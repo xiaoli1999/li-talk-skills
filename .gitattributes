@@ -1,0 +1,7 @@
+# 统一用 LF 换行，保证脚本在 Windows、macOS、Linux 上行为一致
+* text=auto eol=lf
+*.woff2 binary
+*.png binary
+*.jpg binary
+*.gif binary
+*.mp4 binary

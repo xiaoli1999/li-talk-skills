@@ -1,0 +1,13 @@
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log
+
+# 本地私有材料（设计过程的内部文档、草稿），不进公开仓库
+_private/
+
+# 课件升级时的备份、临时输出
+.backup-*/
+*.tmp
