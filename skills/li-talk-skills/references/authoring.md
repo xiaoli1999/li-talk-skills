@@ -481,7 +481,7 @@ Deck.add({
 |---|---|
 | `data-mascot="2"` | 第 2 拍走过来；退拍时走回上一拍的位置 |
 | `data-mascot-side` | 站在哪一侧：`top`（默认，站在上沿）、`left`、`right`、`bottom`、`stay`（原地不动，只换姿势和气泡） |
-| `data-mascot-x` | 站在上沿、下沿时的横向位置，0 最左、1 最右，默认 .12 |
+| `data-mascot-x` | 站在上沿、下沿时的横向位置，默认 .12。站上沿：0 贴左、1 贴右、.5 居中；站下沿：是形象左边落在元素宽度的几成处（.5 是左边对着中线，要居中写 .5 − 形象宽 ÷ 2 ÷ 元素宽） |
 | `data-mascot-dx`、`data-mascot-dy` | 再往右（负数往左）、往下（负数往上）挪多少像素 |
 | `data-mascot-pose` | 到了摆什么姿势，默认 `point` |
 | `data-mascot-face` | 强制朝向 `left` / `right`（默认自动朝向元素） |
