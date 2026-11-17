@@ -29,8 +29,18 @@
      13. 封面色块（可选组件 .mag-cover）：样页「左边一大块撕边墨绿纸压着网点圆」是那一页专用的版式；
         这里做成一个组件，写进页面就有撕边墨绿纸和网点圆，放在里面的字自动反成米白（magazine.css 末尾有写法）
    - 没搬的：网点圆随鼠标的视差（这一版不做视差）；小铅的走位、反应、空闲动作（引擎的形象部分统一做）；
-     样页的「第 01 期」刊号（会和长主题行抢位置）
-   - 自己加的出场名：paste、typeset，只在这个风格里认（别的风格会提醒并换成它的默认出场）
+     样页的「第 01 期」刊号（会和长主题行抢位置；要刊号的页面用下面的刊头 .mag-mast 自己放）
+   - 杂志自有的版式组件（类名带 mag- 前缀，样子和写法见 magazine.css 末尾「杂志自有版式组件」；别的风格不认识，只是普通容器）：
+     .mag-clip 剪报（纸条 + 胶带，可带套印大页码 data-no）、.mag-no 套印大字、.mag-lead 虚线引导、.mag-col 竖排栏目注释、
+     .mag-mast 刊头、.mag-fig 套印插图、.mag-disc 网点圆、.mag-pull 引语、.mag-gutter 跨页中缝、.mag-folio 页脚、.mag-end 文末方块。
+     它们各有这一风格的出场（enterBy 按类名配好，页面不用写 data-in）：
+     · 剪报「贴上」paste：和卡片一样落下、按胶带、字排上来；带 data-no 的，胶带按上后大页码的橘红一版从偏位处对过来
+     · 套印大字、网点圆「套印」register：绿色那版先印上，橘红那版从偏出去的地方滑回来对准；网点圆转着滚进来
+     · 插图「印上」print：像印刷滚筒从上往下滚过，墨线和底色一起印出来，随后橘红网点那一版对过来
+     · 虚线引导「描线」trace：从起点的墨点沿着虚线一路描到尽头，箭头（或圆点）啪地落下
+     · 竖排栏目注释、刊头、引语「排字」typeset：竖排的字从上往下一列列排出来（横排的照旧从下往上升）
+   - 同一拍里先后（plan）：有虚线引导的拍，线先描、纸条等线描到一大半再贴（「顺着线贴到线的尽头」）
+   - 自己加的出场名：paste、typeset、register、print、trace，只在这个风格里认（别的风格会提醒并换成它的默认出场）
    - 禁区（zones，舞台坐标 1920×1080）：
      · 左上角主题行（engine.css 的 .s-topic：x 120 起，宽到 1260，y 18–78）
      · 右上角页码和节拍纸片（.meta 在这里改到 right 120、top 28、高 40：右边和栏线对齐；按每页最多 4 拍、两位数页码量，留出余量后是 x 1390–1810、y 22–74）
@@ -61,14 +71,17 @@
   })();
 
   /* 纸条类组件（出场是「贴上」）；带胶带的；出场时不跟着动的子元素 */
-  const PAPER = '.card, .cell, .term, .shot, .steps > li, .copy, .tag, .mag-cover';
-  const TAPED = '.card, .shot, .steps > li';
+  const PAPER = '.card, .cell, .term, .shot, .steps > li, .copy, .tag, .mag-cover, .mag-clip';
+  const TAPED = '.card, .shot, .steps > li, .mag-clip';
   const SKIP = 'svg.marks, .mascot, .kid, .ripple-layer, .copied-tip, .mag-bit, script, style';
-  /* 默认出场按组件类名分：纸条和一排纸条的容器「贴上」，金句和其余文字「排字」 */
+  /* 默认出场按组件类名分：纸条和一排纸条的容器「贴上」，金句和其余文字「排字」；
+     杂志自有组件：大字和网点圆「套印」、插图「印上」、虚线「描线」 */
   const BY = { card: 'paste', cell: 'paste', term: 'paste', shot: 'paste', copy: 'paste', tag: 'paste', 'mag-cover': 'paste',
-    steps: 'paste', cells: 'paste', grid: 'paste', row: 'paste', col: 'paste', vs: 'paste', quote: 'typeset' };
+    steps: 'paste', cells: 'paste', grid: 'paste', row: 'paste', col: 'paste', vs: 'paste', quote: 'typeset',
+    'mag-clip': 'paste', 'mag-no': 'register', 'mag-disc': 'register', 'mag-fig': 'print', 'mag-lead': 'trace',
+    'mag-col': 'typeset', 'mag-mast': 'typeset', 'mag-pull': 'typeset' };
   const PROPS = ['opacity', 'visibility', 'transform', 'translate', 'rotate', 'scale', 'clip-path', 'box-shadow',
-    '--mag-tp', '--mag-lf', '--mag-gx', '--mag-gy', '--mag-sc', '--mag-ds', '--mag-dr', '--mag-do'];
+    '--mag-tp', '--mag-lf', '--mag-gx', '--mag-gy', '--mag-sc', '--mag-ds', '--mag-dr', '--mag-do', '--mag-ox', '--mag-oy', '--mag-dt'];
 
   const isPaper = e => !!(e && e.matches && e.matches(PAPER));
   /* 清掉出场留下的内联样式，回到 CSS 决定的样子 */
@@ -87,15 +100,52 @@
   const sideOf = tilt => tilt ? Math.sign(tilt) : (flip = -flip);
 
   /* 排字：字从自己的底边升上来。位移（yPercent）和底边的裁切（clip-path 的 bottom）按同样的百分比、同样的缓动走，
-     看起来就是一个不动的窗口里字往上排。o = { vis（true 时连 visibility 一起管，只给节拍单元本身用）, tilt, dur } */
+     看起来就是一个不动的窗口里字往上排。o = { vis（true 时连 visibility 一起管，只给节拍单元本身用）, tilt, dur }
+     竖排的字（writing-mode: vertical-*，比如竖排栏目注释）不挪位置，裁切从顶边往下放开：每一列的字按顺序从上往下出现，像一列列写出来 */
+  const isVert = e => !(e instanceof SVGElement) && /^vertical/.test(getComputedStyle(e).writingMode || '');
   function typesetIn(tl, e, t, o) {
-    const dur = o.dur || .5, off = () => clean(e);
-    const from = { yPercent: 100, clipPath: 'inset(-25% -8% 100% -8%)' };
-    const to = { yPercent: 0, clipPath: 'inset(-25% -8% 0% -8%)', duration: dur, ease: 'power3.out', immediateRender: true, onComplete: off, onInterrupt: off };
+    const dur = o.dur || .5, off = () => clean(e), vert = isVert(e);
+    const from = vert ? { yPercent: 0, clipPath: 'inset(-8% -25% 100% -25%)' } : { yPercent: 100, clipPath: 'inset(-25% -8% 100% -8%)' };
+    const to = { yPercent: 0, clipPath: vert ? 'inset(-8% -25% -8% -25%)' : 'inset(-25% -8% 0% -8%)', duration: vert ? dur + .2 : dur, ease: vert ? 'power1.inOut' : 'power3.out', immediateRender: true, onComplete: off, onInterrupt: off };
     if (o.vis) { from.autoAlpha = 0; to.autoAlpha = 1; } else { from.opacity = 0; to.opacity = 1; }
     if (o.tilt) { from.rotation = o.tilt; to.rotation = o.tilt; }
     tl.fromTo(e, from, to, t);
-    return dur;
+    return to.duration;
+  }
+  /* 插图「印上」：像印刷滚筒从上往下滚过（裁切从上往下放开），随后橘红网点那一版从偏位处对过来（--mag-gx/gy，见 .mag-fig .plate） */
+  function printFig(tl, e, t, vis) {
+    const from = { clipPath: 'inset(-8% -8% 100% -8%)' }, to = { clipPath: 'inset(-8% -8% -8% -8%)', duration: .55, ease: 'power2.inOut', immediateRender: true };
+    if (vis) { from.autoAlpha = 1; to.autoAlpha = 1; } else { from.opacity = 1; to.opacity = 1; }
+    tl.fromTo(e, from, to, t);
+    tl.fromTo(e, { '--mag-gx': '30px', '--mag-gy': '-20px' }, { '--mag-gx': '6px', '--mag-gy': '4px', duration: .55, ease: 'power3.out', immediateRender: true }, t + .3);
+    tl.call(() => clean(e), null, t + .86);
+    return .86;
+  }
+  /* 套印大字：绿色那版先印上（淡入、略大一点压下去），橘红那版从偏出去的地方滑回来对准（--mag-ox/oy，单位 em）；
+     网点圆：转着滚进来（和封面色块后面那枚一样） */
+  function registerIn(tl, e, t, vis, tilt) {
+    const off = () => clean(e);
+    if (e.matches('.mag-disc')) {
+      const from = { scale: .55, rotation: tilt - 50 }, to = { scale: 1, rotation: tilt, duration: .55, ease: 'back.out(1.5)', immediateRender: true, onComplete: off, onInterrupt: off };
+      if (vis) { from.autoAlpha = 0; to.autoAlpha = 1; } else { from.opacity = 0; to.opacity = 1; }
+      tl.fromTo(e, from, to, t);
+      return .55;
+    }
+    const from = { scale: 1.04, rotation: tilt }, to = { scale: 1, rotation: tilt, duration: .32, ease: 'power2.out', immediateRender: true };
+    if (vis) { from.autoAlpha = 0; to.autoAlpha = 1; } else { from.opacity = 0; to.opacity = 1; }
+    tl.fromTo(e, from, to, t);
+    tl.fromTo(e, { '--mag-ox': '0.16em', '--mag-oy': '-0.1em' }, { '--mag-ox': '0.03em', '--mag-oy': '0.02em', duration: .62, ease: 'power3.out', immediateRender: true, onComplete: off, onInterrupt: off }, t + .08);
+    return .7;
+  }
+  /* 虚线引导「描线」：起点的墨点先在，虚线沿着自己的方向一路描过去（裁切从左往右放开；线用 --r 转了角，裁切跟着转），
+     描到头箭头或圆点啪地落下（--mag-dt 从 0 到 1） */
+  function traceIn(tl, e, t, vis) {
+    const off = () => clean(e);
+    const from = { clipPath: 'inset(-30px 100% -30px -30px)', '--mag-dt': 0 }, to = { clipPath: 'inset(-30px -30px -30px -30px)', duration: .42, ease: 'power1.inOut', immediateRender: true };
+    if (vis) { from.autoAlpha = 1; to.autoAlpha = 1; }
+    tl.fromTo(e, from, to, t);
+    tl.fromTo(e, { '--mag-dt': 0 }, { '--mag-dt': 1, duration: .24, ease: 'back.out(2.6)', immediateRender: true, onComplete: off, onInterrupt: off }, t + .38);
+    return .62;
   }
   /* SVG 和别的只淡入 */
   function fadeIn(tl, e, t) {
@@ -132,13 +182,18 @@
     if (!cover) { tl.to(e, { keyframes: [{ y: 2, duration: .05 }, { y: 0, duration: .14, ease: 'power2.out' }] }, t + .44); end = .63; }
     if (e.matches(TAPED)) tl.fromTo(e, { '--mag-tp': 0 }, { '--mag-tp': 1, duration: .2, ease: 'power2.out', immediateRender: true }, t + .3);
     if (e.matches('.steps > li')) tl.fromTo(e, { '--mag-gx': '18px', '--mag-gy': '-12px' }, { '--mag-gx': '4px', '--mag-gy': '3px', duration: .5, ease: 'power3.out', immediateRender: true }, t + .3);
+    // 剪报的大页码（data-no）：胶带按上以后，橘红那一版从偏位处对过来
+    if (e.matches('.mag-clip[data-no]')) { tl.fromTo(e, { '--mag-gx': '24px', '--mag-gy': '-16px' }, { '--mag-gx': '5px', '--mag-gy': '4px', duration: .5, ease: 'power3.out', immediateRender: true }, t + .32); end = Math.max(end, .82); }
     if (cover) { tl.fromTo(e, { '--mag-ds': .55, '--mag-dr': '-50deg', '--mag-do': 0 }, { '--mag-ds': 1, '--mag-dr': '0deg', '--mag-do': 1, duration: .55, ease: 'back.out(1.5)', immediateRender: true }, t + .28); end = Math.max(end, .83); }
     kidsOf(e).forEach((c, i) => {
       const s = (cover ? .36 : .32) + i * .09;
-      const k = isPaper(c) ? pasteOne(tl, c, t + s, false, tiltOf(c), -side) : typesetIn(tl, c, t + s, { dur: .44 });
+      const k = isPaper(c) ? pasteOne(tl, c, t + s, false, tiltOf(c), -side)
+        : c.matches('.mag-fig') ? printFig(tl, c, t + s, false)
+          : c.matches('.mag-no, .mag-disc') ? registerIn(tl, c, t + s, false, tiltOf(c))
+            : typesetIn(tl, c, t + s, { dur: .44 });
       end = Math.max(end, s + k);
     });
-    end = Math.min(end, 1);
+    end = Math.min(end, 1.1);
     tl.call(() => clean(e), null, t + end);
     return end;
   }
@@ -167,7 +222,22 @@
     const big = e.classList.contains('s-title');
     return typesetIn(tl, e, t, { vis: true, tilt: ctx && ctx.tilt ? ctx.tilt() : tiltOf(e), dur: big ? .55 : .5 });
   }
-  const FX = { paste, typeset };
+  /* 「套印」「印上」「描线」：只认各自的组件，用在别的元素上时按「排字」 */
+  function register(tl, e, t, ctx) {
+    if (e instanceof SVGElement) return fadeIn(tl, e, t);
+    if (!e.matches('.mag-no, .mag-disc')) return typeset(tl, e, t, ctx);
+    return registerIn(tl, e, t, true, ctx && ctx.tilt ? ctx.tilt() : tiltOf(e));
+  }
+  function print(tl, e, t, ctx) {
+    if (e instanceof SVGElement) return fadeIn(tl, e, t);
+    return e.matches('.mag-fig') ? printFig(tl, e, t, true) : typeset(tl, e, t, ctx);
+  }
+  function trace(tl, e, t, ctx) {
+    if (e instanceof SVGElement) return fadeIn(tl, e, t);
+    return e.matches('.mag-lead') ? traceIn(tl, e, t, true) : typeset(tl, e, t, ctx);
+  }
+  const FX = { paste, typeset, register, print, trace };
+  const isLead = u => !!(u.el && u.el.classList && u.el.classList.contains('mag-lead'));
   /* 开场里给第 0 拍的元素选出场（和引擎选默认出场的规则一致：data-in 优先，再按类名，最后是排字） */
   function runFx(tl, e, t) {
     const name = e.dataset && e.dataset.in;
@@ -235,6 +305,17 @@
     // 线稿是编辑随手画的墨线，圈注是一支橘红笔圈的，比线稿潦草一点
     rough: { strokeWidth: 2.6, roughness: .9, bowing: .8, markWidth: 4, markRoughness: 1.2, markBowing: 1 },
     fx: FX,
+    // 半调网点（插图 .mag-fig 里用 fill="url(#mag-dot-o)" 这类引用）：45° 网屏，橘红、墨绿、墨黑三种
+    defs: '<pattern id="mag-dot-o" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><circle cx="4.5" cy="4.5" r="2.5" fill="#E0532B"/></pattern>'
+      + '<pattern id="mag-dot-g" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><circle cx="4.5" cy="4.5" r="2.3" fill="#1F4B3B"/></pattern>'
+      + '<pattern id="mag-dot-k" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><circle cx="4" cy="4" r="1.4" fill="#1C1A17"/></pattern>',
+
+    // 同一拍里有虚线引导时：线先描（几条线错开一点），别的块整体往后挪 0.3 秒，等线描到一大半再贴上去
+    plan(units, { base }) {
+      if (!units.some(isLead) || units.every(isLead)) return undefined;
+      let k = 0;
+      return units.map(u => isLead(u) ? base + (k++) * .08 : base + u.start + .3);
+    },
 
     // 退一拍：重点词的纸条先撕掉（引擎同时把 --k 收回 0），整张纸条往上揭起、转一点拿走
     onBack({ tl, units }) {
