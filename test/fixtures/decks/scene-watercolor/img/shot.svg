@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <!-- 截图占位：一个浏览器窗口，里面是一页水彩课件的缩略样子 -->
+  <rect width="1600" height="900" fill="#EDE6D8"/>
+  <rect x="0" y="0" width="1600" height="64" fill="#D9D0BF"/>
+  <circle cx="40" cy="32" r="11" fill="#E8907A"/><circle cx="76" cy="32" r="11" fill="#E9C46A"/><circle cx="112" cy="32" r="11" fill="#9CCB7E"/>
+  <rect x="170" y="16" width="900" height="32" rx="16" fill="#F4EFE4"/>
+  <defs>
+    <linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#BFDCF0"/><stop offset=".6" stop-color="#F6F0E2"/></linearGradient>
+  </defs>
+  <rect x="0" y="64" width="1600" height="836" fill="url(#s)"/>
+  <path d="M0 760 C300 720 600 740 900 724 C1200 708 1400 730 1600 720 V900 H0 Z" fill="#B7D79E"/>
+  <rect x="120" y="150" width="620" height="54" rx="10" fill="#3A322B" opacity=".82"/>
+  <rect x="120" y="232" width="860" height="26" rx="8" fill="#4F463E" opacity=".45"/>
+  <g opacity=".85">
+    <rect x="120" y="340" width="380" height="240" rx="26" fill="#8EC3E6" opacity=".55"/>
+    <rect x="610" y="340" width="380" height="240" rx="26" fill="#F4C35A" opacity=".55"/>
+    <rect x="1100" y="340" width="380" height="240" rx="26" fill="#9CCB7E" opacity=".55"/>
+  </g>
+  <g fill="#3A322B" opacity=".6">
+    <rect x="160" y="400" width="200" height="22" rx="6"/><rect x="160" y="450" width="280" height="16" rx="6"/>
+    <rect x="650" y="400" width="200" height="22" rx="6"/><rect x="650" y="450" width="280" height="16" rx="6"/>
+    <rect x="1140" y="400" width="200" height="22" rx="6"/><rect x="1140" y="450" width="280" height="16" rx="6"/>
+  </g>
+  <circle cx="1400" cy="170" r="40" fill="#FFFEFA" stroke="#5E564D" stroke-width="3"/>
+</svg>

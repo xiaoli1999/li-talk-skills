@@ -1,0 +1,3 @@
+/* 水彩田园测试课件的页面样式：每条都以 [data-id="…"] 开头 */
+[data-id="term"] .cells{flex-direction:column;--gap:26px}
+[data-id="vs"] .vs>.card{min-height:290px}
