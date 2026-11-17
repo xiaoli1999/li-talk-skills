@@ -1,0 +1,3 @@
+/* 第二章页面样式 */
+[data-id="p03"] .steps>li>b{font-size:var(--fs-lg)}
+[data-id="p04"] .card,[data-id="p06"] .card{min-height:300px}

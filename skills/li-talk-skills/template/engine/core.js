@@ -8,7 +8,7 @@
      [Deck] 提醒 warn 同时记进 window.__deckWarns（自检记成 deck-warn）；
      点了不进拍的元素 NO_ADVANCE、署名的链接 SIGN_URL、开场时长上限 INTRO_MAX
    - 引入顺序固定：vendor/gsap.min.js → vendor/rough.min.js → engine/core.js → build.js
-     → beats.js → mascot.js → pages.js → ui.js → presenter.js → selftest.js
+     → beats.js → mascot.js → pages.js → ui.js → presenter.js → tools.js → selftest.js
      → scenes/*.js → mascots/*.js → 各章 slides/*.js
    - 其余引擎文件都写成 (function () { 'use strict'; const I = Deck._; … })()，
      跨文件调用一律写 I.某函数()；可变状态一律读写 I.state.某项，不在各文件里留副本

@@ -10,7 +10,7 @@
      I.dom（lb、world、stage）、I.toast；
      build.js 的 I.boxIn；beats.js 的 I.clearEl、I.setInstant、I.callOnBeat、I.finishRunning；
      mascot.js 的 I.mascotCheer、I.mascotClick、I.spotFor；pages.js 的 I.next、I.prev、I.go、I.finishPageTl、I.mountScene；
-     presenter.js 的 I.openPresenter、I.toggleTimer、I.resetTimer
+     presenter.js 的 I.openPresenter、I.toggleTimer、I.resetTimer；tools.js 的 I.toolKey、I.closeTools（没引入 tools.js 时跳过）
    - 挂到总线：copyText、onCopy、textRects、mascotBoxes、copiedTip、placeSign、openShot、closeShot、onKey、bindInput、
      ripple、parseHash、fit、setMode、scrollToPage、pageInView
    ===================================================================== */
@@ -221,6 +221,7 @@
     if (S.reading) return;
     const ae = document.activeElement;
     if (ae && ae !== document.body && ae.matches && ae.matches('button,[data-copy],.shot')) ae.blur();
+    if (I.toolKey && I.toolKey(e)) return;   // 现场工具（tools.js）：O 总览、B 黑屏、L 激光笔；总览、黑屏开着时翻页键归它们管
     if (NEXT_KEYS.has(k)) { e.preventDefault(); I.next(); }
     else if (PREV_KEYS.has(k)) { e.preventDefault(); I.prev(); }
     else if (k === 'Home') { e.preventDefault(); I.go(0, 0, { anim: false }); }
@@ -318,6 +319,7 @@
     document.documentElement.classList.toggle('reading', r);
     if (S.signAt) placeSign();   // 署名跟着换地方（阅读模式在最后一页下面，演示模式在页里）；启动时第一次量由 boot 调
     if (r) {
+      if (I.closeTools) I.closeTools();   // 总览、黑屏、激光笔全部收起（tools.js）
       // 阅读模式下没有「当前风格」：卸下风格挂的监听和元素；舞台也去掉 data-scene，
       // 免得 [data-scene="…"] .card 这类规则经由舞台套到别的风格的页上（每页只认自己的风格）
       I.mountScene(null);

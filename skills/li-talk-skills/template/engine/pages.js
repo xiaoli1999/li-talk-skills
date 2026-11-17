@@ -10,7 +10,8 @@
      I.dom（bg、stage、chap、meter、dotsBox、mnum、pageno）；
      beats.js 的 I.clearEl、I.setInstant、I.callOnBeat、I.stepForward、I.stepBack、I.finishRunning、
      I.addFx、I.plan、I.queueKeysAndMarks、I.play；
-     mascot.js 的 I.mascotXY、I.moveMascot、I.spotFor、I.mascotActivity；ui.js 的 I.scrollToPage；presenter.js 的 I.syncPresenter
+     mascot.js 的 I.mascotXY、I.moveMascot、I.spotFor、I.mascotActivity；ui.js 的 I.scrollToPage；presenter.js 的 I.syncPresenter；
+     tools.js 的 I.toolGate、I.syncTools（没引入 tools.js 时跳过）
    - 挂到总线：switchScene、mountScene、finishPageTl、go、enterPage、turnPage、playEnter、playIntro、next、prev、afterChange
    ===================================================================== */
 (function () {
@@ -177,6 +178,7 @@
 
   function next() {
     if (S.reading || !PAGES.length) return;
+    if (I.toolGate && I.toolGate(1)) return;   // 黑屏时只恢复、总览开着时移动选中（tools.js）
     finishPageTl();
     const p = PAGES[S.cur.p];
     if (S.cur.b < p.total) go(S.cur.p, S.cur.b + 1);
@@ -184,6 +186,7 @@
   }
   function prev() {
     if (S.reading || !PAGES.length) return;
+    if (I.toolGate && I.toolGate(-1)) return;
     finishPageTl();
     if (S.cur.b > 0) go(S.cur.p, S.cur.b - 1);
     else if (S.cur.p > 0) go(S.cur.p - 1, PAGES[S.cur.p - 1].total, { dir: -1 });
@@ -205,6 +208,7 @@
     const h = '#' + (p.i + 1) + (p.beat ? '/' + p.beat : '');
     if (location.hash !== h) { try { history.replaceState(null, '', h); } catch (e) { /* 个别环境不允许改地址 */ } }
     I.mascotActivity();   // 翻拍也算有人操作：形象 5 秒内不做空闲动作，打着盹的醒过来
+    if (I.syncTools) I.syncTools();   // 底部进度条（tools.js）
     I.syncPresenter();
   }
 

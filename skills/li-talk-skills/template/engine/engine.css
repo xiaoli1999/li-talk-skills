@@ -329,6 +329,54 @@ svg.sketch .c-mark{color:var(--mark)}
 .lb-cap{position:absolute;left:0;right:0;bottom:16px;text-align:center;color:#EDE9E1;font:500 18px/1.4 var(--f-hand);pointer-events:none;text-shadow:0 1px 3px #000}
 
 /* =====================================================================
+   现场工具（tools.js）：总览跳页（O）、黑屏（B）、激光笔（L）、底部进度条
+   总览、黑屏、激光笔是挂在 body 上的固定层，不跟风格走（深色界面，和看大图层一个路子）；
+   层级：样册的换风格小条 700 < 总览 760 < 黑屏 780 < 看大图 800 < 激光笔 850 < 提示条 900
+   ===================================================================== */
+/* 总览：铺满窗口，上面一行说明，下面是缩略图网格（列数、缩放比例 --ov-k 由 tools.js 按窗口和页数算） */
+.deck-ov{position:fixed;inset:0;z-index:760;display:flex;flex-direction:column;background:#111215;color:#EDE9E1;font-family:var(--f-hand);visibility:hidden;opacity:0;user-select:none;-webkit-user-select:none}
+.deck-ov.on{visibility:visible;opacity:1;transition:opacity .18s ease-out}
+.deck-ov.instant{transition:none}
+.ov-head{flex:none;display:flex;align-items:baseline;gap:18px;padding:18px 48px 4px;white-space:nowrap;font:400 18px/1.4 var(--f-hand);color:#A9A396}
+.ov-head .ov-t{font:700 26px/1.2 var(--f-hand);color:#FFF8E6}
+.ov-head .ov-num{flex:1;min-width:0;text-align:center;font:500 22px/1.2 var(--f-hand);color:#FFE68A}
+.ov-head .ov-num b{margin:0 4px;font:700 30px/1 var(--f-mono)}
+.ov-head .ov-num .bad{color:#FF9B85}
+.ov-grid{flex:1;min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(var(--ov-cols,4),minmax(0,1fr));gap:24px;align-content:start;padding:18px 48px 32px}
+.ov-cell{position:relative;min-width:0;cursor:pointer}
+/* 每格只在滚到看得见时才画（content-visibility），页多也不卡 */
+.ov-frame{position:relative;aspect-ratio:16/9;overflow:hidden;border-radius:6px;background:#2A2B2F;box-shadow:0 6px 18px rgba(0,0,0,.45);content-visibility:auto}
+.ov-k{position:absolute;left:0;top:0;width:1920px;height:1080px;transform:scale(var(--ov-k,.2));transform-origin:0 0;pointer-events:none}
+.ov-k>.slide{visibility:visible;pointer-events:none}
+.ov-k *,.ov-k *::before,.ov-k *::after{animation:none!important;transition:none!important}
+.ov-cap{display:flex;align-items:baseline;gap:10px;height:40px;padding:9px 2px 0;white-space:nowrap;overflow:hidden;font:400 18px/1.3 var(--f-hand);color:#CFC9BC}
+.ov-cap b{flex:none;font:700 18px/1 var(--f-mono);color:#FFE68A}
+.ov-cap span{overflow:hidden;text-overflow:ellipsis}
+/* 当前页：橙框加「当前」小签；选中（键盘、鼠标）：白色外圈 */
+.ov-cell.cur .ov-frame{box-shadow:0 0 0 4px #F76707,0 6px 18px rgba(0,0,0,.45)}
+.ov-cell.cur .ov-cap::after{content:"当前";flex:none;order:-1;padding:2px 8px;border-radius:4px;background:#F76707;color:#fff;font:700 14px/1.2 var(--f-hand)}
+.ov-cell.sel .ov-frame{outline:3px solid #fff;outline-offset:5px}
+
+/* 黑屏：全黑、藏起鼠标；点一下也恢复 */
+.deck-black{position:fixed;inset:0;z-index:780;background:#000;cursor:none;visibility:hidden;opacity:0;transition:opacity .25s,visibility 0s .25s}
+.deck-black.on{visibility:visible;opacity:1;transition:opacity .25s}
+.deck-black.instant{transition:none}
+
+/* 激光笔：铺满窗口的画布，不接收指针（点击照常进拍）；开着时藏起鼠标 */
+.deck-laser{position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:850;pointer-events:none;display:none}
+.deck-laser.on{display:block}
+html.deck-laser-on,html.deck-laser-on *{cursor:none!important}
+
+/* 底部进度条：舞台底边 y 1066–1070（当前位置的小圆点 1064–1072），在署名（底边 1036）之下；
+   每章一段，段的长短按这一章的拍数；底用 --ink-3，走过的用 --ink-2，当前位置一个 --accent 小圆点。
+   在外框 .chrome 里：不接收指针，换风格时跟着页码一起淡出淡入，阅读模式里随 .chrome 一起藏起来 */
+.deck-progress{position:absolute;left:64px;right:64px;bottom:10px;height:4px;display:flex;gap:6px;pointer-events:none}
+.deck-progress .pg-seg{position:relative;min-width:4px;border-radius:2px}
+.deck-progress .pg-seg::before{content:"";position:absolute;inset:0;border-radius:2px;background:var(--ink-3);opacity:.32}
+.deck-progress .pg-fill{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:2px;background:var(--ink-2);opacity:.62;transition:width .35s ease}
+.deck-progress .pg-seg.cur::after{content:"";position:absolute;top:50%;left:var(--pg,0%);width:8px;height:8px;margin:-4px 0 0 -6px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 1px rgba(0,0,0,.18);transition:left .35s ease}
+
+/* =====================================================================
    阅读模式（窄的竖屏）：一页页竖排，每页按屏宽缩放，所有拍直接显示
    ===================================================================== */
 html.reading{overflow-x:hidden;overflow-y:auto;height:auto}   /* 只许竖向滚动 */

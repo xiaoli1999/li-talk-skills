@@ -64,6 +64,8 @@ test('只带选中的风格和它的形象', async () => {
   assert.match(html, /scenes\/paper\.js/);
   assert.match(html, /scenes\/paper\.css/);
   assert.match(html, /mascots\/jianjian\.js/);
+  // 现场工具（总览、黑屏、激光笔、进度条）排在演讲者视图之后、自检之前
+  assert.match(html, /engine\/presenter\.js"><\/script>\r?\n<script src="engine\/tools\.js"><\/script>\r?\n<script src="engine\/selftest\.js">/);
   assert.match(html, /name="li-talk-mascot" content="jianjian"/);
   assert.match(html, /name="li-talk-engine" content="0\.1\.0"/);
   assert.match(html, /href="vendor\/fonts\/wenkai-lite\.css"/);
