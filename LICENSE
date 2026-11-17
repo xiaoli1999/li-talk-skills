@@ -24,3 +24,4 @@ Third-party components keep their own licenses:
 - GSAP (skills/li-talk-skills/template/vendor/gsap.min.js): GreenSock Standard License, see LICENSE-gsap.txt
 - rough.js (skills/li-talk-skills/template/vendor/rough.min.js): MIT, see LICENSE-roughjs.txt
 - LXGW WenKai font: SIL Open Font License 1.1, see OFL-LXGW-WenKai.txt
+- Fusion Pixel Font (skills/li-talk-skills/template/vendor/fonts/pixel/): SIL Open Font License 1.1, see OFL-Fusion-Pixel-Font.txt and the upstream licenses next to it
