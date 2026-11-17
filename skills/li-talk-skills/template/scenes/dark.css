@@ -1,0 +1,279 @@
+/* =====================================================================
+   风格 · 科技暗黑 dark 的样子（行为在 dark.js）
+   近黑底、唯一的冷色冰蓝、柔和光晕、极淡噪点；深色缎面卡片配 1px 渐变描边；
+   银色渐变大标题，重点词被一道光扫过后染成冰蓝。所有选择器的第一段都带 [data-scene="dark"]
+   - 1px 渐变描边：伪元素铺满组件，内边距 1px，用遮罩挖掉中间只留一圈；
+     不支持遮罩合成的浏览器在文件末尾的 @supports 里退回普通 1px 描边
+   - 几个状态量都写成 CSS 变量，描边和卡面按它们混出高光：
+     --dk-h 鼠标悬停（0–1，悬停时过渡到 1）、--dk-n 当前拍（0–1）、
+     --dk-sw 出场时扫过描边的那道光的位置（dark.js 推动）、--mx / --my 鼠标在组件里的位置（dark.js 写入）
+   - --recede（讲过的拍变到多淡）由 dark.js 的 recede 写入，这里不写
+   ===================================================================== */
+
+/* 悬停、当前拍两个量注册成数字，才能平滑过渡；伪元素要读到，所以可继承（每个组件自己再写一遍初值，不会从外层组件漏进来） */
+@property --dk-h{syntax:"<number>";inherits:true;initial-value:0}
+@property --dk-n{syntax:"<number>";inherits:true;initial-value:0}
+
+/* 变量：近黑底、冰蓝强调、正文提亮到 #BAC2CD 以上（投影上不发灰） */
+[data-scene="dark"]{
+  --f-hand:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --f-sans:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  /* 等宽字后面补上黑体：命令里的中文不至于落到宋体 */
+  --f-mono:"JetBrains Mono","Cascadia Mono",Consolas,"SF Mono",Menlo,"PingFang SC","Microsoft YaHei","Noto Sans SC",monospace;
+  --rough-r:16px;
+  --bg:#050608; --ink:#F4F6F9; --ink-2:#BAC2CD; --ink-3:#8E98A6; --line:#AAB6C5;
+  --mark:#8CC0FF; --key-ink:#F4F6F9; --hl:rgba(140,192,255,.35); --accent:#8CC0FF;
+  --card-ink:#F4F6F9; --card-ink-2:#BAC2CD; --paper:#0B0E13;
+  /* 只有一个冷色：便签的几种颜色在这里都是冰蓝或浅灰 */
+  --t-yellow:#8CC0FF; --t-mint:#C9D7E6; --t-pink:#D6DDE6; --t-blue:#B4D4FF; --t-white:#F4F6F9; --t-peach:#D6DDE6;
+  --term-bg:#0A0D12; --term-ink:#DCE3EC;
+  /* 「需要人」要和「AI」分开，用一个压低饱和度的暖色，只在这两种格子上出现 */
+  --human:#E9C08E; --ai:#8CC0FF; --idle:#6B7480;
+  --sign-color:rgba(214,228,246,.62);
+  /* 背景：极淡噪点 + 顶部一层冷灰渐变 + 四周压暗 + 近黑底（阅读模式里每页也用它） */
+  --scene-bg:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .091 -.028'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse 90% 70% at 50% 0%,#0B0E15 0%,rgba(11,14,21,0) 72%),
+    radial-gradient(ellipse 120% 95% at 50% 50%,rgba(0,0,0,0) 55%,rgba(0,0,0,.55) 100%),
+    #050608;
+}
+
+/* 背景层里的光晕（dark.js 的 backdrop 放进去）：顶上一大团、右下一小团、标题后面一团；
+   背景层在舞台外也铺满窗口，标题光晕按舞台坐标放（舞台在背景层里居中） */
+[data-scene="dark"] .dk-glow{position:absolute;border-radius:50%;pointer-events:none}
+[data-scene="dark"] .dk-g1{left:12%;top:-42%;width:76%;height:96%;background:radial-gradient(closest-side,rgba(84,132,255,.12),rgba(84,132,255,.04) 55%,rgba(84,132,255,0))}
+[data-scene="dark"] .dk-g2{right:-20%;bottom:-48%;width:72%;height:92%;background:radial-gradient(closest-side,rgba(110,160,255,.065),rgba(110,160,255,0))}
+[data-scene="dark"] .dk-halo{left:calc(50% - 1110px);top:calc(50% - 790px);width:1500px;height:720px;background:radial-gradient(closest-side,rgba(92,142,255,.1),rgba(92,142,255,.035) 50%,rgba(92,142,255,0))}
+
+/* 正文：黑体，字距拉开一点 */
+[data-scene="dark"].slide{letter-spacing:.02em}
+
+/* =====================================================================
+   主题行、标题、解释句
+   ===================================================================== */
+[data-scene="dark"] .s-topic{gap:14px;letter-spacing:.08em}
+[data-scene="dark"] .s-topic::before{content:"";flex:none;width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 10px 1px rgba(140,192,255,.55)}
+[data-scene="dark"] .s-topic .tc{padding:0;font:400 26px/1.2 var(--f-hand);color:var(--ink-3)}
+[data-scene="dark"] .s-topic .ts{font:400 26px/1 var(--f-hand);color:rgba(140,192,255,.8)}
+[data-scene="dark"] .s-topic .tt{font:500 30px/1.2 var(--f-hand);color:var(--ink-2)}
+
+/* 大标题：银色渐变（每行一段渐变）；不支持把背景裁成字形的浏览器就是近白色 */
+[data-scene="dark"] .s-title{font-weight:700;letter-spacing:.04em;color:var(--ink)}
+[data-scene="dark"] .explain{padding-left:26px;color:var(--ink-2);letter-spacing:.03em}
+[data-scene="dark"] .explain::before{width:3px;top:.2em;bottom:.14em;border-radius:2px;background:var(--accent);box-shadow:0 0 10px rgba(140,192,255,.6)}
+[data-scene="dark"] .explain b{color:var(--ink)}
+[data-scene="dark"] .muted{color:var(--ink-2)}
+
+/* 大字金句：和标题一样的银色渐变 */
+[data-scene="dark"] .quote{font-weight:700;letter-spacing:.03em;color:var(--ink)}
+
+@supports ((-webkit-background-clip:text) or (background-clip:text)){
+  [data-scene="dark"] :is(.s-title,.quote){color:transparent;-webkit-background-clip:text;background-clip:text;
+    background-image:linear-gradient(180deg,#FFFFFF 18%,#DFE5EC 55%,#9EA8B6 100%);background-size:100% 1.2em;background-repeat:repeat-y}
+  [data-scene="dark"] .quote{background-size:100% 1.25em}
+}
+
+/* =====================================================================
+   重点词：一道白光从左扫到右，扫过的地方染成冰蓝，扫过时柔光亮一下再收
+   引擎在那一拍把 --k 从 0 推到 1：渐变的位置跟着 --k 走，柔光按 --k 算出先亮后收（--k×(1-−k) 在中间最大）
+   没扫到的部分就是周围文字的颜色（color 继承外层，渐变里用 currentColor）
+   ===================================================================== */
+[data-scene="dark"] .key{color:var(--accent)}
+@supports ((-webkit-background-clip:text) or (background-clip:text)){
+  [data-scene="dark"] .key{color:inherit;-webkit-text-fill-color:transparent;-webkit-background-clip:text;background-clip:text;
+    background-image:linear-gradient(100deg,#D9ECFF 0%,#8CC0FF 22%,#78A6FF 34%,#BFDDFF 44%,#FFFFFF 50%,currentColor 57%,currentColor 100%);
+    background-size:300% 100%;background-position:calc((1 - var(--k)) * 100%) 0;
+    filter:drop-shadow(0 0 14px rgba(120,170,255,calc(var(--k) * .28 + var(--k) * (1 - var(--k)) * 2)))}
+}
+
+/* =====================================================================
+   缎面组件：卡片、小格、步骤的每一行、截图位（终端、命令另写在下面）
+   卡面 = 跟着鼠标的一团高光 + 当前拍时左上角一团柔光 + 左上一道斜向微光 + 上亮下暗 + 半透明近黑
+   ===================================================================== */
+[data-scene="dark"] :is(.card,.cell,.steps>li,.shot){--dk-h:0;--dk-n:0;position:relative;
+  background:
+    radial-gradient(560px circle at var(--mx,50%) var(--my,50%),rgba(160,200,255,calc(.1 * var(--dk-h))),rgba(160,200,255,0) 50%),
+    radial-gradient(ellipse 46% 130% at 0% 0%,rgba(110,160,255,calc(.13 * var(--dk-n))),rgba(110,160,255,0) 70%),
+    linear-gradient(115deg,rgba(255,255,255,.045),rgba(255,255,255,0) 38%),
+    linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.012)),
+    rgba(9,11,15,.66);
+  box-shadow:0 36px 90px -46px rgba(80,130,255,calc(.6 * var(--dk-n))),0 30px 60px -36px rgba(0,0,0,.9);
+  transition:--dk-h .35s,--dk-n .5s}
+/* 讲过的拍：保留引擎的淡出过渡（上面那条 transition 会盖掉它，这里补回来） */
+[data-scene="dark"] :is(.card,.cell,.steps>li,.shot,.term,.copy).past{transition:opacity .45s ease,--dk-h .35s,--dk-n .5s}
+/* 现代风格不歪：页面里写的 --r 倾斜在这里不用 */
+[data-scene="dark"] :is(.card,.cell,.tag,.quote,.term,.copy,.shot){rotate:none}
+
+/* 1px 渐变描边：悬停高光（跟着鼠标）+ 出场扫过的一道光 + 当前拍的冰蓝 + 上亮下暗的底圈
+   卡片、小格、截图位、终端、命令用 ::before（卡片的胶带、图钉，截图位的胶带在这里一并改成描边）；
+   步骤的 ::before 是序号圈，所以描边用 ::after */
+[data-scene="dark"] :is(.card,.cell,.shot,.term,.copy)::before,
+[data-scene="dark"] .steps>li::after{content:"";position:absolute;inset:0;width:auto;height:auto;margin:0;rotate:none;box-shadow:none;z-index:auto;
+  border-radius:inherit;padding:1px;pointer-events:none;
+  background:
+    radial-gradient(340px circle at var(--mx,50%) var(--my,50%),rgba(196,224,255,calc(.9 * var(--dk-h))),rgba(190,220,255,0) 70%),
+    linear-gradient(100deg,rgba(200,226,255,0) calc(var(--dk-sw,-40%) - 16%),rgba(214,234,255,.95) var(--dk-sw,-40%),rgba(200,226,255,0) calc(var(--dk-sw,-40%) + 16%)),
+    linear-gradient(180deg,rgba(176,210,255,calc(.6 * var(--dk-n))),rgba(140,190,255,calc(.14 * var(--dk-n))) 50%,rgba(140,190,255,calc(.32 * var(--dk-n)))),
+    linear-gradient(180deg,var(--dk-rt,rgba(255,255,255,.17)),rgba(255,255,255,.05) 45%,rgba(255,255,255,.035) 70%,rgba(150,190,255,.1));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude}
+
+/* 悬停：描边和卡面的高光亮起来（位置由 dark.js 跟着鼠标写） */
+@media (hover:hover){
+  [data-scene="dark"] :is(.card,.cell,.steps>li,.shot,.term,.copy):hover{--dk-h:1}
+}
+
+/* 当前拍：这一拍的卡片、小格、步骤、终端、截图位描边染冰蓝、左上角亮一团柔光（按页面的 data-now 对上 data-beat，写到第 9 拍） */
+[data-scene="dark"][data-now="1"] :is([data-beat="1"],[data-beat="1"] *):is(.card,.cell,.steps>li,.term,.shot),
+[data-scene="dark"][data-now="2"] :is([data-beat="2"],[data-beat="2"] *):is(.card,.cell,.steps>li,.term,.shot),
+[data-scene="dark"][data-now="3"] :is([data-beat="3"],[data-beat="3"] *):is(.card,.cell,.steps>li,.term,.shot),
+[data-scene="dark"][data-now="4"] :is([data-beat="4"],[data-beat="4"] *):is(.card,.cell,.steps>li,.term,.shot),
+[data-scene="dark"][data-now="5"] :is([data-beat="5"],[data-beat="5"] *):is(.card,.cell,.steps>li,.term,.shot),
+[data-scene="dark"][data-now="6"] :is([data-beat="6"],[data-beat="6"] *):is(.card,.cell,.steps>li,.term,.shot),
+[data-scene="dark"][data-now="7"] :is([data-beat="7"],[data-beat="7"] *):is(.card,.cell,.steps>li,.term,.shot),
+[data-scene="dark"][data-now="8"] :is([data-beat="8"],[data-beat="8"] *):is(.card,.cell,.steps>li,.term,.shot),
+[data-scene="dark"][data-now="9"] :is([data-beat="9"],[data-beat="9"] *):is(.card,.cell,.steps>li,.term,.shot){--dk-n:1}
+
+/* ---------- 卡片 ---------- */
+[data-scene="dark"] .card{padding:34px 40px 36px;border-radius:24px;color:var(--card-ink)}
+[data-scene="dark"] .card h3{font-weight:700;letter-spacing:.03em;color:var(--ink)}
+[data-scene="dark"] .card :is(p,li){color:var(--ink-2);letter-spacing:.03em}
+[data-scene="dark"] .card li::before{left:.15em;top:.62em;width:8px;height:8px;border-radius:50%;rotate:none;opacity:1;background:var(--accent);box-shadow:0 0 8px rgba(140,192,255,.55)}
+/* 卡片上沿的标签：一枚小胶囊 */
+[data-scene="dark"] .lab{top:-26px;padding:3px 20px 5px;border-radius:999px;background:#0C0F14;color:var(--tint,var(--ink-2));font-weight:500;letter-spacing:.06em;box-shadow:inset 0 0 0 1px rgba(255,255,255,.16)}
+
+/* ---------- 带序号的步骤：每一行是一张缎面小卡，序号是带渐变细圈的冰蓝数字 ---------- */
+[data-scene="dark"] .steps>li{padding:28px 34px 30px 30px;border-radius:24px}
+[data-scene="dark"] .steps>li::before{width:60px;height:60px;font:400 30px/1 var(--f-hand);color:var(--accent);border:1px solid transparent;border-radius:50%;
+  background:linear-gradient(#0D1016,#0D1016) padding-box,linear-gradient(180deg,rgba(176,210,255,.7),rgba(140,190,255,.12) 60%,rgba(140,190,255,.3)) border-box;
+  box-shadow:0 0 20px -6px rgba(140,192,255,.5)}
+[data-scene="dark"] .steps>li>b{font-weight:700;color:var(--ink);letter-spacing:.03em}
+[data-scene="dark"] .steps>li>span{color:var(--ink-2);letter-spacing:.03em}
+
+/* ---------- 左右对比：中间一个细的冰蓝符号 ---------- */
+[data-scene="dark"] .vs::before{font:300 60px/1 var(--f-hand);color:var(--accent);text-shadow:0 0 18px rgba(140,192,255,.5)}
+
+/* ---------- 一排小格：缎面小卡；AI 和需要人的格子描边顶上染色 ---------- */
+[data-scene="dark"] .cell{padding:24px 16px 22px;border:0;border-radius:18px}
+[data-scene="dark"] .cell>i{color:var(--ink-3);font-weight:500}
+[data-scene="dark"] .cell>b{font-weight:700;color:var(--ink)}
+[data-scene="dark"] .cell>span{color:var(--ink-2)}
+[data-scene="dark"] .cell.ai{--dk-rt:rgba(140,192,255,.8)}
+[data-scene="dark"] .cell.human{--dk-rt:rgba(233,192,142,.8)}
+[data-scene="dark"] .cell.human::after{top:14px;right:14px;width:10px;height:10px;box-shadow:0 0 10px rgba(233,192,142,.6)}
+[data-scene="dark"] .cell.idle,[data-scene="dark"] .cell.idle>:is(b,span){color:var(--idle)}
+[data-scene="dark"] .cell.idle>b{text-decoration-thickness:2px}
+
+/* ---------- 标签：冰蓝细圈胶囊 ---------- */
+[data-scene="dark"] .tag{padding:6px 22px 7px;border:1px solid rgba(140,192,255,.38);border-radius:999px;background:rgba(140,192,255,.07);color:#CFE3FF;font-weight:500;letter-spacing:.06em}
+
+/* ---------- 终端：近黑玻璃窗，红黄绿三个点收成灰色，提示符用冰蓝 ---------- */
+[data-scene="dark"] .term{--dk-h:0;--dk-n:0;padding:0 0 26px;border-radius:18px;color:var(--term-ink);font-weight:400;
+  background:radial-gradient(560px circle at var(--mx,50%) var(--my,50%),rgba(160,200,255,calc(.07 * var(--dk-h))),rgba(160,200,255,0) 50%),linear-gradient(180deg,#0E1218,#090B0F);
+  box-shadow:0 36px 90px -46px rgba(80,130,255,calc(.5 * var(--dk-n))),0 30px 60px -30px rgba(0,0,0,.9);
+  transition:--dk-h .35s,--dk-n .5s}
+[data-scene="dark"] .term-bar{height:52px;margin-bottom:18px;padding:0 24px;background:rgba(255,255,255,.025);box-shadow:inset 0 -1px 0 rgba(255,255,255,.06);font:400 26px/1 var(--f-mono);color:#7D8794;letter-spacing:.02em}
+[data-scene="dark"] .term-bar i{width:12px;height:12px;background:#2C323B;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+[data-scene="dark"] .term p{padding:0 32px;letter-spacing:0}
+[data-scene="dark"] .term .in::before{color:var(--accent)}
+[data-scene="dark"] .term .cc::before{color:var(--accent)}
+[data-scene="dark"] .term .dim{color:#7D8794}
+[data-scene="dark"] .term .ok{color:#A9D2FF}
+[data-scene="dark"] .term .warn{color:#E9C08E}
+[data-scene="dark"] .term .hi{color:#FFFFFF}
+
+/* ---------- 一行可复制的命令：微微发亮的玻璃条，渐变细描边；悬停描边转冰蓝、底下一点冷光 ---------- */
+[data-scene="dark"] .copy{--dk-h:0;padding:18px 26px 18px 28px;border-radius:18px;color:#EEF2F7;font:400 var(--fs-min)/1.2 var(--f-mono);letter-spacing:0;
+  background:linear-gradient(180deg,rgba(255,255,255,.065),rgba(255,255,255,.025));box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
+  transition:translate .2s,box-shadow .3s,background-color .3s,--dk-h .3s}
+[data-scene="dark"] .copy::before{background:
+  linear-gradient(180deg,rgba(186,216,255,calc(.75 * var(--dk-h))),rgba(150,195,255,calc(.25 * var(--dk-h)))),
+  linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.07))}
+/* 复制成功时沿边框跑一圈的亮光（dark.js 的 copied 推动 --dk-a 角度、--dk-run 亮度） */
+[data-scene="dark"] .copy::after{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.5px;pointer-events:none;opacity:var(--dk-run,0);
+  background:conic-gradient(from var(--dk-a,0deg),rgba(150,198,255,0) 0deg,rgba(150,198,255,0) 190deg,rgba(150,198,255,.55) 270deg,rgba(235,245,255,1) 335deg,rgba(150,198,255,0) 360deg);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude}
+[data-scene="dark"] .copy .ps{color:#6E7886;opacity:1}
+[data-scene="dark"] .copy .ic{width:26px;height:26px;background:#8D97A5;opacity:1;transition:background-color .25s}
+@media (hover:hover){
+  [data-scene="dark"] .copy:hover{translate:0 -2px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 14px 40px -20px rgba(110,160,255,.6)}
+  [data-scene="dark"] .copy:hover .ic{background:#D4E6FF}
+}
+[data-scene="dark"] .copy:focus-visible{--dk-h:1;outline:2px solid rgba(140,192,255,.55);outline-offset:5px}
+[data-scene="dark"] .copy:active{scale:.985}
+/* 出场「柔边擦出」：dark.js 在命令上写 --dk-wp（擦到哪），写着的时候才加遮罩 */
+[data-scene="dark"] [style*="--dk-wp"]{-webkit-mask-image:linear-gradient(90deg,#000 var(--dk-wp),transparent calc(var(--dk-wp) + 16%));mask-image:linear-gradient(90deg,#000 var(--dk-wp),transparent calc(var(--dk-wp) + 16%))}
+/* 复制成功：命令条泛一点冰蓝，复制图标换成对勾 */
+[data-scene="dark"] .copy.is-copied{background:linear-gradient(180deg,rgba(140,192,255,.13),rgba(140,192,255,.04))}
+[data-scene="dark"] .copy.is-copied .ic{background:var(--accent);
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+          mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E")}
+
+/* 「已复制」：一枚小玻璃胶囊，冰蓝细圈、冰蓝对勾（出场见 dark.js 的 copied） */
+[data-scene="dark"] .copied-tip{height:50px;padding:0 20px 0 16px;gap:10px;border-radius:25px;background:rgba(16,21,30,.94);
+  box-shadow:inset 0 0 0 1px rgba(150,195,255,.38),0 12px 30px -12px rgba(0,0,0,.8);color:#DCEBFF;font:400 28px/1 var(--f-hand);letter-spacing:.04em}
+[data-scene="dark"] .copied-tip svg{width:24px;height:21px}
+[data-scene="dark"] .copied-tip path{stroke:var(--accent);stroke-width:4.4}
+
+/* ---------- 截图位：缎面相框、圆角图，不贴胶带 ---------- */
+[data-scene="dark"] .shot{padding:12px;border-radius:22px}
+[data-scene="dark"] .shot-img{border-radius:12px;background:#0B0D11}
+[data-scene="dark"] .shot figcaption{padding:16px 6px 6px;font:400 var(--fs-min)/1.3 var(--f-hand);color:var(--ink-2);letter-spacing:.03em}
+[data-scene="dark"] .shot-miss{font:400 30px/1.4 var(--f-hand);color:#8D97A5;background:repeating-linear-gradient(-45deg,#0E1116 0 14px,#12161C 14px 28px)}
+[data-scene="dark"] .shot-miss small{color:#6E7886}
+[data-scene="dark"] .shot-zoom{right:26px;top:26px;background:rgba(10,13,18,.72);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16);color:#DCE3EC;font-family:var(--f-hand)}
+
+/* ---------- 线稿与圈注：线几乎是直的（dark.js 的 rough 把粗糙度压到很低），圈注是冰蓝细线带一点光 ---------- */
+.slide.active[data-scene="dark"] svg.marks g{filter:drop-shadow(0 0 6px rgba(140,192,255,.5))}
+
+/* ---------- 形象：一点落在暗处的影子；自己不带亮边的形象（outline 没写 false）由引擎描一圈浅色 ---------- */
+[data-scene="dark"] .mascot{--mascot-outline:#E8EEF6;--mascot-shadow:drop-shadow(0 10px 12px rgba(0,0,0,.45))}
+
+/* ---------- 形象说的话：和「已复制」同一种玻璃胶囊 ---------- */
+[data-scene="dark"] .mascot-say{padding:8px 22px 10px;border-radius:22px;background:rgba(16,21,30,.94);color:#DCEBFF;font-family:var(--f-hand);font-weight:500;
+  box-shadow:inset 0 0 0 1px rgba(150,195,255,.38),0 12px 30px -12px rgba(0,0,0,.8)}
+[data-scene="dark"] .mascot-say::after{background:rgba(16,21,30,.94);border-right:1px solid rgba(150,195,255,.38);border-bottom:1px solid rgba(150,195,255,.38)}
+
+/* 点击处一圈很淡的光环（dark.js 的 ripple 放进内容下面的涟漪层） */
+[data-scene="dark"] .dk-ripple{position:absolute;left:0;top:0;width:240px;height:240px;margin:-120px 0 0 -120px;border-radius:50%;pointer-events:none;
+  border:1.5px solid rgba(160,200,255,.42);background:radial-gradient(closest-side,rgba(140,190,255,0) 55%,rgba(140,190,255,.1))}
+
+/* =====================================================================
+   常驻信息：章节、页码、节拍指示（右上一枚玻璃胶囊：当前拍的点拉长成冰蓝短条，数字从下面滚上来）、计时
+   ===================================================================== */
+#stage[data-scene="dark"] .chap span{font:400 26px/1.2 var(--f-hand);color:var(--ink-3);letter-spacing:.08em}
+#stage[data-scene="dark"] .meta{top:22px;gap:24px;font:400 24px/1 var(--f-hand);color:var(--ink-3);letter-spacing:.04em}
+#stage[data-scene="dark"] .pageno{color:var(--ink-3)}
+#stage[data-scene="dark"] .pageno b{color:var(--ink-2);font-weight:600}
+#stage[data-scene="dark"] .meter{position:relative;height:52px;padding:0 24px 0 22px;gap:18px;border-radius:26px;background:rgba(255,255,255,.035)}
+#stage[data-scene="dark"] .meter::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.17),rgba(255,255,255,.04));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude}
+#stage[data-scene="dark"] .meter .dots{gap:8px}
+#stage[data-scene="dark"] .dots i{width:8px;height:8px;border-radius:4px;background:rgba(255,255,255,.2);transition:width .5s cubic-bezier(.2,.8,.2,1),background-color .35s,box-shadow .35s}
+#stage[data-scene="dark"] .dots i.on{background:rgba(255,255,255,.62)}
+#stage[data-scene="dark"] .dots i.now{width:28px;background:var(--accent);box-shadow:0 0 12px rgba(140,192,255,.6)}
+#stage[data-scene="dark"] .meter .ml{display:none}
+#stage[data-scene="dark"] .meter .ms{display:inline-flex;align-items:baseline;gap:2px;color:var(--ink-3)}
+/* 换拍时引擎会重写数字，新数字从下面滚上来（只播一次） */
+#stage[data-scene="dark"] .meter .ms b{display:inline-block;font:600 28px/1 var(--f-hand);color:var(--ink);font-variant-numeric:tabular-nums;animation:dk-roll .42s cubic-bezier(.2,.8,.2,1)}
+@keyframes dk-roll{from{opacity:0;transform:translateY(70%)}to{opacity:1;transform:none}}
+#stage[data-scene="dark"] .timer{font:500 24px/1 var(--f-mono);color:var(--ink-3)}
+
+/* 阅读模式：每页底下压一道很淡的冰蓝细线，页与页分得开 */
+[data-scene="dark"].slide:is(.reading *){box-shadow:inset 0 -2px 0 rgba(140,192,255,.18)}
+
+/* =====================================================================
+   不支持遮罩合成的浏览器：渐变描边退回普通 1px 描边（当前拍描边染冰蓝）
+   ===================================================================== */
+@supports not ((mask-composite:exclude) or (-webkit-mask-composite:xor)){
+  [data-scene="dark"] :is(.card,.cell,.shot,.term,.copy)::before,
+  [data-scene="dark"] .steps>li::after,
+  [data-scene="dark"] .copy::after{display:none}
+  [data-scene="dark"] :is(.card,.cell,.steps>li,.shot,.term){border:1px solid rgba(calc(255 - 95 * var(--dk-n)),calc(255 - 55 * var(--dk-n)),255,calc(.13 + .32 * var(--dk-n)))}
+  [data-scene="dark"] .copy{border:1px solid rgba(255,255,255,.2)}
+  #stage[data-scene="dark"] .meter::before{display:none}
+  #stage[data-scene="dark"] .meter{border:1px solid rgba(255,255,255,.14)}
+}

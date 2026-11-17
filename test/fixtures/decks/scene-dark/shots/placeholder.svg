@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <!-- 截图占位图：一个深色的浏览器窗口，里面是一页课件的样子（只有色块，没有文字） -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#121722"/><stop offset="1" stop-color="#080A0E"/></linearGradient>
+    <radialGradient id="glow" cx=".35" cy=".1" r=".6"><stop offset="0" stop-color="#5C8EFF" stop-opacity=".22"/><stop offset="1" stop-color="#5C8EFF" stop-opacity="0"/></radialGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1A1F28"/><stop offset="1" stop-color="#11141A"/></linearGradient>
+    <linearGradient id="ring" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".22"/><stop offset="1" stop-color="#9CC6FF" stop-opacity=".12"/></linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="#0B0D11"/>
+  <!-- 浏览器标题栏 -->
+  <rect width="1600" height="64" fill="#161A21"/>
+  <circle cx="40" cy="32" r="9" fill="#3A414C"/><circle cx="70" cy="32" r="9" fill="#3A414C"/><circle cx="100" cy="32" r="9" fill="#3A414C"/>
+  <rect x="160" y="18" width="760" height="28" rx="14" fill="#0E1116"/>
+  <!-- 课件画面 -->
+  <rect y="64" width="1600" height="836" fill="url(#bg)"/>
+  <rect y="64" width="1600" height="836" fill="url(#glow)"/>
+  <circle cx="110" cy="128" r="6" fill="#8CC0FF"/>
+  <rect x="128" y="120" width="260" height="16" rx="8" fill="#3B4350"/>
+  <rect x="1310" y="108" width="190" height="40" rx="20" fill="#151A22" stroke="url(#ring)" stroke-width="2"/>
+  <rect x="1334" y="124" width="10" height="8" rx="4" fill="#66707D"/><rect x="1352" y="124" width="30" height="8" rx="4" fill="#8CC0FF"/>
+  <rect x="100" y="200" width="760" height="56" rx="12" fill="#E6EBF1"/>
+  <rect x="100" y="282" width="560" height="22" rx="11" fill="#5B6573"/>
+  <!-- 三张卡片 -->
+  <g>
+    <rect x="100" y="380" width="440" height="300" rx="28" fill="url(#card)" stroke="url(#ring)" stroke-width="2"/>
+    <rect x="148" y="430" width="200" height="30" rx="10" fill="#DCE3EC"/>
+    <rect x="148" y="488" width="320" height="18" rx="9" fill="#5B6573"/><rect x="148" y="522" width="260" height="18" rx="9" fill="#5B6573"/>
+    <rect x="580" y="380" width="440" height="300" rx="28" fill="url(#card)" stroke="#8CC0FF" stroke-opacity=".55" stroke-width="2"/>
+    <rect x="628" y="430" width="200" height="30" rx="10" fill="#DCE3EC"/>
+    <rect x="628" y="488" width="120" height="18" rx="9" fill="#8CC0FF"/><rect x="760" y="488" width="180" height="18" rx="9" fill="#5B6573"/>
+    <rect x="628" y="522" width="280" height="18" rx="9" fill="#5B6573"/>
+    <rect x="1060" y="380" width="440" height="300" rx="28" fill="url(#card)" stroke="url(#ring)" stroke-width="2"/>
+    <rect x="1108" y="430" width="200" height="30" rx="10" fill="#DCE3EC"/>
+    <rect x="1108" y="488" width="300" height="18" rx="9" fill="#5B6573"/><rect x="1108" y="522" width="220" height="18" rx="9" fill="#5B6573"/>
+  </g>
+  <!-- 一行命令 -->
+  <rect x="100" y="740" width="620" height="64" rx="16" fill="#151A22" stroke="url(#ring)" stroke-width="2"/>
+  <rect x="128" y="764" width="16" height="16" rx="4" fill="#5B6573"/><rect x="160" y="764" width="440" height="16" rx="8" fill="#C9D3DF"/>
+  <!-- 形象 -->
+  <ellipse cx="1420" cy="830" rx="40" ry="6" fill="#9CC8FF" opacity=".35"/>
+  <rect x="1376" y="730" width="88" height="80" rx="28" fill="#4A515C" stroke="#fff" stroke-opacity=".5" stroke-width="2"/>
+  <rect x="1388" y="744" width="64" height="40" rx="15" fill="#06080B"/>
+  <rect x="1404" y="758" width="34" height="11" rx="5.5" fill="#EAF5FF"/>
+</svg>
