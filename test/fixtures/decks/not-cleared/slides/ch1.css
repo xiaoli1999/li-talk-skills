@@ -1,0 +1,4 @@
+/* 自检测试 not-cleared 的样式：.stay 让块不管第几拍都看得见（错误示范） */
+[data-id="nc1"] .nc-a{left:200px;top:400px}
+[data-id="nc1"] .nc-a.stay{visibility:visible}
+[data-id="nc1"] .nc-b{left:200px;top:520px}

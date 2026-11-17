@@ -1,0 +1,6 @@
+/* 自检测试 good 的样式：每条都以 [data-id="…"] 开头 */
+[data-id="g1"] .g1-sub{left:150px;top:400px}
+[data-id="g1"] .g1-card{left:150px;top:560px;width:700px}
+[data-id="g2"] .g2-grid{left:150px;top:420px;width:1620px;--cols:3;--gap:60px}
+[data-id="g3"] .g3-quote{left:150px;top:380px}
+[data-id="g3"] .g3-sub{left:150px;top:560px}

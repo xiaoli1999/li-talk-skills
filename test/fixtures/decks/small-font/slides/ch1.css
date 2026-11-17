@@ -1,0 +1,3 @@
+/* 自检测试 small-font 的样式 */
+[data-id="sf1"] .sf-body{left:200px;top:400px;font-size:28px}
+[data-id="sf1"] .sf-note{left:200px;top:560px;font-size:20px}
