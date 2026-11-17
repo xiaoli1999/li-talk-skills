@@ -6,7 +6,8 @@
 <title>li-talk-skills 样册</title>
 <!-- 样册：全部风格、全部形象、4 种样板页（封面、清单、步骤、结尾）。
      地址加 ?scene=<键名> 整份换成那个风格看；左下角的小条点一下也是这样换。
-     不写 li-talk-mascot：形象跟着风格走（科技暗黑用微光，其余用朵朵）。
+     不写 li-talk-mascot：形象跟着风格走（每种风格用自己的默认形象，见 scenes/index.json）。
+     样板页保持通用：不加只有某种风格认的东西（比如杂志复古的封面色块 .mag-cover）。
      引入顺序照入口模板 index.html（接口约定 G）；样板页放在两对「章节」注释之间，check 读模板目录时查的就是它们 -->
 <script>/* 自检用：记下页面里的报错和加载失败 */window.__deckErrors=[];addEventListener('error',function(e){var t=e.target;__deckErrors.push(t&&t!==window&&(t.src||t.href)?'加载失败：'+(t.src||t.href):String(e.message))},true);(function(c){var o=c.error;c.error=function(){__deckErrors.push([].slice.call(arguments).join(' '));return o.apply(c,arguments)}})(console);</script>
 <link rel="stylesheet" href="vendor/fonts/wenkai-lite.css">
@@ -16,7 +17,14 @@
 <link rel="stylesheet" href="scenes/journal.css">
 <link rel="stylesheet" href="scenes/desk.css">
 <link rel="stylesheet" href="scenes/watercolor.css">
+<link rel="stylesheet" href="scenes/ink.css">
 <link rel="stylesheet" href="scenes/dark.css">
+<link rel="stylesheet" href="scenes/frost.css">
+<link rel="stylesheet" href="scenes/glass.css">
+<link rel="stylesheet" href="scenes/flat.css">
+<link rel="stylesheet" href="scenes/magazine.css">
+<link rel="stylesheet" href="scenes/brutal.css">
+<link rel="stylesheet" href="scenes/pixel.css">
 <!-- 章节样式（开始） -->
 <link rel="stylesheet" href="samples/samples.css">
 <!-- 章节样式（结束） -->
@@ -34,6 +42,13 @@
 .gl-bar .gl-fam{padding:0 2px 0 8px;color:rgba(233,235,238,.5);white-space:nowrap}
 .gl-bar .gl-hint{padding:0 8px 0 10px;color:rgba(233,235,238,.5);white-space:nowrap}
 .gl-bar.folded .gl-list,.gl-bar.folded .gl-hint{display:none}
+/* 13 个按钮：窗口不到 1600 宽时排紧一点、不显示「← → 翻页」，1280 宽时展开的小条也只占左边一排，不压右下角的署名 */
+@media (max-width:1599px){
+  .gl-bar{gap:2px;font-size:12px}
+  .gl-bar button{padding:6px 5px}
+  .gl-bar .gl-fam{padding:0 0 0 5px}
+  .gl-bar .gl-hint{display:none}
+}
 </style>
 </head>
 <body class="loading">
@@ -52,9 +67,23 @@
 <script src="scenes/journal.js"></script>
 <script src="scenes/desk.js"></script>
 <script src="scenes/watercolor.js"></script>
+<script src="scenes/ink.js"></script>
 <script src="scenes/dark.js"></script>
+<script src="scenes/frost.js"></script>
+<script src="scenes/glass.js"></script>
+<script src="scenes/flat.js"></script>
+<script src="scenes/magazine.js"></script>
+<script src="scenes/brutal.js"></script>
+<script src="scenes/pixel.js"></script>
 <script src="mascots/duoduo.js"></script>
+<script src="mascots/mowan.js"></script>
 <script src="mascots/weiguang.js"></script>
+<script src="mascots/xiaowu.js"></script>
+<script src="mascots/toutou.js"></script>
+<script src="mascots/xiaoye.js"></script>
+<script src="mascots/xiaoqian.js"></script>
+<script src="mascots/pengpeng.js"></script>
+<script src="mascots/xiaoqi.js"></script>
 <!-- 章节（开始）：样板页（samples/samples.js），页面顺序 = 引入顺序 -->
 <script src="samples/samples.js"></script>
 <!-- 章节（结束） -->

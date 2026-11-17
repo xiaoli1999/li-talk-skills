@@ -282,9 +282,12 @@ test('open：按系统选打开方式；没有 index.html 时说明', async () =
   assert.match(out.join('\n'), /手动/);
 });
 
-test('风格说明 index.json：6 种，字段齐全，和风格文件一致', () => {
+test('风格说明 index.json：13 种按家排好，字段齐全，和风格文件一致', () => {
   const list = JSON.parse(readFileSync(join(TPL, 'scenes', 'index.json'), 'utf8'));
-  assert.deepEqual(list.map(s => s.key), ['paper', 'board', 'journal', 'desk', 'watercolor', 'dark']);
+  // 顺序按家：手绘家、现代家、像素家，同一家的排在一起
+  assert.deepEqual(list.map(s => s.key), ['paper', 'board', 'journal', 'desk', 'watercolor', 'ink',
+    'dark', 'frost', 'glass', 'flat', 'magazine', 'brutal', 'pixel']);
+  assert.deepEqual(list.map(s => s.family), [...Array(6).fill('hand'), ...Array(6).fill('modern'), 'pixel']);
   for (const s of list) {
     for (const k of ['key', 'label', 'family', 'mascot', 'look', 'fit', 'notFit', 'risk']) {
       assert.ok(typeof s[k] === 'string' && s[k].trim(), `${s.key} 缺少 ${k}`);
@@ -303,26 +306,6 @@ test('风格说明 index.json：6 种，字段齐全，和风格文件一致', (
    只有选了 pixel 时 new 才把它复制进课件
    ------------------------------------------------------------------ */
 
-// 复制一份模板到临时目录（scenes/index.json 里还没有 pixel 时补一条），免得改到真的模板
-function tplWithPixel() {
-  const dst = join(tmp(), 'template');
-  const copy = (s, d) => {
-    mkdirSync(d, { recursive: true });
-    for (const e of readdirSync(s, { withFileTypes: true })) {
-      if (e.isDirectory()) copy(join(s, e.name), join(d, e.name));
-      else if (e.isFile()) writeFileSync(join(d, e.name), readFileSync(join(s, e.name)));
-    }
-  };
-  copy(TPL, dst);
-  const file = join(dst, 'scenes', 'index.json');
-  const list = JSON.parse(readFileSync(file, 'utf8'));
-  if (!list.some(s => s.key === 'pixel')) {
-    list.push({ key: 'pixel', label: '像素游戏', family: 'pixel', mascot: 'xiaoqi', look: '像素', fit: '新人引导', notFit: '严肃汇报', risk: '无' });
-    writeFileSync(file, JSON.stringify(list));
-  }
-  return dst;
-}
-
 test('模板里的像素字体：woff2 和许可证都在', () => {
   const dir = join(TPL, 'vendor', 'fonts', 'pixel');
   const woff = readFileSync(join(dir, 'fusion-pixel-12px-proportional-zh_hans.woff2'));
@@ -340,7 +323,7 @@ test('模板里的像素字体：woff2 和许可证都在', () => {
 });
 
 test('选了像素游戏：带上像素字体和许可证，形象默认小旗；字体和模板里的一字不差', async () => {
-  const tpl = tplWithPixel();
+  const tpl = TPL;
   const dir = join(tmp(), '像素课件');
   const out = [];
   const r = await createDeck(dir, { title: '闯关', scenes: ['pixel'] }, { ...offline(), log: s => out.push(s), tplDir: tpl });
@@ -371,7 +354,7 @@ test('没选像素游戏：不带像素字体', async () => {
 });
 
 test('new 命令：选了像素游戏时说一声带了它的字体', async () => {
-  const tpl = tplWithPixel();
+  const tpl = TPL;
   const out = [];
   const code = await runNew({ _: [join(tmp(), 'px')], title: '闯关', scenes: 'pixel' }, { ...offline(), log: s => out.push(s), tplDir: tpl });
   assert.equal(code, 0);

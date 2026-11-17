@@ -1,5 +1,5 @@
 // 模板目录的样册和样板页：check 读模板目录时改用 gallery.html（静态检查、浏览器自检、截图都一样），
-// 样板页在 6 种风格下自检没有错误
+// 样板页在 13 种风格下自检没有错误
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
@@ -14,7 +14,9 @@ import { run as check } from '../skills/li-talk-skills/scripts/lib/check.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const TPL = join(ROOT, 'skills', 'li-talk-skills', 'template');
-const SCENES = ['paper', 'board', 'journal', 'desk', 'watercolor', 'dark'];
+// 样册引入的全部风格，按家排：手绘家、现代家、像素家（和 scenes/index.json 一致）
+const SCENES = ['paper', 'board', 'journal', 'desk', 'watercolor', 'ink',
+  'dark', 'frost', 'glass', 'flat', 'magazine', 'brutal', 'pixel'];
 
 const TMP = [];
 const tmp = prefix => { const d = mkdtempSync(join(tmpdir(), prefix)); TMP.push(d); return d; };
@@ -126,10 +128,10 @@ test('templates.md 里贴的代码和 samples.js、samples.css 一字不差', ()
   for (const r of rules) assert.ok(doc.includes(r), `templates.md 里少了 samples.css 的这条规则：${r}`);
 });
 
-// 真实浏览器：样板页在 6 种风格下（1920×1080）都没有错误、没有提醒。完整的 5 个尺寸用
+// 真实浏览器：样板页在 13 种风格下（1920×1080）都没有错误、没有提醒。完整的 5 个尺寸用
 // node skills/li-talk-skills/scripts/li-talk.mjs check skills/li-talk-skills/template --browser --scene <键名>
 const browser = findBrowser();
-test('真实浏览器：样板页在 6 种风格下自检清零', { skip: !browser && '本机没找到 Edge / Chrome' }, async () => {
+test('真实浏览器：样板页在 13 种风格下自检清零', { skip: !browser && '本机没找到 Edge / Chrome' }, async () => {
   const b = await openBrowser(browser);
   try {
     for (const scene of SCENES) {
