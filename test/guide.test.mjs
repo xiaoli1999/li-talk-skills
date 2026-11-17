@@ -426,9 +426,11 @@ function firstStyleOpt(extra) {
   return /问题 1：[^\n]*\n\s+1\. ([^\n]*)/.exec(t)[1];
 }
 
-test('风格：新加的 7 种风格也能按讲稿里的词推到第一', () => {
+test('风格：后加的 9 种风格也能按讲稿里的词推到第一', () => {
   const cases = [
     ['ink', '水墨国风', '讲传统文化：传统的修身方法论，东方的人文。'],
+    ['blueprint', '蓝图', '讲系统怎么搭建：整个系统由三个模块组成。'],
+    ['comic', '漫画', '讲一个反转的故事：剧情两次反转，大家吐槽。'],
     ['frost', '毛玻璃', '这次讲新产品：产品的三个新功能，下周发布。'],
     ['glass', '液态玻璃', '讲界面设计：界面怎么设计，交互和体验。'],
     ['flat', '扁平插画', '用图解讲清流程：流程一共三段，零基础也能懂。'],
@@ -444,9 +446,13 @@ test('风格：新加的 7 种风格也能按讲稿里的词推到第一', () =>
   const proj = firstStyleOpt('- 时间与时长：20 分钟，会议室投影\n给新人的入职闯关：新人从第一关开始闯关。');
   assert.doesNotMatch(proj, /（pixel）/);
   assert.match(proj, /更像像素游戏，但它是深色底；在投影上讲，优先浅色底/);
+  // 蓝图也是深色底：同样降分
+  const bp = firstStyleOpt('- 时间与时长：20 分钟，会议室投影\n讲系统怎么搭建：整个系统由三个模块组成。');
+  assert.doesNotMatch(bp, /（blueprint）/);
+  assert.match(bp, /更像蓝图，但它是深色底；在投影上讲，优先浅色底/);
 });
 
-test('风格关键词：13 种都有，每种 5–10 个；同一个词只归一种风格，也不会被别的风格的词顺带数到', () => {
+test('风格关键词：15 种都有，每种 5–10 个；同一个词只归一种风格，也不会被别的风格的词顺带数到', () => {
   const keys = JSON.parse(readFileSync(join(SKILL_DIR, 'template', 'scenes', 'index.json'), 'utf8')).map(s => s.key);
   assert.deepEqual(Object.keys(HINTS).sort(), [...keys].sort());
   // 去掉 (?<!非)、(?!行) 这类前后限定，剩下的就是词
@@ -637,9 +643,9 @@ test('styles：按家分组列出所有风格，末尾写推荐规则', async ()
   const code = await runStyles({ _: [] }, { log: s => lines.push(s) });
   const t = lines.join('\n');
   assert.equal(code, 0);
-  assert.match(t, /内置风格：13 种能用/);
+  assert.match(t, /内置风格：15 种能用/);
   // 按家分组：每种风格都列在自己那一家的标题下面
-  const groups = [['手绘家', ['paper', 'board', 'journal', 'desk', 'watercolor', 'ink']],
+  const groups = [['手绘家', ['paper', 'board', 'journal', 'desk', 'watercolor', 'ink', 'blueprint', 'comic']],
     ['现代家', ['dark', 'frost', 'glass', 'flat', 'magazine', 'brutal']], ['像素家', ['pixel']]];
   const heads = groups.map(([name]) => t.indexOf('\n' + name));
   assert.ok(heads.every((h, i) => h > 0 && (i === 0 || h > heads[i - 1])), '三家按顺序都在');

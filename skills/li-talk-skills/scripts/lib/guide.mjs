@@ -293,9 +293,9 @@ function minutes(chars) {
 }
 
 // 深色底的风格：风格说明 index.json 里写了 dark: true，或风格文件 Deck.scene 里写了 dark: true；
-// 黑板（board）、现代家的科技暗黑（dark）、像素家的像素游戏（pixel）就算文件读不到也当深色
+// 黑板（board）、蓝图（blueprint）、现代家的科技暗黑（dark）、像素家的像素游戏（pixel）就算文件读不到也当深色
 function isDarkScene(s) {
-  if (s.dark === true || s.key === 'board' || (s.key === 'dark' && s.family === 'modern') || (s.key === 'pixel' && s.family === 'pixel')) return true;
+  if (s.dark === true || s.key === 'board' || s.key === 'blueprint' || (s.key === 'dark' && s.family === 'modern') || (s.key === 'pixel' && s.family === 'pixel')) return true;
   try { return /\bdark\s*:\s*true\b/.test(readFileSync(join(TPL_DIR, 'scenes', s.key + '.js'), 'utf8')); } catch (e) { return false; }
 }
 
@@ -597,6 +597,8 @@ export const HINTS = {
   desk: /经历|故事|协作|团队|踩坑/g,
   watercolor: /新手|入门|上手|非技术|小白|温和/g,
   ink: /人文|方法论|传统|文化|历史|哲学|修身|东方|国风/g,
+  blueprint: /搭建|组成|结构|模块|零件|部件|组件|系统|框架|蓝图/g,
+  comic: /漫画|吐槽|反转|转折|对比|情绪|剧情|搞笑|段子|笑点/g,
   // 现代家
   dark: /代码|(?<!非)技术|架构|接口|API|部署|性能|开发者|命令行|工程师/g,
   frost: /产品|功能|发布|上线|工具|版本|演示/g,
@@ -607,9 +609,9 @@ export const HINTS = {
   // 像素家
   pixel: /新人|新同事|入职|引导|闯关|通关|关卡|游戏|轻松/g,
 };
-// 命中次数一样时的先后：原来的 6 种在前，新加的 7 种按「通用程度」排在后面
+// 命中次数一样时的先后：最早的 6 种在前，后加的按「通用程度」排在后面
 const DEFAULT_ORDER = ['paper', 'watercolor', 'board', 'dark', 'desk', 'journal',
-  'flat', 'frost', 'magazine', 'ink', 'glass', 'brutal', 'pixel'];
+  'flat', 'frost', 'magazine', 'ink', 'blueprint', 'comic', 'glass', 'brutal', 'pixel'];
 
 // 讲稿（尤其「给组织方」里的场合）写了在投影、幕布上讲
 const PROJECTOR = /投影|幕布|会议室/;
