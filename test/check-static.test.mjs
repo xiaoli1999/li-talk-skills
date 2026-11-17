@@ -161,6 +161,17 @@ test('页面在加载时用到浏览器对象也能跑：什么都能点、什�
   assert.equal(r.pages, 1);
 });
 
+test('用相对路径引用别处的风格文件也认得（测试课件、样册直接引用模板）', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'li-talk-static-'));
+  mkdirSync(join(dir, 'lib', 'scenes'), { recursive: true });
+  mkdirSync(join(dir, 'deck'));
+  writeFileSync(join(dir, 'lib', 'scenes', 'dark.js'), "Deck.scene('dark', { label: '科技暗黑', family: 'modern' });");
+  writeFileSync(join(dir, 'deck', 'index.html'), '<script src="../lib/scenes/dark.js"></script>');
+  const d = readDeck(join(dir, 'deck'));
+  assert.deepEqual(d.sceneFiles, ['../lib/scenes/dark.js']);
+  assert.equal(d.scenes.dark.family, 'modern');
+});
+
 test('目录不存在或没有 index.html 时给中文说明', async () => {
   await assert.rejects(() => checkStatic(join(FIX, 'no-such-deck')), e => /找不到课件目录/.test(e.userMessage));
   const empty = mkdtempSync(join(tmpdir(), 'li-talk-static-'));

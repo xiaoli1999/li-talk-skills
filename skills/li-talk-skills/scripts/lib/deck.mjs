@@ -121,7 +121,8 @@ export function readDeck(dir) {
 
   const scripts = htmlTags(blankHtmlComments(indexHtml))
     .filter(t => t.name === 'script' && t.attrs.src).map(t => localRef(t.attrs.src)).filter(Boolean);
-  const sceneFiles = unique(scripts.filter(f => /^scenes\/[^/]+\.js$/.test(f)));
+  // 课件自己的 scenes/x.js，也认用相对路径引用别处的 …/scenes/x.js（测试课件、样册直接引用模板里的风格）
+  const sceneFiles = unique(scripts.filter(f => /(?:^|\/)scenes\/[^/]+\.js$/.test(f)));
   const scenes = {};
   for (const f of sceneFiles) {
     const p = join(abs, f);
