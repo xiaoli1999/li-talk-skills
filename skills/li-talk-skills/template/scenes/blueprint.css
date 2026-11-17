@@ -1,0 +1,316 @@
+/* =====================================================================
+   风格 · 蓝图 blueprint 的样子（行为在 blueprint.js）
+   深蓝晒图纸、细白网格；线只有白和浅青两种，橙色 --accent 只用在三处：重点词、当前步骤（节拍指示和带序号的步骤）、
+   「已复制」审图章（圈注 data-mark 是标重点的，也用橙色）。所有选择器的第一段都带 [data-scene="blueprint"]
+   - 网格、晒图纸的底色写在 --scene-bg：背景层和翻页时的图纸、阅读模式的每页共用，都按舞台坐标对齐
+     （主网格每 120px、细网格每 24px，线落在舞台坐标的整数倍上；在背景层里用 calc(50% ± …) 对齐到居中的舞台）
+   - 双线图框与分区刻度：背景层里是 blueprint.js 放进去的内联 SVG（开场时一笔描出来）；
+     翻页时的图纸、阅读模式的每页用同样几何的 --bp-frame（data URI）
+   - blueprint.js 动画时写在元素上的变量：--bp-b 零件编号 / 序号圈 / 引出点弹出的进度、--bp-u 大标题下划线画到哪、
+     --bp-ln 竖排步骤之间的点划线画到哪、--bp-mx / --bp-my 鼠标在组件里的位置、--bp-press 命令铭牌被章压下、--bp-ink 印泥洇开；
+     重点词跟着引擎推的 --k 走
+   - --recede（讲过的拍变到多淡）由 blueprint.js 的 recede 写入：.7（深色底，投影上不发虚）
+   ===================================================================== */
+
+/* 悬停程度注册成数字，才能平滑过渡（不继承：每个组件自己算）；--bp-a 是节拍圈「描一圈」的角度 */
+@property --bp-h{syntax:"<number>";inherits:false;initial-value:0}
+@property --bp-a{syntax:"<angle>";inherits:false;initial-value:360deg}
+
+/* 变量：深蓝晒图纸、白线、浅青辅线、橙色强调；正文用白和很浅的青白（投影上不发灰） */
+[data-scene="blueprint"]{
+  --f-mono:"JetBrains Mono","Cascadia Mono",Consolas,"SF Mono",Menlo,"PingFang SC","Microsoft YaHei",monospace;
+  --bg:#0B3568; --ink:#FFFFFF; --ink-2:#D3EAF8; --ink-3:#93BBDD; --line:#FFFFFF;
+  --mark:#FFB12B; --key-ink:#FFFFFF; --hl:rgba(255,177,43,.3); --accent:#FFB12B;
+  --card-ink:#FFFFFF; --card-ink-2:#D3EAF8; --paper:#0A2F5E;
+  /* 卡片颜色只剩白和浅青两种线色（t-* 只换描边、斜线阴影、小标签的颜色） */
+  --t-yellow:#A6F4FF; --t-mint:#C6F7FF; --t-pink:#E4F2FF; --t-blue:#A6F4FF; --t-white:#FFFFFF; --t-peach:#E4F2FF;
+  --term-bg:#062248; --term-ink:#E8F7FF;
+  /* 需要人：白；自动：浅青；不用管：暗青（不用橙色，橙色只给三处强调） */
+  --human:#FFFFFF; --ai:#A6F4FF; --idle:#6F95BC;
+  --sign-color:rgba(214,238,255,.66);
+  --rough-r:2px;
+  --bp-cyan:#A6F4FF; --bp-fill:rgba(7,38,80,.94); --bp-deep:#06244A;
+  --bp-shade:0 2px 0 rgba(3,18,42,.55);
+  /* 斜线阴影（卡片、终端右下方露出的一道，像剖面线） */
+  --bp-hatch:repeating-linear-gradient(-45deg,rgba(166,244,255,.42) 0 2px,transparent 2px 8px);
+  /* 晒图纸：主网格（每 120px，2px）+ 细网格（每 24px，1px）+ 中间略亮、四周略暗的底色；位置都对齐到居中的舞台 */
+  --scene-bg:
+    linear-gradient(rgba(255,255,255,.11) 2px,transparent 2px) calc(50% + 59px) calc(50% - 1px)/120px 120px,
+    linear-gradient(90deg,rgba(255,255,255,.11) 2px,transparent 2px) calc(50% + 59px) calc(50% - 1px)/120px 120px,
+    linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px) calc(50% + 12px) 50%/24px 24px,
+    linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px) calc(50% + 12px) 50%/24px 24px,
+    radial-gradient(1700px 1100px at calc(50% - 154px) calc(50% - 130px),#124683,#0B3568 55%,#06244A);
+  /* 双线图框与分区刻度（和 blueprint.js 里背景层的内联 SVG 同一套几何）：外细线 6px、内粗线 16px，刻度在两线之间 */
+  --bp-frame:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1920 1080' fill='none'%3E%3Crect x='6' y='6' width='1908' height='1068' stroke='%23fff' stroke-opacity='.5' stroke-width='2'/%3E%3Crect x='16' y='16' width='1888' height='1048' stroke='%23fff' stroke-opacity='.88' stroke-width='3'/%3E%3Cpath stroke='%23A6F4FF' stroke-opacity='.8' stroke-width='2' d='M240 6V16M480 6V16M720 6V16M1200 6V16M1440 6V16M1680 6V16M240 1064V1074M480 1064V1074M720 1064V1074M1200 1064V1074M1440 1064V1074M1680 1064V1074M6 270H16M6 810H16M1904 270H1914M1904 810H1914'/%3E%3Cpath stroke='%23fff' stroke-opacity='.9' stroke-width='3' d='M960 6V16M960 1064V1074M6 540H16M1904 540H1914'/%3E%3C/svg%3E");
+}
+
+/* ---------- 背景层（blueprint.js 的 backdrop 放进来）：图框按舞台坐标放（舞台在背景层里居中） ---------- */
+.bg[data-scene="blueprint"] .bp-frame{position:absolute;left:calc(50% - 960px);top:calc(50% - 540px);width:1920px;height:1080px;overflow:visible;pointer-events:none}
+
+/* 字：楷书描粗一点、加一道很淡的落影，深色底投到幕布上也清楚（和样页一样用 text-stroke，不改字重和排版） */
+[data-scene="blueprint"].slide{text-shadow:var(--bp-shade);-webkit-text-stroke:.4px currentColor}
+
+/* =====================================================================
+   主题行、标题、解释句
+   ===================================================================== */
+[data-scene="blueprint"] .s-topic{gap:12px}
+/* 章节短名：一枚浅青细框，像图纸的分区号 */
+[data-scene="blueprint"] .s-topic .tc{padding:2px 12px 4px;border:2px solid rgba(166,244,255,.6);font-size:26px;color:var(--bp-cyan)}
+[data-scene="blueprint"] .s-topic .ts{color:var(--ink-3)}
+[data-scene="blueprint"] .s-topic .tt{color:var(--ink)}
+/* 大标题：白字，底下一道比字长一点的基线（--bp-u 由 blueprint.js 在出场时从 0 推到 1） */
+[data-scene="blueprint"] .s-title{color:var(--ink);letter-spacing:.04em}
+[data-scene="blueprint"] .s-title::after{content:"";position:absolute;left:-10px;bottom:-6px;width:calc(100% + 34px);height:2.5px;background:rgba(255,255,255,.72);
+  transform-origin:0 50%;transform:scaleX(var(--bp-u,1));pointer-events:none}
+/* 一句话解释：左边一个浅青引出点和一小截引出线（--bp-b 控制它弹出来） */
+[data-scene="blueprint"] .explain{padding-left:36px;color:var(--ink-2)}
+[data-scene="blueprint"] .explain::before{left:0;top:50%;bottom:auto;width:24px;height:12px;margin-top:-6px;border-radius:0;
+  background:radial-gradient(circle at 6px 50%,var(--bp-cyan) 5px,transparent 5.6px),linear-gradient(var(--bp-cyan),var(--bp-cyan)) 6px 50%/18px 2.5px no-repeat;
+  transform-origin:6px 50%;transform:scale(var(--bp-b,1))}
+[data-scene="blueprint"] .explain b{color:var(--ink)}
+[data-scene="blueprint"] .muted{color:var(--ink-2)}
+[data-scene="blueprint"] .faint{color:var(--ink-3)}
+
+/* =====================================================================
+   重点词：转成橙色，底下画两道橙色细线（双下划线）。引擎在那一拍把 --k 从 0 推到 1：
+   颜色跟着转；两道线由 ::after 里一份同样的字（透明）带出来，线的位置贴着真实的字，从左往右画出
+   ===================================================================== */
+[data-scene="blueprint"] .key{color:var(--accent);color:color-mix(in srgb,var(--accent) calc(var(--k) * 100%),var(--key-ink))}
+[data-scene="blueprint"] .key::after{content:attr(data-k);content:attr(data-k) / "";position:absolute;left:.1em;top:0;white-space:nowrap;pointer-events:none;color:transparent;text-shadow:none;
+  text-decoration:underline double var(--accent);text-decoration-thickness:max(2.5px,.075em);text-underline-offset:.16em;text-decoration-skip-ink:none;
+  -webkit-mask-image:linear-gradient(90deg,#000 calc(var(--k) * 110% - 10%),transparent calc(var(--k) * 110%));
+          mask-image:linear-gradient(90deg,#000 calc(var(--k) * 110% - 10%),transparent calc(var(--k) * 110%))}
+
+/* =====================================================================
+   零件：卡片、小格、终端、截图位、命令。直线方角（制图不歪），实心的深蓝底把网格挡住，字落在实底上
+   悬停：描边转浅青，鼠标处出一道十字准线和一个小圈，四角亮出四个小方块（像制图软件里选中一个零件）
+   --bp-mx / --bp-my 由 blueprint.js 跟着鼠标写；--bp-h 悬停时过渡到 1
+   ===================================================================== */
+[data-scene="blueprint"] :is(.card,.cell,.tag,.quote,.term,.copy,.shot){rotate:none}
+[data-scene="blueprint"] :is(.card,.cell,.term,.shot){--bp-h:0;
+  background-image:
+    linear-gradient(90deg,transparent calc(var(--bp-mx,50%) - 1px),rgba(166,244,255,calc(.36 * var(--bp-h))) calc(var(--bp-mx,50%) - 1px) calc(var(--bp-mx,50%) + 1px),transparent calc(var(--bp-mx,50%) + 1px)),
+    linear-gradient(180deg,transparent calc(var(--bp-my,50%) - 1px),rgba(166,244,255,calc(.36 * var(--bp-h))) calc(var(--bp-my,50%) - 1px) calc(var(--bp-my,50%) + 1px),transparent calc(var(--bp-my,50%) + 1px)),
+    radial-gradient(circle at var(--bp-mx,50%) var(--bp-my,50%),transparent 9px,rgba(166,244,255,calc(.7 * var(--bp-h))) 9.5px 11.5px,transparent 12px),
+    linear-gradient(rgba(166,244,255,calc(.9 * var(--bp-h))),rgba(166,244,255,calc(.9 * var(--bp-h)))),
+    linear-gradient(rgba(166,244,255,calc(.9 * var(--bp-h))),rgba(166,244,255,calc(.9 * var(--bp-h)))),
+    linear-gradient(rgba(166,244,255,calc(.9 * var(--bp-h))),rgba(166,244,255,calc(.9 * var(--bp-h)))),
+    linear-gradient(rgba(166,244,255,calc(.9 * var(--bp-h))),rgba(166,244,255,calc(.9 * var(--bp-h))));
+  background-size:100% 100%,100% 100%,100% 100%,10px 10px,10px 10px,10px 10px,10px 10px;
+  background-position:0 0,0 0,0 0,3px 3px,calc(100% - 3px) 3px,3px calc(100% - 3px),calc(100% - 3px) calc(100% - 3px);
+  background-repeat:no-repeat;
+  transition:--bp-h .25s ease,border-color .25s ease}
+/* 只给没有绝对定位的加 relative：带 .abs 的要保持引擎的绝对定位 */
+[data-scene="blueprint"] :is(.card,.cell,.term,.shot,.steps>li):not(.abs){position:relative}
+@media (hover:hover){
+  [data-scene="blueprint"] :is(.card,.cell,.term,.shot):hover{--bp-h:1;border-color:var(--bp-cyan)}
+}
+[data-scene="blueprint"] :is(.card,.cell):active{scale:.99}
+/* 讲过的拍：保留引擎的淡出过渡（上面的 transition 会盖掉它） */
+[data-scene="blueprint"] :is(.card,.cell,.term,.shot,.copy).past{transition:opacity .45s ease,--bp-h .25s ease,border-color .25s ease}
+
+/* ---------- 卡片：白描边、实心深蓝底；右下露出一道斜线阴影（::before）；右上角一个零件编号（::after，按页里的顺序编号） ---------- */
+[data-scene="blueprint"].slide{counter-reset:bp-part}
+[data-scene="blueprint"] .card{counter-increment:bp-part;padding:30px 36px 32px;border:2.5px solid var(--tint,rgba(255,255,255,.92));border-radius:2px;
+  background-color:var(--bp-fill);color:var(--card-ink)}
+[data-scene="blueprint"] .card h3{color:var(--ink);letter-spacing:.03em}
+[data-scene="blueprint"] .card :is(p,li){color:var(--ink-2)}
+[data-scene="blueprint"] .card :is(.sm,small){color:var(--card-ink-2)}
+[data-scene="blueprint"] .card li::before{left:.1em;top:.66em;width:.28em;height:.28em;border-radius:0;rotate:none;opacity:1;background:var(--bp-cyan)}
+/* 斜线阴影：整张卡片往右下错开 12px，只留露在外面的 L 形（不压在卡片底下，出场时也不会翻到卡片上面）；
+   卡片的胶带、图钉在这里都改成它 */
+[data-scene="blueprint"] :is(.card,.term)::before{content:"";position:absolute;inset:0;top:0;left:0;width:auto;height:auto;margin:0;rotate:none;border-radius:0;box-shadow:none;z-index:auto;
+  transform:translate(12px,12px);background:var(--bp-hatch);pointer-events:none;
+  clip-path:polygon(calc(100% - 12px) 0,100% 0,100% 100%,0 100%,0 calc(100% - 12px),calc(100% - 12px) calc(100% - 12px))}
+/* 零件编号：白圈数字压在卡片右上角（--bp-b 控制它弹出来） */
+[data-scene="blueprint"] .card::after{content:counter(bp-part);content:counter(bp-part) / "";position:absolute;right:-22px;top:-22px;width:44px;height:44px;display:grid;place-items:center;box-sizing:border-box;
+  border:2.5px solid #fff;border-radius:50%;background:var(--bp-deep);color:#fff;font:700 24px/1 var(--f-hand);text-shadow:none;pointer-events:none;
+  transform:scale(var(--bp-b,1));opacity:min(1,calc(var(--bp-b,1) * 3))}
+/* 卡片上沿的小标签：一枚浅青细框的零件名 */
+[data-scene="blueprint"] .lab{top:-24px;padding:2px 16px 4px;border:2px solid var(--tint,var(--bp-cyan));background:var(--bp-deep);color:var(--tint,var(--bp-cyan));letter-spacing:.04em}
+
+/* ---------- 带序号的步骤：序号是白圈数字（零件编号的样子），当前这一步转橙；
+   竖排时两步之间一道浅青点划线（中心线）把序号串起来（下一步出来了才画，--bp-ln 控制画到哪） ---------- */
+[data-scene="blueprint"] .steps>li::before{box-sizing:border-box;width:60px;height:60px;border:3px solid #fff;border-radius:50%;background:var(--bp-deep);color:#fff;
+  font:700 30px/1 var(--f-hand);text-shadow:none;transform:scale(var(--bp-b,1));opacity:min(1,calc(var(--bp-b,1) * 3));
+  transition:border-color .3s ease,color .3s ease,background-color .3s ease,scale .3s ease}
+[data-scene="blueprint"] .steps>li>b{color:var(--ink);letter-spacing:.03em}
+[data-scene="blueprint"] .steps>li>span{color:var(--ink-2)}
+[data-scene="blueprint"] .steps:not(.h)>li::after{position:absolute;left:28.75px;top:66px;width:2.5px;height:calc(100% + var(--gap,30px) - 72px);pointer-events:none;
+  background:repeating-linear-gradient(180deg,rgba(166,244,255,.8) 0 14px,transparent 14px 19px,rgba(166,244,255,.8) 19px 22px,transparent 22px 27px);
+  -webkit-mask-image:linear-gradient(#000 calc(var(--bp-ln,1) * 100%),transparent calc(var(--bp-ln,1) * 100%));
+          mask-image:linear-gradient(#000 calc(var(--bp-ln,1) * 100%),transparent calc(var(--bp-ln,1) * 100%))}
+[data-scene="blueprint"] .steps:not(.h)>li:has(+ li:is(.on,:not([data-beat])))::after{content:""}
+@supports not selector(:has(+ *)){
+  [data-scene="blueprint"] .steps:not(.h)>li:not(:last-child)::after{content:""}
+}
+/* 当前这一步（页面的 data-now 对上这一步的 data-beat，写到第 9 拍）：序号圈转橙 */
+[data-scene="blueprint"][data-now="1"] .steps>li[data-beat="1"]::before,
+[data-scene="blueprint"][data-now="2"] .steps>li[data-beat="2"]::before,
+[data-scene="blueprint"][data-now="3"] .steps>li[data-beat="3"]::before,
+[data-scene="blueprint"][data-now="4"] .steps>li[data-beat="4"]::before,
+[data-scene="blueprint"][data-now="5"] .steps>li[data-beat="5"]::before,
+[data-scene="blueprint"][data-now="6"] .steps>li[data-beat="6"]::before,
+[data-scene="blueprint"][data-now="7"] .steps>li[data-beat="7"]::before,
+[data-scene="blueprint"][data-now="8"] .steps>li[data-beat="8"]::before,
+[data-scene="blueprint"][data-now="9"] .steps>li[data-beat="9"]::before{border-color:var(--accent);color:var(--accent)}
+@media (hover:hover){
+  [data-scene="blueprint"] .steps>li:hover::before{background-color:rgba(166,244,255,.18);scale:1.08}
+  [data-scene="blueprint"] .steps>li:hover>b{color:var(--bp-cyan)}
+}
+
+/* ---------- 左右对比：中间一个浅青符号 ---------- */
+[data-scene="blueprint"] .vs::before{color:var(--bp-cyan)}
+
+/* ---------- 一排小格：白细框的小零件；自动的格子浅青框，需要人的格子双线框加一个对位标记 ⊕，不用管的格子暗青虚线、划掉 ---------- */
+[data-scene="blueprint"] .cell{padding:22px 14px 20px;border:2.5px solid rgba(255,255,255,.85);border-radius:2px;background-color:var(--bp-fill)}
+[data-scene="blueprint"] .cell>i{color:var(--bp-cyan)}
+[data-scene="blueprint"] .cell>b{color:var(--ink)}
+[data-scene="blueprint"] .cell>span{color:var(--ink-2)}
+[data-scene="blueprint"] .cell.ai{border-color:var(--bp-cyan)}
+[data-scene="blueprint"] .cell.human{border-color:#fff;box-shadow:inset 0 0 0 4px var(--bp-deep),inset 0 0 0 6px rgba(255,255,255,.55)}
+[data-scene="blueprint"] .cell.human::after{top:-14px;right:-14px;width:28px;height:28px;box-sizing:border-box;border:2.5px solid #fff;border-radius:50%;box-shadow:none;
+  background:linear-gradient(#fff,#fff) center/2.5px 100% no-repeat,linear-gradient(#fff,#fff) center/100% 2.5px no-repeat,var(--bp-deep)}
+[data-scene="blueprint"] .cell.idle{border-style:dashed;border-color:var(--idle)}
+[data-scene="blueprint"] .cell.idle>:is(i,b,span){color:var(--idle)}
+[data-scene="blueprint"] .cell.idle>b{text-decoration-thickness:2.5px}
+
+/* ---------- 标签：浅青细框的尺寸字 ---------- */
+[data-scene="blueprint"] .tag{padding:4px 18px 6px;border:2px solid var(--tint,var(--bp-cyan));border-radius:0;background:rgba(6,36,74,.7);color:var(--tint,var(--bp-cyan))}
+
+/* ---------- 大字金句：白字 ---------- */
+[data-scene="blueprint"] .quote{color:var(--ink);letter-spacing:.04em}
+
+/* ---------- 终端窗口：一个画出来的窗口零件——更深的蓝底、白描边、标题栏下一道白线、三个浅青空心圆；右下一道斜线阴影 ---------- */
+[data-scene="blueprint"] .term{overflow:visible;-webkit-text-stroke:0;border:2.5px solid rgba(255,255,255,.92);border-radius:3px;background-color:var(--term-bg);color:var(--term-ink);box-shadow:none;text-shadow:none}
+[data-scene="blueprint"] .term-bar{height:52px;margin-bottom:18px;background:transparent;border-bottom:2px solid rgba(255,255,255,.5);color:var(--ink-3)}
+[data-scene="blueprint"] .term-bar i{width:15px;height:15px;box-sizing:border-box;border:2px solid var(--bp-cyan);background:transparent}
+[data-scene="blueprint"] .term-bar i:nth-child(2),[data-scene="blueprint"] .term-bar i:nth-child(3){background:transparent}
+[data-scene="blueprint"] .term :is(.in,.cc)::before{color:var(--bp-cyan)}
+[data-scene="blueprint"] .term .dim{color:#8FB3D6}
+[data-scene="blueprint"] .term .ok{color:var(--bp-cyan)}
+[data-scene="blueprint"] .term .warn{color:#fff;font-weight:700}
+[data-scene="blueprint"] .term .hi{color:#fff;background:linear-gradient(transparent 70%,rgba(166,244,255,.32) 70%,rgba(166,244,255,.32) 92%,transparent 92%)}
+
+/* ---------- 可复制的一行：一块铭牌——白色外框、浅青内框、深蓝底；悬停抬起、内外框转浅青、四角亮出小方块；
+   盖章时 blueprint.js 推 --bp-press，铭牌被压得一沉；复制成功复制图标换成橙色对勾 ---------- */
+[data-scene="blueprint"] .copy{padding:15px 26px 15px 24px;-webkit-text-stroke:0;border:2.5px solid #fff;border-radius:2px;color:#fff;font:600 var(--fs-min)/1.2 var(--f-mono);text-shadow:none;
+  background:var(--bp-deep);
+  box-shadow:inset 0 0 0 5px var(--bp-deep),inset 0 0 0 6.5px rgba(166,244,255,.6);
+  transform:translateY(calc(var(--bp-press,0) * 3px));
+  transition:translate .2s,box-shadow .25s ease,border-color .25s ease,background-color .25s ease}
+[data-scene="blueprint"] .copy .ps{color:var(--bp-cyan);opacity:1}
+[data-scene="blueprint"] .copy .ic{background:var(--bp-cyan);opacity:.8;transition:opacity .2s,background-color .2s}
+@media (hover:hover){
+  [data-scene="blueprint"] .copy:hover{border-color:var(--bp-cyan);box-shadow:inset 0 0 0 5px var(--bp-deep),inset 0 0 0 6.5px var(--bp-cyan),0 10px 0 -6px rgba(3,18,42,.5)}
+  [data-scene="blueprint"] .copy:hover::after{opacity:1}
+  [data-scene="blueprint"] .copy:hover .ic{opacity:1}
+}
+/* 铭牌四角的小方块（悬停时亮出来，压在外框的四个角上） */
+[data-scene="blueprint"] .copy::after{content:"";position:absolute;inset:-6px;pointer-events:none;opacity:0;transition:opacity .2s ease;
+  background:
+    linear-gradient(var(--bp-cyan),var(--bp-cyan)) 0 0/10px 10px no-repeat,
+    linear-gradient(var(--bp-cyan),var(--bp-cyan)) 100% 0/10px 10px no-repeat,
+    linear-gradient(var(--bp-cyan),var(--bp-cyan)) 0 100%/10px 10px no-repeat,
+    linear-gradient(var(--bp-cyan),var(--bp-cyan)) 100% 100%/10px 10px no-repeat}
+[data-scene="blueprint"] .copy:active{scale:.985}
+[data-scene="blueprint"] .copy:focus-visible{outline:2.5px dashed var(--bp-cyan);outline-offset:6px}
+[data-scene="blueprint"] .copy.is-copied .ic{background:var(--accent);opacity:1;
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.8l4.6 4.4L19.2 6.8'/%3E%3C/svg%3E");
+          mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.8l4.6 4.4L19.2 6.8'/%3E%3C/svg%3E")}
+
+/* 「已复制」：一枚橙色审图章——双线框、字距拉开、印面斑驳（遮罩），盖下时略歪（出场见 blueprint.js 的 copied）；
+   ::before 是盖下时往外洇的一圈橙色（--bp-ink 由 blueprint.js 从 1 推到 0）。复制失败时还是引擎的红条 */
+[data-scene="blueprint"] .copied-tip:not(.fail){padding:7px 16px 9px 22px;border:6px double var(--accent);border-radius:7px;background:rgba(6,32,66,.6);color:var(--accent);
+  font:700 36px/1 var(--f-hand);letter-spacing:.16em;text-shadow:none;
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='110'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.6 1.62'/%3E%3C/filter%3E%3Crect width='220' height='110' filter='url(%23g)'/%3E%3C/svg%3E");
+          mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='110'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.6 1.62'/%3E%3C/filter%3E%3Crect width='220' height='110' filter='url(%23g)'/%3E%3C/svg%3E");
+  -webkit-mask-size:220px 110px;mask-size:220px 110px}
+[data-scene="blueprint"] .copied-tip:not(.fail) svg{display:none}
+[data-scene="blueprint"] .copied-tip:not(.fail)::before{content:"";position:absolute;inset:-6px;border-radius:9px;box-shadow:0 0 0 calc(var(--bp-ink,0) * 10px) rgba(255,177,43,calc(var(--bp-ink,0) * .35));pointer-events:none}
+/* 盖进图签栏的审核格里时小一号 */
+[data-scene="blueprint"] .copied-tip.bp-in-tb:not(.fail){padding:3px 6px 5px 12px;border-width:5px;font-size:24px;letter-spacing:.12em}
+
+/* ---------- 截图位：一个画出来的屏幕——白描边、深蓝衬底；顶上一道浅青尺寸标注线（两头箭头、两边引出线），不贴胶带 ---------- */
+[data-scene="blueprint"] .shot{padding:40px 14px 0;border:2.5px solid rgba(255,255,255,.92);border-radius:2px;background-color:var(--bp-fill);box-shadow:none}
+[data-scene="blueprint"] .shot::before{top:8px;left:14px;right:14px;width:auto;height:26px;margin:0;rotate:none;box-shadow:none;z-index:auto;
+  border-left:2px solid rgba(166,244,255,.75);border-right:2px solid rgba(166,244,255,.75);
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 12'%3E%3Cpath d='M16 0L0 6l16 6z' fill='%23A6F4FF'/%3E%3C/svg%3E") 0 6px/16px 12px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 12'%3E%3Cpath d='M0 0l16 6L0 12z' fill='%23A6F4FF'/%3E%3C/svg%3E") 100% 6px/16px 12px no-repeat,
+    linear-gradient(rgba(166,244,255,.75),rgba(166,244,255,.75)) 0 11px/100% 2px no-repeat}
+[data-scene="blueprint"] .shot-img{background:var(--bp-deep);box-shadow:0 0 0 1.5px rgba(166,244,255,.45)}
+[data-scene="blueprint"] .shot figcaption{color:var(--ink-2);text-shadow:none}
+[data-scene="blueprint"] .shot-miss{background:repeating-linear-gradient(-45deg,#0A3366 0 14px,#0C3A72 14px 28px);color:var(--ink-3)}
+[data-scene="blueprint"] .shot-miss small{color:var(--ink-3)}
+[data-scene="blueprint"] .shot-zoom{top:54px;right:28px;background:rgba(3,20,46,.82);box-shadow:inset 0 0 0 1.5px rgba(166,244,255,.55);color:#fff;text-shadow:none}
+
+/* ---------- 手绘线稿：白线（--line），斜线涂色一律改成浅青（填充线的线宽 = blueprint.js 里 rough.fillWeight 2.2），实心涂色改成很淡的浅青；
+   圈注是橙色（--mark） ---------- */
+[data-scene="blueprint"] svg.sketch path[stroke-width="2.2"]{stroke:var(--bp-cyan);stroke-opacity:.6}
+[data-scene="blueprint"] svg.sketch path[stroke="none"]{fill:var(--bp-cyan);fill-opacity:.22}
+[data-scene="blueprint"] svg.sketch .c-ink2{color:var(--bp-cyan)}
+
+/* ---------- 图签栏（可选）：页面里写 <div class="bp-titleblock" data-speaker="讲者"></div> 才有，blueprint.js 的 decorate 填上内容；
+   贴着图框的右下角：图名（这一页的主题或标题）、讲者、审核（复制时审图章盖在这一格）、装配进度（第几拍 / 共几拍）。
+   换到别的风格时它是一个空的 div，什么也不显示 ---------- */
+[data-scene="blueprint"] .bp-titleblock{display:none}
+[data-scene="blueprint"] .bp-titleblock.bp-on{position:absolute;right:16px;bottom:16px;z-index:4;display:flex;height:56px;border-top:3px solid #fff;border-left:3px solid #fff;
+  background:rgba(6,32,66,.94);font:700 24px/1 var(--f-hand);white-space:nowrap;pointer-events:none}
+[data-scene="blueprint"] .bp-tb-c{display:flex;align-items:center;gap:10px;padding:0 16px}
+[data-scene="blueprint"] .bp-tb-c+.bp-tb-c{border-left:2px solid rgba(255,255,255,.6)}
+[data-scene="blueprint"] .bp-tb-c i{font-style:normal;color:var(--bp-cyan)}
+[data-scene="blueprint"] .bp-tb-c b{color:#fff}
+[data-scene="blueprint"] .bp-tb-chk{min-width:198px}
+[data-scene="blueprint"] .bp-tb-now::before{content:"0"}
+[data-scene="blueprint"][data-now="1"] .bp-tb-now::before{content:"1"}
+[data-scene="blueprint"][data-now="2"] .bp-tb-now::before{content:"2"}
+[data-scene="blueprint"][data-now="3"] .bp-tb-now::before{content:"3"}
+[data-scene="blueprint"][data-now="4"] .bp-tb-now::before{content:"4"}
+[data-scene="blueprint"][data-now="5"] .bp-tb-now::before{content:"5"}
+[data-scene="blueprint"][data-now="6"] .bp-tb-now::before{content:"6"}
+[data-scene="blueprint"][data-now="7"] .bp-tb-now::before{content:"7"}
+[data-scene="blueprint"][data-now="8"] .bp-tb-now::before{content:"8"}
+[data-scene="blueprint"][data-now="9"] .bp-tb-now::before{content:"9"}
+[data-scene="blueprint"] .bp-tb-c .bp-tb-now{font-style:normal;color:#fff}
+
+/* ---------- 出场时临时画的「安装位」（blueprint.js 放进页面、播完删掉）：零件滑进来之前，先在它的位置上描一圈浅青细线 ---------- */
+[data-scene="blueprint"] .bp-slot{position:absolute;overflow:visible;pointer-events:none;fill:none;stroke:rgba(166,244,255,.8);stroke-width:2}
+/* 点击处画一个圆规圈（ripple，在内容下面的涟漪层里）：浅青细圈 + 圆心十字 + 一条半径 */
+[data-scene="blueprint"] .bp-rip{position:absolute;width:150px;height:150px;overflow:visible;pointer-events:none;fill:none;stroke:rgba(166,244,255,.7);stroke-width:2;stroke-linecap:round}
+
+/* ---------- 形象：一点落在纸上的影子；自己不带亮边的形象由引擎描一圈浅色边（圈圈自带白线，不描）；
+   说的话是一个白框的标注框 ---------- */
+[data-scene="blueprint"] .mascot{--mascot-outline:#EAF8FF;--mascot-shadow:drop-shadow(0 5px 0 rgba(3,18,42,.5))}
+[data-scene="blueprint"] .mascot-say{padding:6px 18px 9px;border:2.5px solid #fff;border-radius:3px;background:var(--bp-deep);color:#fff;text-shadow:none}
+[data-scene="blueprint"] .mascot-say::after{background:var(--bp-deep);border-right:2.5px solid #fff;border-bottom:2.5px solid #fff}
+
+/* =====================================================================
+   常驻信息：章节、页码、节拍指示（右上，贴着图框：「装配」两个字 + 一排白圈装配步骤编号；
+   讲过的白圈、当前这一步的圈像圆规一样描一圈橙色、编号转橙；没讲到的虚圈）、计时
+   ===================================================================== */
+#stage[data-scene="blueprint"] .chap span{font-weight:700;color:var(--bp-cyan)}
+#stage[data-scene="blueprint"] .meta{top:28px;gap:22px;font:700 24px/1 var(--f-hand);color:var(--ink-3);text-shadow:var(--bp-shade)}
+#stage[data-scene="blueprint"] .pageno{color:var(--ink-3)}
+#stage[data-scene="blueprint"] .pageno b{color:#fff}
+#stage[data-scene="blueprint"] .meter{gap:12px}
+#stage[data-scene="blueprint"] .meter::before{content:"装配";font:700 24px/1 var(--f-hand);color:var(--bp-cyan);letter-spacing:.08em}
+#stage[data-scene="blueprint"] .meter .mnum{display:none}
+#stage[data-scene="blueprint"] .meter .dots{gap:10px;counter-reset:bp-step}
+#stage[data-scene="blueprint"] .dots i{counter-increment:bp-step;position:relative;display:grid;place-items:center;box-sizing:border-box;width:38px;height:38px;
+  border:2.5px dashed rgba(255,255,255,.42);border-radius:50%;color:rgba(255,255,255,.5);font:700 22px/1 var(--f-hand);font-style:normal;
+  transition:border-color .3s ease,color .3s ease}
+#stage[data-scene="blueprint"] .dots i::before{content:counter(bp-step)}
+#stage[data-scene="blueprint"] .dots i.on{border:2.5px solid rgba(255,255,255,.95);color:#fff}
+#stage[data-scene="blueprint"] .dots i.now{border-color:transparent;color:var(--accent)}
+#stage[data-scene="blueprint"] .dots i.now::before{animation:bpNum .4s cubic-bezier(.3,1.6,.5,1)}
+/* 当前这一步：一圈橙色像圆规一样从 12 点钟方向描一圈（--bp-a 从 0 转到 360°，只播一次） */
+#stage[data-scene="blueprint"] .dots i.now::after{content:"";position:absolute;inset:-2.5px;border:3px solid var(--accent);border-radius:50%;
+  -webkit-mask-image:conic-gradient(#000 var(--bp-a),transparent 0);mask-image:conic-gradient(#000 var(--bp-a),transparent 0);animation:bpRing .55s ease-out}
+#stage[data-scene="blueprint"] .timer{color:var(--ink-3)}
+@keyframes bpRing{from{--bp-a:0deg}to{--bp-a:360deg}}
+@keyframes bpNum{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
+
+/* ---------- 翻页时的图纸（blueprint.js 的 pageTurn 临时加上）、阅读模式的每页：自带晒图纸底和双线图框 ---------- */
+[data-scene="blueprint"].slide.bp-sheet{background:var(--scene-bg);box-shadow:var(--bp-sd,-22px) 0 34px -10px rgba(2,10,26,.7)}
+[data-scene="blueprint"].slide:is(.bp-sheet,.reading *)::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:var(--bp-frame) 0 0/100% 100% no-repeat}

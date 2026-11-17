@@ -1,0 +1,5 @@
+/* 蓝图测试课件的页面样式：每条都以 [data-id="…"] 开头 */
+[data-id="b3"] .steps .copy{justify-self:start;margin-top:20px}
+/* 圈注的圈比字宽出一圈，被圈的词前后留点空 */
+[data-id="b2"] [data-mark]{margin:0 .5em}
+[data-id="b7"] .vs>.card{min-height:240px}
