@@ -34,7 +34,39 @@
      13. 同风格翻页 pageTurn：旧页上收淡出，新页从下面浮上来
    - 没搬的：背景随鼠标视差（这一版不做；样页也说过视差会让磨砂反复重算）；卡片底部的小示意（讲稿纸、色块）是那一页的内容，不是风格；
      小雾的走位、反应、空闲动作（吹泡泡、伸懒腰）归形象和引擎
-   - 自己加的出场名：mist、float、sheen，只在这个风格里认（别的风格会提醒并换成它的默认出场）
+   - 自己加的出场名：mist、float、sheen，以及下面版式组件用的 frball、frcap、frstack、frface、frnote、frfix、frset，
+     只在这个风格里认（别的风格会提醒并换成它的默认出场）。页面里不用写，组件按类名自动选
+   - 毛玻璃自己的版式组件（.fr-*，只在这个风格里有样子；样板页 samples/frost.js 把每个都用了一遍，整段抄过去改字就行）。
+     整体是「彩色光斑上层层叠叠的磨砂卡片和控件」：每拍发生的是磨砂玻璃上的事——一张卡片从一摞里滑出来、
+     一条通知从上一条底下滑出来、字从磨砂后面聚焦变清楚、背后的光斑挪到当前这一块后面、开关拨过去、滑块推上去、旋钮转过去。
+     可读性约定（组件已经按这个做好，抄的时候别改坏）：
+       · 讲过的块只由引擎退到 .8，组件不另外调淡；「当前」靠背后挪过来的那团光斑（.fr-spot）和掠过的一道光交代
+       · 要点一律写在玻璃卡片上一直留着：叠成一摞的卡片翻到最后都摊开并排；通知一条条往下排、不顶掉旧的
+       · 字一律实色横排，写在乳白磨砂上（底下的光斑隔着磨砂只剩一团柔色）；渐变字只给重点词和大数字
+       · 小球（.fr-ball）、光斑只垫在玻璃后面，不和字直接叠在一起；没摊开的卡片里的图标、占位条是磨砂模糊的，不放字
+     · .fr-pane：一大块磨砂玻璃板（封面、结尾的大字放在里面）。加 .fr-back 是后面垫的一块空玻璃（不放字），只为叠出层次
+     · .fr-ball：一颗边缘清楚的渐变小球，放在玻璃板后面、一半露在外面：露出来的一半清楚，藏在玻璃后面的一半是磨砂的。
+       写 left、top、width（正方形）；data-fr-tone 换颜色：pink（默认）、violet、blue、peach
+     · .fr-cap：一枚白色磨砂胶囊（左边一颗渐变圆点），放讲者、致谢这类一句话；出场时从上面那块玻璃板底下滑出来
+     · .fr-ico[data-fr-ico="名字"]：渐变圆角小方块里一个白色线稿图标（这里画好，建页时填进去）：
+       cup 盖碗、leaf 茶叶、kettle 热水壶、thermo 温度计、clock 钟
+     · .fr-fan > .fr-leaf：卡片展开。第 0 拍几张磨砂卡片叠成一摞（默认叠在中间那一栏，--fr-stack 写第几栏，从 0 数），
+       每张卡片里放一个 .fr-ico 和一块带拍的字 .fr-face（<small data-small>01</small><h3>名字</h3><p>一句说明</p>）。
+       到拍时最上面那张滑到自己那一栏、图标由模糊变清楚、字从磨砂后面聚焦出来、一道光掠过，背后的光斑跟过去；
+       最后全部摊开并排。卡片的位置、叠放都由 frost.css 按「几张 .fr-face 到拍了」算好，页面只写 --cols、--gap。
+       形象的目标写在 .fr-leaf 上（它的版面位置就是摊开后的那一栏）
+     · .fr-notes > .fr-note[data-beat]：通知横幅。一条一个 .fr-ico 加 .fr-nt（<span class="fr-src" data-small>第 1 步</span><p><b>标题</b>一句说明</p>）；
+       到拍时这一条从上一条底下滑出来（第一条从上面落下来），由模糊变清楚、一道光掠过。旧的不顶掉，从上往下读
+     · .fr-set > .fr-row：设置面板（一大块磨砂玻璃，一行一项，行尾一个开关，建页时补上）。一行写 .fr-ico、
+       <span class="fr-bad">错的做法</span>、<p class="fr-fix" data-beat="n">对的做法</p>；到拍时开关拨到「开」、对的做法从模糊里浮出来，
+       错的做法一直留着（粉色小胶囊，不划掉）。当前这一行底下亮一道淡紫
+     · .fr-cc > .fr-tile[data-fr-ctl="slider|knob|timer"]：控制中心。一排磨砂方块，每块一个控件（建页时补上）：
+       slider 竖着的温度滑块、knob 计量旋钮（周围几颗刻度点，data-fr-steps 写几颗，默认 5）、timer 沙漏计时器；
+       style 写 --fr-to（读数占满量程的比例：80℃ 是 .8、五颗点里的 3 克是 .6；沙漏不用写）。
+       里面放 <span class="fr-lab">名字</span> 和一块带拍的读数 .fr-read（<b>80<small>℃</small></b><span>一句说明</span>）。
+       到拍时滑块推上去、旋钮转过去点亮刻度、沙漏翻过来（frost.css 的 --fr-v 过渡，略过冲再回），读数随后由虚变实，
+       背后的光斑挪到这一块后面。没调的控件是灰一点的磨砂样子
+     · .fr-spot：光斑，不用写：.fr-fan、.fr-cc 建页时自己放一团，跟着「几块到拍了」挪到当前这一块后面
    - 注意：外层元素半透明（opacity < 1）时，里面卡片的磨砂只能模糊外层自己。所以讲过的拍变淡时外层不整体变淡（frost.css），
      出场时外层只极短地淡入；翻页那 0.3 秒整页在淡入淡出，磨砂会短暂变薄，背景本来就是柔光斑，看不太出来
    - 禁区（zones，舞台坐标 1920×1080）：
@@ -48,12 +80,15 @@
   const gs = () => window.gsap;
   const RMQ = matchMedia('(prefers-reduced-motion: reduce)');
   /* 磨砂组件（有玻璃底的）；HOVER 是有悬停柔光的；SKIP 是出场时不跟着动的子元素（形象、圈注层、涟漪层、泡泡） */
-  const GLASS = '.card, .cell, .term, .shot, .steps > li';
+  const GLASS = '.card, .cell, .term, .shot, .steps > li, .fr-pane, .fr-cap, .fr-leaf, .fr-note, .fr-set, .fr-tile';
   const HOVER = GLASS + ', .copy';
   const TILT = '.card, .cell, .shot, .steps > li';
-  const SKIP = 'svg.marks, .mascot, .kid, .ripple-layer, .copied-tip, .fr-bub, script, style';
-  /* 默认出场按组件类名分：磨砂组件和一排卡片的外层「浮出」，命令「凝出」，其余文字「凝出」 */
-  const BY = { card: 'float', cell: 'float', term: 'float', shot: 'float', steps: 'float', cells: 'float', grid: 'float', row: 'float', col: 'float', vs: 'float', copy: 'mist' };
+  const SKIP = 'svg.marks, .mascot, .kid, .ripple-layer, .copied-tip, .fr-bub, .fr-spot, script, style';
+  /* 默认出场按组件类名分：磨砂组件和一排卡片的外层「浮出」，命令「凝出」，其余文字「凝出」；
+     后半是版式组件（.fr-*）各自的出场 */
+  const BY = { card: 'float', cell: 'float', term: 'float', shot: 'float', steps: 'float', cells: 'float', grid: 'float', row: 'float', col: 'float', vs: 'float', copy: 'mist',
+    'fr-pane': 'float', 'fr-set': 'float', 'fr-cc': 'float', 'fr-ball': 'frball', 'fr-cap': 'frcap', 'fr-fan': 'frstack', 'fr-face': 'frface',
+    'fr-note': 'frnote', 'fr-fix': 'frfix', 'fr-read': 'frset' };
   const PROPS = ['opacity', 'visibility', 'transform', 'translate', 'rotate', 'scale', 'filter', '--fr-sh'];
 
   const isGlass = e => !!(e && e.matches && e.matches(GLASS));
@@ -128,7 +163,99 @@
       if (isGlass(e)) sheenOn(tl, e, t);
       return .5;
     },
+    // 版式组件（.fr-*）的出场：页面里不用写，按类名自动选（见文件开头的说明和 BY）
+    frball(tl, e, t) { return ballIn(tl, e, t); },
+    frcap(tl, e, t) { return capIn(tl, e, t); },
+    frstack(tl, e, t) { return stackIn(tl, e, t); },
+    frface(tl, e, t) { return faceIn(tl, e, t); },
+    frnote(tl, e, t) { return noteIn(tl, e, t); },
+    frfix(tl, e, t) { return fixIn(tl, e, t); },
+    frset(tl, e, t) { return setIn(tl, e, t); },
   };
+
+  /* =================================================================
+     毛玻璃自己的版式组件（.fr-*）的出场：层层叠叠的磨砂卡片和控件。
+     卡片摊开、开关拨动、滑块推上去、旋钮转过去、沙漏翻过来、光斑挪过去，都是 frost.css 里跟着 .on 写好的过渡
+     （位置和控件读数用 translate、scale 和注册过的 --fr-v，版面位置不变，形象照样量得准）；
+     这里只管「字从磨砂后面聚焦出来」「一道光掠过」「从上一块底下滑出来」，播完把临时写的内联样式收回去。
+     结束时的样子都在 CSS 里，所以总览、阅读模式、自检直接摆到最后一拍也是对的
+     ================================================================= */
+  /* 一组字依次从模糊、略低的位置聚焦出来（只用 opacity，不碰 visibility），返回最晚结束的时刻（相对 t） */
+  function kidsMist(tl, e, t, at, gap, o) {
+    let end = 0;
+    kidsOf(e).forEach((c, i) => { const s = at + i * gap; end = Math.max(end, s + mistIn(tl, c, t + s, o)); });
+    return end;
+  }
+  /* 只动 x 或 scale 的补间也要把 y 写成 0：引擎退拍时用 y 收回、清行内样式时不清 gsap 记着的位移，
+     下次只补间 x 会把记着的 y 一起写回去（字会低一截） */
+  /* 小球：从模糊里鼓出来，略过冲再回 */
+  function ballIn(tl, e, t) {
+    const off = () => clean(e);
+    const from = { autoAlpha: 0, y: 0, scale: .6 }, to = { autoAlpha: 1, y: 0, scale: 1, duration: .8, ease: 'back.out(1.6)', immediateRender: true, onComplete: off, onInterrupt: off };
+    if (blurOk(e)) { from.filter = 'blur(16px)'; to.filter = 'blur(0px)'; }
+    tl.fromTo(e, from, to, t);
+    return .8;
+  }
+  /* 胶囊：从上面那块玻璃板底下滑出来（胶囊的 z-index 比玻璃板低，起点藏在玻璃后面，隔着磨砂只看得到一团影子），
+     滑出来时由模糊变清楚，一道光掠过 */
+  function capIn(tl, e, t) {
+    tl.fromTo(e, { autoAlpha: 0 }, { autoAlpha: 1, duration: .18, ease: 'power1.out', immediateRender: true }, t);
+    const from = { y: -76, scale: .94 }, to = { y: 0, scale: 1, duration: .72, ease: 'power3.out', immediateRender: true, onComplete: () => clean(e), onInterrupt: () => clean(e) };
+    if (blurOk(e)) { from.filter = 'blur(10px)'; to.filter = 'blur(0px)'; }
+    tl.fromTo(e, from, to, t);
+    sheenOn(tl, e, t + .34);
+    return 1.05;
+  }
+  /* 一摞卡片（第 0 拍）：从最底下一张往上，一张张由模糊变清楚地显出来（不动位置：叠放的错位是 CSS 的 translate、scale） */
+  function stackIn(tl, e, t) {
+    tl.fromTo(e, { autoAlpha: 0 }, { autoAlpha: 1, duration: .2, ease: 'power1.out', immediateRender: true, onComplete: () => clean(e), onInterrupt: () => clean(e) }, t);
+    const leaves = [...e.children].filter(c => c.matches('.fr-leaf')).reverse();
+    leaves.forEach((c, i) => {
+      const off = () => clean(c), from = { opacity: 0 }, to = { opacity: 1, duration: .55, ease: 'power2.out', immediateRender: true, onComplete: off, onInterrupt: off };
+      if (blurOk(c)) { from.filter = 'blur(14px)'; to.filter = 'blur(0px)'; }
+      tl.fromTo(c, from, to, t + .05 + i * .12);
+    });
+    const top = leaves[leaves.length - 1];
+    if (top) sheenOn(tl, top, t + .1 + leaves.length * .12);
+    return Math.min(1.1, .05 + leaves.length * .12 + .55);
+  }
+  /* 摊开一张（.fr-leaf 里的 .fr-face）：卡片滑到自己那一栏是 CSS 过渡（约 .75 秒）；这里让字随后从磨砂后面聚焦出来，一道光掠过卡片 */
+  function faceIn(tl, e, t) {
+    const leaf = e.closest('.fr-leaf');
+    tl.fromTo(e, { autoAlpha: 0 }, { autoAlpha: 1, duration: .2, ease: 'power1.out', immediateRender: true, onComplete: () => clean(e), onInterrupt: () => clean(e) }, t + .2);
+    if (leaf) sheenOn(tl, leaf, t + .3);
+    const end = kidsMist(tl, e, t, .24, .1, { y: 16, blur: 12, dur: .5 });
+    return Math.min(1.1, Math.max(end, 1));
+  }
+  /* 一条通知：从上一条底下滑出来（第一条从上面落下来）。起点藏在上一条后面（越早的 z-index 越高），隔着磨砂先看到一团影子，
+     滑到自己的位置时由模糊变清楚，一道光掠过，里面的字随后聚焦 */
+  function noteIn(tl, e, t) {
+    const prev = e.previousElementSibling;
+    const dy = prev && prev.matches('.fr-note') && prev.classList.contains('on') ? prev.offsetTop - e.offsetTop : -64;
+    tl.fromTo(e, { autoAlpha: 0 }, { autoAlpha: 1, duration: .16, ease: 'power1.out', immediateRender: true }, t);
+    const from = { y: dy, scale: .965 }, to = { y: 0, scale: 1, duration: .72, ease: 'power3.out', immediateRender: true, onComplete: () => clean(e), onInterrupt: () => clean(e) };
+    if (blurOk(e)) { from.filter = 'blur(12px)'; to.filter = 'blur(0px)'; }
+    tl.fromTo(e, from, to, t);
+    sheenOn(tl, e, t + .38);
+    const end = kidsMist(tl, e, t, .3, .1, { y: 14, blur: 10, dur: .45 });
+    return Math.min(1.1, Math.max(end, .9));
+  }
+  /* 设置面板的一行（.fr-fix）：开关拨到「开」是 CSS 过渡；对的做法从左边、模糊里浮出来 */
+  function fixIn(tl, e, t) {
+    const off = () => clean(e);
+    const from = { autoAlpha: 0, x: -26, y: 0 }, to = { autoAlpha: 1, x: 0, y: 0, duration: .55, ease: 'power3.out', immediateRender: true, onComplete: off, onInterrupt: off };
+    if (blurOk(e)) { from.filter = 'blur(12px)'; to.filter = 'blur(0px)'; }
+    tl.fromTo(e, from, to, t + .16);
+    return .75;
+  }
+  /* 控制中心的读数（.fr-tile 里的 .fr-read）：控件调到读数是 CSS 的 --fr-v 过渡（约 .95 秒）；一道光掠过这一块，读数随后聚焦 */
+  function setIn(tl, e, t) {
+    const tile = e.closest('.fr-tile');
+    if (tile) sheenOn(tl, tile, t);
+    tl.fromTo(e, { autoAlpha: 0 }, { autoAlpha: 1, duration: .2, ease: 'power1.out', immediateRender: true, onComplete: () => clean(e), onInterrupt: () => clean(e) }, t + .3);
+    const end = kidsMist(tl, e, t, .32, .14, { y: 16, blur: 12, dur: .5 });
+    return Math.min(1.1, Math.max(end, 1));
+  }
   /* 开场里给第 0 拍的元素选出场（和引擎选默认出场的规则一致：data-in 优先，再按类名，最后是 mist） */
   function runFx(tl, e, t) {
     const name = e.dataset && e.dataset.in;
@@ -155,6 +282,49 @@
         .fromTo(b, { scale: .2, opacity: 0, x: 0, y: 0 }, { scale: 1, opacity: 1, y: -(20 + Math.random() * 22), x: Math.random() * 20 - 10, duration: .45, ease: 'power2.out' })
         .to(b, { scale: 1.35, opacity: 0, duration: .16, ease: 'power1.out' }, '+=' + (.12 + Math.random() * .25).toFixed(2));
     }
+  }
+
+  /* =================================================================
+     建页时补全版式组件（decorate）：线稿图标、光斑、控制中心的控件、设置面板的开关
+     ================================================================= */
+  /* 白色线稿图标（viewBox 0 0 120 120，描边粗细在 frost.css） */
+  const ICON = {
+    cup: '<path d="M48 19c-4-4 4-7 0-12M72 19c-4-4 4-7 0-12"/><path d="M54 31a6 6 0 0 1 12 0"/><path d="M31 47c3-13 55-13 58 0z"/>'
+      + '<path d="M25 53c2 25 18 34 35 34s33-9 35-34z"/><path d="M21 99c23 6 55 6 78 0"/>',
+    leaf: '<path d="M25 95C23 56 50 27 97 23c2 43-25 72-72 72z"/><path d="M25 95C46 74 67 51 90 30"/><path d="M47 75c-3-9-2-18 2-26M62 61c9 1 17-1 24-6"/>',
+    kettle: '<path d="M44 45c0-23 34-23 34 0"/><path d="M38 47h46c7 16 9 34 4 47H34c-5-13-3-31 4-47z"/><path d="M37 60 18 47l-5 6 21 23"/><path d="M50 72h22"/>',
+    thermo: '<path d="M52 72V27a8 8 0 0 1 16 0v45a17 17 0 1 1-16 0z"/><path d="M60 87V46"/><path d="M80 34h10M80 48h10M80 62h10"/>',
+    clock: '<circle cx="60" cy="63" r="35"/><path d="M60 43v20l13 9"/><path d="M48 16h24M60 16v12"/>',
+  };
+  const svgOf = name => `<svg viewBox="0 0 120 120" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[name]}</svg>`;
+  /* 控制中心的控件：slider 竖着的温度滑块（里面一个温度计）、knob 计量旋钮（周围一圈刻度点）、timer 沙漏（翻过来就是开始计时） */
+  const CTL = {
+    slider: () => `<i class="fr-track"><i class="fr-fill"></i>${svgOf('thermo')}</i>`,
+    knob: n => `<i class="fr-dial">${Array.from({ length: n }, (_, k) => `<i class="fr-dot" style="--k:${k};--a:${(-135 + k * 270 / Math.max(1, n - 1)).toFixed(1)}deg"></i>`).join('')}<i class="fr-disc"><i class="fr-pin"></i></i></i>`,
+    timer: () => '<svg class="fr-hg" viewBox="0 0 160 220" aria-hidden="true">'
+      + '<path class="gl" d="M34 26c0 44 36 62 40 84-4 22-40 40-40 84h92c0-44-36-62-40-84 4-22 40-40 40-84z"/>'
+      + '<path class="sd" d="M40 190c2-30 26-50 40-60 14 10 38 30 40 60z"/>'
+      + '<rect class="cap" x="20" y="10" width="120" height="18" rx="9"/><rect class="cap" x="20" y="192" width="120" height="18" rx="9"/></svg>',
+  };
+  function decorate(s) {
+    s.querySelectorAll('.fr-ico[data-fr-ico]').forEach(el => {
+      const name = el.dataset.frIco;
+      if (!ICON[name]) { console.warn(`[Deck] 毛玻璃的图标 data-fr-ico="${name}" 不认识，可选：${Object.keys(ICON).join('、')}`); return; }
+      el.innerHTML = svgOf(name);
+      el.setAttribute('aria-hidden', 'true');
+    });
+    s.querySelectorAll('.fr-fan, .fr-cc').forEach(c => { if (!c.querySelector(':scope > .fr-spot')) c.insertAdjacentHTML('beforeend', '<i class="fr-spot" aria-hidden="true"></i>'); });
+    s.querySelectorAll('.fr-tile[data-fr-ctl]').forEach(t => {
+      const kind = t.dataset.frCtl;
+      if (!CTL[kind]) { console.warn(`[Deck] 毛玻璃的控件 data-fr-ctl="${kind}" 不认识，可选：${Object.keys(CTL).join('、')}`); return; }
+      if (t.querySelector(':scope > .fr-ctl')) return;
+      const n = Math.max(2, Math.min(9, parseInt(t.dataset.frSteps, 10) || 5));
+      if (kind === 'knob') t.style.setProperty('--fr-steps', String(n));
+      const html = `<i class="fr-ctl" data-kind="${kind}" aria-hidden="true">${CTL[kind](n)}</i>`;
+      const read = t.querySelector(':scope > .fr-read');
+      if (read) read.insertAdjacentHTML('beforebegin', html); else t.insertAdjacentHTML('beforeend', html);
+    });
+    s.querySelectorAll('.fr-row').forEach(r => { if (!r.querySelector(':scope > .fr-sw')) r.insertAdjacentHTML('beforeend', '<i class="fr-sw" aria-hidden="true"><i></i></i>'); });
   }
 
   /* 悬停：写进鼠标下面那个组件（和它外面的组件）的 --mx --my（柔光的位置）、--fr-rx --fr-ry（轻微倾斜），每帧最多写一次；
@@ -188,6 +358,10 @@
     recede: .8,
     rough: { strokeWidth: 2.6, roughness: .35, bowing: .3, markWidth: 3, markRoughness: .4, markBowing: .3 },   // 线稿和圈注都几乎是直的
     fx: FX,
+    // 沙漏里的沙子用的渐变（放进页面公用的 .deck-defs，id 以 fr- 开头）
+    defs: '<linearGradient id="fr-sand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C8307F"/><stop offset="1" stop-color="#6B4CF6"/></linearGradient>',
+    // 建页：补全版式组件（.fr-*）的图标、光斑、控件、开关
+    decorate,
     // 背景层：四团柔光斑、两颗小球（位置和颜色在 frost.css）
     backdrop(layer) {
       layer.insertAdjacentHTML('beforeend', '<i class="fr-blob fr-b1"></i><i class="fr-blob fr-b2"></i><i class="fr-blob fr-b3"></i><i class="fr-blob fr-b4"></i><i class="fr-orb fr-o1"></i><i class="fr-orb fr-o2"></i>');
