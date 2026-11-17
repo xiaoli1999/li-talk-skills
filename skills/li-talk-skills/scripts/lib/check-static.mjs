@@ -10,7 +10,7 @@ const BUILTIN_SCENES = { plain: { label: '朴素', family: 'modern' } };
 // 计算拍数时看的属性
 const BEAT_ATTRS = ['data-beat', 'data-mascot', 'data-kid', 'data-mark-beat', 'data-arrange'];
 const MEDIA_ATTRS = ['src', 'data-src', 'poster'];
-const BOUNDARY_FIX = '见设计文档第 3 节：只用普通 script 标签和本地文件';
+const BOUNDARY_FIX = '见 references/authoring.md 的「技术边界」一节：只用普通 script 标签和本地文件';
 
 const isFile = p => existsSync(p) && statSync(p).isFile();
 const text = v => (v == null || typeof v === 'object' || typeof v === 'function' ? '' : String(v).trim());

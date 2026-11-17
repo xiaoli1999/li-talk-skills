@@ -75,7 +75,7 @@ test('表格里其余的规则、页码、行号和「怎么改」', async () =>
   assert.match(t, /slides\/a\.css 第 11 行：选择器「:is\(\[data-id="p1"\], \.other\) \.y」/);
   assert.match(t, /slides\/a\.css 第 12 行：选择器「\.z \[data-id="p1"\]」/);
   // 技术边界：行号；注释掉的不算
-  assert.match(t, /slides\/a\.js 第 \d+ 行：用了 fetch\(，课件里不能用\n {4}→ 见设计文档第 3 节：只用普通 script 标签和本地文件/);
+  assert.match(t, /slides\/a\.js 第 \d+ 行：用了 fetch\(，课件里不能用\n {4}→ 见 references\/authoring\.md 的「技术边界」一节：只用普通 script 标签和本地文件/);
   assert.match(t, /index\.html 第 8 行：用了 外部地址 https:\/\/fonts\.example\.com\/wenkai\.css，课件里不能用/);
   assert.match(t, /slides\/a\.css 第 9 行：用了 外部地址 https:\/\/example\.com\/bg\.png，课件里不能用/);
   assert.doesNotMatch(t, /cdn\.example\.com/);
