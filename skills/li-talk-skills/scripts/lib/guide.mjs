@@ -686,7 +686,7 @@ function switchLines(s, info) {
     `   ${cli('confirm', quote(s.dir), 'style', '--scenes', '〈新风格〉', ...(s.meta.mascot ? ['--mascot', s.meta.mascot] : []))}`,
     `b. 把 ${tplScenes}/〈新风格〉.js 和 〈新风格〉.css 复制到 ${posix(s.dir)}/scenes/${fontLine}`,
     `c. 把 ${posix(s.dir)}/index.html 里 scenes/${old}.css、scenes/${old}.js 这两行的文件名换成新风格（只有换风格时才动章节区以外的这两行）`,
-    `d. 把 ${posix(s.dir)}/slides/ 里每页的 scene: '${old}' 换成新风格`,
+    `d. 把 ${posix(s.dir)}/slides/ 里每页的 scene: '${old}' 换成新风格。用了旧风格专用组件（类名带风格前缀，比如 .ink-*、.px-*，是照旧风格自己的样板页写的）的页，要照新风格的样板页 ${posix(join(TPL_DIR, 'samples'))}/〈新风格〉.js 重写版式，字和讲词照旧；先告诉用户要重写几页`,
     'e. 重跑后台自检，错误改到 0 个：',
     `   ${cli('check', quote(s.dir), '--browser')}`,
   ];
