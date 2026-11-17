@@ -1,17 +1,20 @@
 // guide：从课件目录的实际状态推断做到哪一步，告诉 AI 下一步做什么、问用户什么；以及 styles 命令
 // 搭骨架时字体一律用假的清单和假的下载函数，不联网，也不碰本机的字体缓存
+// guide 到 ④ 风格会自动打开样册：这里一律设上 LI_TALK_NO_OPEN，要测打开的地方传假的 opener，不真的弹浏览器
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { guideText, HINTS, run as runGuide, talkMinutes, targetChars } from '../skills/li-talk-skills/scripts/lib/guide.mjs';
+import { GALLERY, guideText, HINTS, run as runGuide, talkMinutes, targetChars } from '../skills/li-talk-skills/scripts/lib/guide.mjs';
 import { run as runStyles } from '../skills/li-talk-skills/scripts/lib/styles.mjs';
-import { confirmStep } from '../skills/li-talk-skills/scripts/lib/meta.mjs';
+import { confirmStep, readMeta } from '../skills/li-talk-skills/scripts/lib/meta.mjs';
 import { createDeck } from '../skills/li-talk-skills/scripts/lib/new.mjs';
 import { readDeck } from '../skills/li-talk-skills/scripts/lib/deck.mjs';
 import { sha256 } from '../skills/li-talk-skills/scripts/lib/fonts.mjs';
 import { SKILL_DIR } from '../skills/li-talk-skills/scripts/lib/paths.mjs';
+
+process.env.LI_TALK_NO_OPEN = '1';
 
 const made = [];
 const tmp = () => { const d = mkdtempSync(join(tmpdir(), 'li-talk-guide-')); made.push(d); return d; };
@@ -325,7 +328,7 @@ test('风格：讲稿写了在投影上讲，深色底（黑板、科技暗黑�
   confirmStep(online, 'outline');
   confirmStep(online, 'script');
   const o = guideText(online);
-  assert.match(o, /\n\s+1\. 黑板（board）[^\n]*（推荐/);
+  assert.match(o, /\n\s+1\. 按推荐的：黑板（board）[^\n]*（推荐/);
   assert.doesNotMatch(o, /优先浅色底/);
 });
 
@@ -344,7 +347,7 @@ test('风格：推荐理由只列讲稿里实际匹配到的词和次数；一�
   confirmStep(mixed, 'script');
   const m = reasonWords(guideText(mixed), text);
   // 「角色」只出现 1 次，不到门槛：像素手账不加分，理由里也不列它
-  assert.match(m.first, /^方格纸（paper）[^\n]*（推荐：讲稿里的「安装」2 处、「步骤」2 处、「配置」1 处更像黑板，但它是深色底；在投影上讲，优先浅色底）/);
+  assert.match(m.first, /^按推荐的：方格纸（paper）[^\n]*（推荐：讲稿里的「安装」2 处、「步骤」2 处、「配置」1 处更像黑板，但它是深色底；在投影上讲，优先浅色底）/);
   assert.doesNotMatch(m.first, /角色」/);
   assert.ok(m.pairs.length >= 2);
 
@@ -376,11 +379,11 @@ test('风格：关键词只数内容（给组织方、屏幕、讲词），节�
   const fmt = make('今天讲泡茶。');
   assert.doesNotMatch(fmt, /（board）/, '只在节拍、画面、行首标签里的「步骤」不让黑板排第一');
   assert.doesNotMatch(fmt, /步骤/);
-  assert.match(fmt, /^方格纸（paper）[^\n]*（推荐：讲稿里没有明显的关键词，按适合讲什么挑的）/);
+  assert.match(fmt, /^按推荐的：方格纸（paper）[^\n]*（推荐：讲稿里没有明显的关键词，按适合讲什么挑的）/);
 
   // 讲词里真的讲到了「步骤」：算数，屏幕标签和节拍、画面里的仍然不算
   const said = make('下面讲具体的步骤，一共两个步骤。');
-  assert.match(said, /^黑板（board）[^\n]*（推荐：讲稿里出现了「步骤」2 处）/);
+  assert.match(said, /^按推荐的：黑板（board）[^\n]*（推荐：讲稿里出现了「步骤」2 处）/);
 });
 
 test('风格：某个风格的关键词合计只命中 1 次，当作没有匹配，不会排第一、理由里也不列', () => {
@@ -392,7 +395,7 @@ test('风格：某个风格的关键词合计只命中 1 次，当作没有匹�
   const first = /问题 1：[^\n]*\n\s+1\. ([^\n]*)/.exec(t)[1];
   assert.doesNotMatch(first, /（journal）/, '只出现一次的「角色」不让像素手账排第一');
   assert.doesNotMatch(first, /角色」/);
-  assert.match(first, /^方格纸（paper）[^\n]*（推荐：讲稿里没有明显的关键词，按适合讲什么挑的）/);
+  assert.match(first, /^按推荐的：方格纸（paper）[^\n]*（推荐：讲稿里没有明显的关键词，按适合讲什么挑的）/);
   checkShape(t);
 
   // 出现两次就算数
@@ -400,7 +403,7 @@ test('风格：某个风格的关键词合计只命中 1 次，当作没有匹�
   writeFileSync(join(twice, '讲稿.md'), script(2, { extra: '主持人这个角色不复杂。讲讲每个角色做什么。' }));
   confirmStep(twice, 'outline');
   confirmStep(twice, 'script');
-  assert.match(guideText(twice), /\n\s+1\. 像素手账（journal）[^\n]*（推荐：讲稿里出现了「角色」2 处）/);
+  assert.match(guideText(twice), /\n\s+1\. 按推荐的：像素手账（journal）[^\n]*（推荐：讲稿里出现了「角色」2 处）/);
 });
 
 test('风格：讲稿写了在投影上讲，技术词很多也先推浅色底；深色底出现在选项里时标出来', () => {
@@ -411,7 +414,7 @@ test('风格：讲稿写了在投影上讲，技术词很多也先推浅色底�
   const t = guideText(dir);
   assert.doesNotMatch(t, /\n\s+1\. 科技暗黑（dark）/);
   assert.match(t, /\n\s+1\. [^\n]*在投影上讲，优先浅色底/);
-  assert.doesNotMatch(t, /\n\s+[23]\. (黑板|科技暗黑)（(board|dark)）(?![^\n]*深色底，投影上容易发灰)/);
+  assert.doesNotMatch(t, /\n\s+[23]\. 备选：(黑板|科技暗黑)（(board|dark)）(?![^\n]*深色底，投影上容易发灰)/);
   checkShape(t);
 });
 
@@ -440,7 +443,7 @@ test('风格：后加的 9 种风格也能按讲稿里的词推到第一', () =>
   ];
   for (const [key, label, words] of cases) {
     assert.match(firstStyleOpt(`- 时间与时长：20 分钟，线上会议共享屏幕\n${words}`),
-      new RegExp(`^${label}（${key}）[^\\n]*（推荐：讲稿里出现了「`), key);
+      new RegExp(`^按推荐的：${label}（${key}）[^\\n]*（推荐：讲稿里出现了「`), key);
   }
   // 像素游戏是深色底：在投影上讲时不排第一，理由里说它更像像素游戏
   const proj = firstStyleOpt('- 时间与时长：20 分钟，会议室投影\n给新人的入职闯关：新人从第一关开始闯关。');
@@ -474,7 +477,7 @@ test('风格：按讲稿内容给推荐，推荐项排第一；选定后运行 c
   confirmStep(dir, 'script');
   const t = guideText(dir);
   assert.match(t, /问题 1：.*风格/);
-  assert.match(t, /\n\s+1\. 科技暗黑（dark）[^\n]*（推荐/);
+  assert.match(t, /\n\s+1\. 按推荐的：科技暗黑（dark）[^\n]*（推荐/);
   assert.ok(t.includes(cmd('confirm', q(dir), 'style', '--scenes')), t);
   assert.ok(t.includes(cmd('styles')), t);
   checkShape(t);
@@ -483,7 +486,110 @@ test('风格：按讲稿内容给推荐，推荐项排第一；选定后运行 c
   writeFileSync(join(plain, '讲稿.md'), script(2));
   confirmStep(plain, 'outline');
   confirmStep(plain, 'script');
-  assert.match(guideText(plain), /\n\s+1\. 方格纸（paper）[^\n]*（推荐/);
+  assert.match(guideText(plain), /\n\s+1\. 按推荐的：方格纸（paper）[^\n]*（推荐/);
+});
+
+// 确认到讲稿、停在 ④ 风格的课件
+function styleDeck(extra = '') {
+  const d = tmp();
+  writeFileSync(join(d, '讲稿.md'), script(2, { extra }));
+  confirmStep(d, 'outline');
+  confirmStep(d, 'script');
+  return d;
+}
+const askOf = t => t.slice(t.indexOf('【问用户】'), t.indexOf('【可以这样对 AI 说】'));
+
+test('风格：问题直接给 4 个选项——按推荐的、两个备选、先体验全部风格；选 4 时等用户说出风格名再 confirm', () => {
+  const dir = styleDeck('- 时间与时长：20 分钟，线上会议共享屏幕\n入门上手：新手入门，非技术同事也能上手。');
+  const t = guideText(dir);
+  const ask = askOf(t);
+  assert.match(ask, /问题 1：风格怎么定？（样册已经在浏览器里打开，可以先点开体验）/);
+  const opts = ask.split('\n').filter(l => /^\s+\d+\. /.test(l)).map(l => l.replace(/^\s+\d+\. /, ''));
+  assert.equal(opts.length, 4, ask);
+  assert.match(opts[0], /^按推荐的：水彩田园（watercolor），适合入门教程[^\n]*（推荐：讲稿里出现了「/);
+  assert.match(opts[1], /^备选：[^（]+（[a-z]+），适合/);
+  assert.match(opts[2], /^备选：[^（]+（[a-z]+），适合/);
+  assert.equal(opts[3], '先体验全部风格，看完再告诉我选哪个');
+  checkShape(t);
+  // 每个选项对应的 confirm 命令都写全；选 4 写明先等用户在样册里看完、说出风格名
+  const keys = opts.slice(0, 3).map(o => /（([a-z]+)）/.exec(o)[1]);
+  for (const k of keys) assert.ok(t.includes(cmd('confirm', q(dir), 'style', '--scenes', k)), `${k} 的 confirm 命令：\n${t}`);
+  assert.match(t, /选 4（先体验全部风格）：[^\n]*等用户看完、说出风格名[^\n]*用户还没说选哪个，就不要 confirm/);
+  assert.match(t, /不要改成「你想要什么风格」这样的开放式提问，也不要等用户开口要看风格/);
+  assert.match(t, /【可以这样对 AI 说】「就用水彩田园」/);
+  // guideText 不碰浏览器：提示 AI 自己运行 styles --open
+  assert.ok(t.startsWith('请运行 styles --open 打开样册给用户看，15 种风格都能点开体验：'), t.slice(0, 200));
+  assert.ok(t.includes(cmd('styles', '--open')), t);
+});
+
+test('风格：guide 一到 ④ 就自动打开样册，记下 galleryOpened，之后不再自动打开', async () => {
+  const dir = styleDeck();
+  const opened = [];
+  const opener = async f => { opened.push(f); return true; };
+  let lines = [];
+  // env 传空的：模拟没设 LI_TALK_NO_OPEN 的机器；opener 是假的，不真的弹浏览器
+  assert.equal(await runGuide({ _: [dir] }, { log: s => lines.push(s), opener, env: {} }), 0);
+  let t = lines.join('\n');
+  assert.deepEqual(opened, [GALLERY]);
+  assert.ok(t.startsWith(`已经在浏览器里打开了样册：${fwd(GALLERY)}，15 种风格都能点开体验。\n【现在在哪一步】④ 风格`), t.slice(0, 300));
+  assert.match(t, /样册已经在用户的浏览器里打开了，不用等用户开口要看风格/);
+  assert.match(askOf(t), /问题 1：风格怎么定？（样册已经在浏览器里打开，可以先点开体验）/);
+  checkShape(t);
+  const at = readMeta(dir).galleryOpened;
+  assert.ok(typeof at === 'string' && !Number.isNaN(Date.parse(at)), `.li-talk.json 里记下打开的时间：${at}`);
+
+  // 再跑一次：不再打开，告诉 AI 用户要再看就运行 styles --open
+  lines = [];
+  await runGuide({ _: [dir] }, { log: s => lines.push(s), opener, env: {} });
+  t = lines.join('\n');
+  assert.equal(opened.length, 1, '同一份课件只自动打开一次');
+  assert.match(t, /^样册之前已经自动打开过（[^）]+），这次不再自动打开；用户要再看，运行 styles --open：/);
+  assert.ok(t.includes(cmd('styles', '--open')), t);
+  assert.equal(readMeta(dir).galleryOpened, at, '标记不变');
+  // 别的字段原样留着
+  assert.equal(readMeta(dir).confirmed.script, true);
+});
+
+test('风格：设了 LI_TALK_NO_OPEN 不打开样册，改成请运行 styles --open；不记标记', async () => {
+  const dir = styleDeck();
+  const opened = [];
+  const opener = async f => { opened.push(f); return true; };
+  const lines = [];
+  // 不传 env：用 process.env，这个测试文件开头设了 LI_TALK_NO_OPEN=1
+  await runGuide({ _: [dir] }, { log: s => lines.push(s), opener });
+  const t = lines.join('\n');
+  assert.equal(opened.length, 0);
+  assert.match(t, /^这次没有自动打开样册（设了 LI_TALK_NO_OPEN）：请运行 styles --open/);
+  assert.match(t, /先打开样册给用户看，不用等用户开口要看风格：/);
+  assert.ok(t.includes(cmd('styles', '--open')), t);
+  assert.equal(readMeta(dir).galleryOpened, undefined);
+  checkShape(t);
+});
+
+test('风格：打不开浏览器（没有图形界面）不报错，请用户手动双击打开样册；下次还会再试', async () => {
+  for (const opener of [async () => false, async () => { throw new Error('没有图形界面'); }]) {
+    const dir = styleDeck();
+    const lines = [];
+    assert.equal(await runGuide({ _: [dir] }, { log: s => lines.push(s), opener, env: {} }), 0);
+    const t = lines.join('\n');
+    assert.ok(t.startsWith(`没能打开浏览器（可能没有图形界面）：请用户手动双击打开样册：${fwd(GALLERY)}`), t.slice(0, 200));
+    assert.match(askOf(t), /问题 1：风格怎么定？（双击打开我发给你的样册，可以先点开体验）/);
+    assert.equal(readMeta(dir).galleryOpened, undefined, '没打开就不记，下次 guide 再试');
+    checkShape(t);
+  }
+});
+
+test('风格：别的步骤不打开样册', async () => {
+  const dir = tmp();
+  writeFileSync(join(dir, '讲稿.md'), script(2));
+  const opened = [];
+  await runGuide({ _: [dir] }, { log() {}, opener: async f => { opened.push(f); return true; }, env: {} });
+  assert.equal(opened.length, 0, '② 提纲不打开样册');
+  confirmStep(dir, 'outline');
+  confirmStep(dir, 'script');
+  confirmStep(dir, 'style', { scenes: ['paper'] });
+  await runGuide({ _: [dir] }, { log() {}, opener: async f => { opened.push(f); return true; }, env: {} });
+  assert.equal(opened.length, 0, '⑤ 搭骨架不打开样册');
 });
 
 test('搭骨架：风格确认后给出 new 命令，标题取讲稿的一级标题', () => {
@@ -623,7 +729,7 @@ test('跳过确认直接 new 的课件，按顺序回到没确认的那一步', 
   const t = guideText(dir);
   assert.match(t, /④ 风格/);
   assert.match(t, /已经搭好骨架/);
-  assert.match(t, /\n\s+1\. 方格纸（paper）[^\n]*（推荐/);
+  assert.match(t, /\n\s+1\. 按推荐的：方格纸（paper）[^\n]*（推荐/);
 });
 
 test('目录是个文件时报中文错误；run 打印说明并返回 0', async () => {

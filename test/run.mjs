@@ -11,5 +11,7 @@ const files = readdirSync(dir)
   .filter(f => f.endsWith('.test.mjs') && (!only || f.includes(only)))
   .map(f => join(dir, f));
 if (!files.length) { console.error('没找到测试文件'); process.exit(1); }
+// guide 到 ④ 风格会自动打开样册：测试里一律不打开浏览器
+process.env.LI_TALK_NO_OPEN = '1';
 const r = spawnSync(process.execPath, ['--test', ...files], { stdio: 'inherit' });
 process.exit(r.status === null ? 1 : r.status);

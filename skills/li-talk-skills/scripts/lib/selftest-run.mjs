@@ -62,7 +62,7 @@ const PROBE = `(function () {
 })()`;
 
 /**
- * 起一个无头浏览器，返回 { selftest, screenshot, close }。几个尺寸和截图共用这一个浏览器，用完必须 close。
+ * 起一个无头浏览器，返回 { selftest, screenshot, peek, close }。几个尺寸和截图共用这一个浏览器，用完必须 close。
  * 每次用一个新的临时用户目录，不碰用户自己的浏览器。
  */
 export async function openBrowser(browser, { callTimeout = CALL_TIMEOUT } = {}) {
@@ -200,7 +200,18 @@ export async function openBrowser(browser, { callTimeout = CALL_TIMEOUT } = {}) 
     writeFileSync(file, Buffer.from(data, 'base64'));
   }
 
-  return { selftest, screenshot, close };
+  // 打开一个地址（query 是「?…」、hash 是「#…」），加载完再等 settle 毫秒，在页面里算 expression，返回结果（测试用）
+  async function peek(deckDir, { w = 1920, h = 1080, query = '', hash = '', entry, expression, settle = SETTLE }) {
+    shown = null;
+    await call('Emulation.setEmulatedMedia', { features: [LIGHT] });
+    await load(deckUrl(deckDir, query, hash, entry), w, h, entry);
+    const start = Date.now();
+    while (Date.now() - start < CALL_TIMEOUT && !(await evaluate("document.readyState === 'complete'"))) await sleep(POLL);
+    await sleep(settle);
+    return evaluate(expression);
+  }
+
+  return { selftest, screenshot, peek, close };
 }
 
 // 单独跑一次自检：起浏览器、跑、关掉

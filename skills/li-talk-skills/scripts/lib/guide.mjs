@@ -16,11 +16,16 @@
 // 输出固定四块：【现在在哪一步】【下一步做什么】【问用户】【可以这样对 AI 说】。
 // 较弱的模型会照着一步步做，所以：命令写全（skill 和课件都用绝对路径、正斜杠，各种终端都认），
 // 问题带编号选项、推荐项放第一个并标（推荐…），每个问题最多 4 个选项（Claude Code 的提问卡片最多放 4 个）。
+//
+// ④ 风格：guide 命令（run）一到这一步就用浏览器打开样册，不等用户开口要看风格；每份课件只自动开一次，
+// 打开后在 .li-talk.json 里记下 galleryOpened（打开的时间），之后用户要再看就运行 styles --open。
+// 环境变量 LI_TALK_NO_OPEN=1 时不打开（测试和开不了浏览器的环境用）。guideText 是纯函数，不碰浏览器。
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import { UserError } from './cli.mjs';
 import { SKILL_DIR, TPL_DIR, VERSION } from './paths.mjs';
-import { metaPath, readMeta, STEPS, STEP_NAMES } from './meta.mjs';
+import { metaPath, readMeta, writeMeta, STEPS, STEP_NAMES } from './meta.mjs';
+import { openPath } from './open.mjs';
 import { collectPages, readDeck, scriptPageHeads } from './deck.mjs';
 import { mascotList, sceneIndex } from './new.mjs';
 import { cacheDir, loadManifest } from './fonts.mjs';
@@ -251,11 +256,12 @@ const ASK_HOW = '有选项卡片（比如 Claude Code 的提问卡片）就用�
   '没有卡片就把问题和编号选项原样发给用户，请用户回一个数字或直接说。';
 
 /**
- * body: { where: [行], steps: [文字 | [文字, 接着的行…]], asks: [{ q, opts: [], when }], noAsk, say }
+ * body: { lead: [行], where: [行], steps: [文字 | [文字, 接着的行…]], asks: [{ q, opts: [], when }], noAsk, say }
+ * lead 是放在四块前面的几行（比如「已经在浏览器里打开了样册」），可以不写。
  * 接着的行（命令、格式样例）单独成行、缩进对齐，方便原样复制。
  */
 function render(stage, body) {
-  const out = [`【现在在哪一步】${MARK[stage - 1]} ${STAGES[stage - 1]}（共 9 步）`];
+  const out = [...(body.lead || []), `【现在在哪一步】${MARK[stage - 1]} ${STAGES[stage - 1]}（共 9 步）`];
   for (const l of body.where) out.push('  ' + l);
   out.push('【下一步做什么】');
   body.steps.forEach((st, i) => {
@@ -686,12 +692,63 @@ function switchLines(s, info) {
   ];
 }
 
-// ④ 风格
-function stageStyle(s) {
+/* ------------------------------------------------------------------
+   ④ 风格：自动打开样册
+   ------------------------------------------------------------------ */
+
+/** 样册的位置：模板目录里的 gallery.html */
+export const GALLERY = join(TPL_DIR, 'gallery.html');
+
+// 样册打开的情况（④ 的输出照它写）：
+//   opened  这次 guide 刚自动打开了；before  之前自动打开过（at 是时间），这次不再开；
+//   off     设了 LI_TALK_NO_OPEN，没开；manual  没尝试打开（guideText 不碰浏览器）；
+//   failed  打不开浏览器（比如没有图形界面）；missing  样册文件不在
+function galleryNow(s) {
+  if (typeof s.meta.galleryOpened === 'string' && s.meta.galleryOpened) return { state: 'before', at: s.meta.galleryOpened };
+  return { state: existsSync(GALLERY) ? 'manual' : 'missing' };
+}
+
+/**
+ * 课件在 ④ 风格、还没自动打开过样册时，用浏览器打开一次，并在 .li-talk.json 里记下 galleryOpened（打开的时间）。
+ * opener 换打开函数、env 换环境变量（测试用，不真的弹浏览器）。打不开不报错，返回 { state: 'failed' }。
+ */
+export async function autoOpenGallery(s, { opener = openPath, env = process.env } = {}) {
+  const now = galleryNow(s);
+  if (now.state !== 'manual') return now;
+  const off = env.LI_TALK_NO_OPEN;
+  if (off && off !== '0' && off !== 'false') return { state: 'off' };
+  let ok = false;
+  try { ok = await opener(GALLERY); } catch (e) { ok = false; }
+  if (!ok) return { state: 'failed' };
+  const at = new Date().toISOString();
+  // 记不下（比如目录只读）也不要紧：下次 guide 会再开一次
+  try { writeMeta(s.dir, { galleryOpened: at }); } catch (e) { /* 忽略 */ }
+  return { state: 'opened', at };
+}
+
+// 样册里怎么看（④ 告诉用户）
+const GALLERY_HOW = '首页是全部风格的总览，点一张卡片就从第一页看这种风格；看的时候 ← → 翻页，左下角的小条随时换风格，点「全部风格」回到总览';
+
+// ④ 风格。ctx.gallery 是样册打开的情况（run 里自动打开后传进来）；不传就按 .li-talk.json 里的记录算，不碰浏览器
+function stageStyle(s, ctx = {}) {
   const info = sceneInfo();
+  const g = ctx.gallery || galleryNow(s);
+  const gpath = posix(GALLERY);
+  const n = info.ready.length;
   const where = [`课件目录：${posix(s.dir)}`, progress(s.meta)];
   if (s.script) where.push(`讲稿.md 有 ${s.script.pages.length} 页`);
   if (s.engine) where.push(`已经搭好骨架，用的风格：${s.meta.scenes.map(info.label).join('、') || '没记下'}；形象：${s.meta.mascot ? info.mascot(s.meta.mascot) : '没记下'}`);
+
+  // 最前面一句：样册开了没有
+  const openCmd = cli('styles', '--open');
+  const lead = {
+    opened: [`已经在浏览器里打开了样册：${gpath}，${n} 种风格都能点开体验。`],
+    before: [`样册之前已经自动打开过（${fmtTime(g.at)}），这次不再自动打开；用户要再看，运行 styles --open：`, '  ' + openCmd],
+    off: [`这次没有自动打开样册（设了 LI_TALK_NO_OPEN）：请运行 styles --open 打开样册给用户看，${n} 种风格都能点开体验：`, '  ' + openCmd],
+    manual: [`请运行 styles --open 打开样册给用户看，${n} 种风格都能点开体验：`, '  ' + openCmd],
+    failed: [`没能打开浏览器（可能没有图形界面）：请用户手动双击打开样册：${gpath}`],
+    missing: ['样册还没做好：先照 styles 的文字说明，和用户一起挑风格。'],
+  }[g.state];
 
   // 推荐：已经记下的风格优先（搭好的骨架就是它），否则按讲稿内容里的词粗估（节拍、画面这些格式段不算）
   let text = '';
@@ -700,18 +757,21 @@ function stageStyle(s) {
   const ranked = rankScenes(info.ready, text, { projector });
   const anyDark = ranked.some(r => r.penalized);
   if (projector && anyDark) where.push('讲稿里写了在投影、幕布或会议室讲：深色底在幕布上容易发灰，推荐时浅色底排在前面');
-  const fit = sc => (sc.fit ? `：适合${sc.fit}` : '');
+  const fit = sc => (sc.fit ? `，适合${sc.fit}` : '');
   let first;
   let recKeys;
+  let recLabel;
   const recorded = s.meta.scenes.filter(k => info.ready.some(x => x.key === k));
   if (recorded.length) {
     const scs = recorded.map(k => info.ready.find(x => x.key === k));
     recKeys = recorded.join(',');
+    recLabel = scs.map(x => x.label).join(' + ');
     const dim = projector && scs.some(x => x.dark) ? '；注意在投影上讲，深色底容易发灰' : '';
-    first = `${scs.map(x => x.label).join(' + ')}（${recKeys}）${scs.length === 1 ? fit(scs[0]) : ''}（推荐：${s.engine ? '已经搭好的骨架用的就是它，不用改文件' : '之前记下的就是它'}${dim}）`;
+    first = `按推荐的：${recLabel}（${recKeys}）${scs.length === 1 ? fit(scs[0]) : ''}（推荐：${s.engine ? '已经搭好的骨架用的就是它，不用改文件' : '之前记下的就是它'}${dim}）`;
   } else if (ranked.length) {
     const top = ranked[0];
     recKeys = top.s.key;
+    recLabel = top.s.label;
     // 深色底因为投影被排到后面、而它本来命中更多时，说一句它为什么没排第一
     const demoted = projector ? ranked.find(r => r.penalized && r.hits > top.hits) : null;
     const why = [];
@@ -719,14 +779,26 @@ function stageStyle(s) {
     else if (!demoted) why.push('讲稿里没有明显的关键词，按适合讲什么挑的');
     if (demoted) why.push(`讲稿里的${demoted.words.join('、')}更像${demoted.s.label}，但它是深色底`);
     if (projector && anyDark) why.push('在投影上讲，优先浅色底');
-    first = `${top.s.label}（${top.s.key}）${fit(top.s)}（推荐：${why.join('；')}）`;
+    first = `按推荐的：${top.s.label}（${top.s.key}）${fit(top.s)}（推荐：${why.join('；')}）`;
   } else {
     recKeys = '〈风格键名〉';
+    recLabel = '';
     first = '照 styles 列出的挑一个（推荐）';
   }
-  const others = ranked.filter(r => !recKeys.split(',').includes(r.s.key)).slice(0, 2)
-    .map(r => `${r.s.label}（${r.s.key}）${fit(r.s)}${r.penalized ? '（深色底，投影上容易发灰）' : ''}`);
-  const opts = [first, ...others, '先看样册再定'];
+  // 两个备选：推荐之后排得最前的两种。理由是它适合讲什么；讲稿里也有它的词、深色底在投影上发灰时再补一句
+  const alts = ranked.filter(r => !recKeys.split(',').includes(r.s.key)).slice(0, 2);
+  const others = alts.map(r => {
+    const why = [];
+    if (r.hits) why.push(`讲稿里有${r.words.join('、')}`);
+    if (r.penalized) why.push('深色底，投影上容易发灰');
+    return `备选：${r.s.label}（${r.s.key}）${fit(r.s)}${why.length ? `（${why.join('；')}）` : ''}`;
+  });
+  const tryAll = g.state === 'missing' ? '先听全部风格的文字说明，再告诉我选哪个' : '先体验全部风格，看完再告诉我选哪个';
+  const opts = [first, ...others, tryAll];
+  const q = {
+    failed: '风格怎么定？（双击打开我发给你的样册，可以先点开体验）',
+    missing: '风格怎么定？',
+  }[g.state] || '风格怎么定？（样册已经在浏览器里打开，可以先点开体验）';
 
   // 各风格默认的形象：「方格纸用尖尖（jianjian），黑板用沙沙（shasha），科技暗黑用微光（weiguang）」
   const byMascot = {};
@@ -734,23 +806,36 @@ function stageStyle(s) {
   const mascotNote = Object.entries(byMascot).map(([k, labels]) => `${labels.join('、')}用${info.mascot(k)}`).join('，');
 
   const steps = [];
+  steps.push({
+    opened: `样册已经在用户的浏览器里打开了，不用等用户开口要看风格。告诉用户样册怎么看：${GALLERY_HOW}。`,
+    before: ['这份课件之前已经自动打开过样册，这次不再自动打开。用户要再看（或者浏览器里关掉了），运行：', openCmd, `样册怎么看：${GALLERY_HOW}。`],
+    off: ['先打开样册给用户看，不用等用户开口要看风格：', openCmd, `告诉用户样册怎么看：${GALLERY_HOW}。`],
+    manual: ['先打开样册给用户看，不用等用户开口要看风格：', openCmd, `告诉用户样册怎么看：${GALLERY_HOW}。`],
+    failed: ['没能自动打开浏览器：把样册的路径发给用户，请用户手动双击打开（还是打不开，就把 styles 的文字说明讲给用户听）：', gpath, `样册怎么看：${GALLERY_HOW}。`],
+    missing: '样册还没做好：把下面 styles 列出的文字说明讲给用户听。',
+  }[g.state]);
   steps.push(['运行 styles，看所有风格的样子、适合讲什么、不适合什么、属于哪一家：', cli('styles')]);
   steps.push('对照讲稿每部分讲什么，从「适合」里挑一个主推，跟用户说一句理由。下面问题 1 的推荐是按讲稿里的词粗估的；' +
-    '你读过讲稿，觉得别的更合适，就把它换到第一个、标上（推荐）。' +
+    '你读过讲稿，觉得别的更合适，就把它换到第一个，照「按推荐的：风格名（键名），适合……（推荐：理由）」的样子写，原来的推荐挪成备选。' +
     (projector && anyDark ? `讲稿里写了在投影上讲：优先推浅色底；用户想要深色底（${info.ready.filter(x => x.dark).map(x => x.label).join('、')}），先跟他说一声投到幕布上容易发灰。` : ''));
   steps.push('内容跨度大时，可以按章用不同风格：最多 3 种，只在同一家里混（手绘家、现代家、像素家互不混用）；一份课件只用一个形象。');
-  steps.push(['打开样册给用户看（样册还没做好时它会说明，那就把 styles 的文字说明讲给用户听）：', cli('styles', '--open')]);
-  steps.push(['用户选定后（必须等用户明确选了）运行，--scenes 后面写风格的键名，多种用逗号隔开：',
-    cli('confirm', quote(s.dir), 'style', '--scenes', recKeys),
-    `形象默认跟第一种风格走（${mascotNote}）；用户想换形象再加 --mascot 键名。`]);
+  steps.push(`把下面的问题 1 原样问用户，${opts.length} 个选项照抄（有提问卡片就用卡片）；不要改成「你想要什么风格」这样的开放式提问，也不要等用户开口要看风格。`);
+  const confirmCmd = keys => cli('confirm', quote(s.dir), 'style', '--scenes', keys);
+  const pick = ['用户选了哪个就照着做。必须等用户明确选了才运行 confirm；--scenes 后面写风格的键名，多种用逗号隔开：',
+    `选 1（按推荐的${recLabel}）：`, '  ' + confirmCmd(recKeys)];
+  alts.forEach((r, i) => pick.push(`选 ${i + 2}（备选${r.s.label}）：`, '  ' + confirmCmd(r.s.key)));
+  pick.push(`选 ${opts.length}（${tryAll.split('，')[0]}）：${g.state === 'missing' ? '把 styles 的文字说明讲给用户听' : `告诉用户样册怎么看（${GALLERY_HOW}）`}，` +
+    `然后等用户看完、说出风格名（比如「就用${recLabel || '水彩田园'}」），按 styles 的列表对成键名，照上面的命令运行 confirm（--scenes 后面换成那个键名）。` +
+    '用户还没说选哪个，就不要 confirm，也不要往下做。');
+  pick.push(`形象默认跟第一种风格走（${mascotNote}）；用户想换形象再加 --mascot 键名。`);
+  steps.push(pick);
   if (s.engine) steps.push(['已经搭好骨架了：用户选的和现在的一样，就照上面运行 confirm；选了别的风格，照这样换：', ...switchLines(s, info)]);
   steps.push(guideStep(s.dir));
 
-  const label = recorded.length ? recorded.map(k => info.ready.find(x => x.key === k).label).join('和') : ranked.length ? ranked[0].s.label : '推荐的那个';
   return render(4, {
-    where, steps,
-    asks: [{ q: '这份课件用哪种风格？', opts }],
-    say: `先打开样册让我看看，没问题就用${label}`,
+    lead, where, steps,
+    asks: [{ q, opts }],
+    say: `就用${recLabel ? recLabel.replace(/ \+ /g, '和') : '水彩田园'}`,
   });
 }
 
@@ -931,17 +1016,22 @@ function stageDone(s) {
 const RENDER = [null, stageStart, stageOutline, stageScript, stageStyle, stageBuild, stageTrial, stageFull, stageReview, stageDone];
 
 /**
- * guide 的输出文字。target 是课件目录，不写就用当前目录。
+ * guide 的输出文字。target 是课件目录，不写就用当前目录。纯函数：不打开浏览器、不写文件。
+ * ctx.gallery 是 ④ 里样册打开的情况（见 autoOpenGallery）；不传就按 .li-talk.json 里的记录算。
  */
-export function guideText(target) {
+export function guideText(target, ctx = {}) {
   const s = inspect(target);
-  return RENDER[s.stage](s);
+  return RENDER[s.stage](s, ctx);
 }
 
-// guide 命令
+// guide 命令。到了 ④ 风格、这份课件还没自动打开过样册时，先用浏览器打开样册（见文件开头）；
+// opts.opener 换打开函数、opts.env 换环境变量（测试用，不真的弹浏览器）
 export async function run(args = {}, opts = {}) {
   const log = opts.log || (s => console.log(s));
-  const target = args._ && args._[0];
-  log(guideText(target ? String(target) : undefined));
+  const target = args._ && args._[0] ? String(args._[0]) : undefined;
+  const s = inspect(target);
+  const ctx = {};
+  if (s.stage === 4) ctx.gallery = await autoOpenGallery(s, { opener: opts.opener, env: opts.env });
+  log(RENDER[s.stage](s, ctx));
   return 0;
 }

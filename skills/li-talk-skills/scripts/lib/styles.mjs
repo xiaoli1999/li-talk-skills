@@ -66,7 +66,7 @@ export async function run(args = {}, opts = {}) {
   }
   if (await opener(gallery)) {
     log(`已用浏览器打开样册：${posix(gallery)}`);
-    log('样册里可以切换风格，看同一批样板页在各种风格下的样子。');
+    log('样册首页是全部风格的总览，点一张卡片就从第一页看这种风格；左下角的小条随时换风格，点「全部风格」回到总览。');
     return 0;
   }
   log(`打不开浏览器，请手动双击打开样册：${posix(gallery)}`);
