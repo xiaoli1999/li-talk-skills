@@ -52,7 +52,7 @@
   /* 阅读模式里每页的底：和背景层同样的光斑（按 1920×1080 的页面坐标），两颗小球简化成同心的渐变 */
   --scene-bg:
     radial-gradient(circle 108px at 200px 1008px,#fff 0,#FFF0E6 22%,#FFCDB3 62%,#FFA285 99%,rgba(255,162,133,0) 100%),
-    radial-gradient(circle 84px at 1330px 398px,#fff 0,#EEF2FF 22%,#C3D1FF 62%,#94ABFF 99%,rgba(148,171,255,0) 100%),
+    radial-gradient(circle 84px at 1880px 560px,#fff 0,#EEF2FF 22%,#C3D1FF 62%,#94ABFF 99%,rgba(148,171,255,0) 100%),
     radial-gradient(circle 560px at 1640px 860px,rgba(118,224,212,.72) 0,rgba(118,224,212,.72) 42%,rgba(118,224,212,0) 100%),
     radial-gradient(circle 500px at 260px 1060px,rgba(255,194,156,.74) 0,rgba(255,194,156,.74) 42%,rgba(255,194,156,0) 100%),
     radial-gradient(circle 340px at 960px 700px,rgba(236,176,236,.46) 0,rgba(236,176,236,.46) 42%,rgba(236,176,236,0) 100%),
@@ -78,8 +78,8 @@
 .bg[data-scene="glass"] .gl-b3{--gx:260px;--gy:1060px;--gs:500px;--gc:rgba(255,194,156,.74)}    /* 杏色 */
 .bg[data-scene="glass"] .gl-b4{--gx:960px;--gy:700px;--gs:340px;--gc:rgba(236,176,236,.46)}     /* 一抹淡紫，透过玻璃中段 */
 .bg[data-scene="glass"] .gl-b5{--gx:-60px;--gy:420px;--gs:300px;--gc:rgba(150,206,255,.5)}      /* 左侧天蓝 */
-/* 两颗光亮的小球：边缘清楚，半藏在玻璃后面，折射靠它们看出来 */
-.bg[data-scene="glass"] .gl-o1{--gx:1330px;--gy:398px;--gs:84px;background:radial-gradient(circle at 34% 30%,#fff 0,#EEF2FF 16%,#C3D1FF 55%,#94ABFF 100%)}
+/* 两颗光亮的小球：边缘清楚，放在舞台边上、半出舞台，不垫在字后面（蓝球原来在 1330,398，会压到正文）；玻璃滑过它们时看得出折射 */
+.bg[data-scene="glass"] .gl-o1{--gx:1880px;--gy:560px;--gs:84px;background:radial-gradient(circle at 34% 30%,#fff 0,#EEF2FF 16%,#C3D1FF 55%,#94ABFF 100%)}
 .bg[data-scene="glass"] .gl-o2{--gx:200px;--gy:1008px;--gs:108px;background:radial-gradient(circle at 34% 30%,#fff 0,#FFF0E6 16%,#FFCDB3 55%,#FFA285 100%)}
 
 /* 正文：黑体，字距拉开一点 */

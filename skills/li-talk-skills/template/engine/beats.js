@@ -43,9 +43,12 @@
     const v = getComputedStyle(e).rotate;
     return v && v !== 'none' ? (parseFloat(v) || 0) : 0;
   }
+  // 去掉出场留下的行内样式；gsap 记着的位移（e._gsap 里的 x、y、scale…）也一起清掉，
+  // 不然之后的出场只补间 x 或 scale 时，会把旧的 y 写回去，字低一截
+  const TF_KEYS = ['transform', 'translate', 'rotate', 'scale'];
   function clearEl(e) {
-    if (G) G.killTweensOf(e);
-    ['opacity', 'visibility', 'transform', 'clip-path', 'translate', 'rotate', 'scale', '--lift'].forEach(k => e.style.removeProperty(k));
+    if (G) { G.killTweensOf(e); if (e._gsap) G.set(e, { clearProps: 'transform' }); }
+    ['opacity', 'visibility', 'clip-path', '--lift', ...TF_KEYS].forEach(k => e.style.removeProperty(k));
     if (e instanceof SVGElement) { e.removeAttribute('transform'); e.style.removeProperty('transform-origin'); }
   }
   function strokes(e) { return e instanceof SVGElement ? (e.matches('path,line,rect,circle,ellipse,polyline') ? [e] : $$('path', e)) : []; }
@@ -132,7 +135,9 @@
      ================================================================= */
   function emphasize(tl, k, t) {
     tl.fromTo(k.el, { '--k': 0 }, { '--k': 1, duration: .45, ease: 'power2.out', immediateRender: true }, t);
-    tl.fromTo(k.el, { scale: 1 }, { scale: 1.1, duration: .16, yoyo: true, repeat: 1, ease: 'power1.out', onComplete: () => k.el.style.removeProperty('transform') }, t + .12);
+    // 放大一下就收回；收回后把 gsap 写在行内的 transform 和 translate/rotate/scale:none 都去掉，
+    // 不然它们会盖住风格给重点词写的 CSS 变换（比如液态玻璃重点词的透镜放大）
+    tl.fromTo(k.el, { scale: 1 }, { scale: 1.1, duration: .16, yoyo: true, repeat: 1, ease: 'power1.out', onComplete: () => TF_KEYS.forEach(p => k.el.style.removeProperty(p)) }, t + .12);
   }
   function markLayer(p) {
     let svg = $(':scope > svg.marks', p.el);
