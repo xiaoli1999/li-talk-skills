@@ -19,9 +19,10 @@
         一步出场时：上一步的竖画往下写（--ink-seg）→ 落笔一顿，墨点洇开（--ink-dp）、溅出几粒细墨 → 步骤名、说明依次墨晕洇出。
         横排 .steps.h 不画竖画（页面一般自己画了手绘箭头），只有墨点。
         讲过的步骤不整项变淡，只让字和墨点变淡：通到当前这一步的那笔竖画保持浓墨，两头都讲过了才淡（ink.css）
-     5. 朱砂点重点词：样页的重点词到拍时转朱砂，每个字下面朱笔圈一个小圈。这里 decorate 把重点词直接写着的字拆成单字
-        （连在一起的字母数字算一个），每个字一个 .ink-kc；颜色和小圈都跟着引擎本来就会推的 --k 走（ink.css），
-        小圈按字的先后一个个画出来
+     5. 朱笔点重点词：样页的重点词到拍时转朱砂，每个字下面朱笔圈一个小圈；小圈在投影上像句号、一页多了显得乱，
+        这里改成字下面淡淡一道朱笔（竖排时在字右边，古书的旁线），颜色和这一笔都跟着引擎本来就会推的 --k 走（ink.css），
+        笔顺着字的方向写出来。decorate 仍把重点词直接写着的字拆成单字 .ink-kc（连在一起的字母数字算一个），好一个个写出来。
+        一页的重点词最多两处
      6. 墨晕悬停：卡片、小格、步骤、命令移上去时，一团淡墨从鼠标处洇开（墨点图按 --ink-h 由小变大），卡片、命令抬起一点，
         步骤的墨点吸饱了墨微微一胀、说明转浓墨。mount 时在舞台上挂一个 pointermove，写悬停组件的 --ink-mx --ink-my
      7. 点击处洇开一点淡墨（ripple，样页的 inkDrop）
@@ -36,12 +37,18 @@
      样页点到步骤上时墨点按一下（ripple 只拿到坐标，这一版不做）
    - 自己加的出场名：yun、zhan，只在这个风格里认（别的风格会提醒并换成它的默认出场）；
      下面的自有组件另有 shu、juan、kai、yin、ran，都由组件类名自动选上（enterBy），页面不用写 data-in
+   - 可读性的规矩（竖排好看，但句子竖着读很吃力）：竖排只给短的——题签、标题、物名、印文、短诗句，
+     一块不超过 12 个字，一页竖排的字（含印上的字）加起来不超过 24 个；说明、句子、落款、讲者一律横排（.ink-heng）。
+     讲过的字只退到 recede（.8），页面里别再给讲过的块另加透明度、另调淡；正文不用比 --ink-2 更淡的颜色
    - 自有版式组件（水墨国风专用，类名都带 ink- 前缀；样子在 ink.css，样板页见 samples/ink.js）：
      「每一拍发生了什么」按水墨的习惯来——一列字从上往下写出来、一笔墨洇开、一枚印盖下，而不是卡片弹出来
      · .ink-v 竖排（writing-mode: vertical-rl）：多行时一列列从右往左排；带拍出现时一个字一个字写出来（出场 shu：
        按文档顺序，也就是从上到下、从右往左，每个字由淡转浓、从上往下洇出，大字写得慢、小字写得快）；
-       竖排里重点词的朱砂圈点画在字的右边（古书竖排的圈点位置）。竖排里别用逗号句号，用空格（　）或分列
-     · .ink-note 双行小注（和 .ink-v 一起用）：古书的夹注，小一号的中墨字，用 <br> 分成两行并排在一列里
+       竖排里重点词的朱笔画在字的右边（古书竖排的旁线）。竖排里别用逗号句号，用空格（　）或分列
+     · .ink-heng 横写：横排的句子、说明、落款，带拍出现时也一个字一个字写出来（出场 shu，从左往右、一行行往下）；
+       退一拍时从右往左收回。不折行，换行写 <br>
+     · .ink-note 小注：小一号的中墨字，用 <br> 分行。说明句写成 .ink-heng.ink-note（横排）；
+       .ink-v.ink-note 是古书的双行夹注，只给很短的注
      · .ink-box 框字：一个字套在细墨方框里，放在列首当小标记（「器」「茶」「水」）
      · .ink-seal 朱印：默认白文（朱底、字留出纸色），.zhu 朱文（朱字朱框），.round 椭圆印；.sm 小印（34px）、.lg 大印（64px）。
        字竖排，多列用 <br>；倾斜写 --r。带拍出现时盖下来（出场 yin：提起、压下、印泥往外洇一圈、溅出几粒朱砂）；
@@ -50,6 +57,7 @@
        出场 juan：签条从上往下展开，里面的字再一个个写出来、里面的印再盖下
      · .ink-scroll 手卷 + .ink-col 一列：手卷是上下两道（外粗内细）边线框起来的一段纸，里面的 .ink-col 从右往左排，
        每列左边一道乌丝栏（细墨竖线）；.ink-col.ink-head 是引首（放标题，几行竖排并排，和正文之间是双线）。
+       一列里放一个竖排的物名（4 个字以内）加横排的说明（.ink-heng.ink-note），别把说明也竖着写。
        手卷第 0 拍出现时从右往左展开（出场 kai），引首的字跟着写出来；之后每拍一列：乌丝栏从上往下画、这一列的字写出来（出场 shu）。
        列宽、字号在页面 CSS 里定；手卷写死 width，列靠右排，左边空着的一截是拖尾，可以放闲章
      · .ink-frame 版框：外粗内细的双线框（印谱的格子、册页的框），不带底色
@@ -207,7 +215,8 @@
     return end;
   }
 
-  /* 竖排的一列（.ink-v）、手卷的一列（.ink-col）：手卷的一列先从上往下画出左边的乌丝栏；再一个字一个字写出来；里面的印最后盖下 */
+  /* 竖排的一列（.ink-v）、横写的一段（.ink-heng）、手卷的一列（.ink-col）：手卷的一列先从上往下画出左边的乌丝栏；
+     再一个字一个字写出来；里面的印最后盖下 */
   function shu(tl, e, t, ctx) {
     if (e instanceof SVGElement) return fade(tl, e, t, ctx);
     if (isStep(e)) return step(tl, e, t, ctx);
@@ -254,8 +263,8 @@
     tl.fromTo(e, { autoAlpha: 0, '--ink-ran': 0 }, { autoAlpha: 1, '--ink-ran': 1, duration: .95, ease: 'power2.out', immediateRender: true, onComplete: () => { ctx.done(); off(); }, onInterrupt: off }, t);
     return .95;
   }
-  /* 竖排、题签、手卷：退一拍时字从下往上收回去（--ink-shou） */
-  const VERT = '.ink-v, .ink-col, .ink-tiqian, .ink-scroll';
+  /* 竖排、横写、题签、手卷：退一拍时字收回去（--ink-shou；竖排从下往上收，横写从右往左收，见 ink.css） */
+  const VERT = '.ink-v, .ink-heng, .ink-col, .ink-tiqian, .ink-scroll';
 
   /* 溅出的细墨：从墨点飞出去，转眼被纸吸干（都往左、上、下，不往右边的字上溅；单双步上下翻一下，溅得不一样） */
   const SPLASH = [[-64, -26, 8.4], [-44, 38, 6], [-18, -60, 7.2], [-74, 10, 4.8], [8, 58, 6.4]];
@@ -313,7 +322,7 @@
   const FX = { yun, zhan, shu, juan, kai, yin, ran };
   /* 自有组件排在前面（引擎按这里的顺序取第一个对上的类名） */
   const BY = {
-    'ink-scroll': 'kai', 'ink-tiqian': 'juan', 'ink-seal': 'yin', 'ink-wash': 'ran', 'ink-col': 'shu', 'ink-v': 'shu',
+    'ink-scroll': 'kai', 'ink-tiqian': 'juan', 'ink-seal': 'yin', 'ink-wash': 'ran', 'ink-col': 'shu', 'ink-v': 'shu', 'ink-heng': 'shu',
     card: 'zhan', cell: 'zhan', cells: 'zhan', copy: 'zhan', term: 'zhan', shot: 'zhan', tag: 'zhan',
   };
   function pick(e) {
@@ -356,9 +365,9 @@
     k.style.setProperty('--n', Math.max(n, 1));
   }
 
-  /* 竖排的块（和印、题签、手卷）里的字也拆成单字（.ink-ch，连在一起的字母数字算一个），好一个个写出来；
+  /* 竖排、横写的块（和印、题签、手卷）里的字也拆成单字（.ink-ch，连在一起的字母数字算一个），好一个个写出来；
      重点词已经拆成 .ink-kc 的不再拆。顺带让自检能逐字量到竖排的字（它按行量，竖排时只量得到一列中间的一截） */
-  const CHARS = '.ink-v, .ink-tiqian, .ink-col, .ink-scroll, .ink-seal';
+  const CHARS = '.ink-v, .ink-heng, .ink-tiqian, .ink-col, .ink-scroll, .ink-seal';
   function splitChars(root) {
     if (root.dataset.inkChars) return;
     root.dataset.inkChars = '1';
@@ -458,7 +467,7 @@
           tl.call(offW, null, .42);
           return;
         }
-        // 竖排的列、题签、手卷：字从下往上收回去（和写的方向相反）
+        // 竖排的列、横写、题签、手卷：字收回去（和写的方向相反）
         if (e.matches(VERT)) {
           const offV = () => clear(e, ['--ink-shou']);
           tl.fromTo(e, { '--ink-shou': 1 }, { '--ink-shou': 0, duration: .3, ease: 'power2.in', immediateRender: false, onInterrupt: offV }, 0);

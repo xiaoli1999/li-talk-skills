@@ -3,12 +3,13 @@
    宣纸底、左下两层淡墨远山；墨分三层（浓 --ink、中 --ink-2、淡 --ink-3），朱砂 --ink-zhu 只给重点词、印章、圈注和形象；
    不用别的颜色：卡片颜色 t-* 在这里都是深浅不同的纸色。所有选择器的第一段都带 [data-scene="ink"]
    - 图都是 data URI（只栅格化一次）：--ink-paper 宣纸纹、--ink-far / --ink-near 远山两层、--ink-blot 点击洇开的墨点、
-     --ink-wash 悬停时的淡墨晕、--ink-brush 有飞白的竖笔、--ink-node 步骤的墨点（浓墨芯 + 中墨 + 淡墨晕）
+     --ink-wash 悬停时的淡墨晕、--ink-brush 有飞白的竖笔、--ink-node 步骤的墨点（浓墨芯 + 中墨 + 淡墨晕）、
+     --ink-zhu-h / --ink-zhu-v 重点词下面（竖排时右边）的一道朱笔
    - ink.js 动画时写在元素上的变量：--ir 墨晕遮罩的半径（只在写着时加遮罩）、--ink-dp 步骤墨点洇开的进度、
      --ink-seg 竖笔写到哪、--ink-mx / --ink-my 鼠标在组件里的位置、--ink-press 题签被印压下去、--ink-glow 印泥洇开、
      --ink-tr / --ink-ox 翻页时新页洇开的半径和起点；重点词跟着引擎推的 --k 走
    - --recede（讲过的拍变到多淡）由 ink.js 的 recede 写入：.8
-   - 自有版式组件（.ink-v 竖排、.ink-note 双行小注、.ink-box 框字、.ink-seal 朱印、.ink-tiqian 题签、.ink-scroll / .ink-col 手卷、
+   - 自有版式组件（.ink-v 竖排、.ink-heng 横写、.ink-note 小注、.ink-box 框字、.ink-seal 朱印、.ink-tiqian 题签、.ink-scroll / .ink-col 手卷、
      .ink-frame 版框、.ink-wash / .ink-peaks 墨染的画、.steps.ink-cn / .ink-needle）的样子在文件末尾，用法见 ink.js 开头；
      它们动画时 ink.js 写的变量：--ink-xie 一个字写到哪、--ink-shou 退拍时收到哪、--ink-rule 乌丝栏画到哪、
      --ink-ran 画洇开到哪、--ink-ndl 悬针写到哪、--ink-glow 印泥洇开
@@ -40,6 +41,9 @@
   /* 自有组件用的图：--ink-needle 收尖的悬针（.steps.ink-needle）、--ink-peaks 一座带雾的主峰和一叶小舟（.ink-peaks） */
   --ink-needle:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 200' width='24' height='200' preserveAspectRatio='none'%3E%3Cdefs%3E %3Cfilter id='f' x='-80%25' y='-4%25' width='260%25' height='108%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.55 .016' numOctaves='2' seed='11' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='3' xChannelSelector='R' yChannelSelector='G' result='d'/%3E%3CfeColorMatrix in='n' type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -9 0 0 0 6.6' result='m'/%3E%3CfeComposite in='d' in2='m' operator='in'/%3E%3C/filter%3E%3C/defs%3E %3Cpath filter='url(%23f)' fill='%231E1C19' fill-opacity='.92' d='M2 2C1 46 5 92 3 124C3 148 8 172 12 198C16 172 21 148 21 124C19 92 23 46 22 2Z'/%3E%3C/svg%3E");
   --ink-peaks:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1040 800' width='1040' height='800'%3E%3Cdefs%3E %3ClinearGradient id='ga' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%231E1C19' stop-opacity='.09'/%3E%3Cstop offset='1' stop-color='%231E1C19' stop-opacity='0'/%3E%3C/linearGradient%3E %3ClinearGradient id='gb' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%231E1C19' stop-opacity='.2'/%3E%3Cstop offset='.5' stop-color='%231E1C19' stop-opacity='.07'/%3E%3Cstop offset='1' stop-color='%231E1C19' stop-opacity='0'/%3E%3C/linearGradient%3E %3ClinearGradient id='gc' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%231E1C19' stop-opacity='.46'/%3E%3Cstop offset='.25' stop-color='%231E1C19' stop-opacity='.24'/%3E%3Cstop offset='.6' stop-color='%231E1C19' stop-opacity='.07'/%3E%3Cstop offset='1' stop-color='%231E1C19' stop-opacity='0'/%3E%3C/linearGradient%3E %3ClinearGradient id='gd' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%231E1C19' stop-opacity='.16'/%3E%3Cstop offset='1' stop-color='%231E1C19' stop-opacity='0'/%3E%3C/linearGradient%3E %3ClinearGradient id='fy' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='.5' stop-color='%23fff'/%3E%3Cstop offset='.93' stop-color='%23fff' stop-opacity='0'/%3E%3C/linearGradient%3E %3ClinearGradient id='fx' x1='0' y1='0' x2='1' y2='0'%3E%3Cstop offset='0' stop-color='%23fff' stop-opacity='0'/%3E%3Cstop offset='.12' stop-color='%23fff'/%3E%3Cstop offset='.88' stop-color='%23fff'/%3E%3Cstop offset='1' stop-color='%23fff' stop-opacity='0'/%3E%3C/linearGradient%3E %3Cmask id='m' maskUnits='userSpaceOnUse' x='0' y='0' width='1040' height='800'%3E%3Crect width='1040' height='800' fill='url(%23fy)'/%3E%3C/mask%3E %3Cmask id='mx' maskUnits='userSpaceOnUse' x='0' y='0' width='1040' height='800'%3E%3Crect width='1040' height='800' fill='url(%23fx)'/%3E%3C/mask%3E %3Cfilter id='s' x='-5%25' y='-10%25' width='110%25' height='120%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .03' numOctaves='2' seed='4'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='24' xChannelSelector='R' yChannelSelector='G'/%3E%3CfeGaussianBlur stdDeviation='3.2'/%3E%3C/filter%3E %3Cfilter id='r' x='-5%25' y='-10%25' width='110%25' height='120%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.018 .05' numOctaves='3' seed='9'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='14' xChannelSelector='R' yChannelSelector='G'/%3E%3CfeGaussianBlur stdDeviation='1.1'/%3E%3C/filter%3E %3Cfilter id='e' x='-5%25' y='-10%25' width='110%25' height='120%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.03 .09' numOctaves='3' seed='21'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='12' xChannelSelector='R' yChannelSelector='G'/%3E%3CfeGaussianBlur stdDeviation='2.6'/%3E%3C/filter%3E %3C/defs%3E %3Cg mask='url(%23mx)'%3E%3Cg mask='url(%23m)'%3E %3Cpath filter='url(%23s)' fill='url(%23ga)' d='M640 800C700 640 760 520 820 430C850 386 880 340 912 324C936 312 952 330 974 366C996 402 1018 430 1040 446L1040 800Z'/%3E %3Cpath filter='url(%23s)' fill='url(%23gb)' d='M90 800C130 690 190 590 240 520C270 478 290 420 316 370C330 342 346 322 362 330C382 340 396 380 420 410C450 448 500 466 560 486C610 502 650 540 690 600C720 650 740 720 760 800Z'/%3E %3Cpath filter='url(%23e)' fill='none' stroke='%231E1C19' stroke-opacity='.16' stroke-width='5' d='M240 520C270 478 290 420 316 370C330 342 346 322 362 330C382 340 396 380 420 410C450 448 500 466 560 486'/%3E %3Cpath filter='url(%23r)' fill='url(%23gc)' d='M360 800C400 700 440 620 482 560C506 526 520 486 548 458C572 434 572 396 590 350C604 312 620 262 640 212C654 176 664 140 680 124C692 112 704 120 712 146C722 180 728 214 750 240C772 266 800 270 818 304C836 338 846 362 878 392C912 424 952 446 990 490C1012 516 1028 548 1040 572L1040 800Z'/%3E %3Cpath filter='url(%23e)' fill='none' stroke='%231E1C19' stroke-opacity='.3' stroke-width='7' stroke-linecap='round' d='M482 560C506 526 520 486 548 458C572 434 572 396 590 350C604 312 620 262 640 212C654 176 664 140 680 124C692 112 704 120 712 146C722 180 728 214 750 240C772 266 800 270 818 304C836 338 846 362 878 392C912 424 952 446 990 490'/%3E %3Cpath filter='url(%23e)' fill='none' stroke='%231E1C19' stroke-opacity='.13' stroke-width='5' stroke-linecap='round' d='M664 170C650 230 640 290 618 352M712 196C706 250 716 300 700 364M590 372C576 410 560 442 540 474M800 300C788 340 794 372 780 418'/%3E %3Cpath filter='url(%23s)' fill='url(%23gd)' d='M0 800L0 650C70 616 150 604 230 612C300 618 340 646 410 664C470 680 520 700 570 740L590 800Z'/%3E %3Cg fill='%231E1C19' transform='translate(30 -104)'%3E%3Cpath fill-opacity='.6' d='M196 714C220 722 262 723 288 714L281 722C258 728 226 728 204 722Z'/%3E%3Cpath fill-opacity='.55' d='M238 714L240 692C241 686 247 686 248 692L250 714Z'/%3E%3Ccircle fill-opacity='.55' cx='244' cy='686' r='4.6'/%3E%3C/g%3E %3C/g%3E%3C/g%3E%3C/svg%3E");
+  /* 重点词下面的一道朱笔（两头收尖、带飞白）：--ink-zhu-h 横排时画在字下，--ink-zhu-v 竖排时画在字右边 */
+  --ink-zhu-h:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 24' width='200' height='24' preserveAspectRatio='none'%3E%3Cdefs%3E%3Cfilter id='f' x='-4%25' y='-80%25' width='108%25' height='260%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.016 .55' numOctaves='2' seed='11' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='3' xChannelSelector='R' yChannelSelector='G' result='d'/%3E%3CfeColorMatrix in='n' type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -9 0 0 0 6.6' result='m'/%3E%3CfeComposite in='d' in2='m' operator='in'/%3E%3C/filter%3E%3C/defs%3E%3Cpath filter='url(%23f)' fill='%23B8352B' d='M2 12C8 4 30 3 60 4C100 5 150 4 182 6C192 7 198 10 198 12C196 17 182 20 150 20C110 20 60 21 30 21C12 21 4 18 2 12Z'/%3E%3C/svg%3E");
+  --ink-zhu-v:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 200' width='24' height='200' preserveAspectRatio='none'%3E%3Cdefs%3E%3Cfilter id='f' x='-80%25' y='-4%25' width='260%25' height='108%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.55 .016' numOctaves='2' seed='11' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='3' xChannelSelector='R' yChannelSelector='G' result='d'/%3E%3CfeColorMatrix in='n' type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -9 0 0 0 6.6' result='m'/%3E%3CfeComposite in='d' in2='m' operator='in'/%3E%3C/filter%3E%3C/defs%3E%3Cpath filter='url(%23f)' fill='%23B8352B' d='M12 2C4 8 3 30 4 60C5 100 4 150 6 182C7 192 10 198 12 198C17 196 20 182 20 150C20 110 21 60 21 30C21 12 18 4 12 2Z'/%3E%3C/svg%3E");
   /* 宣纸：底色 + 纸纹平铺 + 四周一圈极淡的旧纸色（阅读模式每页也用它） */
   --scene-bg:var(--ink-paper) 0 0/320px 320px repeat,radial-gradient(ellipse 120% 95% at 50% 42%,rgba(110,90,60,0) 55%,rgba(110,90,60,.08) 100%),#F3EDE1;
 }
@@ -67,15 +71,16 @@
 [data-scene="ink"] .explain b{color:var(--ink)}
 [data-scene="ink"] .faint{color:var(--ink-3)}
 
-/* ---------- 重点词：先是墨色，到拍时转朱砂，每个字下面朱笔圈一个小圈（ink.js 把字拆成 .ink-kc，--i 第几个、--n 一共几个）。
-   --k 从 0 到 1（引擎在那一拍动画）：颜色跟着转；小圈按字的先后一个个画出来（圆锥渐变遮罩转一圈） ---------- */
+/* ---------- 重点词：先是墨色，到拍时转朱砂，字下面朱笔淡淡划一道（横排在字下、竖排在字右边，古书的旁线）。
+   --k 从 0 到 1（引擎在那一拍动画）：颜色跟着转，那一笔顺着字的方向写出来。
+   以前每个字下面圈一个小圈，投影上像句号、显得乱，改成一整道笔触；一页的重点词最多两处。
+   ink.js 仍把字拆成 .ink-kc（一个字一个盒子，好一个个写出来） ---------- */
 [data-scene="ink"] .key{padding:0;margin:0 .04em;color:var(--ink-zhu);color:color-mix(in srgb,var(--ink-zhu) calc(var(--k) * 100%),var(--key-ink))}
-[data-scene="ink"] .key .ink-kc{position:relative;display:inline-block}
-[data-scene="ink"] .key .ink-kc::after{content:"";position:absolute;left:50%;top:calc(50% + .5em);width:.22em;height:.22em;margin-left:-.11em;box-sizing:border-box;border-radius:50%;
-  border:max(2px,.055em) solid var(--ink-zhu);pointer-events:none;
-  opacity:clamp(0,calc(var(--k) * var(--n,1) * 1.4 - var(--i,0)),1);
-  -webkit-mask-image:conic-gradient(from 200deg,#000 calc(clamp(0,var(--k) * var(--n,1) * 1.4 - var(--i,0),1) * 360deg),transparent 0);
-          mask-image:conic-gradient(from 200deg,#000 calc(clamp(0,var(--k) * var(--n,1) * 1.4 - var(--i,0),1) * 360deg),transparent 0)}
+[data-scene="ink"] .key .ink-kc{display:inline-block}
+[data-scene="ink"] .key::after{content:"";position:absolute;z-index:-1;left:-.04em;right:-.04em;top:calc(50% + .43em);height:clamp(9px,.22em,18px);pointer-events:none;
+  background:var(--ink-zhu-h) 0 0/100% 100% no-repeat;opacity:.55;
+  -webkit-mask-image:linear-gradient(90deg,#000 calc(var(--k) * 110% - 10%),transparent calc(var(--k) * 110%));
+          mask-image:linear-gradient(90deg,#000 calc(var(--k) * 110% - 10%),transparent calc(var(--k) * 110%))}
 
 /* ---------- 悬停的淡墨晕：卡片、小格、步骤、命令底下一团淡墨，悬停时从鼠标处（--ink-mx --ink-my，ink.js 写）由小变大洇开 ---------- */
 [data-scene="ink"] :is(.card,.cell,.copy,.steps>li){--ink-h:0;background-image:var(--ink-wash);background-repeat:no-repeat;
@@ -266,9 +271,18 @@
 /* ---------- 竖排 .ink-v：多行时一列列从右往左排；ink.js 把字拆成 .ink-ch（一个字一个盒子，好一个个写出来）。
    竖排里别用逗号句号：分列或用全角空格 ---------- */
 [data-scene="ink"] .ink-v{margin:0;writing-mode:vertical-rl;text-orientation:mixed;white-space:nowrap;line-height:1.5;letter-spacing:.14em}
-[data-scene="ink"] :is(.ink-v,.ink-tiqian,.ink-col,.ink-scroll,.ink-seal) .ink-ch{display:inline-block}
-/* 竖排里重点词的朱砂圈点画在字的右边（古书竖排圈点的位置），不压下一个字 */
-[data-scene="ink"] :is(.ink-v,.ink-tiqian) .key .ink-kc::after{top:50%;margin:-.11em 0 0 .56em}
+[data-scene="ink"] :is(.ink-v,.ink-heng,.ink-tiqian,.ink-col,.ink-scroll,.ink-seal) .ink-ch{display:inline-block}
+/* ---------- 横写 .ink-heng：句子、说明、落款这些横排的字，也一个字一个字写出来（从左往右、一行行往下）；不折行，换行用 <br> ---------- */
+[data-scene="ink"] .ink-heng{margin:0;white-space:nowrap;line-height:1.6;letter-spacing:.06em}
+/* 横写退一拍：从右往左收回去（和写的方向相反；比通用的从下往上收优先） */
+[data-scene="ink"] .ink-heng[style*="--ink-shou"]{
+  -webkit-mask-image:linear-gradient(90deg,#000 calc(var(--ink-shou) * 100%),transparent calc(var(--ink-shou) * 100% + 90px));
+          mask-image:linear-gradient(90deg,#000 calc(var(--ink-shou) * 100%),transparent calc(var(--ink-shou) * 100% + 90px))}
+/* 竖排里重点词的朱笔画在字的右边（古书竖排旁线的位置），从上往下写，不压左边一列 */
+[data-scene="ink"] :is(.ink-v,.ink-tiqian) .key::after{left:calc(50% + .52em);right:auto;top:.02em;bottom:.12em;width:clamp(9px,.22em,18px);height:auto;
+  background-image:var(--ink-zhu-v);
+  -webkit-mask-image:linear-gradient(#000 calc(var(--k) * 110% - 10%),transparent calc(var(--k) * 110%));
+          mask-image:linear-gradient(#000 calc(var(--k) * 110% - 10%),transparent calc(var(--k) * 110%))}
 /* 一个字写出来：从上往下洇出（--ink-xie 0 → 1，ink.js 写）；退一拍：从下往上收回（--ink-shou 1 → 0） */
 [data-scene="ink"] [style*="--ink-xie"]{
   -webkit-mask-image:linear-gradient(#000 calc(var(--ink-xie) * 160% - 60%),transparent calc(var(--ink-xie) * 160%));
@@ -277,8 +291,10 @@
   -webkit-mask-image:linear-gradient(#000 calc(var(--ink-shou) * 100%),transparent calc(var(--ink-shou) * 100% + 90px));
           mask-image:linear-gradient(#000 calc(var(--ink-shou) * 100%),transparent calc(var(--ink-shou) * 100% + 90px))}
 
-/* ---------- 双行小注 .ink-note（和 .ink-v 一起用）：小一号的中墨字，<br> 分成两行并排；行距留出圈点的位置 ---------- */
+/* ---------- 小注 .ink-note：小一号的中墨字，<br> 分行。说明句和 .ink-heng 一起用（横排）；
+   和 .ink-v 一起用是古书的双行夹注，只给很短的注（竖排一块不超过 12 个字） ---------- */
 [data-scene="ink"] .ink-note{font-size:var(--fs-body);line-height:1.62;letter-spacing:.1em;color:var(--ink-2)}
+[data-scene="ink"] .ink-heng.ink-note{letter-spacing:.06em}
 
 /* ---------- 框字 .ink-box：一个字套在细墨方框里（列首的小标记） ---------- */
 [data-scene="ink"] .ink-box{display:inline-grid;place-items:center;box-sizing:border-box;width:1.6em;height:1.6em;margin:0;
