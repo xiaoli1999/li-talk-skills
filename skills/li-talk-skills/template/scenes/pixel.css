@@ -79,6 +79,11 @@
   [data-scene="pixel"] .s-title.px-split{background:none}
   [data-scene="pixel"] .s-title .px-ch{display:inline-block;color:transparent;background:var(--px-gold-t) 0 0/.08334em 1em repeat;-webkit-background-clip:text;background-clip:text}
 }
+/* 长标题（超过 8 个字，pixel.js 建页时加 .px-plain）：条纹渐变字面长了难读，换成实色金字；
+   字板只外扩一格深色、往右下一格深色投影，不要锈红厚度（厚度在每一道横笔下面多出一条线，字一多就像条纹） */
+[data-scene="pixel"] .s-title.px-plain,
+[data-scene="pixel"] .s-title.px-plain .px-ch{color:var(--px-y);background:none}
+[data-scene="pixel"] .s-title.px-plain{filter:drop-shadow(4px 0 0 #0B0B1E) drop-shadow(-4px 0 0 #0B0B1E) drop-shadow(0 4px 0 #0B0B1E) drop-shadow(0 -4px 0 #0B0B1E) drop-shadow(8px 8px 0 #0B0B1E)}
 /* 标题角上的闪光（开场时 pixel.js 放一个，播完删掉） */
 [data-scene="pixel"] .px-spark{position:absolute;z-index:7;width:28px;height:28px;visibility:hidden;pointer-events:none;background:var(--px-spark) center/100% 100% no-repeat}
 
@@ -185,13 +190,12 @@
 [data-scene="pixel"] .tag{padding:4px 20px;border:0;border-radius:0;font:400 48px/56px var(--f-hand);color:var(--px-a);background:var(--px-n3);
   box-shadow:0 -4px 0 0 var(--px-n5),0 4px 0 0 var(--px-n5),-4px 0 0 0 var(--px-n5),4px 0 0 0 var(--px-n5),8px 8px 0 0 var(--px-k)}
 
-/* ---------- 大字金句：和大标题一样的金色抖动字面，字板外扩一格、锈红厚度一格 ---------- */
+/* ---------- 大字金句：句子要一眼读完，用实色金字（不用条纹渐变字面），字板外扩一格深色、往右下一格深色投影 ---------- */
 [data-scene="pixel"] .quote{font:400 var(--fs-xl)/1.25 var(--f-hand);letter-spacing:0;color:var(--px-y);text-shadow:none;
-  filter:drop-shadow(4px 0 0 #0B0B1E) drop-shadow(-4px 0 0 #0B0B1E) drop-shadow(0 4px 0 #0B0B1E) drop-shadow(0 -4px 0 #0B0B1E) drop-shadow(0 8px 0 #A9432A) drop-shadow(0 4px 0 #0B0B1E)}
-@supports ((-webkit-background-clip:text) or (background-clip:text)){
-  [data-scene="pixel"] .quote{color:transparent;background:var(--px-gold-q) 0 0/.08334em 1.25em repeat;-webkit-background-clip:text;background-clip:text}
-}
-[data-scene="pixel"] .quote .key{padding:0;margin:0}
+  filter:drop-shadow(4px 0 0 #0B0B1E) drop-shadow(-4px 0 0 #0B0B1E) drop-shadow(0 4px 0 #0B0B1E) drop-shadow(0 -4px 0 #0B0B1E) drop-shadow(8px 8px 0 #0B0B1E)}
+/* 金句里的重点词：浅金字（和金句的金色分开），落定后的像素下划线照常 */
+[data-scene="pixel"] .quote .key{padding:0;margin:0;text-shadow:none}
+[data-scene="pixel"] .quote .key{color:rgb(calc(255 - 244 * var(--px-fl)) calc(242 - 231 * var(--px-fl)) calc(166 - 136 * var(--px-fl)))}
 
 /* ---------- 终端：深色窗口，暖白字；标题栏一条亮蓝，三个方块灯 ---------- */
 [data-scene="pixel"] .term{padding:0 0 28px;border-radius:0;color:var(--px-w);font:400 48px/64px var(--f-mono);text-shadow:none;
@@ -334,6 +338,10 @@
   [data-scene="pixel"] .px-logo.px-split{background:none}
   [data-scene="pixel"] .px-logo .px-ch{display:inline-block;color:transparent;background:var(--px-gold-l) 0 0/8px 1em repeat;-webkit-background-clip:text;background-clip:text}
 }
+/* 超过 8 个字的大字标（pixel.js 加 .px-plain）：实色金字，字板外扩两格、右下两格深色投影 */
+[data-scene="pixel"] .px-logo.px-plain,
+[data-scene="pixel"] .px-logo.px-plain .px-ch{color:var(--px-y);background:none}
+[data-scene="pixel"] .px-logo.px-plain{filter:drop-shadow(8px 0 0 #0B0B1E) drop-shadow(-8px 0 0 #0B0B1E) drop-shadow(0 8px 0 #0B0B1E) drop-shadow(0 -8px 0 #0B0B1E) drop-shadow(12px 12px 0 #0B0B1E)}
 
 /* ---------- 「按任意键开始」.px-press：前面一个金色 ▶ ---------- */
 [data-scene="pixel"] .px-press{display:inline-flex;align-items:center;gap:20px;font:400 48px/48px var(--f-hand);color:var(--px-w)}
@@ -374,6 +382,8 @@
 [data-scene="pixel"] .px-slot:has(> .on):not(:has(~ .px-slot > .on)){--ring:var(--px-y)}
 [data-scene="pixel"] .px-slot > *{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;margin:0}
 [data-scene="pixel"] .px-slot b{font:400 48px/48px var(--f-hand);color:var(--px-w)}
+/* 道具的说明：名字下面一两行浅紫字，居中（格子要在页面 CSS 里加宽加高才放得下） */
+[data-scene="pixel"] .px-slot > * > :is(span,p,small){display:block;margin:0;font:400 48px/56px var(--f-hand);color:var(--px-n6);text-align:center}
 [data-scene="pixel"] .px-slot::after{content:"";position:absolute;left:50%;top:-60px;width:36px;height:24px;margin-left:-18px;visibility:hidden;pointer-events:none;
   background:var(--px-down) center/100% 100% no-repeat}
 [data-scene="pixel"] .px-slot:has(> .on):not(:has(~ .px-slot > .on))::after{visibility:inherit;animation:px-curdn .16s steps(2)}
@@ -390,8 +400,10 @@
 [data-scene="pixel"] .px-node:not(.px-goal).px-flash{background-image:var(--px-node-w)}
 /* 起点（.px-on）：章上画一面小旗，不写数字 */
 [data-scene="pixel"] .px-node.px-on::after{content:"";inset:20px 20px 20px 28px;background:var(--px-flag) center/48px 56px no-repeat}
-/* 关卡名：章下面居中（盒子比章宽，字短的话左右都有空） */
-[data-scene="pixel"] .px-node > b{position:absolute;left:-72px;right:-72px;top:calc(100% + 16px);font:400 48px/48px var(--f-hand);color:var(--px-w);text-align:center;white-space:nowrap}
+/* 关卡名（或「关卡名 + 说明」一块）：章下面居中（盒子比章宽，字短的话左右都有空）；说明浅紫，一行 48px 行高 56px */
+[data-scene="pixel"] .px-node > :is(b,p,div){position:absolute;left:-72px;right:-72px;top:calc(100% + 16px);margin:0;font:400 48px/48px var(--f-hand);color:var(--px-w);text-align:center;white-space:nowrap}
+[data-scene="pixel"] .px-node > :is(p,div) > b{display:block;font:400 48px/48px var(--f-hand);color:var(--px-w)}
+[data-scene="pixel"] .px-node > :is(p,div) > span{display:block;margin-top:8px;font:400 48px/56px var(--f-hand);color:var(--px-n6)}
 /* 终点（.px-goal）：不画圆章，里面放一个图标；到拍时四角冒闪光 */
 [data-scene="pixel"] .px-node.px-goal{background:none;filter:none}
 [data-scene="pixel"] .px-node.px-goal::after{content:none}
@@ -402,15 +414,17 @@
 [data-scene="pixel"] :is(.px-road,.px-road-base) > b{position:absolute;background:var(--px-road-on) 0 0/24px 24px repeat}
 [data-scene="pixel"] .px-road-base > b{background-image:var(--px-road-off)}
 
-/* ---------- 命令菜单 .px-menu（.px-2col 两列）：光标 ▶ 只显示最新到拍的那个；选过的项变灰，当前项金色；选中时反白闪两下 ---------- */
+/* ---------- 命令菜单 .px-menu（.px-2col 两列）：光标 ▶ 只显示最新到拍的那个，当前项由它标出；
+   选过的项不变灰（讲过的只由引擎退一点）；选中时反白闪两下。
+   选项的字到拍才出时（li 里有带拍的 span），没到拍的项先显示一行暗紫的「？？？」 ---------- */
 [data-scene="pixel"] .px-menu{display:grid;grid-template-columns:1fr;gap:16px 32px;margin:0;padding:40px;list-style:none;font:400 48px/64px var(--f-hand);color:var(--px-w)}
 [data-scene="pixel"] .px-menu.px-2col{grid-template-columns:1fr 1fr}
 [data-scene="pixel"] .px-menu > li{position:relative;margin:0;padding:0 8px 0 48px;white-space:nowrap}
 [data-scene="pixel"] .px-cur{position:absolute;left:4px;top:14px;width:24px;height:36px;background:var(--px-cursor) center/100% 100% no-repeat}
 [data-scene="pixel"] .px-menu > li:has(~ li > .px-cur.on) > .px-cur{visibility:hidden}
-[data-scene="pixel"] .px-menu > li:has(> .px-cur.on){color:var(--px-n5)}
-[data-scene="pixel"] .px-menu > li:has(> .px-cur.on):not(:has(~ li > .px-cur.on)){color:var(--px-y)}
+[data-scene="pixel"] .px-menu > li:has(> [data-beat]:not(.px-cur):not(.on))::after{content:"？？？";position:absolute;left:48px;top:0;color:var(--px-n5)}
 [data-scene="pixel"] .px-menu > li.px-sel{color:var(--px-k);background:var(--px-y);text-shadow:none}
+[data-scene="pixel"] .px-menu > li.px-sel .key{color:var(--px-k)}
 
 /* ---------- 血条 .px-bar > .px-cut：20 格（宽 488：两边各 4px 框，一格 24px）；掉空的一段是暗蓝抖动 ---------- */
 [data-scene="pixel"] .px-bar{height:40px;box-sizing:border-box;background:var(--px-k);
@@ -421,8 +435,9 @@
 [data-scene="pixel"] .px-cut{position:absolute;top:4px;bottom:4px;left:calc(4px + (100% - 8px) * var(--from,0));right:calc(4px + (100% - 8px) * (1 - var(--to,1)));
   background:repeating-linear-gradient(90deg,transparent 0 20px,var(--px-k) 20px 24px),var(--px-dith-12) 0 0/8px 8px}
 
-/* ---------- 敌人 .px-foe：最后一击（.px-ko）到拍以后敌人一直藏着（出场时 .px-hold 先留住它闪三下）；伤害数字 .px-dmg ---------- */
+/* ---------- 敌人 .px-foe：最后一击（.px-ko）到拍以后敌人和伤害数字一直藏着（出场时 .px-hold 先留住它闪三下）；伤害数字 .px-dmg ---------- */
 [data-scene="pixel"] .px-foe:not(.abs){position:relative}
-[data-scene="pixel"] .px-foe:has(.px-ko.on):not(.px-hold) > .px-icon{visibility:hidden}
+[data-scene="pixel"] .px-foe:has(.px-ko.on):not(.px-hold) > .px-icon,
+[data-scene="pixel"] .px-foe:has(.px-ko.on):not(.px-hold) .px-dmg{visibility:hidden}
 [data-scene="pixel"] .px-dmg{font:400 96px/1 var(--f-hand);color:var(--px-a);white-space:nowrap;
   text-shadow:-4px 0 0 #0B0B1E,4px 0 0 #0B0B1E,0 -4px 0 #0B0B1E,0 4px 0 #0B0B1E,8px 8px 0 #0B0B1E}
