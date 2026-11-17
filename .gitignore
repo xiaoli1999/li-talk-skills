@@ -11,3 +11,6 @@ _private/
 # 课件升级时的备份、临时输出
 .backup-*/
 *.tmp
+
+# 课件的自检结果和截图（check --browser 生成）
+.li-talk/
