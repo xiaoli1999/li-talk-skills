@@ -723,7 +723,7 @@ function stageStyle(s) {
     .map(r => `${r.s.label}（${r.s.key}）${fit(r.s)}${r.penalized ? '（深色底，投影上容易发灰）' : ''}`);
   const opts = [first, ...others, '先看样册再定'];
 
-  // 各风格默认的形象：「方格纸、黑板用朵朵（duoduo），科技暗黑用微光（weiguang）」
+  // 各风格默认的形象：「方格纸用尖尖（jianjian），黑板用沙沙（shasha），科技暗黑用微光（weiguang）」
   const byMascot = {};
   for (const sc of info.ready) (byMascot[sc.mascot] = byMascot[sc.mascot] || []).push(sc.label);
   const mascotNote = Object.entries(byMascot).map(([k, labels]) => `${labels.join('、')}用${info.mascot(k)}`).join('，');

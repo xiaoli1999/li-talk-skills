@@ -15,11 +15,12 @@
      · 打盹：超过 napAfter 秒没人操作才换 rest（默认 300 秒，<meta name="li-talk-nap" content="秒数"> 可改，0 不打盹），
        任何操作（按键、点击、触屏、滚轮、移动鼠标、翻拍）都会叫醒它
      · 减少动态时：不眨眼、没有空闲动作、不打盹、直接到位；自检模式（?selftest）也不眨眼、不做小动作、不打盹
+     · 像素形象（注册时写 pixel: true）：落点取整到整数屏幕像素，窗口大小变了再取整一次，边缘不虚
    - 每个形象元素的结构（引擎生成）：
      .mascot > .mascot-body（蹦跳、压扁） > .mascot-spin（转圈） > .mascot-art（画像；CSS 镜像、描边在这层）
              > .mascot-say（说的话）
    - 依赖总线：core 的常量和工具、I.MASCOTS、I.PAGES、I.sc、I.mascotList、
-     I.state（cur、mascot、mascotWarns、lastAct、reading、booted）、I.motion；build.js 的 I.boxIn
+     I.state（cur、mascot、mascotWarns、lastAct、reading、booted、running、pageTl）、I.motion、I.dom.stage；build.js 的 I.boxIn
    - 挂到总线：mascotDef、mascotSvg、mascotEl、initMascotEl、bindMascot、warnMascotOnce、setPose、spotFor、applySpot、
      mascotXY、placeMascot、moveMascot、mascotCheer、mascotClick、mascotActivity、napAfter
    ===================================================================== */
@@ -178,8 +179,20 @@
   /* 读目标上的形象属性：data-mascot-* 优先，没有就读旧写法 data-kid-* */
   const dv = (ds, name) => { const a = ds['mascot' + name]; return a != null && a !== '' ? a : ds['kid' + name]; };
   /* 第 n 拍时形象该在哪：取 data-mascot（或 data-kid）≤ n 的最后一个目标；没有就待在原地。
-     返回 { x, y（相对放在页面上的位置的位移）, pose, face, say, look（视线方向，世界坐标）} */
-  function spotFor(p, n) {
+     返回 { x, y（相对放在页面上的位置的位移）, pose, face, say, look（视线方向，世界坐标）}；像素形象的落点取整到整数屏幕像素 */
+  function spotFor(p, n) { return pixelSnap(p.mascot, spotRaw(p, n)); }
+  /* 像素形象（pixel: true）：把落点微调到整数屏幕像素上（按舞台缩放和设备像素比换算），放在半像素上边缘会虚。
+     只调落定的位置，走在路上的不管；阅读模式不管。别的形象原样返回 */
+  function pixelSnap(k, sp) {
+    const d = mascotDef(), st = I.dom.stage;
+    if (!d || !d.pixel || S.reading || !st) return sp;
+    const r = st.getBoundingClientRect(), dpr = window.devicePixelRatio || 1, u = r.width / W * dpr;   // 一个舞台像素合多少设备像素
+    if (!(u > 0)) return sp;
+    // 舞台坐标 base + v 换成设备像素取整，再换回位移
+    const snap = (v, base, org) => (Math.round(org * dpr + (base + v) * u) - org * dpr) / u - base;
+    return Object.assign({}, sp, { x: snap(sp.x, k.el.offsetLeft, r.left), y: snap(sp.y, k.el.offsetTop, r.top) });
+  }
+  function spotRaw(p, n) {
     const k = p.mascot, s = p.el;
     let tg = null;
     p.targets.forEach(t => { if (t.beat <= n && (!tg || t.beat >= tg.beat)) tg = t; });   // 拍号最大的那个；同一拍取写在后面的
@@ -474,6 +487,15 @@
     if (k && k.napping) wake(k);
   }
   ['keydown', 'pointerdown', 'pointermove', 'wheel', 'touchstart'].forEach(t => document.addEventListener(t, mascotActivity, { capture: true, passive: true }));
+
+  /* 窗口大小变了（含全屏），舞台缩放跟着变：站定的像素形象重新落到整数屏幕像素上。
+     等一帧，让 ui.js 的 fit 先缩放好；从这一拍的落点重新算，不在上一次的结果上累积 */
+  window.addEventListener('resize', () => requestAnimationFrame(() => {
+    const k = curMascot(), d = mascotDef();
+    if (!k || !d || !d.pixel || !G || k.walking || S.running || S.pageTl) return;
+    const sp = spotFor(k.page, k.page.beat);
+    G.set(k.el, { x: sp.x, y: sp.y });
+  }));
 
   Object.assign(I, {
     mascotDef, mascotSvg, mascotEl, initMascotEl, bindMascot, warnMascotOnce, setPose, spotFor, applySpot,

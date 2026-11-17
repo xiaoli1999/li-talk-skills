@@ -168,6 +168,7 @@
   const MASCOT_FIELDS = {
     label: 'string', svg: 'function', size: 'array', foot: 'number', frames: 'array',
     flipSvg: 'boolean', outline: 'boolean', defs: 'string',
+    pixel: 'boolean',         // 像素画：落定的位置取整到整数屏幕像素（mascot.js 的 pixelSnap）
   };
   function mascot(key, opts) {
     if (S.booted) { warn(`Deck.mascot 要在页面加载完之前调用：把形象文件用 <script src> 写进 index.html。这次注册的「${key}」被忽略`); return; }

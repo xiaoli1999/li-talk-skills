@@ -62,6 +62,7 @@
 [data-scene="board"] .shot::before{background:rgba(239,226,190,.55)}
 
 /* 形象（不管用哪个）：浅色描边由引擎按 board.js 的 dark: true 加，这里只给描边的颜色（白粉笔色）和一道投影；
+   默认形象沙沙是白粉笔、自带粉尘光（outline: false），不加描边，只有投影；换成别的形象时描边才用得上。
    说的话是黄粉笔框 */
 [data-scene="board"] .mascot{--mascot-outline:#F6F4EE;--mascot-shadow:drop-shadow(0 6px 6px rgba(0,0,0,.35))}
 [data-scene="board"] .mascot-say{color:#FFDC6A;border:3px solid #FFDC6A;border-radius:18px;background:#213B31}

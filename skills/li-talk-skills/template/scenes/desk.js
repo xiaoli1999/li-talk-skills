@@ -17,7 +17,7 @@
   Deck.scene('desk', {
     label: '工位桌面',
     family: 'hand',
-    mascot: 'duoduo',         // 暂时借用朵朵，下一份计划换成自己的形象
+    mascot: 'juanjuan',       // 默认形象：卷卷（一卷和纸胶带）
     enter: 'drop',
     enterBy: { copy: 'print' },   // 命令条：标签机打字
     titleIn: 'fade',

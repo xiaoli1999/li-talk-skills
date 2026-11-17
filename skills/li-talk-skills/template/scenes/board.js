@@ -38,7 +38,7 @@
     label: '黑板',
     family: 'hand',
     dark: true,               // 深色底：引擎给形象加浅色描边
-    mascot: 'duoduo',         // 暂时借用朵朵，下一份计划换成自己的形象
+    mascot: 'shasha',         // 默认形象：沙沙（一截白粉笔头，自带亮色，不用引擎描边）
     enter: 'write',
     titleIn: 'write',
     recede: .74,

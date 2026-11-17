@@ -44,9 +44,9 @@ test('只带选中的风格和它的形象', async () => {
   const r = await createDeck(dir, { title: '我的分享', scenes: ['paper'] }, offline());
   assert.equal(r.font, 'lite');
   assert.deepEqual(r.scenes, ['paper']);
-  assert.equal(r.mascot, 'duoduo');
+  assert.equal(r.mascot, 'jianjian');
   for (const f of ['index.html', 'engine/core.js', 'engine/engine.css', 'scenes/paper.js', 'scenes/paper.css',
-    'mascots/duoduo.js', 'slides/ch1.js', 'slides/ch1.css', 'vendor/gsap.min.js', 'vendor/rough.min.js',
+    'mascots/jianjian.js', 'slides/ch1.js', 'slides/ch1.css', 'vendor/gsap.min.js', 'vendor/rough.min.js',
     'vendor/LICENSE-gsap.txt', 'vendor/LICENSE-roughjs.txt',
     'vendor/fonts/wenkai-lite.css', 'vendor/fonts/wenkai-lite-regular.woff2', 'vendor/fonts/OFL-LXGW-WenKai.txt',
     '.li-talk.json', '素材']) {
@@ -63,8 +63,8 @@ test('只带选中的风格和它的形象', async () => {
   assert.match(html, /<title>我的分享<\/title>/);
   assert.match(html, /scenes\/paper\.js/);
   assert.match(html, /scenes\/paper\.css/);
-  assert.match(html, /mascots\/duoduo\.js/);
-  assert.match(html, /name="li-talk-mascot" content="duoduo"/);
+  assert.match(html, /mascots\/jianjian\.js/);
+  assert.match(html, /name="li-talk-mascot" content="jianjian"/);
   assert.match(html, /name="li-talk-engine" content="0\.1\.0"/);
   assert.match(html, /href="vendor\/fonts\/wenkai-lite\.css"/);
   assert.doesNotMatch(html, /\{\{/);
@@ -78,7 +78,7 @@ test('只带选中的风格和它的形象', async () => {
   assert.equal(meta.tool, 'li-talk-skills');
   assert.equal(meta.title, '我的分享');
   assert.deepEqual(meta.scenes, ['paper']);
-  assert.equal(meta.mascot, 'duoduo');
+  assert.equal(meta.mascot, 'jianjian');
   assert.equal(meta.version, '0.1.0');
   assert.deepEqual(meta.confirmed, { outline: false, script: false, style: false, trial: false, review: false });
   assert.ok(!Number.isNaN(Date.parse(meta.created)));
@@ -162,7 +162,7 @@ test('风格可以写名字、用逗号隔开多种；形象默认取第一种�
   for (const f of ['scenes/board.js', 'scenes/board.css', 'scenes/paper.js', 'mascots/weiguang.js']) {
     assert.ok(existsSync(join(dir, f)), '缺少 ' + f);
   }
-  assert.ok(!existsSync(join(dir, 'mascots', 'duoduo.js')));
+  assert.ok(!existsSync(join(dir, 'mascots', 'shasha.js')));
   const html = readFileSync(join(dir, 'index.html'), 'utf8');
   assert.ok(html.indexOf('scenes/board.js') < html.indexOf('scenes/paper.js'), '风格按选的顺序引入');
   assert.match(readFileSync(join(dir, 'slides', 'ch1.js'), 'utf8'), /scene: 'board'/);
@@ -245,7 +245,7 @@ test('confirm 命令：确认风格时顺带记下风格和形象；提纲要先
   let m = readMeta(dir);
   assert.equal(m.confirmed.style, true);
   assert.deepEqual(m.scenes, ['paper']);
-  assert.equal(m.mascot, 'duoduo');
+  assert.equal(m.mascot, 'jianjian');
   assert.match(out.join('\n'), /方格纸/);
 
   await assert.rejects(() => runConfirm({ _: [dir, 'style'], scenes: 'nope' }, { log }), /不认识的风格「nope」/);

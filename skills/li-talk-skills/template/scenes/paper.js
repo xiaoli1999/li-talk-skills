@@ -19,7 +19,7 @@
   Deck.scene('paper', {
     label: '方格纸',
     family: 'hand',
-    mascot: 'duoduo',         // 暂时借用朵朵，下一份计划换成自己的形象
+    mascot: 'jianjian',       // 默认形象：尖尖（一截铅笔头）
     enter: 'rise',
     titleIn: 'write',
     recede: .55,

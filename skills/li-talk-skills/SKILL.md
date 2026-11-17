@@ -35,7 +35,7 @@ node "<本 skill 目录>/scripts/li-talk.mjs" guide "<课件目录>"
 这是最小可用版，只承诺下面这些：
 
 - **13 种风格**，分三家：手绘家 6 种（方格纸 `paper`、黑板 `board`、像素手账 `journal`、工位桌面 `desk`、水彩田园 `watercolor`、水墨国风 `ink`），现代家 6 种（科技暗黑 `dark`、毛玻璃 `frost`、液态玻璃 `glass`、扁平插画 `flat`、杂志复古 `magazine`、新粗野主义 `brutal`），像素家 1 种（像素游戏 `pixel`）。
-- **9 个形象**：朵朵 `duoduo`（水彩田园和手绘家前四种默认用它）、墨丸 `mowan`、微光 `weiguang`、小雾 `xiaowu`、透透 `toutou`、小页 `xiaoye`、小铅 `xiaoqian`、砰砰 `pengpeng`、小旗 `xiaoqi`；其余每种风格有自己的默认形象，`styles` 会列出来。
+- **13 个形象**：尖尖 `jianjian`（方格纸）、沙沙 `shasha`（黑板）、点点 `diandian`（像素手账）、卷卷 `juanjuan`（工位桌面）、朵朵 `duoduo`（水彩田园）、墨丸 `mowan`、微光 `weiguang`、小雾 `xiaowu`、透透 `toutou`、小页 `xiaoye`、小铅 `xiaoqian`、砰砰 `pengpeng`、小旗 `xiaoqi`；其余每种风格有自己的默认形象，`styles` 会列出来。
 - **4 种样板页**：封面、清单、步骤（图示）、结尾，写在 `references/templates.md`。
 - **课件本身**：按拍出现、讲过的拍变淡、主题行、重点词、圈注、手绘线和箭头、卡片、步骤、对比、终端窗口、点击复制、截图位（点开看大图）、形象每拍走到内容旁、演讲者视图（S）、计时（T / R）、全屏（F）、竖屏阅读模式、刷新不丢位置、最后一页自动署名。双击 `index.html` 离线打开。
 - **检查**：不开浏览器的检查 `check`，后台浏览器自检 `check --browser`（5 个尺寸逐页逐拍量，出中文报告）。
