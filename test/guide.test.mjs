@@ -2,10 +2,10 @@
 // 搭骨架时字体一律用假的清单和假的下载函数，不联网，也不碰本机的字体缓存
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { guideText, run as runGuide, talkMinutes, targetChars } from '../skills/li-talk-skills/scripts/lib/guide.mjs';
+import { guideText, HINTS, run as runGuide, talkMinutes, targetChars } from '../skills/li-talk-skills/scripts/lib/guide.mjs';
 import { run as runStyles } from '../skills/li-talk-skills/scripts/lib/styles.mjs';
 import { confirmStep } from '../skills/li-talk-skills/scripts/lib/meta.mjs';
 import { createDeck } from '../skills/li-talk-skills/scripts/lib/new.mjs';
@@ -415,6 +415,52 @@ test('风格：讲稿写了在投影上讲，技术词很多也先推浅色底�
   checkShape(t);
 });
 
+// 写一份讲稿、确认到风格这一步，返回 ④ 里问题 1 的第一个选项
+function firstStyleOpt(extra) {
+  const d = tmp();
+  writeFileSync(join(d, '讲稿.md'), script(2, { extra }));
+  confirmStep(d, 'outline');
+  confirmStep(d, 'script');
+  const t = guideText(d);
+  checkShape(t);
+  return /问题 1：[^\n]*\n\s+1\. ([^\n]*)/.exec(t)[1];
+}
+
+test('风格：新加的 7 种风格也能按讲稿里的词推到第一', () => {
+  const cases = [
+    ['ink', '水墨国风', '讲传统文化：传统的修身方法论，东方的人文。'],
+    ['frost', '毛玻璃', '这次讲新产品：产品的三个新功能，下周发布。'],
+    ['glass', '液态玻璃', '讲界面设计：界面怎么设计，交互和体验。'],
+    ['flat', '扁平插画', '用图解讲清流程：流程一共三段，零基础也能懂。'],
+    ['magazine', '杂志复古', '分享读书心得：这本书的观点，我的读书心得。'],
+    ['brutal', '新粗野主义', '内部分享：实操攻略，大家动手做一遍实操。'],
+    ['pixel', '像素游戏', '给新人的入职闯关：新人从第一关开始闯关。'],
+  ];
+  for (const [key, label, words] of cases) {
+    assert.match(firstStyleOpt(`- 时间与时长：20 分钟，线上会议共享屏幕\n${words}`),
+      new RegExp(`^${label}（${key}）[^\\n]*（推荐：讲稿里出现了「`), key);
+  }
+  // 像素游戏是深色底：在投影上讲时不排第一，理由里说它更像像素游戏
+  const proj = firstStyleOpt('- 时间与时长：20 分钟，会议室投影\n给新人的入职闯关：新人从第一关开始闯关。');
+  assert.doesNotMatch(proj, /（pixel）/);
+  assert.match(proj, /更像像素游戏，但它是深色底；在投影上讲，优先浅色底/);
+});
+
+test('风格关键词：13 种都有，每种 5–10 个；同一个词只归一种风格，也不会被别的风格的词顺带数到', () => {
+  const keys = JSON.parse(readFileSync(join(SKILL_DIR, 'template', 'scenes', 'index.json'), 'utf8')).map(s => s.key);
+  assert.deepEqual(Object.keys(HINTS).sort(), [...keys].sort());
+  // 去掉 (?<!非)、(?!行) 这类前后限定，剩下的就是词
+  const words = Object.fromEntries(Object.entries(HINTS).map(([k, re]) => [k, re.source.replace(/\(\?<?[!=][^)]*\)/g, '').split('|')]));
+  for (const [k, ws] of Object.entries(words)) {
+    assert.ok(ws.length >= 5 && ws.length <= 10, `${k} 有 ${ws.length} 个关键词：${ws.join('、')}`);
+    for (const w of ws) {
+      for (const [k2, re] of Object.entries(HINTS)) {
+        if (k2 !== k) assert.equal(w.match(new RegExp(re.source, 'g')), null, `「${w}」（${k}）也会给 ${k2} 计分`);
+      }
+    }
+  }
+});
+
 test('风格：按讲稿内容给推荐，推荐项排第一；选定后运行 confirm style --scenes', () => {
   const dir = tmp();
   writeFileSync(join(dir, '讲稿.md'), script(2, { extra: '讲代码怎么部署，接口和架构，命令行里敲命令。代码、部署。' }));
@@ -501,6 +547,8 @@ test('先做 3 页：自检清零后打开给用户看，认可后运行 confirm
   assert.ok(t.includes(cmd('open', q(dir))), t);
   assert.ok(t.includes(cmd('confirm', q(dir), 'trial')), t);
   assert.match(t, /这 3 页/);
+  // 换风格的做法里提醒：换成自带字体的像素游戏时，字体目录也要复制过去
+  assert.match(t, /b\. 把 [^\n]*〈新风格〉\.css 复制到 [^\n]*换成像素游戏（pixel）时，还要把 [^\n]*\/vendor\/fonts\/〈新风格〉\/ 整个复制到/);
   checkShape(t);
 });
 
@@ -589,10 +637,18 @@ test('styles：按家分组列出所有风格，末尾写推荐规则', async ()
   const code = await runStyles({ _: [] }, { log: s => lines.push(s) });
   const t = lines.join('\n');
   assert.equal(code, 0);
-  assert.match(t, /手绘家/);
-  assert.match(t, /现代家/);
-  for (const k of ['paper', 'board', 'journal', 'desk', 'watercolor', 'dark']) assert.match(t, new RegExp(`\\b${k}\\b`));
-  assert.ok(t.indexOf('手绘家') < t.indexOf('paper') && t.indexOf('现代家') < t.indexOf('dark'));
+  assert.match(t, /内置风格：13 种能用/);
+  // 按家分组：每种风格都列在自己那一家的标题下面
+  const groups = [['手绘家', ['paper', 'board', 'journal', 'desk', 'watercolor', 'ink']],
+    ['现代家', ['dark', 'frost', 'glass', 'flat', 'magazine', 'brutal']], ['像素家', ['pixel']]];
+  const heads = groups.map(([name]) => t.indexOf('\n' + name));
+  assert.ok(heads.every((h, i) => h > 0 && (i === 0 || h > heads[i - 1])), '三家按顺序都在');
+  groups.forEach(([name, ks], i) => {
+    for (const k of ks) {
+      const at = t.indexOf(`\n  ${k}  `);
+      assert.ok(at > heads[i] && (i + 1 === heads.length || at < heads[i + 1]), `${k} 应该列在${name}下面`);
+    }
+  });
   assert.match(t, /方格纸/);
   assert.match(t, /适合/);
   assert.match(t, /不适合/);

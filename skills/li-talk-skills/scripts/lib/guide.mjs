@@ -293,9 +293,9 @@ function minutes(chars) {
 }
 
 // 深色底的风格：风格说明 index.json 里写了 dark: true，或风格文件 Deck.scene 里写了 dark: true；
-// 现代家的科技暗黑（dark）和黑板（board）就算文件读不到也当深色
+// 黑板（board）、现代家的科技暗黑（dark）、像素家的像素游戏（pixel）就算文件读不到也当深色
 function isDarkScene(s) {
-  if (s.dark === true || s.key === 'board' || (s.key === 'dark' && s.family === 'modern')) return true;
+  if (s.dark === true || s.key === 'board' || (s.key === 'dark' && s.family === 'modern') || (s.key === 'pixel' && s.family === 'pixel')) return true;
   try { return /\bdark\s*:\s*true\b/.test(readFileSync(join(TPL_DIR, 'scenes', s.key + '.js'), 'utf8')); } catch (e) { return false; }
 }
 
@@ -586,16 +586,30 @@ function stageScript(s) {
 }
 
 // 按讲稿里的词粗估推荐哪种风格（只是起点，AI 读过讲稿可以换）。
-// 不放「开场」「收尾」这类几乎每份提纲都有的章节名，免得什么讲稿都推同一种
-const HINTS = {
-  dark: /代码|(?<!非)技术|架构|接口|API|部署|性能|开发者|命令行|终端|工程师/g,
-  board: /安装|命令|教程|教学|培训|步骤|配置|课程/g,
-  watercolor: /新手|新人|新同事|入职|入门|非技术|小白|上手|温和/g,
-  desk: /经历|故事|协作|团队|复盘|踩坑/g,
-  journal: /原理|角色|示意图|机制/g,
+// 不放「开场」「收尾」「总结」这类几乎每份提纲都有的词，免得什么讲稿都推同一种。
+// 每种风格 5–10 个最能代表它的词；同一个词只归一种风格，也不让一个词是另一种风格的词的一部分
+// （「技术」不数「非技术」里的，「命令」不数「命令行」里的），免得一句话同时给两种风格加分
+export const HINTS = {
+  // 手绘家
   paper: /总览|愿景|规划|展望|全景|路线图/g,
+  board: /安装|命令(?!行)|教程|教学|培训|步骤|配置|课程/g,
+  journal: /原理|角色|示意图|机制|主线/g,
+  desk: /经历|故事|协作|团队|踩坑/g,
+  watercolor: /新手|入门|上手|非技术|小白|温和/g,
+  ink: /人文|方法论|传统|文化|历史|哲学|修身|东方|国风/g,
+  // 现代家
+  dark: /代码|(?<!非)技术|架构|接口|API|部署|性能|开发者|命令行|工程师/g,
+  frost: /产品|功能|发布|上线|工具|版本|演示/g,
+  glass: /界面|设计|交互|体验|视觉|UI|原型|App|科技/g,
+  flat: /流程|插画|图解|科普|零基础|通俗/g,
+  magazine: /观点|读书|书单|复盘|思考|心得|反思|拆解/g,
+  brutal: /实操|动手|清单|攻略|玩法|速成|内部分享|周会/g,
+  // 像素家
+  pixel: /新人|新同事|入职|引导|闯关|通关|关卡|游戏|轻松/g,
 };
-const DEFAULT_ORDER = ['paper', 'watercolor', 'board', 'dark', 'desk', 'journal'];
+// 命中次数一样时的先后：原来的 6 种在前，新加的 7 种按「通用程度」排在后面
+const DEFAULT_ORDER = ['paper', 'watercolor', 'board', 'dark', 'desk', 'journal',
+  'flat', 'frost', 'magazine', 'ink', 'glass', 'brutal', 'pixel'];
 
 // 讲稿（尤其「给组织方」里的场合）写了在投影、幕布上讲
 const PROJECTOR = /投影|幕布|会议室/;
@@ -650,11 +664,16 @@ function rankScenes(ready, text, { projector = false } = {}) {
 function switchLines(s, info) {
   const old = s.meta.scenes[0] || '〈现在的风格〉';
   const tplScenes = posix(join(TPL_DIR, 'scenes'));
+  // 自带字体的风格（像素游戏的缝合像素字体在 template/vendor/fonts/pixel/）：换过去时字体目录也要带上
+  const withFont = info.ready.filter(x => existsSync(join(TPL_DIR, 'vendor', 'fonts', x.key)));
+  const fontLine = withFont.length
+    ? `（换成${withFont.map(x => `${x.label}（${x.key}）`).join('、')}时，还要把 ${posix(join(TPL_DIR, 'vendor', 'fonts'))}/〈新风格〉/ 整个复制到 ${posix(s.dir)}/vendor/fonts/〈新风格〉/，不然字会退回系统字体）`
+    : '';
   // 命令单独占一行，后面不跟说明，免得复制时把说明也带进去
   return [
     `a. 记下新风格（把〈新风格〉换成键名，比如 board${s.meta.mascot ? `；形象先不换，还用${info.mascot(s.meta.mascot)}` : ''}）：`,
     `   ${cli('confirm', quote(s.dir), 'style', '--scenes', '〈新风格〉', ...(s.meta.mascot ? ['--mascot', s.meta.mascot] : []))}`,
-    `b. 把 ${tplScenes}/〈新风格〉.js 和 〈新风格〉.css 复制到 ${posix(s.dir)}/scenes/`,
+    `b. 把 ${tplScenes}/〈新风格〉.js 和 〈新风格〉.css 复制到 ${posix(s.dir)}/scenes/${fontLine}`,
     `c. 把 ${posix(s.dir)}/index.html 里 scenes/${old}.css、scenes/${old}.js 这两行的文件名换成新风格（只有换风格时才动章节区以外的这两行）`,
     `d. 把 ${posix(s.dir)}/slides/ 里每页的 scene: '${old}' 换成新风格`,
     'e. 重跑后台自检，错误改到 0 个：',
@@ -713,8 +732,8 @@ function stageStyle(s) {
   steps.push(['运行 styles，看所有风格的样子、适合讲什么、不适合什么、属于哪一家：', cli('styles')]);
   steps.push('对照讲稿每部分讲什么，从「适合」里挑一个主推，跟用户说一句理由。下面问题 1 的推荐是按讲稿里的词粗估的；' +
     '你读过讲稿，觉得别的更合适，就把它换到第一个、标上（推荐）。' +
-    (projector && anyDark ? '讲稿里写了在投影上讲：优先推浅色底；用户想要深色底（黑板、科技暗黑），先跟他说一声投到幕布上容易发灰。' : ''));
-  steps.push('内容跨度大时，可以按章用不同风格：最多 3 种，只在同一家里混（手绘家和现代家不混用）；一份课件只用一个形象。');
+    (projector && anyDark ? `讲稿里写了在投影上讲：优先推浅色底；用户想要深色底（${info.ready.filter(x => x.dark).map(x => x.label).join('、')}），先跟他说一声投到幕布上容易发灰。` : ''));
+  steps.push('内容跨度大时，可以按章用不同风格：最多 3 种，只在同一家里混（手绘家、现代家、像素家互不混用）；一份课件只用一个形象。');
   steps.push(['打开样册给用户看（样册还没做好时它会说明，那就把 styles 的文字说明讲给用户听）：', cli('styles', '--open')]);
   steps.push(['用户选定后（必须等用户明确选了）运行，--scenes 后面写风格的键名，多种用逗号隔开：',
     cli('confirm', quote(s.dir), 'style', '--scenes', recKeys),
