@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { guideText, run as runGuide } from '../skills/li-talk-skills/scripts/lib/guide.mjs';
+import { guideText, run as runGuide, talkMinutes, targetChars } from '../skills/li-talk-skills/scripts/lib/guide.mjs';
 import { run as runStyles } from '../skills/li-talk-skills/scripts/lib/styles.mjs';
 import { confirmStep } from '../skills/li-talk-skills/scripts/lib/meta.mjs';
 import { createDeck } from '../skills/li-talk-skills/scripts/lib/new.mjs';
@@ -176,6 +176,105 @@ test('讲稿：给出讲稿格式说明的绝对路径、现有页数和字数�
   assert.match(t, /现在有 2 页/);
   assert.match(t, /讲词约 \d+ 字/);
   assert.match(t, /## 第 N 页/);
+  checkShape(t);
+});
+
+test('讲多久：从「给组织方」里读，取讲的那个数，读不出返回 null', () => {
+  const sec = line => `# 标题\n\n## 给组织方\n- 一句话简介：5 分钟讲清楚\n${line}\n\n## 第 1 页 封面\n- 时间与时长：99 分钟\n`;
+  assert.deepEqual(talkMinutes(sec('- 时间与时长：20 分钟；会议室投影')), { lo: 20, hi: 20 }, '看「时长」那一行，不看简介');
+  assert.deepEqual(talkMinutes(sec('- 时间与时长：40 分钟（讲 35 分钟，问答 5 分钟）')), { lo: 35, hi: 35 });
+  assert.deepEqual(talkMinutes(sec('- 时间与时长：15～20 分钟')), { lo: 15, hi: 20 });
+  assert.deepEqual(talkMinutes(sec('- 时间与时长：1 小时')), { lo: 60, hi: 60 });
+  assert.deepEqual(talkMinutes(sec('- 时间与时长：半小时左右')), { lo: 30, hi: 30 });
+  assert.deepEqual(talkMinutes(sec('- 时间与时长：二十分钟，在投影上讲')), { lo: 20, hi: 20 });
+  assert.equal(talkMinutes(sec('- 时间与时长：午休时间，看情况')), null);
+  assert.equal(talkMinutes('# 标题\n\n## 第 1 页 封面\n- 时间与时长：5 分钟\n'), null, '没有「给组织方」就跳过');
+  assert.deepEqual(targetChars({ lo: 5, hi: 5 }), { lo: 1100, hi: 1250 });
+});
+
+test('讲稿：按「给组织方」里的时长算目标字数，不到下限的 90% 先补够再问用户', () => {
+  const dir = tmp();
+  writeFileSync(join(dir, '讲稿.md'), script(2, { extra: '- 时间与时长：5 分钟，会议室投影\n- 合计：约 2 页' }));
+  confirmStep(dir, 'outline');
+  const t = guideText(dir);
+  assert.match(t, /③ 讲稿/);
+  // 每页讲词 16 字，2 页 32 字；5 分钟目标 1100–1250 字
+  assert.match(t, /讲 5 分钟（讲稿开头「给组织方」里写的）：目标约 1100–1250 字，现在 32 字，还差约 1068 字/);
+  assert.match(t, /低于 990 字（目标下限的 90%）要补，超过 1250 字要删/);
+  assert.match(t, /提纲里的页都写了（合计约 2 页/);
+  // 「补到目标范围」写进下一步，排在给用户看、confirm 之前
+  const fill = t.indexOf('先补到目标范围（1100–1250 字）');
+  assert.ok(fill > 0, t);
+  assert.ok(fill < t.indexOf(cmd('confirm', q(dir), 'script')), '先补够，再问用户、再 confirm');
+  assert.match(t, /用户明确说就要这么短，才可以不补/);
+  assert.match(t, /（讲稿写完、讲词字数够了以后问）/);
+  checkShape(t);
+
+  // 「40 分钟（讲 35 分钟）」按讲的 35 分钟算
+  const qa = tmp();
+  writeFileSync(join(qa, '讲稿.md'), script(1, { extra: '- 时间与时长：40 分钟（讲 35 分钟）' }));
+  confirmStep(qa, 'outline');
+  assert.match(guideText(qa), /讲 35 分钟（讲稿开头「给组织方」里写的）：目标约 7700–8750 字/);
+
+  // 超过上限：先删
+  const long = tmp();
+  writeFileSync(join(long, '讲稿.md'), '# 长\n\n## 给组织方\n- 时间与时长：5 分钟\n\n## 第 1 页 封面\n\n**讲词**\n【第 0 拍】' + '好'.repeat(1300) + '\n');
+  confirmStep(long, 'outline');
+  const lt = guideText(long);
+  assert.match(lt, /目标约 1100–1250 字，现在 1300 字，超出约 50 字/);
+  assert.match(lt, /先删到 1250 字以内/);
+  assert.doesNotMatch(lt, /先补到目标范围/);
+
+  // 到了下限的 90% 就不硬要求补
+  const near = tmp();
+  writeFileSync(join(near, '讲稿.md'), '# 近\n\n## 给组织方\n- 时间与时长：5 分钟\n\n## 第 1 页 封面\n\n**讲词**\n【第 0 拍】' + '好'.repeat(1000) + '\n');
+  confirmStep(near, 'outline');
+  const nt = guideText(near);
+  assert.match(nt, /现在 1000 字，还差约 100 字（差得不多，可以不补）/);
+  assert.doesNotMatch(nt, /先补到目标范围/);
+
+  // 读不出时长：不写目标，提示怎么写
+  const none = tmp();
+  writeFileSync(join(none, '讲稿.md'), script(2));
+  confirmStep(none, 'outline');
+  const xt = guideText(none);
+  assert.doesNotMatch(xt, /目标约/);
+  assert.match(xt, /没读到讲多久/);
+});
+
+test('风格：讲稿写了在投影上讲，深色底（黑板、科技暗黑）降分，推荐理由写明优先浅色底', () => {
+  const steps = '讲安装步骤：安装、配置、命令、步骤、教程、培训。';
+  const dir = tmp();
+  writeFileSync(join(dir, '讲稿.md'), script(2, { extra: `- 时间与时长：20 分钟，在会议室投影上讲\n${steps}` }));
+  confirmStep(dir, 'outline');
+  confirmStep(dir, 'script');
+  const t = guideText(dir);
+  const ask = t.slice(t.indexOf('【问用户】'), t.indexOf('【可以这样对 AI 说】'));
+  const first = /\n\s+1\. ([^\n]*)/.exec(ask)[1];
+  assert.doesNotMatch(first, /（board）|（dark）/, '深色底不排第一');
+  assert.match(first, /（推荐：[^\n]*在投影上讲，优先浅色底）/);
+  assert.match(first, /更像黑板，但它是深色底/);
+  assert.equal(checkShape(t), 1);
+
+  // 同样的词、不在投影上讲：黑板照样排第一
+  const online = tmp();
+  writeFileSync(join(online, '讲稿.md'), script(2, { extra: `- 时间与时长：20 分钟，线上会议共享屏幕\n${steps}` }));
+  confirmStep(online, 'outline');
+  confirmStep(online, 'script');
+  const o = guideText(online);
+  assert.match(o, /\n\s+1\. 黑板（board）[^\n]*（推荐/);
+  assert.doesNotMatch(o, /优先浅色底/);
+});
+
+test('风格：讲稿写了在投影上讲，技术词很多也先推浅色底；深色底出现在选项里时标出来', () => {
+  const dir = tmp();
+  writeFileSync(join(dir, '讲稿.md'), script(2, { extra: '- 时间与时长：20 分钟，大会场幕布\n讲代码怎么部署，接口和架构。代码、部署、性能。' }));
+  confirmStep(dir, 'outline');
+  confirmStep(dir, 'script');
+  const t = guideText(dir);
+  assert.doesNotMatch(t, /\n\s+1\. 科技暗黑（dark）/);
+  assert.match(t, /\n\s+1\. [^\n]*在投影上讲，优先浅色底/);
+  assert.doesNotMatch(t, /\n\s+[23]\. (黑板|科技暗黑)（(board|dark)）(?![^\n]*深色底，投影上容易发灰)/);
   checkShape(t);
 });
 

@@ -21,7 +21,7 @@ import { basename, join, resolve } from 'node:path';
 import { UserError } from './cli.mjs';
 import { SKILL_DIR, TPL_DIR, VERSION } from './paths.mjs';
 import { metaPath, readMeta, STEPS, STEP_NAMES } from './meta.mjs';
-import { collectPages, readDeck } from './deck.mjs';
+import { collectPages, readDeck, scriptPageHeads } from './deck.mjs';
 import { mascotList, sceneIndex } from './new.mjs';
 import { cacheDir, loadManifest } from './fonts.mjs';
 
@@ -58,8 +58,9 @@ const IMG_RE = /\.(png|jpe?g|gif|webp|svg|heic|heif|bmp|tiff?)$/i;
    ------------------------------------------------------------------ */
 
 /**
- * 读讲稿：{ title（第一个一级标题）, pages: [{ no, title }], sayChars（讲词字数）, hasOutline }；没有讲稿.md 返回 null
+ * 读讲稿：{ title（第一个一级标题）, pages: [{ no, title }], sayChars（讲词字数）, hasOutline, talk, planned }；没有讲稿.md 返回 null
  * 页数靠「## 第 N 页 页标题」这样的二级标题来数。
+ * talk：「## 给组织方」里写的讲多久 { lo, hi }（分钟），读不出是 null；planned：那一节「合计：约 N 页」的 N，没写是 null
  */
 export function readScript(dir) {
   const file = join(dir, SCRIPT);
@@ -67,19 +68,65 @@ export function readScript(dir) {
   let text;
   try { text = readFileSync(file, 'utf8').replace(/^﻿/, ''); } catch (e) { return null; }
   const h1 = /^#[ \t]+(.+?)[ \t#]*$/m.exec(text);
-  const pages = [];
-  const at = [];
-  const re = /^##[ \t]*第[ \t]*(\d+)[ \t]*页[ \t]*(.*)$/gm;
-  let m;
-  while ((m = re.exec(text))) { pages.push({ no: Number(m[1]), title: m[2].trim() }); at.push(m.index); }
+  const heads = scriptPageHeads(text);
+  const pages = heads.map(h => ({ no: h.no, title: h.title }));
   let sayChars = 0;
-  at.forEach((start, i) => {
-    const body = text.slice(start, i + 1 < at.length ? at[i + 1] : text.length);
+  heads.forEach((h, i) => {
+    const body = text.slice(h.index, i + 1 < heads.length ? heads[i + 1].index : text.length);
     const k = body.indexOf('**讲词**');
     if (k >= 0) sayChars += textCount(body.slice(k + 6).replace(/【第\s*\d+\s*拍】/g, ''));
   });
   const hasOutline = /^#{1,3}[ \t]*(给组织方|提纲|大纲)/m.test(text) || /^[-*]?[ \t]*大纲[:：]/m.test(text);
-  return { title: h1 ? h1[1].trim() : '', pages, sayChars, hasOutline };
+  const total = /合计[：:][ \t]*约?[ \t]*(\d+)[ \t]*页/.exec(organizerSection(text));
+  return { title: h1 ? h1[1].trim() : '', pages, sayChars, hasOutline, talk: talkMinutes(text), planned: total ? Number(total[1]) : null };
+}
+
+// 讲稿开头「## 给组织方」这一节的正文（到下一个一级、二级标题为止）；没有这一节返回空串
+export function organizerSection(text) {
+  const m = /^##[ \t]*给组织方[^\n]*\n([\s\S]*?)(?=^#{1,2}[ \t]|(?![\s\S]))/m.exec(String(text));
+  return m ? m[1] : '';
+}
+
+// 一到九十九的中文数字（「五分钟」「二十分钟」「两小时」）；认不出返回 NaN
+function cnNumber(s) {
+  const d = { 零: 0, 一: 1, 二: 2, 两: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
+  const m = /^([一二两三四五六七八九])?(十)?([一二三四五六七八九])?$/.exec(s);
+  if (!m || !s) return NaN;
+  if (!m[2]) return m[3] ? NaN : d[m[1]];
+  return (m[1] ? d[m[1]] : 1) * 10 + (m[3] ? d[m[3]] : 0);
+}
+
+/**
+ * 从「## 给组织方」里读讲多久，返回 { lo, hi }（分钟），读不出返回 null。
+ * 先看写着「时长」的那一行，没有就看写着「时间」的，再没有就看整节。
+ * 「40 分钟（讲 35 分钟）」取讲的那个数；「15～20 分钟」是一个范围；「1 小时」「半小时」也认。
+ */
+export function talkMinutes(text) {
+  const sec = organizerSection(text);
+  if (!sec) return null;
+  const lines = sec.split('\n');
+  const line = lines.find(l => /时长/.test(l)) || lines.find(l => /时间/.test(l)) || sec;
+  const num = '(\\d+(?:\\.\\d+)?|[一二两三四五六七八九十]{1,3})';
+  const re = new RegExp(`${num}(?:\\s*[~～\\-–—到至]\\s*${num})?\\s*(?:个)?\\s*(分钟|小时)`, 'g');
+  const toNum = s => (/\d/.test(s) ? Number(s) : cnNumber(s));
+  const found = [];
+  let m;
+  while ((m = re.exec(line))) {
+    const k = m[3] === '小时' ? 60 : 1;
+    const lo = toNum(m[1]) * k;
+    const hi = (m[2] ? toNum(m[2]) : toNum(m[1])) * k;
+    // 前面紧挨着「讲」（可以隔「约」「大约」这类一两个字）的，就是讲的时长
+    const said = /讲[^\d\n，,；;。）)]{0,3}$/.test(line.slice(Math.max(0, m.index - 4), m.index));
+    if (lo > 0 && hi >= lo) found.push({ lo, hi, said });
+  }
+  if (!found.length && /半(?:个)?小时/.test(line)) return { lo: 30, hi: 30 };
+  const pick = found.find(f => f.said) || found[0];
+  return pick ? { lo: pick.lo, hi: pick.hi } : null;
+}
+
+// 按讲多久算讲词的目标字数（每分钟 220–250 字）
+export function targetChars(talk) {
+  return talk ? { lo: Math.round(talk.lo * 220), hi: Math.round(talk.hi * 250) } : null;
 }
 
 // 目录里 new 不允许的东西（搭骨架前只能有 讲稿.md、素材/）
@@ -235,11 +282,21 @@ function progress(meta) {
 
 const guideStep = dir => ['做完这一步，再运行 guide 看下一步：', cli('guide', quote(dir))];
 
-// 讲词字数换算成时长（每分钟 220–250 字）
+// 讲词字数换算成时长（每分钟 220–250 字）；10 分钟以内按半分钟取整，再长按整分钟（和 check 一样）
 function minutes(chars) {
   const hi = chars / 220;
   if (hi < 1) return '不到 1 分钟';
-  return `${Math.max(1, Math.round(chars / 250))}～${Math.max(1, Math.round(hi))} 分钟`;
+  const f = x => (x >= 10 ? String(Math.round(x)) : String(Math.round(x * 2) / 2));
+  const a = f(Math.max(chars / 250, 0.5));
+  const b = f(hi);
+  return a === b ? `${a} 分钟` : `${a}～${b} 分钟`;
+}
+
+// 深色底的风格：风格说明 index.json 里写了 dark: true，或风格文件 Deck.scene 里写了 dark: true；
+// 现代家的科技暗黑（dark）和黑板（board）就算文件读不到也当深色
+function isDarkScene(s) {
+  if (s.dark === true || s.key === 'board' || (s.key === 'dark' && s.family === 'modern')) return true;
+  try { return /\bdark\s*:\s*true\b/.test(readFileSync(join(TPL_DIR, 'scenes', s.key + '.js'), 'utf8')); } catch (e) { return false; }
 }
 
 // 机器读到的风格、形象说明（读不到时给空的，不让 guide 因为模板问题整个报错）
@@ -248,7 +305,8 @@ function sceneInfo() {
   let mascots = [];
   try { index = sceneIndex(TPL_DIR); } catch (e) { index = []; }
   try { mascots = mascotList(TPL_DIR); } catch (e) { mascots = []; }
-  const ready = index.filter(s => existsSync(join(TPL_DIR, 'scenes', s.key + '.js')));
+  const ready = index.filter(s => existsSync(join(TPL_DIR, 'scenes', s.key + '.js')))
+    .map(s => ({ ...s, dark: isDarkScene(s) }));
   const label = k => { const x = index.find(s => s.key === k); return x ? `${x.label}（${k}）` : k; };
   const mascot = k => { const x = mascots.find(m => m.key === k); return x ? `${x.label}（${k}）` : k; };
   return { index, ready, label, mascot };
@@ -395,34 +453,68 @@ const SCRIPT_TPL = [
 
 // ③ 讲稿
 function stageScript(s) {
-  const sc = s.script || { pages: [], sayChars: 0 };
+  const sc = s.script || { pages: [], sayChars: 0, talk: null };
   const n = sc.pages.length;
+  const z = sc.sayChars;
+  // 目标字数：「给组织方」里写的讲多久 × 每分钟 220–250 字；低于下限的 90% 要补，超过上限要删
+  const goal = targetChars(sc.talk);
+  const floor = goal ? Math.ceil(goal.lo * 0.9) : 0;
+  const talk = sc.talk ? (sc.talk.lo === sc.talk.hi ? `${sc.talk.lo} 分钟` : `${sc.talk.lo}～${sc.talk.hi} 分钟`) : '';
+  const short = !!goal && n > 0 && z < floor;
+  const long = !!goal && z > goal.hi;
   const where = [`课件目录：${posix(s.dir)}`, progress(s.meta)];
   if (n) {
     const a = sc.pages[0];
     const b = sc.pages[n - 1];
-    where.push(`讲稿.md 现在有 ${n} 页（第 ${a.no} 页「${a.title}」到第 ${b.no} 页「${b.title}」），讲词约 ${sc.sayChars} 字，按每分钟 220～250 字算约 ${minutes(sc.sayChars)}`);
+    where.push(`讲稿.md 现在有 ${n} 页（第 ${a.no} 页「${a.title}」到第 ${b.no} 页「${b.title}」），讲词约 ${z} 字，按每分钟 220～250 字算约 ${minutes(z)}`);
   } else {
     where.push('讲稿.md 现在有 0 页，还没开始写');
   }
+  if (goal) {
+    const state = z < goal.lo ? `还差约 ${goal.lo - z} 字${z >= floor ? '（差得不多，可以不补）' : ''}`
+      : z > goal.hi ? `超出约 ${z - goal.hi} 字` : '在目标范围内';
+    where.push(`讲 ${talk}（讲稿开头「给组织方」里写的）：目标约 ${goal.lo}–${goal.hi} 字，现在 ${z} 字，${state}`);
+  }
 
+  // 提纲「合计：约 N 页」写了、讲稿也写到这么多页了：页都写了，不用再往后接
+  const allWritten = !!sc.planned && n >= sc.planned;
   const steps = [];
   steps.push(['先读讲稿格式说明（格式、规则、两页完整示例都在里面）：', refDoc('script-format.md')]);
-  steps.push([(n ? `接着往下写：照提纲一页一页写进讲稿.md，接在第 ${n} 页后面。` : '照提纲一页一页写进 讲稿.md，接在提纲后面。') +
-    '每页的标题行必须写成「## 第 N 页 页标题」（guide 靠它数页数），下面四段：', ...SCRIPT_TPL]);
+  const writeLead = allWritten ? `提纲里的页都写了（合计约 ${sc.planned} 页，讲稿.md 现在 ${n} 页）：对照格式说明逐页查一遍，不对的改过来。`
+    : n ? `接着往下写：照提纲一页一页写进讲稿.md，接在第 ${n} 页后面${sc.planned ? `（提纲合计约 ${sc.planned} 页）` : ''}。`
+      : '照提纲一页一页写进 讲稿.md，接在提纲后面。';
+  steps.push([writeLead + '每页的标题行必须写成「## 第 N 页 页标题」（guide 靠它数页数），下面四段：', ...SCRIPT_TPL]);
   steps.push('最容易错的几条：每页 2～4 拍（封面、结尾 1～2 拍），讲词按拍分段、和节拍一一对上；每拍一个重点词，讲词里加粗；' +
     '新概念第一次出现的那页，第 0 拍先用一句大白话解释；不写没有依据的数字、百分比、案例和用户反馈；讲词用第一人称、短句，每拍三四句以内。');
-  steps.push('用总字数控制时长：按每分钟 220～250 字估，比如 20 分钟约 4400～5000 字。超了就删，不够再补。');
+  if (goal) {
+    steps.push(`用总字数控制时长：这份讲 ${talk}，讲词目标约 ${goal.lo}–${goal.hi} 字（每分钟 220～250 字）。` +
+      `低于 ${floor} 字（目标下限的 90%）要补，超过 ${goal.hi} 字要删。`);
+  } else {
+    steps.push('用总字数控制时长：按每分钟 220～250 字估，比如 20 分钟约 4400～5000 字；低于目标下限的 90% 要补，超过上限要删。' +
+      '讲稿开头「给组织方」里没读到讲多久：写成「- 时间与时长：20 分钟，会议室投影」这样，guide 就能算出目标字数。');
+  }
+  if (short) {
+    const how = allWritten ? '页都写了：挑讲得简略的拍补具体（怎么做、为什么、容易错在哪），每拍仍在三四句以内；每拍都补满了还不够，就跟用户商量加一页。'
+      : sc.planned ? `提纲里还有约 ${sc.planned - n} 页没写，先照提纲写完；写完还不够，再把每拍讲具体（怎么做、为什么、容易错在哪）。`
+        : '提纲里还有没写的页，先照提纲写完；页都写了，就把每拍讲具体（怎么做、为什么、容易错在哪）。';
+    steps.push(`讲词现在 ${z} 字，不到目标下限的 90%（${floor} 字）：问用户「讲稿可以吗」之前，先补到目标范围（${goal.lo}–${goal.hi} 字）。` +
+      how + '不要编数字、案例和用户反馈。用户明确说就要这么短，才可以不补。');
+  }
+  if (long) {
+    steps.push(`讲词现在 ${z} 字，超过目标上限（${goal.hi} 字）约 ${z - goal.hi} 字：问用户之前，先删到 ${goal.hi} 字以内（删重复的话、合并页）。` +
+      '用户明确说可以讲长一点，才可以不删。');
+  }
   if (s.materials.images) {
     steps.push(s.materials.note
       ? '「画面」一段要用截图时，写 素材/截图说明.md 里的文件名。'
       : ['「画面」一段要用截图时写文件名。素材里有图但还没有截图说明表，先运行：', cli('materials', quote(join(s.dir, '素材')))]);
   }
   steps.push('页数多（超过 15 页）时，可以先写完第一部分给用户看一眼语气对不对，再接着写。');
-  steps.push(['写完给用户看（问题 1），必须等用户明确说可以；要改就改完再问。用户确认后运行：', cli('confirm', quote(s.dir), 'script')]);
+  steps.push([`写完${goal ? `、讲词在 ${floor}–${goal.hi} 字之间了，再` : ''}给用户看（问题 1），必须等用户明确说可以；要改就改完再问。用户确认后运行：`,
+    cli('confirm', quote(s.dir), 'script')]);
   steps.push(guideStep(s.dir));
 
-  const asks = [{ when: '讲稿写完以后问', q: '讲稿写好了，你看一遍，可以吗？', opts: [
+  const asks = [{ when: goal ? '讲稿写完、讲词字数够了以后问' : '讲稿写完以后问', q: '讲稿写好了，你看一遍，可以吗？', opts: [
     '可以，就按这个做课件（推荐）', '要改：说哪页改什么', '太长或太短：说要加还是要减'] }];
   return render(3, { where, steps, asks, say: '第 3 页的讲词太书面了，改口语一点；第 5、6 页合成一页' });
 }
@@ -439,15 +531,23 @@ const HINTS = {
 };
 const DEFAULT_ORDER = ['paper', 'watercolor', 'board', 'dark', 'desk', 'journal'];
 
-function rankScenes(ready, text) {
+// 讲稿（尤其「给组织方」里的场合）写了在投影、幕布上讲
+const PROJECTOR = /投影|幕布|会议室/;
+// 在投影上讲时深色底要扣的分：比任何一份讲稿的关键词命中都多，深色底排到所有浅色底后面
+const DARK_PENALTY = 1000;
+
+// 返回 [{ s, hits（关键词命中次数）, score（扣分后）, penalized, order, words }]，按 score 从高到低
+function rankScenes(ready, text, { projector = false } = {}) {
   const rank = ready.map((s, i) => {
-    const hits = {};
+    const found = {};
     const re = HINTS[s.key];
-    if (re) for (const m of text.match(re) || []) hits[m] = (hits[m] || 0) + 1;
-    const score = Object.values(hits).reduce((a, b) => a + b, 0);
+    if (re) for (const m of text.match(re) || []) found[m] = (found[m] || 0) + 1;
+    const hits = Object.values(found).reduce((a, b) => a + b, 0);
+    const penalized = projector && !!s.dark;
+    const score = hits - (penalized ? DARK_PENALTY : 0);
     const order = DEFAULT_ORDER.includes(s.key) ? DEFAULT_ORDER.indexOf(s.key) : DEFAULT_ORDER.length + i;
-    const words = Object.entries(hits).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([w]) => `「${w}」`);
-    return { s, score, order, words };
+    const words = Object.entries(found).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([w]) => `「${w}」`);
+    return { s, hits, score, penalized, order, words };
   });
   return rank.sort((a, b) => b.score - a.score || a.order - b.order);
 }
@@ -478,7 +578,10 @@ function stageStyle(s) {
   // 推荐：已经记下的风格优先（搭好的骨架就是它），否则按讲稿里的词粗估
   let text = '';
   try { text = readFileSync(join(s.dir, SCRIPT), 'utf8'); } catch (e) { text = ''; }
-  const ranked = rankScenes(info.ready, text);
+  const projector = PROJECTOR.test(text);
+  const ranked = rankScenes(info.ready, text, { projector });
+  const anyDark = ranked.some(r => r.penalized);
+  if (projector && anyDark) where.push('讲稿里写了在投影、幕布或会议室讲：深色底在幕布上容易发灰，推荐时浅色底排在前面');
   const fit = sc => (sc.fit ? `：适合${sc.fit}` : '');
   let first;
   let recKeys;
@@ -486,17 +589,25 @@ function stageStyle(s) {
   if (recorded.length) {
     const scs = recorded.map(k => info.ready.find(x => x.key === k));
     recKeys = recorded.join(',');
-    first = `${scs.map(x => x.label).join(' + ')}（${recKeys}）${scs.length === 1 ? fit(scs[0]) : ''}（推荐：${s.engine ? '已经搭好的骨架用的就是它，不用改文件' : '之前记下的就是它'}）`;
+    const dim = projector && scs.some(x => x.dark) ? '；注意在投影上讲，深色底容易发灰' : '';
+    first = `${scs.map(x => x.label).join(' + ')}（${recKeys}）${scs.length === 1 ? fit(scs[0]) : ''}（推荐：${s.engine ? '已经搭好的骨架用的就是它，不用改文件' : '之前记下的就是它'}${dim}）`;
   } else if (ranked.length) {
     const top = ranked[0];
     recKeys = top.s.key;
-    const why = top.score ? `讲稿里有${top.words.join('')}这些词` : '讲稿里看不出明显偏向，先推通用的';
-    first = `${top.s.label}（${top.s.key}）${fit(top.s)}（推荐：${why}）`;
+    // 深色底因为投影被排到后面、而它本来命中更多时，说一句它为什么没排第一
+    const demoted = projector ? ranked.find(r => r.penalized && r.hits > top.hits) : null;
+    const why = [];
+    if (top.hits) why.push(`讲稿里有${top.words.join('')}这些词`);
+    else if (!demoted) why.push('讲稿里看不出明显偏向，先推通用的');
+    if (demoted) why.push(`${demoted.words.join('')}更像${demoted.s.label}，但它是深色底`);
+    if (projector && anyDark) why.push('在投影上讲，优先浅色底');
+    first = `${top.s.label}（${top.s.key}）${fit(top.s)}（推荐：${why.join('；')}）`;
   } else {
     recKeys = '〈风格键名〉';
     first = '照 styles 列出的挑一个（推荐）';
   }
-  const others = ranked.filter(r => !recKeys.split(',').includes(r.s.key)).slice(0, 2).map(r => `${r.s.label}（${r.s.key}）${fit(r.s)}`);
+  const others = ranked.filter(r => !recKeys.split(',').includes(r.s.key)).slice(0, 2)
+    .map(r => `${r.s.label}（${r.s.key}）${fit(r.s)}${r.penalized ? '（深色底，投影上容易发灰）' : ''}`);
   const opts = [first, ...others, '先看样册再定'];
 
   // 各风格默认的形象：「方格纸、黑板用朵朵（duoduo），科技暗黑用微光（weiguang）」
@@ -507,7 +618,8 @@ function stageStyle(s) {
   const steps = [];
   steps.push(['运行 styles，看所有风格的样子、适合讲什么、不适合什么、属于哪一家：', cli('styles')]);
   steps.push('对照讲稿每部分讲什么，从「适合」里挑一个主推，跟用户说一句理由。下面问题 1 的推荐是按讲稿里的词粗估的；' +
-    '你读过讲稿，觉得别的更合适，就把它换到第一个、标上（推荐）。');
+    '你读过讲稿，觉得别的更合适，就把它换到第一个、标上（推荐）。' +
+    (projector && anyDark ? '讲稿里写了在投影上讲：优先推浅色底；用户想要深色底（黑板、科技暗黑），先跟他说一声投到幕布上容易发灰。' : ''));
   steps.push('内容跨度大时，可以按章用不同风格：最多 3 种，只在同一家里混（手绘家和现代家不混用）；一份课件只用一个形象。');
   steps.push(['打开样册给用户看（样册还没做好时它会说明，那就把 styles 的文字说明讲给用户听）：', cli('styles', '--open')]);
   steps.push(['用户选定后（必须等用户明确选了）运行，--scenes 后面写风格的键名，多种用逗号隔开：',
@@ -594,7 +706,8 @@ function stageTrial(s) {
     const hasCover = s.pages.some(p => p.def.id === 'p01');
     const steps = [
       ['先读两份说明：样板页（照着改，少从零写）、写页面的规矩：', refDoc('templates.md'), refDoc('authoring.md')],
-      `写到 3 页：封面，加讲稿里最典型的两页——一页图示（步骤、组成或关系）、一页清单。${hasCover ? '封面 p01 已经有了（new 生成的），照讲稿第 1 页改文字。' : ''}`,
+      '写到 3 页：封面，加讲稿里最典型的两页——从讲稿里挑一页步骤或图示（有先后、有箭头的）和一页清单（并列的几件事），' +
+        `优先挑内容最多、最能代表这份课件的那两页。${hasCover ? '封面 p01 已经有了（new 生成的），照讲稿第 1 页改文字。' : ''}`,
       `写在 ${posix(s.dir)}/slides/ch1.js 里（每页一个 Deck.add，页面顺序就是写的顺序）。id 用讲稿的页号：讲稿第 5 页就写 id: 'p05'，以后写全稿再按顺序把中间的页补上。` +
         `页面样式写在同一目录的 ch1.css 里，选择器以 [data-id="p05"] 这样开头。`,
       '只改 slides/ 里的文件和 index.html 里两对「章节」注释之间的行，不碰 engine/、scenes/、mascots/、vendor/。',

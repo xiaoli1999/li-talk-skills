@@ -2,7 +2,7 @@
 // 章节文件在 deck.mjs 的假环境里执行，只收集 Deck.add 的参数；某章运行出错时明确报「这一章没查到」
 import { existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { readDeck, collectPages, readText, htmlTags, localRef, blankHtmlComments } from './deck.mjs';
+import { readDeck, collectPages, readText, htmlTags, localRef, blankHtmlComments, scriptPageCount } from './deck.mjs';
 
 const FAMILY = { hand: '手绘家', modern: '现代家', pixel: '像素家' };
 // 引擎内置的朴素风格：页面写了也不算没引入
@@ -329,12 +329,16 @@ export async function checkStatic(dir) {
   const firstById = new Map();
   const usedScenes = [];
   let sayChars = 0;
+  // 讲稿比课件页数多（比如先做 3 页）时，课件现在的最后一页还不是结尾，按普通页查
+  const scriptPages = scriptPageCount(deck.dir);
+  const unfinished = scriptPages != null && pages.length < scriptPages;
   pages.forEach(p => {
     const d = p.def;
     const n = p.no;
     const id = text(d.id);
     const at = id ? `第 ${n} 页 ${id}` : `第 ${n} 页`;
-    const edge = n === 1 || n === pages.length;
+    const role = n === 1 ? '封面' : n === pages.length && !unfinished ? '结尾' : '';
+    const edge = !!role;
 
     if (!id) error(`第 ${n} 页没写 id`, `加一个全稿唯一的 id，比如 p${n}`, n);
     else if (firstById.has(id)) error(`第 ${n} 页：id「${id}」和第 ${firstById.get(id)} 页重复`, '改成全稿唯一的 id', n);
@@ -380,8 +384,9 @@ export async function checkStatic(dir) {
       const said = Math.max(...notes.map(x => toInt(x.beat)));
       if (said !== total) warn(`${at}：讲词写到第 ${said} 拍，页面有 ${total} 拍`, '让讲词和节拍一一对应', n);
     }
-    const [min, max] = edge ? [1, 2] : [2, 4];
-    if (total < min || total > max) warn(`${at}：有 ${total} 拍，建议 2 到 4 拍（封面结尾 1 到 2 拍）`, '拆页或合并节拍', n);
+    // 提醒只写实际套用的那条规则：封面、结尾 1 到 2 拍，其余 2 到 4 拍
+    if (edge && (total < 1 || total > 2)) warn(`${at}：这是${role}页，有 ${total} 拍，建议 1 到 2 拍`, '拆页或合并节拍', n);
+    else if (!edge && (total < 2 || total > 4)) warn(`${at}：有 ${total} 拍，建议 2 到 4 拍`, '拆页或合并节拍', n);
 
     // 讲词字数
     if (notes) for (const x of notes) sayChars += countWords(text(x.say));
@@ -453,6 +458,7 @@ export async function checkStatic(dir) {
   const block = (title, list) => (list.length ? `\n${title}\n` + list.map(x => `  ${x.msg}\n    → ${x.fix}`).join('\n') : '');
   const out = `检查：${pages.length} 页，${errs.length} 个错误、${warns.length} 个提醒\n`
     + block('错误', errs) + block('提醒', warns)
-    + `\n信息\n  ${durationLine(sayChars)}`;
+    + `\n信息\n  ${durationLine(sayChars)}`
+    + (unfinished ? `\n  讲稿.md 有 ${scriptPages} 页，课件现在 ${pages.length} 页：最后一页还不是结尾，按普通页查（主题行、2 到 4 拍）` : '');
   return { text: out, errors: errs.length, warnings: warns.length, pages: pages.length, issues: errs.concat(warns) };
 }

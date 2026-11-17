@@ -78,6 +78,32 @@
 
 一章一个文件就够，不用一页一个文件。按讲稿的章节分：讲稿「一、准备」写进 `ch1.js`，「二、动手」写进 `ch2.js`。
 
+### 章节文件可以跳号
+
+章节文件名只是名字，**页面顺序 = `index.html` 章节区里的引入顺序**（同一个文件里再按 `Deck.add` 的顺序），和 `ch` 后面的数字无关。
+
+所以先做 3 页时，可以只建用到的章：比如 3 页分别在第一、三、四章，就只建 `ch1`、`ch3`、`ch4`（各一个 `.js` 和 `.css`），引入也只写这三章。之后补第二章时，建 `slides/ch2.js` 和 `slides/ch2.css`，把它的两行引入分别插到 `ch3` 那两行的**前面**。插完是这样：
+
+```html
+<!-- 章节样式（开始） -->
+<link rel="stylesheet" href="slides/ch1.css">
+<link rel="stylesheet" href="slides/ch2.css">
+<link rel="stylesheet" href="slides/ch3.css">
+<link rel="stylesheet" href="slides/ch4.css">
+<!-- 章节样式（结束） -->
+```
+
+```html
+<!-- 章节（开始）：页面顺序 = 引入顺序；新增一章就在这里和上面的章节样式里各加一行 -->
+<script src="slides/ch1.js"></script>
+<script src="slides/ch2.js"></script>
+<script src="slides/ch3.js"></script>
+<script src="slides/ch4.js"></script>
+<!-- 章节（结束） -->
+```
+
+插错位置（比如加在 `ch4` 后面），第二章的页就会排到最后。插完运行 `check <课件目录>`，看页数对不对。
+
 ---
 
 ## 2. 技术边界

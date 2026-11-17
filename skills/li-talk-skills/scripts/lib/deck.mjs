@@ -57,6 +57,28 @@ export function localRef(ref) {
 
 const unique = list => [...new Set(list)];
 
+/* ------------------------------------------------------------------
+   讲稿：每页的标题行写成「## 第 N 页 页标题」，guide 靠它数讲稿页数，check 靠它判断最后一页是不是结尾
+   ------------------------------------------------------------------ */
+
+export const SCRIPT_FILE = '讲稿.md';
+
+/** 讲稿里每页的标题行：[{ no, title, index }]，index 是这一行在全文里的位置 */
+export function scriptPageHeads(text) {
+  const out = [];
+  const re = /^##[ \t]*第[ \t]*(\d+)[ \t]*页[ \t]*(.*)$/gm;
+  let m;
+  while ((m = re.exec(String(text)))) out.push({ no: Number(m[1]), title: m[2].trim(), index: m.index });
+  return out;
+}
+
+/** 课件目录里 讲稿.md 有几页；没有讲稿、读不了时返回 null */
+export function scriptPageCount(dir) {
+  const file = join(resolve(dir), SCRIPT_FILE);
+  if (!existsSync(file)) return null;
+  try { return scriptPageHeads(readText(file)).length; } catch (e) { return null; }
+}
+
 // index.html 里两对「章节（开始）/（结束）」注释之间引入的 js 和 css；没有这两对注释时退回「引入的 slides/ 下的文件」
 function chapterRefs(indexHtml) {
   const pick = (re, fallbackAll) => {

@@ -53,7 +53,9 @@ test('表格里其余的规则、页码、行号和「怎么改」', async () =>
   assert.match(t, /第 2 页 p1：带拍的元素上写了 transform\n {4}→ 位置用 left \/ top，倾斜用 --r/);
   assert.match(t, /第 2 页 p1：讲词写到第 3 拍，页面有 2 拍\n {4}→ 让讲词和节拍一一对应/);
   assert.match(t, /第 5 页 p5：没写主题行 topic\n {4}→ 加上「本页主题」/);
-  assert.match(t, /第 5 页 p5：有 5 拍，建议 2 到 4 拍（封面结尾 1 到 2 拍）\n {4}→ 拆页或合并节拍/);
+  assert.match(t, /第 5 页 p5：有 5 拍，建议 2 到 4 拍\n {4}→ 拆页或合并节拍/);
+  // 提醒只写实际套用的那条规则，不把两种范围混在一句里
+  assert.doesNotMatch(t, /封面结尾/);
   assert.match(t, /风格混用了不同的家：方格纸（手绘家）和 科技暗黑（现代家）\n {4}→ 同一份课件里只用同一家的风格/);
   // 第一页、最后一页不要求主题行
   assert.doesNotMatch(t, /第 1 页 p1：没写主题行/);
@@ -115,6 +117,47 @@ function tempDeck(chapters) {
     + names.map(n => `<script src="slides/${n}"></script>`).join('\n') + '\n<!-- 章节（结束） -->\n</body></html>\n');
   return dir;
 }
+
+// 一页：第 0 拍到第 beats 拍各一段字；topic=false 时不写主题行
+const beatsPage = (id, beats, { topic = true } = {}) => {
+  const html = Array.from({ length: beats + 1 }, (_, i) => `<p data-beat="${i}">x</p>`).join('');
+  return `Deck.add({ id: '${id}', scene: 'plain', title: '${id}', ${topic ? "topic: '主题', " : ''}html: '${html}' });\n`;
+};
+// 讲稿：n 页「## 第 N 页」
+const scriptOf = n => '# 标题\n\n## 给组织方\n- 时间与时长：5 分钟\n'
+  + Array.from({ length: n }, (_, i) => `\n## 第 ${i + 1} 页 第${i + 1}页\n`).join('');
+
+test('拍数提醒：封面、结尾 1 到 2 拍，普通页 2 到 4 拍，提醒文字只写套用的那条', async () => {
+  const dir = tempDeck({ 'a.js': beatsPage('p01', 3) + beatsPage('p02', 5) + beatsPage('p03', 3) });
+  const t = (await checkStatic(dir)).text;
+  assert.match(t, /第 1 页 p01：这是封面页，有 3 拍，建议 1 到 2 拍\n {4}→ 拆页或合并节拍/);
+  assert.match(t, /第 2 页 p02：有 5 拍，建议 2 到 4 拍\n {4}→ 拆页或合并节拍/);
+  assert.match(t, /第 3 页 p03：这是结尾页，有 3 拍，建议 1 到 2 拍\n {4}→ 拆页或合并节拍/);
+  assert.doesNotMatch(t, /封面结尾/);
+});
+
+test('讲稿 5 页、课件 3 页（先做 3 页）时，最后一页按普通页算，不按结尾算', async () => {
+  // 替身实测的样子：p01 封面 1 拍，p03 步骤 3 拍，p04 清单 3 拍
+  const pages = beatsPage('p01', 1) + beatsPage('p03', 3) + beatsPage('p04', 3, { topic: false });
+  const dir = tempDeck({ 'a.js': pages });
+  writeFileSync(join(dir, '讲稿.md'), scriptOf(5));
+  const r = await checkStatic(dir);
+  assert.doesNotMatch(r.text, /拍，建议/, r.text);
+  assert.match(r.text, /\n {2}讲稿\.md 有 5 页，课件现在 3 页：最后一页还不是结尾，按普通页查/);
+  // 按普通页算，主题行也要写
+  assert.match(r.text, /第 3 页 p04：没写主题行 topic/);
+
+  // 讲稿页数够了，最后一页就是结尾：3 拍要提醒
+  writeFileSync(join(dir, '讲稿.md'), scriptOf(3));
+  const done = (await checkStatic(dir)).text;
+  assert.match(done, /第 3 页 p04：这是结尾页，有 3 拍，建议 1 到 2 拍/);
+  assert.doesNotMatch(done, /没写主题行/);
+  assert.doesNotMatch(done, /还不是结尾/);
+
+  // 没有讲稿：保持原来的判断，最后一页按结尾算
+  const bare = tempDeck({ 'a.js': pages });
+  assert.match((await checkStatic(bare)).text, /第 3 页 p04：这是结尾页，有 3 拍，建议 1 到 2 拍/);
+});
 
 test('假环境碰不到 Node：process、require 都没有；死循环会超时', async () => {
   const dir = tempDeck({
