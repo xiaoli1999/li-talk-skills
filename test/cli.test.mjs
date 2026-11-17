@@ -37,12 +37,21 @@ test('命令模块还不存在时给一句中文，不抛 Node 的错误', async
   await assert.rejects(() => loadCommand(url), e => /还没做好/.test(e.userMessage) && e.exitCode === 1);
 });
 
-test('version 打印版本号，和 version.txt 一致', () => {
+test('version 打印版本号（和 version.txt 一致）、安装位置；在仓库里运行时说明不自动更新', () => {
   const v = readFileSync(join(SKILL, 'version.txt'), 'utf8').trim();
   assert.equal(v, '0.1.0');
   const r = cli('version');
   assert.equal(r.code, 0, r.err);
-  assert.equal(r.out.trim(), 'li-talk-skills ' + v);
+  const lines = r.out.trim().split(/\r?\n/);
+  assert.equal(lines[0], 'li-talk-skills ' + v);
+  assert.equal(lines[1], '安装位置：' + SKILL);
+  assert.match(lines[2], /^安装方式：开发中的仓库.*不自动更新/);
+});
+
+test('update 在仓库里运行：不联网，说明原因，退出码 0', () => {
+  const r = cli('update');
+  assert.equal(r.code, 0, r.err);
+  assert.match(r.out, /开发中的仓库/);
 });
 
 test('不带命令时打印用法，退出码 0', () => {

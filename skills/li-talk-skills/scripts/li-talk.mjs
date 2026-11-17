@@ -15,7 +15,10 @@ const COMMANDS = {
   guide: './lib/guide.mjs', styles: './lib/styles.mjs', materials: './lib/materials.mjs',
   new: './lib/new.mjs', open: './lib/open.mjs', confirm: './lib/meta.mjs',
   check: './lib/check.mjs', fonts: './lib/fonts.mjs', version: './lib/version.mjs',
+  update: './lib/update.mjs',
 };
+// 这两个命令自己处理更新，不在命令开始前自动检查
+const NO_AUTO_UPDATE = ['version', 'update'];
 const HELP = `用法：node li-talk.mjs <命令> [参数]
   guide [课件目录]                    看做到哪一步、下一步做什么
   styles [--open]                     列出所有风格；--open 打开样册
@@ -25,7 +28,8 @@ const HELP = `用法：node li-talk.mjs <命令> [参数]
   confirm <课件目录> <outline|script|style|trial|review>   记下用户已确认的环节
   check <课件目录> [--browser] [--pages 3-5] [--shots] [--scene 风格]
   fonts [--into 课件目录]             下载或检查完整字体
-  version                             查看版本`;
+  version                             查看版本、安装位置、上次检查更新的结果
+  update                              立即检查并更新（平时每天第一次运行命令时自动更新）`;
 
 // 等输出都写完再退出：Windows 上 stdout 接管道时是异步写，直接 process.exit 可能截掉报告的尾巴
 function finish(code) {
@@ -36,6 +40,20 @@ function finish(code) {
   process.stderr.write('', done);
 }
 
+// 自动更新刚把文件换成新版：这个进程里已经加载的是旧模块，接着加载命令会新旧混用，
+// 所以用新的入口把这条命令重新跑一遍（不会再检查更新：今天已经记过了）
+async function rerun(argv) {
+  await new Promise(done => process.stdout.write('', done));   // 先把更新说明写出去，再让新进程输出
+  const { spawnSync } = await import('node:child_process');
+  const { fileURLToPath } = await import('node:url');
+  const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url), ...argv], { stdio: 'inherit' });
+  if (r.error || typeof r.status !== 'number') {
+    console.error('更新后重新运行这条命令没成功，请把刚才的命令再运行一次。');
+    return 1;
+  }
+  return r.status;
+}
+
 async function main() {
   const argv = process.argv.slice(2);
   let cmd = argv[0];
@@ -44,6 +62,12 @@ async function main() {
   if (!COMMANDS[cmd]) { console.error(`不认识的命令「${cmd}」。\n\n${HELP}`); return 1; }
 
   const { parseArgs, loadCommand } = await import('./lib/cli.mjs');
+  if (!NO_AUTO_UPDATE.includes(cmd)) {
+    // 每天第一次运行命令时检查更新；网络不通、更新模块自己出错，都不影响这次的命令
+    let up = null;
+    try { up = await (await import('./lib/update.mjs')).autoUpdate(); } catch { up = null; }
+    if (up && up.updated) return rerun(argv);
+  }
   const run = await loadCommand(new URL(COMMANDS[cmd], import.meta.url));
   const code = await run(parseArgs(argv.slice(1), BOOLS));
   return typeof code === 'number' ? code : 0;
