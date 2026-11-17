@@ -156,7 +156,7 @@
    下面通用样板页的 Deck.add 在这里拦下；引入它自己的样板文件在章节注释后面那段。
    新做好一种风格的样板，就把键名加进 NATIVE（test/gallery.test.mjs 会对照 samples/ 里的文件） */
 (function () {
-  var NATIVE = ['blueprint', 'board', 'dark', 'flat', 'ink', 'magazine', 'pixel'];
+  var NATIVE = ['blueprint', 'board', 'dark', 'flat', 'ink', 'magazine', 'paper', 'pixel', 'watercolor'];
   var k = new URLSearchParams(location.search).get('scene');
   if (!k || NATIVE.indexOf(k) < 0 || !window.Deck) return;
   window.LI_TALK_SAMPLES = k;
