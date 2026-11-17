@@ -1,0 +1,278 @@
+/* =====================================================================
+   风格 · 漫画 comic 的样子（行为在 comic.js）
+   米白漫画原稿纸、淡蓝裁切线与角标；黑白墨线加两个专色：朱红 --cm-warm、钴蓝 --cm-cool，不用别的颜色。
+   所有选择器的第一段都带 [data-scene="comic"]
+   - 分镜格（卡片、小格、步骤的每一项、终端、截图位、命令，以及漫画自己的 .cm-panel）：
+     组件本身不画底色，整格画在它的 ::after 里（步骤的 ::before 是序号、卡片和截图位的 ::before 原来是胶带，都不占用），
+     这个伪元素压在组件的内容下面（组件 isolation:isolate），一层背景里叠着：
+       · 四条毛笔墨线（--cm-ft / fr / fb / fl，中间粗两头收，各自拉长、不拉粗；四角各出头 6px 交叉）
+       · 格子里的留白（--cm-fill，命令是墨黑）
+       · 右下错开的一块半调网点（--cm-dots，网点阴影；卡片颜色 t-* 决定网点是墨、朱红还是钴蓝）
+     几个量：--cm-S 网点阴影错开多远；--cm-l 悬停时整格抬起多少（CSS 过渡，网点留在原地，所以阴影变宽）；
+     --cm-p 复制时命令被按下去多少、--cm-k 网点阴影浮出来的进度、--cm-d1…d4 四条墨线描到哪（这四个由 comic.js 推）
+   - 卡片颜色：t-yellow / t-peach / t-pink 是朱红网点，t-blue / t-mint 是钴蓝网点，t-white 和不写是墨色网点；格子本身都是白的
+   - 卡片的胶带 tape、图钉 pin 在这里不画（漫画格子不贴东西）
+   - --recede（讲过的拍变到多淡）由 comic.js 的 recede 写入（.5），这里不写
+   ===================================================================== */
+
+/* 悬停抬起：注册成长度才能平滑过渡；要继承，画格子的伪元素才读得到（每个格子自己写 0px，里外两层格子不串） */
+@property --cm-l{syntax:"<length>";inherits:true;initial-value:0px}
+
+/* 变量：原稿纸、墨、朱红、钴蓝 */
+[data-scene="comic"]{
+  --f-mono:"JetBrains Mono","Cascadia Mono",Consolas,"SF Mono",Menlo,"PingFang SC","Microsoft YaHei",monospace;
+  --bg:#F5F0E4; --ink:#16130F; --ink-2:#4A443B; --ink-3:#7E776B; --line:#16130F;
+  --mark:#E2452A; --key-ink:#16130F; --hl:rgba(226,69,42,.18); --accent:#E2452A;
+  --card-ink:#16130F; --card-ink-2:#4A443B; --paper:#FFFDF8;
+  /* 只有两个专色：黄、桃、粉都归到朱红，蓝、薄荷归到钴蓝（页面拿来当底色时是很淡的一层） */
+  --t-yellow:#FBE4DA; --t-peach:#FBE4DA; --t-pink:#FBE4DA; --t-blue:#DDE9F5; --t-mint:#DDE9F5; --t-white:#FFFDF8;
+  --term-bg:#FFFDF8; --term-ink:#16130F;
+  --human:#E2452A; --ai:#1D6CB4; --idle:#7A93AB;
+  --sign-color:rgba(74,68,59,.72);
+  --cm-warm:#E2452A; --cm-warm-ink:#C9381D; --cm-cool:#1D6CB4; --cm-pencil:#8CBBE2; --cm-white:#FFFDF8;
+  /* 图（data URI）：四条毛笔墨线、三种网点、「已复制！」的爆炸气泡 */
+  --cm-ft:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 20' preserveAspectRatio='none'%3E%3Cpath d='M0 8.9L15.4 7.4L30.8 6.4L46.2 6.1L61.5 5.8L76.9 4.9L92.3 5L107.7 5.2L123.1 5L138.5 4.8L153.8 5.1L169.2 4.2L184.6 3.9L200 3.8L215.4 4L230.8 5.2L246.2 3.6L261.5 5.2L276.9 5L292.3 5L307.7 5.8L323.1 4.9L338.5 6.1L353.8 5.7L369.2 6.5L384.6 7.4L400 9.1L400 11.1L384.6 12.9L369.2 13.3L353.8 14.3L338.5 13.5L323.1 15L307.7 14.6L292.3 15.4L276.9 15.1L261.5 15.1L246.2 16.3L230.8 15.1L215.4 15.8L200 16.1L184.6 16.5L169.2 15.8L153.8 15.1L138.5 15.4L123.1 15L107.7 14.5L92.3 15.2L76.9 15L61.5 14.2L46.2 14L30.8 13.2L15.4 13L0 11.2Z' fill='%2316130F'/%3E%3C/svg%3E");
+  --cm-fb:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 20' preserveAspectRatio='none'%3E%3Cpath d='M0 9.1L15.4 7.2L30.8 6.6L46.2 5.4L61.5 6L76.9 5L92.3 4L107.7 4.3L123.1 4.5L138.5 3.7L153.8 4.1L169.2 3.6L184.6 2.7L200 2.9L215.4 3.5L230.8 3.1L246.2 2.9L261.5 3.3L276.9 4.2L292.3 4.3L307.7 4L323.1 4.5L338.5 4.6L353.8 6L369.2 6.8L384.6 7L400 9.1L400 11L384.6 13.1L369.2 12.9L353.8 13.6L338.5 14.2L323.1 14.2L307.7 15L292.3 14.6L276.9 14L261.5 15.2L246.2 15.4L230.8 15.4L215.4 15L200 15.1L184.6 15L169.2 14.1L153.8 14.4L138.5 15.1L123.1 13.8L107.7 14.5L92.3 15.1L76.9 13.5L61.5 13.3L46.2 14.2L30.8 12.9L15.4 12.4L0 11.1Z' fill='%2316130F'/%3E%3C/svg%3E");
+  --cm-fl:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 400' preserveAspectRatio='none'%3E%3Cpath d='M8.5 0L6.9 15.4L6.4 30.8L5.7 46.2L5.8 61.5L4.9 76.9L5 92.3L4.6 107.7L5.2 123.1L4 138.5L4.3 153.8L4 169.2L3.8 184.6L4 200L4.4 215.4L4.5 230.8L4.2 246.2L4.1 261.5L5.1 276.9L4.9 292.3L5.6 307.7L5.7 323.1L5.3 338.5L6.3 353.8L6 369.2L7.3 384.6L8.7 400L11.3 400L12.5 384.6L13.6 369.2L14.2 353.8L14.3 338.5L14.1 323.1L14.8 307.7L15.4 292.3L14.7 276.9L16.3 261.5L15.5 246.2L15.4 230.8L16.1 215.4L16 200L16.1 184.6L15.9 169.2L15.4 153.8L15.7 138.5L15 123.1L15.9 107.7L15.5 92.3L14.9 76.9L14.3 61.5L14.5 46.2L13.3 30.8L12.8 15.4L11.1 0Z' fill='%2316130F'/%3E%3C/svg%3E");
+  --cm-fr:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 400' preserveAspectRatio='none'%3E%3Cpath d='M8.9 0L7.4 15.4L6.6 30.8L6.2 46.2L4.7 61.5L4.4 76.9L4.9 92.3L4.8 107.7L3.8 123.1L3.3 138.5L2.9 153.8L4.1 169.2L3.3 184.6L2.7 200L4 215.4L2.8 230.8L3.3 246.2L4 261.5L4.6 276.9L3.9 292.3L4.9 307.7L5.2 323.1L5.3 338.5L5.2 353.8L6.1 369.2L6.6 384.6L8.6 400L11 400L12.8 384.6L13.4 369.2L13.9 353.8L14 338.5L14.2 323.1L13.9 307.7L14.7 292.3L14.1 276.9L14.8 261.5L15.2 246.2L15.1 230.8L14.8 215.4L15.2 200L14.9 184.6L14.4 169.2L15.4 153.8L15.4 138.5L14.4 123.1L14.3 107.7L13.6 92.3L14.8 76.9L14.4 61.5L13.6 46.2L13 30.8L12.2 15.4L11 0Z' fill='%2316130F'/%3E%3C/svg%3E");
+  --cm-dk:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='p' width='5.5' height='5.5' patternUnits='userSpaceOnUse' patternTransform='rotate(45)'%3E%3Ccircle cx='2.75' cy='2.75' r='1.5' fill='%2316130F'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23p)' fill-opacity='0.5'/%3E%3C/svg%3E");
+  --cm-dw:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='p' width='5.5' height='5.5' patternUnits='userSpaceOnUse' patternTransform='rotate(45)'%3E%3Ccircle cx='2.75' cy='2.75' r='1.5' fill='%23E2452A'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23p)' fill-opacity='0.72'/%3E%3C/svg%3E");
+  --cm-dc:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='p' width='5.5' height='5.5' patternUnits='userSpaceOnUse' patternTransform='rotate(45)'%3E%3Ccircle cx='2.75' cy='2.75' r='1.5' fill='%231D6CB4'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23p)' fill-opacity='0.66'/%3E%3C/svg%3E");
+  --cm-burst:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 280 170' preserveAspectRatio='none'%3E%3Cpolygon points='140,12.3 162.1,32.2 196.9,21.1 200.9,44.5 247.2,41.4 224.6,66.1 263.2,76.2 232.3,91.6 254.4,110.6 214,115.1 226.2,142.3 181.5,131.7 169.8,156.2 140,139.9 110.2,156.2 97.8,132.5 54.3,142 68.4,114.1 20.5,111.7 48,91.6 8.8,75.6 57.8,66.6 31.1,40.7 83.6,47.4 79.7,17.3 119.3,35.4' fill='%23E2452A' stroke='%2316130F' stroke-width='6' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --cm-tail:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 80'%3E%3Cpath d='M15 0 H55 V8 Q42 50 6 78 Q22 46 15 8 Z' fill='%23FFFDF8'/%3E%3Cpath d='M14 8 Q22 46 6 78 Q42 50 56 8' fill='none' stroke='%2316130F' stroke-width='5' stroke-linejoin='round' stroke-linecap='round'/%3E%3C/svg%3E");
+  /* 原稿纸：米白，左上一片很淡的亮（阅读模式每页也用它） */
+  --scene-bg:radial-gradient(ellipse 70% 60% at 30% 22%,rgba(255,255,255,.5),rgba(255,255,255,0) 70%),#F5F0E4;
+}
+
+/* ---------- 背景层（comic.js 的 backdrop 放进来）：淡蓝裁切线和四个角标，按舞台坐标放（舞台在背景层里居中） ---------- */
+.bg[data-scene="comic"] .cm-trim{position:absolute;left:calc(50% - 938px);top:calc(50% - 518px);width:1876px;height:1036px;border:1.5px solid rgba(140,187,226,.55);pointer-events:none}
+.bg[data-scene="comic"] .cm-trim i{position:absolute;width:38px;height:38px;border:0 solid rgba(140,187,226,.6)}
+.bg[data-scene="comic"] .cm-trim i:nth-child(1){left:-15px;top:-15px;border-left-width:1.5px;border-top-width:1.5px}
+.bg[data-scene="comic"] .cm-trim i:nth-child(2){right:-15px;top:-15px;border-right-width:1.5px;border-top-width:1.5px}
+.bg[data-scene="comic"] .cm-trim i:nth-child(3){left:-15px;bottom:-15px;border-left-width:1.5px;border-bottom-width:1.5px}
+.bg[data-scene="comic"] .cm-trim i:nth-child(4){right:-15px;bottom:-15px;border-right-width:1.5px;border-bottom-width:1.5px}
+
+/* =====================================================================
+   主题行、标题、解释句
+   ===================================================================== */
+/* 主题行：章节名是一块墨黑的格号标签，留白字 */
+[data-scene="comic"] .s-topic{gap:14px}
+[data-scene="comic"] .s-topic .tc{padding:4px 16px 7px;background:var(--ink);color:var(--cm-white);font:700 26px/1.2 var(--f-hand);letter-spacing:.04em}
+[data-scene="comic"] .s-topic .ts{color:var(--ink-3)}
+[data-scene="comic"] .s-topic .tt{color:var(--ink)}
+[data-scene="comic"] .s-title{color:var(--ink);letter-spacing:.03em}
+
+/* 一句话解释：旁白框——白底方框、墨线、错开一点的墨影 */
+[data-scene="comic"] .explain{margin-top:-8px;padding:5px 18px 8px;border:2.5px solid var(--ink);background:var(--cm-white);box-shadow:4px 4px 0 var(--ink);color:var(--ink-2)}
+[data-scene="comic"] .explain::before{display:none}
+[data-scene="comic"] .explain b{color:var(--ink)}
+[data-scene="comic"] .muted{color:var(--ink-2)}
+[data-scene="comic"] .faint{color:var(--ink-3)}
+[data-scene="comic"] .c-mark:not(svg *){color:var(--cm-warm-ink)}
+
+/* =====================================================================
+   重点词：字转朱红，字的下半截垫一条淡淡的墨色网点（像贴了一条网点纸），从左往右跟着引擎推的 --k 贴上
+   ===================================================================== */
+[data-scene="comic"] .key{padding:0 .08em;margin:0 .06em;color:var(--cm-warm-ink);color:color-mix(in srgb,var(--cm-warm-ink) calc(var(--k) * 100%),var(--key-ink))}
+[data-scene="comic"] .key::before{content:"";position:absolute;left:-.02em;right:-.02em;bottom:.02em;height:.5em;z-index:-1;pointer-events:none;
+  background:radial-gradient(circle,rgba(22,19,15,.4) 1.5px,rgba(22,19,15,0) 2.1px) 0 0/6px 6px;
+  clip-path:inset(0 calc((1 - var(--k)) * 100%) 0 0)}
+
+/* =====================================================================
+   分镜格：卡片、小格、步骤的每一项、终端、截图位、命令、.cm-panel
+   ===================================================================== */
+/* 几个量的默认值：用 :where 不加优先级，下面各组件（命令、卡片颜色、小格）才改得动；
+   写在每个格子自己身上，里外两层格子（比如步骤里的命令）各管各的，不从外层继承 */
+[data-scene="comic"] :where(.card,.cell,.steps>li,.term,.shot,.copy,.cm-panel){
+  --cm-S:14px; --cm-l:0px; --cm-dots:var(--cm-dk); --cm-fill:var(--cm-white);
+  --cm-d1:1; --cm-d2:1; --cm-d3:1; --cm-d4:1; --cm-k:1; --cm-p:0px}
+[data-scene="comic"] :is(.card,.cell,.steps>li,.term,.shot,.copy,.cm-panel){
+  isolation:isolate; border:0; border-radius:0; background:none; box-shadow:none;
+  translate:calc(var(--cm-p,0px) - var(--cm-l)) calc(var(--cm-p,0px) - var(--cm-l));
+  transition:--cm-l .22s cubic-bezier(.3,1.6,.6,1)}
+[data-scene="comic"] :is(.steps>li,.cm-panel:not(.abs)){position:relative}
+/* 整格画在 ::after 里：四条墨线 + 留白 + 右下的网点阴影（见文件开头）。伪元素比格子左、上各多 6px（墨线出头），右、下多 6px 加阴影 */
+[data-scene="comic"] :is(.card,.cell,.cell.human,.steps>li,.term,.shot,.copy,.cm-panel)::after{
+  --cm-o:calc(var(--cm-S) * var(--cm-k,1) + var(--cm-l) - var(--cm-p,0px));
+  content:"";position:absolute;z-index:-1;pointer-events:none;
+  top:-6px;left:-6px;right:calc(-6px - var(--cm-o));bottom:calc(-6px - var(--cm-o));
+  width:auto;height:auto;margin:0;border:0;border-radius:0;rotate:none;box-shadow:none;opacity:1;
+  background:
+    var(--cm-ft) left 0 top 0/calc((100% - var(--cm-o)) * var(--cm-d1,1)) 12px no-repeat,
+    var(--cm-fr) right var(--cm-o) top 0/12px calc((100% - var(--cm-o)) * var(--cm-d2,1)) no-repeat,
+    var(--cm-fb) right var(--cm-o) bottom var(--cm-o)/calc((100% - var(--cm-o)) * var(--cm-d3,1)) 12px no-repeat,
+    var(--cm-fl) left 0 bottom var(--cm-o)/12px calc((100% - var(--cm-o)) * var(--cm-d4,1)) no-repeat,
+    linear-gradient(var(--cm-fill),var(--cm-fill)) left 6px top 6px/calc(100% - var(--cm-o) - 12px) calc(100% - var(--cm-o) - 12px) no-repeat,
+    var(--cm-dots) right 6px bottom 6px/calc(100% - var(--cm-o) - 12px) calc(100% - var(--cm-o) - 12px) no-repeat}
+/* 卡片颜色 → 网点阴影的颜色 */
+[data-scene="comic"] :is(.card,.cell,.steps>li,.term,.shot,.cm-panel):is(.t-yellow,.t-peach,.t-pink){--cm-dots:var(--cm-dw)}
+[data-scene="comic"] :is(.card,.cell,.steps>li,.term,.shot,.cm-panel):is(.t-blue,.t-mint){--cm-dots:var(--cm-dc)}
+/* 悬停：整格抬起一点（网点留在原地，阴影变宽），角上冒三道钴蓝效果线（comic.js）；按下时压进阴影 */
+@media (hover:hover){
+  [data-scene="comic"] :is(.card,.cell,.steps>li,.term,.shot,.copy,.cm-panel):hover{--cm-l:4px}
+}
+[data-scene="comic"] :is(.card,.cell,.steps>li,.term,.shot,.copy,.cm-panel):active{--cm-l:-3px;transition-duration:.06s}
+/* 讲过时的变淡要有过渡（上面的 transition 盖掉了引擎的那一条，这里补上） */
+[data-scene="comic"] :is(.card,.cell,.steps>li,.term,.shot,.copy,.cm-panel).past{transition:--cm-l .22s cubic-bezier(.3,1.6,.6,1),opacity .45s ease}
+
+/* ---------- 卡片：白格子；上沿的小标签是墨黑的格号标签；胶带、图钉不画 ---------- */
+[data-scene="comic"] .card{padding:32px 38px 34px;color:var(--card-ink)}
+[data-scene="comic"] :is(.card.tape,.card.pin)::before{content:none}
+[data-scene="comic"] .card h3{color:var(--ink);letter-spacing:.02em}
+[data-scene="comic"] .card :is(.sm,small){color:var(--card-ink-2)}
+[data-scene="comic"] .card li::before{top:.6em;width:.32em;height:.32em;border-radius:50%;rotate:none;opacity:1;background:var(--ink)}
+[data-scene="comic"] .lab{top:-20px;left:22px;padding:3px 16px 6px;background:var(--ink);color:var(--cm-white);letter-spacing:.04em}
+
+/* ---------- 带序号的步骤：每一项是一格；序号是墨黑的格号方块（竖排在格子左边一列，横排骑在格子的上框线上，和卡片的小标签一样） ---------- */
+[data-scene="comic"] .steps>li{grid-template-columns:52px minmax(0,1fr);column-gap:24px;padding:20px 30px 22px 20px}
+[data-scene="comic"] .steps>li::before{width:52px;height:52px;border:0;border-radius:0;background:var(--ink);color:var(--cm-white);font:700 32px/1 var(--f-hand)}
+[data-scene="comic"] .steps>li>b{color:var(--ink)}
+[data-scene="comic"] .steps>li>span{color:var(--ink-2)}
+[data-scene="comic"] .steps.h>li{grid-template-columns:minmax(0,1fr);padding:42px 30px 26px}
+[data-scene="comic"] .steps.h>li::before{position:absolute;left:22px;top:-20px;grid-row:auto;box-sizing:border-box;width:auto;min-width:46px;height:44px;padding:0 13px;font-size:30px}
+
+/* ---------- 左右对比：中间一个拟声字式的大符号 ---------- */
+[data-scene="comic"] .vs::before{font:700 66px/1 var(--f-hand);color:var(--cm-warm);-webkit-text-stroke:5px var(--ink);paint-order:stroke fill;rotate:-8deg;
+  filter:drop-shadow(4px 4px 0 var(--ink))}
+
+/* ---------- 一排小格：小分镜格；AI 的格子钴蓝网点、需要人的朱红网点，不用管的是没上墨的蓝铅笔草稿框 ---------- */
+[data-scene="comic"] .cell{padding:22px 14px 20px}
+[data-scene="comic"] .cell>i{color:var(--ink-3)}
+[data-scene="comic"] .cell>b{color:var(--ink)}
+[data-scene="comic"] .cell>span{color:var(--ink-2)}
+[data-scene="comic"] .cell.ai{--cm-dots:var(--cm-dc)}
+[data-scene="comic"] .cell.ai>i{color:var(--cm-cool)}
+[data-scene="comic"] .cell.human{--cm-dots:var(--cm-dw)}
+[data-scene="comic"] .cell.human>i{color:var(--cm-warm-ink)}
+[data-scene="comic"] .cell.idle{--cm-S:0px;color:var(--idle)}
+[data-scene="comic"] .cell.idle::after{top:0;left:0;right:0;bottom:0;background:none;border:3px dashed var(--cm-pencil)}
+[data-scene="comic"] .cell.idle>:is(i,b,span){color:var(--idle)}
+
+/* ---------- 标签：旁白框式的小方块，墨影错开（带颜色的标签墨影换成朱红或钴蓝） ---------- */
+[data-scene="comic"] .tag{padding:4px 18px 7px;border:3px solid var(--ink);border-radius:0;background:var(--cm-white);color:var(--ink);box-shadow:4px 4px 0 var(--ink)}
+[data-scene="comic"] .tag:is(.t-yellow,.t-peach,.t-pink){box-shadow:4px 4px 0 var(--cm-warm)}
+[data-scene="comic"] .tag:is(.t-blue,.t-mint){box-shadow:4px 4px 0 var(--cm-cool)}
+[data-scene="comic"] .dot{box-shadow:0 0 0 2.5px var(--ink)}
+
+/* ---------- 大字金句：像拟声大字——粗墨字、一圈留白、朱红的错位影子 ---------- */
+[data-scene="comic"] .quote{color:var(--ink);letter-spacing:.03em;-webkit-text-stroke:1.4px var(--ink);
+  filter:drop-shadow(3px 0 0 #FFFDF8) drop-shadow(-3px 0 0 #FFFDF8) drop-shadow(0 3px 0 #FFFDF8) drop-shadow(0 -3px 0 #FFFDF8) drop-shadow(6px 6px 0 #E2452A)}
+/* 金句里的重点词：朱红字带墨边，像拟声字；不垫网点（会被金句的留白和影子描成一块） */
+[data-scene="comic"] .quote .key{-webkit-text-stroke:3.4px var(--ink);paint-order:stroke fill}
+[data-scene="comic"] .quote .key::before{display:none}
+
+/* ---------- 终端窗口：一格白底，标题栏下一道墨线，三个空心墨圈；字是墨色（投影上比深底清楚） ---------- */
+[data-scene="comic"] .term{overflow:visible;padding:0 0 24px;color:var(--term-ink);font-weight:500}
+[data-scene="comic"] .term-bar{height:52px;margin-bottom:16px;padding:0 22px;background:none;border-bottom:3px solid var(--ink);color:var(--ink-2);font:600 24px/1 var(--f-mono)}
+[data-scene="comic"] .term-bar i{width:15px;height:15px;border:2.6px solid var(--ink);border-radius:50%;background:none}
+[data-scene="comic"] .term-bar i:nth-child(2){background:none}
+[data-scene="comic"] .term-bar i:nth-child(3){background:none;margin-right:12px}
+[data-scene="comic"] .term .in::before{color:var(--cm-warm-ink)}
+[data-scene="comic"] .term .cc::before{color:var(--cm-cool)}
+[data-scene="comic"] .term .dim{color:var(--ink-3)}
+[data-scene="comic"] .term .ok{color:var(--cm-cool)}
+[data-scene="comic"] .term .warn{color:var(--cm-warm-ink)}
+[data-scene="comic"] .term .hi{color:var(--ink);background:linear-gradient(transparent 62%,rgba(226,69,42,.24) 62%,rgba(226,69,42,.24) 92%,transparent 92%)}
+
+/* ---------- 一行可复制的命令：墨黑的一格（毛笔墨线收边），朱红网点阴影，$ 是朱红 ---------- */
+[data-scene="comic"] .copy{--cm-S:8px;--cm-fill:var(--ink);--cm-dots:var(--cm-dw);padding:14px 26px 16px 24px;color:var(--cm-white);font:600 var(--fs-min)/1.2 var(--f-mono)}
+[data-scene="comic"] .copy .ps{color:var(--cm-warm);opacity:1}
+[data-scene="comic"] .copy .ic{background:var(--cm-white);opacity:.7}
+[data-scene="comic"] .copy.is-copied .ic{opacity:1;background:var(--cm-warm);
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 12.5l5 5L20 7'/%3E%3C/svg%3E");
+          mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 12.5l5 5L20 7'/%3E%3C/svg%3E")}
+[data-scene="comic"] .copy:focus-visible{outline:3px dashed var(--cm-cool);outline-offset:10px}
+
+/* 「已复制！」：朱红锯齿形的爆炸气泡，留白字加粗墨边（出场见 comic.js 的 copied）。复制失败时还是引擎的红条 */
+[data-scene="comic"] .copied-tip:not(.fail){display:grid;place-items:center;width:236px;height:142px;padding:0 0 4px;background:var(--cm-burst) center/100% 100% no-repeat;
+  color:var(--cm-white);font:700 42px/1 var(--f-hand);-webkit-text-stroke:6px var(--ink);paint-order:stroke fill;letter-spacing:.02em}
+[data-scene="comic"] .copied-tip:not(.fail) svg{display:none}
+[data-scene="comic"] .copied-tip:not(.fail)>span{rotate:-6deg}
+[data-scene="comic"] .copied-tip:not(.fail)>span::after{content:"！"}
+
+/* ---------- 截图位：一格，图片外一道细墨线；不贴胶带 ---------- */
+[data-scene="comic"] .shot{padding:14px 14px 0}
+[data-scene="comic"] .shot::before{display:none}
+[data-scene="comic"] .shot-img{box-shadow:0 0 0 2px var(--ink);background:#2A2723}
+[data-scene="comic"] .shot figcaption{padding:12px 6px 14px;font:700 30px/1.3 var(--f-hand);color:var(--ink-2)}
+[data-scene="comic"] .shot-miss{background:repeating-linear-gradient(-45deg,#F5F0E4 0 14px,#ECE5D5 14px 28px);color:var(--ink-3)}
+[data-scene="comic"] .shot-miss small{color:var(--ink-3)}
+[data-scene="comic"] .shot-zoom{border-radius:0;background:var(--ink);color:var(--cm-white)}
+
+/* ---------- 手绘线稿：墨线；圈注是朱红（rough 参数见 comic.js） ---------- */
+[data-scene="comic"] svg.sketch{color:var(--line)}
+[data-scene="comic"] svg.marks{color:var(--mark)}
+
+/* ---------- 形象：一道很淡的墨色硬投影（朝左时引擎把画像镜像，投影方向这里反过来）；说的话是一个对白气泡 ---------- */
+[data-scene="comic"] .mascot{--mascot-shadow:drop-shadow(4px 5px 0 rgba(22,19,15,.14))}
+[data-scene="comic"] .mascot[data-face="left"]:not(.self-flip){--mascot-shadow:drop-shadow(-4px 5px 0 rgba(22,19,15,.14))}
+[data-scene="comic"] .mascot-say{padding:10px 26px 12px;border:3px solid var(--ink);border-radius:999px;background:var(--cm-white);color:var(--ink);font-weight:700}
+[data-scene="comic"] .mascot-say::after{bottom:-11px;width:16px;height:16px;background:var(--cm-white);border-right:3px solid var(--ink);border-bottom:3px solid var(--ink)}
+
+/* =====================================================================
+   漫画自己的可选组件（别的风格不认，换风格后只剩普通的字和块；写法见 references/styles.md）
+   - .cm-panel 分镜格：和卡片一样的格子，但不管里面怎么排，里面的东西可以伸出格子（破格）
+   - .cm-say 对白气泡：白底椭圆、墨线、带一个小尾巴（默认尾巴在左下，加 .tail-r 换到右下）
+   - .cm-sfx 拟声大字：朱红填充、粗墨边、一圈留白、墨影，默认歪 -6°（加 .cool 换成钴蓝）
+   ===================================================================== */
+[data-scene="comic"] .cm-panel{display:block;padding:28px 34px;color:var(--ink)}
+[data-scene="comic"] .cm-say{position:relative;display:inline-block;padding:20px 42px 24px;border:3.5px solid var(--ink);border-radius:140px 130px 150px 120px/64px 58px 70px 54px;
+  background:var(--cm-white);color:var(--ink);font:700 var(--fs-body)/1.35 var(--f-hand);text-align:center;white-space:nowrap}
+[data-scene="comic"] .cm-say.abs{position:absolute}
+[data-scene="comic"] .cm-say::after{content:"";position:absolute;left:22%;top:calc(100% - 2px);width:44px;height:56px;pointer-events:none;background:var(--cm-tail) 0 0/100% 100% no-repeat}
+[data-scene="comic"] .cm-say.tail-r::after{left:auto;right:22%;transform:scaleX(-1)}
+[data-scene="comic"] .cm-sfx{--r:-6deg;display:inline-block;rotate:var(--r);font:700 112px/1.05 var(--f-hand);letter-spacing:-.02em;white-space:nowrap;color:var(--cm-warm);
+  -webkit-text-stroke:10px var(--ink);paint-order:stroke fill;
+  filter:drop-shadow(4px 0 0 #FFFDF8) drop-shadow(-4px 0 0 #FFFDF8) drop-shadow(0 4px 0 #FFFDF8) drop-shadow(0 -4px 0 #FFFDF8) drop-shadow(6px 7px 0 #16130F)}
+[data-scene="comic"] .cm-sfx.cool{color:var(--cm-cool)}
+
+/* comic.js 用的层：集中线、速度线放在每页一层 .cm-fx 里（内容上面、不接收指针），播完即删；
+   悬停时角上的三道效果线 .cm-hv；点击处的冲击星画在引擎的涟漪层里 */
+[data-scene="comic"] .cm-fx{position:absolute;inset:0;z-index:25;pointer-events:none;overflow:hidden}
+[data-scene="comic"] .cm-fx svg,[data-scene="comic"] .cm-star{position:absolute;display:block;overflow:visible;pointer-events:none}
+[data-scene="comic"] .cm-hv{position:absolute;z-index:24;width:40px;height:40px;pointer-events:none;opacity:0;transform:scale(.3);transform-origin:0 100%;transition:opacity .12s,transform .12s}
+[data-scene="comic"] .cm-hv.on{opacity:1;transform:none;transition:opacity .12s,transform .32s cubic-bezier(.34,1.9,.64,1)}
+[data-scene="comic"] .cm-hv svg{display:block;width:100%;height:100%;overflow:visible}
+
+/* 署名：粗一点 */
+[data-scene="comic"] .li-sign{font-weight:700}
+
+/* =====================================================================
+   常驻信息：章节、页码、节拍指示（页脚右下一排分镜小缩略格，像漫画原稿角上的页码）、计时
+   缩略格：没讲到的是蓝铅笔虚线草稿框，讲过的上了墨，当前这一格描粗、铺上网点；
+   换拍时新的当前格「啪」地放大落定，拍号从上面掉下来（都只播一次）
+   ===================================================================== */
+#stage[data-scene="comic"] .chap span{padding:4px 16px 7px;background:var(--ink);color:var(--cm-white);font:700 26px/1.2 var(--f-hand)}
+#stage[data-scene="comic"] .meta{top:auto;bottom:40px;right:72px;gap:22px;font:400 24px/1 var(--f-hand);color:var(--ink-3)}
+#stage[data-scene="comic"] .pageno{color:var(--ink-3)}
+#stage[data-scene="comic"] .pageno b{color:var(--ink);font-weight:700}
+#stage[data-scene="comic"] .meter{gap:14px}
+#stage[data-scene="comic"] .meter .dots{gap:4px;align-items:stretch;height:28px}
+#stage[data-scene="comic"] .dots i{display:block;width:30px;border:2px dashed var(--cm-pencil);background:transparent;transition:background-color .2s,border-color .2s}
+#stage[data-scene="comic"] .dots i:nth-child(3n+2){width:20px}
+#stage[data-scene="comic"] .dots i:nth-child(3n){width:38px}
+#stage[data-scene="comic"] .dots i.on{border:2.5px solid var(--ink);background:var(--cm-white)}
+#stage[data-scene="comic"] .dots i.now{border-width:3.5px;background:radial-gradient(circle,#16130F 1.2px,rgba(22,19,15,0) 1.7px) 0 0/5px 5px,#FFFDF8;
+  animation:cm-thumb .34s cubic-bezier(.34,1.8,.64,1)}
+@keyframes cm-thumb{from{transform:scale(1.7) rotate(-10deg)}to{transform:none}}
+#stage[data-scene="comic"] .meter .ml{display:none}
+#stage[data-scene="comic"] .meter .ms{display:inline-flex;align-items:baseline;gap:2px;font:400 24px/1 var(--f-hand);color:var(--ink-3)}
+#stage[data-scene="comic"] .meter .ms b{display:inline-block;min-width:.6em;text-align:right;font:700 32px/1 var(--f-hand);color:var(--ink);font-variant-numeric:tabular-nums;
+  animation:cm-num .3s cubic-bezier(.34,1.6,.64,1)}
+@keyframes cm-num{from{opacity:0;transform:translateY(-70%) scale(1.3)}to{opacity:1;transform:none}}
+#stage[data-scene="comic"] .timer{color:var(--ink-3)}
+
+/* ---------- 翻页：新页像漫画里切一刀那样斜着横切进来，刀口是一道墨线（comic.js 推 --cm-cx 刀口位置、--cm-ca 斜度，播完去掉这个类） ---------- */
+[data-scene="comic"].slide.cm-turn{background:var(--scene-bg)}
+[data-scene="comic"].slide.cm-turn::after{content:"";position:absolute;z-index:60;top:50%;left:var(--cm-cx,-10%);width:10px;height:1130px;margin:-565px 0 0 -5px;
+  background:var(--ink);rotate:var(--cm-ca,0deg);pointer-events:none}
+
+/* ---------- 阅读模式（没有背景层）：每页画上淡蓝裁切线，comic.js 的层不显示 ---------- */
+/* 裁切线用四条背景细线画（不用 inset 投影：页面缩小显示时 Chrome 会把整页画暗） */
+[data-scene="comic"].slide:is(.reading *){background:
+  linear-gradient(rgba(140,187,226,.55),rgba(140,187,226,.55)) 22px 22px/calc(100% - 44px) 1.5px no-repeat,
+  linear-gradient(rgba(140,187,226,.55),rgba(140,187,226,.55)) 22px calc(100% - 22px)/calc(100% - 44px) 1.5px no-repeat,
+  linear-gradient(rgba(140,187,226,.55),rgba(140,187,226,.55)) 22px 22px/1.5px calc(100% - 44px) no-repeat,
+  linear-gradient(rgba(140,187,226,.55),rgba(140,187,226,.55)) calc(100% - 22px) 22px/1.5px calc(100% - 44px) no-repeat,
+  var(--scene-bg)}
+[data-scene="comic"] :is(.cm-fx,.cm-hv):is(.reading *){display:none}

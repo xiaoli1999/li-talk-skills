@@ -1,0 +1,6 @@
+/* 漫画测试课件的页面样式：每条都以 [data-id="…"] 开头 */
+[data-id="c2"] .card{min-height:250px}
+/* 圈注比字宽出一圈，被圈的词前后留点空 */
+[data-id="c2"] [data-mark]{margin:0 .5em}
+[data-id="c4"] .steps .copy{justify-self:start;margin-top:16px}
+[data-id="c7"] .vs>.card{min-height:220px}
