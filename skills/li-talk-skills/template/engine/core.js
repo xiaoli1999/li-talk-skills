@@ -256,12 +256,17 @@
   /* =================================================================
      启动
      ================================================================= */
+  /* 等字体：先点名加载霞鹜文楷的两个字重，再等 document.fonts.ready，把风格自带的字体（比如像素游戏的缝合像素字体）
+     和页面用到的其他字块也等完，这样量主题行、署名位置、形象落脚点时用的是真字体，不是退回的字体。
+     字体要等页面排过版才开始加载，所以等 ready 之前先强制排一次版。最多等 2.5 秒：字体出问题也不让课件卡在 loading */
   function fontsReady() {
     if (!document.fonts || !document.fonts.load) return Promise.resolve();
-    return Promise.race([
-      Promise.all([document.fonts.load('400 40px WK'), document.fonts.load('700 40px WK')]).catch(() => {}),
-      new Promise(r => setTimeout(r, 2500)),
-    ]);
+    const wk = Promise.all([document.fonts.load('400 40px WK'), document.fonts.load('700 40px WK')]).catch(() => {});
+    const all = wk.then(() => {
+      void document.body.offsetWidth;   // 强制排版：页面里用到、还没加载的字体这时开始加载
+      return document.fonts.ready;
+    }).catch(() => {});
+    return Promise.race([all, new Promise(r => setTimeout(r, 2500))]);
   }
   /* 主题行放不下（超过 TOPIC_MAX 宽）时：先把主题从 42px 往下缩到 34px，再缩章节标签；不换行 */
   const TOPIC_MAX = 1260;
