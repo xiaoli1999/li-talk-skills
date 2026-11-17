@@ -4,7 +4,7 @@
    - 内容和通用样板（samples.js）大致对应，版式全按「从上往下看一张办公桌」来：东西摆上桌，便签贴在旁边，
      标签机吐出一条条待办贴在本子上，回形针把改法别在打印纸上，小键盘一颗颗装上键帽，下班前在电脑上贴一张便签
    - 招牌页两页：桌面俯视（第 2 页，三样东西摆上桌、一拍一件、旁边贴一张便签）、标签机待办（第 3 页，标签机一拍吐出一条，做完的打勾）
-   - 每拍「发生了什么」由工位桌面的版式组件（.dk-*，写法见 scenes/desk.css 末尾、出场见 scenes/desk.js 开头）自己完成：
+   - 每拍「发生了什么」由工位桌面的版式组件（.dsk-*，写法见 scenes/desk.css 末尾、出场见 scenes/desk.js 开头）自己完成：
      东西被放到桌上、纸片落下来、纸胶带按上、便签拍平、标签从标签机里吐出来、马克笔打勾、工牌晃两下、键帽咔哒装上。
      页面里只写结构和 data-beat，不写 onBeat、不写 data-in
    - 可读性（翻到最后一拍整页要一眼读清）：
@@ -31,13 +31,13 @@ Deck.add({
   title: '怎么泡好一杯茶',
   noTitle: true,
   html: `
-    <i class="dk-obj abs" data-dk-art="pencil" data-beat="0" style="left:200px;top:884px;width:440px;--r:-5deg"></i>
-    <i class="dk-obj abs" data-dk-art="gaiwan" data-beat="0" style="left:1290px;top:146px;width:380px"></i>
-    <div class="dk-sheet corners abs cv-sheet" data-beat="0" style="left:150px;top:176px;width:1000px;--r:-1deg">
+    <i class="dsk-obj abs" data-dsk-art="pencil" data-beat="0" style="left:200px;top:884px;width:440px;--r:-5deg"></i>
+    <i class="dsk-obj abs" data-dsk-art="gaiwan" data-beat="0" style="left:1290px;top:146px;width:380px"></i>
+    <div class="dsk-sheet corners abs cv-sheet" data-beat="0" style="left:150px;top:176px;width:1000px;--r:-1deg">
       <p class="cv-title">怎么<em class="key">泡好</em><br>一杯茶</p>
       <p class="cv-sub">水温、茶量、时间，三件事讲清楚</p>
     </div>
-    <div class="dk-badge abs" data-beat="1" data-mascot="1" data-mascot-side="left" data-mascot-pose="happy" style="left:1240px;top:640px;width:540px;--r:1.5deg">
+    <div class="dsk-badge abs" data-beat="1" data-mascot="1" data-mascot-side="left" data-mascot-pose="happy" style="left:1240px;top:640px;width:540px;--r:1.5deg">
       <b>讲者：〈你的名字〉</b><span>〈日期〉</span>
     </div>
     <div class="mascot guide" data-face="left" style="left:1060px;top:826px"></div>`,
@@ -54,7 +54,7 @@ Deck.add({
    为什么是工位桌面：俯视的桌面 + 便签，是在工位上备东西、给同事留话的样子；东西都画成从上往下看的样子（圆盘、罐口、壶盖），
    一眼就是桌面，不是货架。
    可读性：从左到右一条路，圈号 1、2、3 就是顺序；名字和说明都写在便签上，讲完一直贴着；重点词三处（盖碗、三克、八十度）。
-   抄过去改：换东西就改 data-dk-art（可选的见 scenes/desk.css 的 .dk-obj），东西要在便签正上方、底边在 y 590 以上；
+   抄过去改：换东西就改 data-dsk-art（可选的见 scenes/desk.css 的 .dsk-obj），东西要在便签正上方、底边在 y 590 以上；
    便签的名字（44px，一行 8 个字以内）和说明（36px，一行 10 个字以内，想在哪断行写 <br>）；
    多一样东西就改成四列：便签宽 380、列距 420，东西缩到宽 260 以内 */
 Deck.add({
@@ -65,17 +65,17 @@ Deck.add({
   title: '泡茶之前，备好三样东西',
   html: `
     <p class="explain" data-beat="0"><b>盖碗</b>：带盖的小茶碗，泡茶、闻香、出汤都用它</p>
-    <i class="dk-obj abs" data-dk-art="gaiwan" data-beat="1" style="left:250px;top:298px;width:270px"></i>
-    <i class="dk-obj abs" data-dk-art="tin" data-beat="2" style="left:762px;top:320px;width:380px"></i>
-    <i class="dk-obj abs" data-dk-art="kettle" data-beat="3" style="left:1352px;top:292px;width:330px"></i>
-    <div class="dk-note abs it-note" data-beat="1" data-mascot="1" data-mascot-side="bottom" data-mascot-x=".3" style="left:165px;top:600px;width:440px;--r:-1.4deg">
-      <h3><i class="dk-no">1</i>一只<em class="key">盖碗</em></h3><p>白瓷的最好，<br>看得清茶色</p>
+    <i class="dsk-obj abs" data-dsk-art="gaiwan" data-beat="1" style="left:250px;top:298px;width:270px"></i>
+    <i class="dsk-obj abs" data-dsk-art="tin" data-beat="2" style="left:762px;top:320px;width:380px"></i>
+    <i class="dsk-obj abs" data-dsk-art="kettle" data-beat="3" style="left:1352px;top:292px;width:330px"></i>
+    <div class="dsk-note abs it-note" data-beat="1" data-mascot="1" data-mascot-side="bottom" data-mascot-x=".3" style="left:165px;top:600px;width:440px;--r:-1.4deg">
+      <h3><i class="dsk-no">1</i>一只<em class="key">盖碗</em></h3><p>白瓷的最好，<br>看得清茶色</p>
     </div>
-    <div class="dk-note p abs it-note" data-beat="2" data-mascot="2" data-mascot-side="bottom" data-mascot-x=".3" style="left:740px;top:616px;width:440px;--r:1.2deg">
-      <h3><i class="dk-no">2</i><em class="key">三克</em>绿茶</h3><p>大约铺满碗底，<br>薄薄一层</p>
+    <div class="dsk-note p abs it-note" data-beat="2" data-mascot="2" data-mascot-side="bottom" data-mascot-x=".3" style="left:740px;top:616px;width:440px;--r:1.2deg">
+      <h3><i class="dsk-no">2</i><em class="key">三克</em>绿茶</h3><p>大约铺满碗底，<br>薄薄一层</p>
     </div>
-    <div class="dk-note b abs it-note" data-beat="3" data-mascot="3" data-mascot-side="bottom" data-mascot-x=".3" style="left:1315px;top:600px;width:440px;--r:-1deg">
-      <h3><i class="dk-no">3</i>一壶热水</h3><p>烧开后，<br>晾到<em class="key">八十度</em></p>
+    <div class="dsk-note b abs it-note" data-beat="3" data-mascot="3" data-mascot-side="bottom" data-mascot-x=".3" style="left:1315px;top:600px;width:440px;--r:-1deg">
+      <h3><i class="dsk-no">3</i>一壶热水</h3><p>烧开后，<br>晾到<em class="key">八十度</em></p>
     </div>
     <div class="mascot guide" data-face="left" style="left:1610px;top:826px"></div>`,
   notes: [
@@ -103,16 +103,16 @@ Deck.add({
   scene: 'desk',
   title: '泡一杯绿茶，只要三步',
   html: `
-    <i class="dk-obj abs" data-dk-art="maker" data-beat="0" style="left:210px;top:380px;width:330px"></i>
-    <div class="dk-book abs" data-beat="0" style="left:660px;top:272px;width:980px;height:690px;--r:-.4deg"></div>
-    <p class="dk-label abs" data-beat="1" data-mascot="1" data-mascot-side="right" style="left:760px;top:332px;--r:-.8deg">
-      <i class="dk-box"><i class="dk-tick" data-beat="2"></i></i><b>温杯</b><span>热水把盖碗烫一遍</span>
+    <i class="dsk-obj abs" data-dsk-art="maker" data-beat="0" style="left:210px;top:380px;width:330px"></i>
+    <div class="dsk-book abs" data-beat="0" style="left:660px;top:272px;width:980px;height:690px;--r:-.4deg"></div>
+    <p class="dsk-label abs" data-beat="1" data-mascot="1" data-mascot-side="right" style="left:760px;top:332px;--r:-.8deg">
+      <i class="dsk-box"><i class="dsk-tick" data-beat="2"></i></i><b>温杯</b><span>热水把盖碗烫一遍</span>
     </p>
-    <p class="dk-label abs" data-beat="2" data-mascot="2" data-mascot-side="right" style="left:760px;top:476px;--r:.6deg">
-      <i class="dk-box"><i class="dk-tick" data-beat="3"></i></i><b>投茶</b><span>三克茶叶铺满碗底</span>
+    <p class="dsk-label abs" data-beat="2" data-mascot="2" data-mascot-side="right" style="left:760px;top:476px;--r:.6deg">
+      <i class="dsk-box"><i class="dsk-tick" data-beat="3"></i></i><b>投茶</b><span>三克茶叶铺满碗底</span>
     </p>
-    <p class="dk-label abs" data-beat="3" data-mascot="3" data-mascot-side="right" style="left:760px;top:620px;--r:-.5deg">
-      <i class="dk-box"><i class="dk-tick" data-beat="4"></i></i><b>注水</b><span>八十度水沿碗边倒</span>
+    <p class="dsk-label abs" data-beat="3" data-mascot="3" data-mascot-side="right" style="left:760px;top:620px;--r:-.5deg">
+      <i class="dsk-box"><i class="dsk-tick" data-beat="4"></i></i><b>注水</b><span>八十度水沿碗边倒</span>
     </p>
     <button class="copy abs" type="button" data-beat="4" data-mascot="4" data-mascot-side="right" style="left:760px;top:800px;--r:.4deg" data-copy="tea brew --green --temp 80">tea brew --green --temp 80</button>
     <div class="mascot guide" data-face="left" style="left:1420px;top:770px"></div>`,
@@ -131,7 +131,7 @@ Deck.add({
    为什么是工位桌面：在打印稿上别一张便签写改法，是工位上改东西最常见的做法；错的写在纸上，对的别在旁边，一眼看出「坑 → 改法」。
    可读性：从左到右三列，每列从上往下（坑 → 改法），圈号 1、2、3 就是顺序；错的做法不划掉，照样读得清；
    便签只压住纸下半截的空白，回形针不碰字；重点词三处都在改法里（八十度、一分钟、三克）。
-   抄过去改：坑（64px，4 个字以内）、改法（48px，「→」后面 6 个字以内）；小图换 data-dk-art（thermo、timer、leaves），
+   抄过去改：坑（64px，4 个字以内）、改法（48px，「→」后面 6 个字以内）；小图换 data-dsk-art（thermo、timer、leaves），
    在字下面正中；便签的 top 要压住纸下沿 60–80px（纸 min-height 400，便签 top = 纸 top + 330） */
 Deck.add({
   id: 't-desk-pits',
@@ -140,22 +140,22 @@ Deck.add({
   scene: 'desk',
   title: '别踩这三个坑',
   html: `
-    <div class="dk-sheet abs pt-memo" data-beat="1" style="left:150px;top:300px;width:480px;--r:-1deg">
-      <p class="pt-bad"><i class="dk-no">1</i>水太烫</p><i class="dk-obj pt-ic" data-dk-art="thermo"></i>
+    <div class="dsk-sheet abs pt-memo" data-beat="1" style="left:150px;top:300px;width:480px;--r:-1deg">
+      <p class="pt-bad"><i class="dsk-no">1</i>水太烫</p><i class="dsk-obj pt-ic" data-dsk-art="thermo"></i>
     </div>
-    <div class="dk-note clip abs pt-fix" data-beat="1" data-mascot="1" data-mascot-side="bottom" data-mascot-x=".3" style="left:190px;top:630px;width:420px;--r:1.4deg">
+    <div class="dsk-note clip abs pt-fix" data-beat="1" data-mascot="1" data-mascot-side="bottom" data-mascot-x=".3" style="left:190px;top:630px;width:420px;--r:1.4deg">
       <p>→ 晾到<em class="key">八十度</em></p>
     </div>
-    <div class="dk-sheet stripe abs pt-memo" data-beat="2" style="left:720px;top:300px;width:480px;--r:.9deg">
-      <p class="pt-bad"><i class="dk-no">2</i>泡太久</p><i class="dk-obj pt-ic" data-dk-art="timer"></i>
+    <div class="dsk-sheet stripe abs pt-memo" data-beat="2" style="left:720px;top:300px;width:480px;--r:.9deg">
+      <p class="pt-bad"><i class="dsk-no">2</i>泡太久</p><i class="dsk-obj pt-ic" data-dsk-art="timer"></i>
     </div>
-    <div class="dk-note g clip abs pt-fix" data-beat="2" data-mascot="2" data-mascot-side="bottom" data-mascot-x=".3" style="left:760px;top:630px;width:420px;--r:-1.2deg">
+    <div class="dsk-note g clip abs pt-fix" data-beat="2" data-mascot="2" data-mascot-side="bottom" data-mascot-x=".3" style="left:760px;top:630px;width:420px;--r:-1.2deg">
       <p>→ <em class="key">一分钟</em>出汤</p>
     </div>
-    <div class="dk-sheet abs pt-memo" data-beat="3" style="left:1290px;top:300px;width:480px;--r:-.8deg">
-      <p class="pt-bad"><i class="dk-no">3</i>茶太多</p><i class="dk-obj pt-ic" data-dk-art="leaves"></i>
+    <div class="dsk-sheet abs pt-memo" data-beat="3" style="left:1290px;top:300px;width:480px;--r:-.8deg">
+      <p class="pt-bad"><i class="dsk-no">3</i>茶太多</p><i class="dsk-obj pt-ic" data-dsk-art="leaves"></i>
     </div>
-    <div class="dk-note b clip abs pt-fix" data-beat="3" data-mascot="3" data-mascot-side="bottom" data-mascot-x=".3" style="left:1330px;top:630px;width:420px;--r:1deg">
+    <div class="dsk-note b clip abs pt-fix" data-beat="3" data-mascot="3" data-mascot-side="bottom" data-mascot-x=".3" style="left:1330px;top:630px;width:420px;--r:1deg">
       <p>→ 只放<em class="key">三克</em></p>
     </div>
     <div class="mascot guide" data-face="left" style="left:1610px;top:840px"></div>`,
@@ -181,14 +181,14 @@ Deck.add({
   scene: 'desk',
   title: '记住三个数，一键一个',
   html: `
-    <div class="dk-macro abs" data-beat="0" style="left:210px;top:290px;width:1500px;height:560px;--r:-.5deg"></div>
-    <div class="dk-key c abs" data-beat="1" data-mascot="1" data-mascot-side="bottom" data-mascot-x=".29" style="left:270px;top:350px;width:420px;height:440px">
+    <div class="dsk-macro abs" data-beat="0" style="left:210px;top:290px;width:1500px;height:560px;--r:-.5deg"></div>
+    <div class="dsk-key c abs" data-beat="1" data-mascot="1" data-mascot-side="bottom" data-mascot-x=".29" style="left:270px;top:350px;width:420px;height:440px">
       <span>水温</span><b>80<small>℃</small></b>
     </div>
-    <div class="dk-key abs" data-beat="2" data-mascot="2" data-mascot-side="bottom" data-mascot-x=".29" style="left:750px;top:350px;width:420px;height:440px">
+    <div class="dsk-key abs" data-beat="2" data-mascot="2" data-mascot-side="bottom" data-mascot-x=".29" style="left:750px;top:350px;width:420px;height:440px">
       <span>茶量</span><b>3<small>克</small></b>
     </div>
-    <div class="dk-key abs" data-beat="3" data-mascot="3" data-mascot-side="bottom" data-mascot-x=".29" style="left:1230px;top:350px;width:420px;height:440px">
+    <div class="dsk-key abs" data-beat="3" data-mascot="3" data-mascot-side="bottom" data-mascot-x=".29" style="left:1230px;top:350px;width:420px;height:440px">
       <span>时间</span><b>1<small>分钟</small></b>
     </div>
     <div class="mascot guide" data-face="left" style="left:1716px;top:812px"></div>`,
@@ -213,12 +213,12 @@ Deck.add({
   title: '谢谢',
   noTitle: true,
   html: `
-    <div class="dk-laptop abs" data-beat="0" style="left:140px;top:176px;width:1060px;height:720px;--r:-1.2deg"></div>
-    <i class="dk-obj abs" data-dk-art="cup" data-beat="0" style="left:1336px;top:200px;width:380px"></i>
-    <div class="dk-note abs ed-note" data-beat="0" style="left:250px;top:292px;width:820px;--r:-1deg">
+    <div class="dsk-laptop abs" data-beat="0" style="left:140px;top:176px;width:1060px;height:720px;--r:-1.2deg"></div>
+    <i class="dsk-obj abs" data-dsk-art="cup" data-beat="0" style="left:1336px;top:200px;width:380px"></i>
+    <div class="dsk-note abs ed-note" data-beat="0" style="left:250px;top:292px;width:820px;--r:-1deg">
       <p class="ed-q">水温对了，<br>茶就<em class="key">不苦</em></p>
     </div>
-    <div class="dk-note p abs ed-thx" data-beat="1" data-mascot="1" data-mascot-side="left" data-mascot-pose="happy" data-mascot-say="谢谢！" style="left:1250px;top:664px;width:540px;--r:1.5deg">
+    <div class="dsk-note p abs ed-thx" data-beat="1" data-mascot="1" data-mascot-side="left" data-mascot-pose="happy" data-mascot-say="谢谢！" style="left:1250px;top:664px;width:540px;--r:1.5deg">
       <p class="ed-thanks">谢谢大家，欢迎提问</p>
     </div>
     <div class="mascot guide" data-face="left" style="left:1420px;top:820px"></div>`,

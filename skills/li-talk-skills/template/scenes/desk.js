@@ -12,24 +12,24 @@
      · 右上角页码和图钉节拍格（engine.css 的 .meta：右边距 64、y 40–80；按每页最多 4 拍量，留出余量后是 x 1340–1856、y 30–90）
    - 样子在 desk.css 里
 
-   - 工位桌面自有的版式组件（类名带 dk- 前缀，样子和写法见 desk.css 末尾「工位桌面自有版式组件」，样板页见 samples/desk.js；
+   - 工位桌面自有的版式组件（类名带 dsk- 前缀，样子和写法见 desk.css 末尾「工位桌面自有版式组件」，样板页见 samples/desk.js；
      别的风格不认识，只是普通容器）。整页当成从上往下看的一张办公桌：东西摆上桌、便签贴在旁边、标签机吐出一条条标签。
      每拍「发生了什么」由组件自己做（enterBy 按类名配好，页面只写结构和 data-beat，不写 data-in、不写 onBeat）：
-     · .dk-obj[data-dk-art="名字"] 桌上的东西（俯视的简笔插画，建页时这里把 SVG 填进去）：出场「放下」dkset——
+     · .dsk-obj[data-dsk-art="名字"] 桌上的东西（俯视的简笔插画，建页时这里把 SVG 填进去）：出场「放下」dkset——
        从桌面上方一点被放下来，影子从大而淡收到小而实。内置：gaiwan 盖碗、tin 开着盖的茶叶罐、kettle 电水壶、cup 一杯茶、
        pencil 铅笔、maker 标签机、thermo 温度计、timer 钟、leaves 一堆茶叶（后三个是小图标，放在纸上配字）
-     · .dk-note 便签（四种颜色：默认黄、p 粉、g 绿、b 蓝；加 clip 是用回形针别在下面那张纸上）：出场「贴上」dkstick——
+     · .dsk-note 便签（四种颜色：默认黄、p 粉、g 绿、b 蓝；加 clip 是用回形针别在下面那张纸上）：出场「贴上」dkstick——
        从上面落下来，上沿先粘住，下半截随后拍平
-     · .dk-sheet 白纸（打印的纸、卡片）：出场「贴上」dkstick——纸落到桌上，纸胶带随后从一头按下去
+     · .dsk-sheet 白纸（打印的纸、卡片）：出场「贴上」dkstick——纸落到桌上，纸胶带随后从一头按下去
        （默认上沿正中一条；corners 两个上角各一条；stripe 换成珊瑚条纹的胶带）
-     · .dk-label 标签条（标签机打出来的一条，里面可以放 .dk-box 勾选框）：出场「吐出」dkprint——
-       这页有标签机（.dk-obj[data-dk-art="maker"]）时，标签从标签机右边靠下的出口一格格吐出来，撕下、挪到自己的位置贴好；
+     · .dsk-label 标签条（标签机打出来的一条，里面可以放 .dsk-box 勾选框）：出场「吐出」dkprint——
+       这页有标签机（.dsk-obj[data-dsk-art="maker"]）时，标签从标签机右边靠下的出口一格格吐出来，撕下、挪到自己的位置贴好；
        没有标签机时就地一格格打出来。可复制的命令 .copy 也是这样出场
-     · .dk-tick 马克笔勾（放在 .dk-box 里，写自己的 data-beat）：出场「打勾」dktick——珊瑚红马克笔从左往右一笔勾上
-     · .dk-badge 工牌（带挂绳）：出场「挂上」dkswing——从上面落下来，绕挂绳那头晃两下停住
-     · .dk-key 键帽（放在 .dk-macro 小键盘上）：出场「装键帽」dkkey——键帽落到轴上，咔哒按一下再弹回来
-     · .dk-book 牛皮纸本子、.dk-macro 小键盘、.dk-laptop 合上的笔记本电脑：大件，出场和桌上的东西一样「放下」dkset
-     · .dk-no 手写圈号（1、2、3，就是阅读顺序）：跟着所在的纸一起出现，不另出场
+     · .dsk-tick 马克笔勾（放在 .dsk-box 里，写自己的 data-beat）：出场「打勾」dktick——珊瑚红马克笔从左往右一笔勾上
+     · .dsk-badge 工牌（带挂绳）：出场「挂上」dkswing——从上面落下来，绕挂绳那头晃两下停住
+     · .dsk-key 键帽（放在 .dsk-macro 小键盘上）：出场「装键帽」dkkey——键帽落到轴上，咔哒按一下再弹回来
+     · .dsk-book 牛皮纸本子、.dsk-macro 小键盘、.dsk-laptop 合上的笔记本电脑：大件，出场和桌上的东西一样「放下」dskset
+     · .dsk-no 手写圈号（1、2、3，就是阅读顺序）：跟着所在的纸一起出现，不另出场
    - 同一拍里的先后（plan）：先打勾（上一条做完了），再放桌上的东西和大件，最后贴纸、吐标签（「先有东西，再贴说明」）
    - 自己加的出场名：dkset、dkstick、dkprint、dktick、dkswing、dkkey，只在这个风格里认（别的风格会提醒并换成它的默认出场）
    - 可读性约定（形态丰富，翻到最后一拍整页仍要读得清）：
@@ -43,7 +43,7 @@
   'use strict';
 
   /* =================================================================
-     桌上的东西 .dk-obj[data-dk-art]：俯视的简笔插画（墨色轮廓 + 平涂，光从左上来，投影由 desk.css 的 drop-shadow 画）
+     桌上的东西 .dsk-obj[data-dsk-art]：俯视的简笔插画（墨色轮廓 + 平涂，光从左上来，投影由 desk.css 的 drop-shadow 画）
      vb 是画布；slot 只有标签机有：标签出口在画布里的位置（按宽、高的比例），标签从这里吐出来
      ================================================================= */
   const K = '#4A423B', K2 = '#8A7F73', W = '#FFFDF9', TEA = '#E2D38A', CORAL = '#EF6A43', DARK = '#3E3935', TIN = '#5F8A78', TIND = '#4B7161', METAL = '#DCD4C5', BLUE = '#5D7FA6';
@@ -143,8 +143,8 @@
       `<path d="M6 108H144" fill="none" ${ln(3, K2)}/>` + leafHeap(75, 106, 50, 70, 34, 3) },
   };
   function fillArt(el) {
-    const a = ART[el.dataset.dkArt];
-    if (!a) { console.warn(`[Deck] 工位桌面的插画 data-dk-art="${el.dataset.dkArt}" 不认识，可选：${Object.keys(ART).join('、')}`); return; }
+    const a = ART[el.dataset.dskArt];
+    if (!a) { console.warn(`[Deck] 工位桌面的插画 data-dsk-art="${el.dataset.dskArt}" 不认识，可选：${Object.keys(ART).join('、')}`); return; }
     el.setAttribute('aria-hidden', 'true');
     el.innerHTML = `<svg viewBox="${a.vb}" focusable="false">${a.svg}</svg>`;
   }
@@ -154,7 +154,7 @@
      - 引擎不清函数出场留下的行内样式，这里在每个元素自己的补间都排完以后清（直接 removeProperty：跳拍时时间线被推到结尾，
        补间 onComplete 里的 gsap.set clearProps 不生效）
      ================================================================= */
-  const PROPS = ['opacity', 'visibility', 'transform', 'translate', 'rotate', 'scale', 'clip-path', 'transform-origin', '--dk-lift', '--dk-tp'];
+  const PROPS = ['opacity', 'visibility', 'transform', 'translate', 'rotate', 'scale', 'clip-path', 'transform-origin', '--dsk-lift', '--dsk-tp'];
   const clean = e => { if (e && e.style) PROPS.forEach(k => e.style.removeProperty(k)); };
   const later = (tl, e, at) => tl.call(() => clean(e), null, at);
   /* 元素自己的倾斜角（页面写的 --r）：gsap 动画时会把 rotate 写成 none，倾斜要并进 gsap 的 rotation */
@@ -181,9 +181,9 @@
   /* 放下：从桌面上方一点被放下来，影子从大而淡收到小而实（大件抬得低一点） */
   function setIn(tl, e, t) {
     if (e instanceof SVGElement) return fadeIn(tl, e, t);
-    const tilt = tiltOf(e), big = e.matches('.dk-book, .dk-macro, .dk-laptop');
-    const from = { y: big ? -16 : -30, scale: big ? 1.025 : 1.07, rotation: tilt + (big ? .8 : 3), '--dk-lift': 1 };
-    const to = { y: 0, scale: 1, rotation: tilt, '--dk-lift': 0, duration: big ? .5 : .45, ease: 'power2.out', immediateRender: true };
+    const tilt = tiltOf(e), big = e.matches('.dsk-book, .dsk-macro, .dsk-laptop');
+    const from = { y: big ? -16 : -30, scale: big ? 1.025 : 1.07, rotation: tilt + (big ? .8 : 3), '--dsk-lift': 1 };
+    const to = { y: 0, scale: 1, rotation: tilt, '--dsk-lift': 0, duration: big ? .5 : .45, ease: 'power2.out', immediateRender: true };
     vis(from, to, true);
     tl.fromTo(e, from, to, t);
     later(tl, e, t + to.duration + .01);
@@ -192,10 +192,10 @@
   /* 贴上：纸从上面落下来贴住。便签上沿先粘住，下半截随后拍平；白纸落下后纸胶带从一头按下去 */
   function stickIn(tl, e, t) {
     if (e instanceof SVGElement) return fadeIn(tl, e, t);
-    const tilt = tiltOf(e), note = e.matches('.dk-note');
+    const tilt = tiltOf(e), note = e.matches('.dsk-note');
     const side = tilt < 0 ? -1 : 1;
-    const from = { y: -46, rotation: tilt + side * 4, scale: 1.05, '--dk-lift': 1 };
-    const to = { y: 0, rotation: tilt, scale: 1, '--dk-lift': 0, duration: .42, ease: 'power3.out', immediateRender: true };
+    const from = { y: -46, rotation: tilt + side * 4, scale: 1.05, '--dsk-lift': 1 };
+    const to = { y: 0, rotation: tilt, scale: 1, '--dsk-lift': 0, duration: .42, ease: 'power3.out', immediateRender: true };
     vis(from, to, true);
     if (note) { from.transformOrigin = '50% 0%'; from.scaleY = .9; to.scaleY = .97; }
     tl.fromTo(e, from, to, t);
@@ -205,7 +205,7 @@
       tl.to(e, { keyframes: [{ scaleY: 1.015, duration: .08, ease: 'power2.out' }, { scaleY: 1, duration: .12, ease: 'power1.inOut' }] }, t + .42);
       end = .62;
     } else {
-      tl.fromTo(e, { '--dk-tp': 0 }, { '--dk-tp': 1, duration: .22, ease: 'power2.out', immediateRender: true }, t + .34);
+      tl.fromTo(e, { '--dsk-tp': 0 }, { '--dsk-tp': 1, duration: .22, ease: 'power2.out', immediateRender: true }, t + .34);
       end = .56;
     }
     later(tl, e, t + end + .01);
@@ -217,7 +217,7 @@
     if (e instanceof SVGElement) return fadeIn(tl, e, t);
     const tilt = tiltOf(e);
     const page = e.closest('.slide');
-    const maker = page && page.querySelector('.dk-obj[data-dk-art="maker"]');
+    const maker = page && page.querySelector('.dsk-obj[data-dsk-art="maker"]');
     const n = Math.max(10, Math.min(28, (e.textContent || '').trim().length + 4));
     if (!maker || !maker.offsetWidth) {
       const from = { clipPath: 'inset(-30% 100% -30% -4%)' }, to = { clipPath: 'inset(-30% -4% -30% -4%)', duration: .5, ease: `steps(${n})`, immediateRender: true };
@@ -231,10 +231,10 @@
     const slot = ART.maker.slot;
     const sx = m.l + maker.offsetWidth * slot[0], sy = m.t + maker.offsetHeight * slot[1];
     const x0 = sx - p.l, y0 = sy - (p.t + h / 2), dp = .5;
-    tl.fromTo(e, { autoAlpha: 1, x: x0, y: y0, rotation: 0, '--dk-lift': .5, clipPath: 'inset(-40% 100% -40% -6%)' },
+    tl.fromTo(e, { autoAlpha: 1, x: x0, y: y0, rotation: 0, '--dsk-lift': .5, clipPath: 'inset(-40% 100% -40% -6%)' },
       { clipPath: 'inset(-40% -6% -40% -6%)', duration: dp, ease: `steps(${n})`, immediateRender: true }, t);
     // 撕下来，挪到自己的位置（这时才歪那一点），按一下贴牢
-    tl.to(e, { x: 0, y: 0, rotation: tilt, '--dk-lift': 0, duration: .4, ease: 'power2.inOut' }, t + dp + .06);
+    tl.to(e, { x: 0, y: 0, rotation: tilt, '--dsk-lift': 0, duration: .4, ease: 'power2.inOut' }, t + dp + .06);
     tl.to(e, { keyframes: [{ scale: .97, duration: .06, ease: 'power2.out' }, { scale: 1, duration: .12, ease: 'power1.out' }] }, t + dp + .46);
     later(tl, e, t + dp + .65);
     return dp + .64;
@@ -251,8 +251,8 @@
   function swingIn(tl, e, t) {
     if (e instanceof SVGElement) return fadeIn(tl, e, t);
     const tilt = tiltOf(e);
-    tl.fromTo(e, { autoAlpha: 0, y: -70, rotation: tilt - 9, transformOrigin: '50% -30px', '--dk-lift': 1 },
-      { autoAlpha: 1, y: 0, rotation: tilt + 5, '--dk-lift': 0, duration: .4, ease: 'power2.in', immediateRender: true }, t);
+    tl.fromTo(e, { autoAlpha: 0, y: -70, rotation: tilt - 9, transformOrigin: '50% -30px', '--dsk-lift': 1 },
+      { autoAlpha: 1, y: 0, rotation: tilt + 5, '--dsk-lift': 0, duration: .4, ease: 'power2.in', immediateRender: true }, t);
     tl.to(e, { keyframes: [{ rotation: tilt - 3, duration: .22, ease: 'sine.inOut' }, { rotation: tilt + 1.4, duration: .2, ease: 'sine.inOut' }, { rotation: tilt, duration: .18, ease: 'sine.out' }] }, t + .4);
     later(tl, e, t + 1.01);
     return 1;
@@ -261,17 +261,17 @@
   function keyIn(tl, e, t) {
     if (e instanceof SVGElement) return fadeIn(tl, e, t);
     const tilt = tiltOf(e);
-    tl.fromTo(e, { autoAlpha: 0, y: -36, scale: 1.1, rotation: tilt - 2, '--dk-lift': 1 },
-      { autoAlpha: 1, y: 0, scale: 1, rotation: tilt, '--dk-lift': 0, duration: .34, ease: 'power2.in', immediateRender: true }, t);
+    tl.fromTo(e, { autoAlpha: 0, y: -36, scale: 1.1, rotation: tilt - 2, '--dsk-lift': 1 },
+      { autoAlpha: 1, y: 0, scale: 1, rotation: tilt, '--dsk-lift': 0, duration: .34, ease: 'power2.in', immediateRender: true }, t);
     tl.to(e, { keyframes: [{ y: 7, scale: .985, duration: .07, ease: 'power2.out' }, { y: 0, scale: 1, duration: .18, ease: 'back.out(2.5)' }] }, t + .36);
     later(tl, e, t + .62);
     return .61;
   }
-  const FX = { dkset: setIn, dkstick: stickIn, dkprint: printIn, dktick: tickIn, dkswing: swingIn, dkkey: keyIn };
-  const BY = { copy: 'dkprint', 'dk-label': 'dkprint', 'dk-tick': 'dktick', 'dk-obj': 'dkset', 'dk-book': 'dkset', 'dk-macro': 'dkset', 'dk-laptop': 'dkset',
-    'dk-note': 'dkstick', 'dk-sheet': 'dkstick', 'dk-badge': 'dkswing', 'dk-key': 'dkkey' };
-  const isTick = u => !!(u.el.classList && u.el.classList.contains('dk-tick'));
-  const isHeavy = u => !!(u.el.matches && u.el.matches('.dk-obj, .dk-book, .dk-macro, .dk-laptop'));
+  const FX = { dskset: setIn, dskstick: stickIn, dskprint: printIn, dsktick: tickIn, dskswing: swingIn, dskkey: keyIn };
+  const BY = { copy: 'dskprint', 'dsk-label': 'dskprint', 'dsk-tick': 'dsktick', 'dsk-obj': 'dskset', 'dsk-book': 'dskset', 'dsk-macro': 'dskset', 'dsk-laptop': 'dskset',
+    'dsk-note': 'dskstick', 'dsk-sheet': 'dskstick', 'dsk-badge': 'dskswing', 'dsk-key': 'dskkey' };
+  const isTick = u => !!(u.el.classList && u.el.classList.contains('dsk-tick'));
+  const isHeavy = u => !!(u.el.matches && u.el.matches('.dsk-obj, .dsk-book, .dsk-macro, .dsk-laptop'));
 
   Deck.scene('desk', {
     label: '工位桌面',
@@ -290,7 +290,7 @@
     defs: `<filter id="pencil"><feTurbulence type="fractalNoise" baseFrequency="1.6" numOctaves="1" seed="3"/><feDisplacementMap in="SourceGraphic" scale="1.6"/></filter>
       <filter id="stamp-ink"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="8" result="t"/><feColorMatrix in="t" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1 1.45" result="holes"/><feComposite in="SourceGraphic" in2="holes" operator="in" result="ink"/><feDisplacementMap in="ink" in2="t" scale="2.5"/></filter>`,
     // 建页时把桌上东西的插画填进去
-    decorate(s) { s.querySelectorAll('.dk-obj[data-dk-art]').forEach(fillArt); },
+    decorate(s) { s.querySelectorAll('.dsk-obj[data-dsk-art]').forEach(fillArt); },
     // 同一拍里：先打勾，再放桌上的东西和大件，最后贴纸、吐标签。没有这几样的拍照默认顺序
     plan(units, { base }) {
       const ticks = units.filter(isTick), heavy = units.filter(u => !isTick(u) && isHeavy(u));
