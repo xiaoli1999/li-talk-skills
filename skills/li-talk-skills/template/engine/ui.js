@@ -177,14 +177,21 @@
       const zones = (I.sc(p.scene).zones || []).filter(z => z && typeof z === 'object').map(z => ({ l: +z.x || 0, t: +z.y || 0, r: (+z.x || 0) + (+z.w || 0), b: (+z.y || 0) + (+z.h || 0) }));
       const avoid = textRects(p.el, sg, true).map(r => toStage(r, sr, k)).concat(mascotSpots(p), zones);
       const d = SIGN.pad;
-      const hit = x => avoid.some(r => x - d < r.r && x + tw + d > r.l && y - d < r.b && y + th + d > r.t);
-      let c = cands.find(([, x]) => !hit(x));
+      const hit = (x, yy) => avoid.some(r => x - d < r.r && x + tw + d > r.l && yy - d < r.b && yy + th + d > r.t);
+      // 底部被风格的禁区占满时（比如黑板的粉笔槽），再试紧贴禁区上沿的那一行
+      const ys = [y];
+      zones.forEach(z => { if (z.t > H * .6 && z.t < y + th + d) ys.push(Math.round(z.t - d - th - 8)); });
+      let c = null;
+      for (const yy of ys) {
+        const f = cands.find(([, x]) => !hit(x, yy));
+        if (f) { c = [f[0], f[1], yy]; break; }
+      }
       if (!c) {
-        c = cands[0];
+        c = [cands[0][0], cands[0][1], y];
         I.warn(`页面 ${p.id}（最后一页）：署名放在右下、左下、正下都会压住页面上的文字或形象，先放在右下角。请把这一页底部的内容往上挪，给署名留出约 ${Math.ceil(th + SIGN.bottom + d)}px 高的一条`);
       }
-      S.signAt = { x: c[1], y, at: c[0] };
-      sg.style.left = c[1] + 'px'; sg.style.top = y + 'px';
+      S.signAt = { x: c[1], y: c[2], at: c[0] };
+      sg.style.left = c[1] + 'px'; sg.style.top = c[2] + 'px';
       sg.dataset.at = c[0];
     }
     if (S.reading) { const fr = p.el.parentNode; if (sg.parentNode !== p.item) p.item.insertBefore(sg, fr.nextSibling); }

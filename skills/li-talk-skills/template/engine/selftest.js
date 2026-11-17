@@ -381,8 +381,8 @@
     // 6. 字号：先攒着，一页量完再按「同样的元素、同样的字号」合成一条（一排 11 个编号不报 11 条）
     ts.forEach(t => {
       if (t.el.closest(FONT_FREE) || fonts.seen.has(t.el)) return;
-      // 截图的图注属于注释类小字，和 data-small 一样允许到 24px（引擎默认 32px）
-      const fs = Math.round(t.fs * 10) / 10, small = !!t.el.closest('[data-small], figcaption');
+      // 截图的图注、小格里的编号属于注释类小字，和 data-small 一样允许到 24px（引擎默认 32px、28px）
+      const fs = Math.round(t.fs * 10) / 10, small = !!t.el.closest('[data-small], figcaption, .cell > i');
       if (small ? fs >= FONT_SMALL - .05 : fs >= FONT_MIN - .05) return;
       fonts.seen.add(t.el);
       const pe = t.el.parentElement;

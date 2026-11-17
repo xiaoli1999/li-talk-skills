@@ -184,7 +184,8 @@ code,.code{font-family:var(--f-mono);font-size:.92em}
 
 /* ---------- 散落再归位：<div class="cells scatter" data-arrange="2">，子元素用 --sx --sy --sr 写散落的位置 ---------- */
 .scatter{position:relative}
-.scatter.scattered>*{position:absolute;left:var(--sx,0);top:var(--sy,0);rotate:var(--sr,0deg);margin:0}
+/* 前面加 .slide 提高优先级：风格给卡片写的 position:relative 不能盖过散开的状态 */
+.slide .scatter.scattered>*{position:absolute;left:var(--sx,0);top:var(--sy,0);rotate:var(--sr,0deg);margin:0}
 
 /* ---------- 图例圆点：<i class="dot human"></i> ---------- */
 .dot{display:inline-block;width:.62em;height:.62em;border-radius:50%;background:var(--ink-3);vertical-align:.02em;margin-right:.3em}
