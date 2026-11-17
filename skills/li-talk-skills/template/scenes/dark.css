@@ -90,7 +90,10 @@
    缎面组件：卡片、小格、步骤的每一行、截图位（终端、命令另写在下面）
    卡面 = 跟着鼠标的一团高光 + 当前拍时左上角一团柔光 + 左上一道斜向微光 + 上亮下暗 + 半透明近黑
    ===================================================================== */
-[data-scene="dark"] :is(.card,.cell,.steps>li,.shot){--dk-h:0;--dk-n:0;position:relative;
+[data-scene="dark"] :is(.card,.cell,.steps>li,.shot){--dk-h:0;--dk-n:0;}
+/* 只给没有绝对定位的组件加 relative：带 .abs 的卡片要保持引擎的绝对定位 */
+[data-scene="dark"] :is(.card,.cell,.steps>li,.shot):not(.abs){position:relative}
+[data-scene="dark"] :is(.card,.cell,.steps>li,.shot){
   background:
     radial-gradient(560px circle at var(--mx,50%) var(--my,50%),rgba(160,200,255,calc(.1 * var(--dk-h))),rgba(160,200,255,0) 50%),
     radial-gradient(ellipse 46% 130% at 0% 0%,rgba(110,160,255,calc(.13 * var(--dk-n))),rgba(110,160,255,0) 70%),
