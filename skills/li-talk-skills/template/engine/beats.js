@@ -144,8 +144,14 @@
     const svg = markLayer(p), b = I.boxIn(m.el, p.el);
     const g = document.createElementNS(NS, 'g');
     if (m.el.dataset.markColor) g.style.color = m.el.dataset.markColor;
-    const sw = I.roughOf(p.scene).markWidth;
-    const o = (x) => Object.assign({ stroke: 'currentColor', strokeWidth: sw, roughness: 1.4, bowing: 1.2, seed: 7 + p.i * 13 + p.marks.indexOf(m) * 3 }, x);
+    const L = I.roughOf(p.scene), own = I.sc(p.scene).rough || {}, sw = L.markWidth;
+    // 圈注的手感：风格的 rough 里写了 markRoughness / markBowing 就用它们（各种圈注之间的轻重比例不变）；
+    // 没写时按风格线稿的粗糙度 roughness 缩放圈注的默认值（圈注默认比线稿潦草：粗糙度 1.4、弯曲度 1.2）：
+    // roughness ≥ 1 的手绘风格圈注和以前完全一样，小于 1 的现代风格按比例变直（比如 roughness .35 → 圈注约 .49）
+    const f = Math.min(1, L.roughness > 0 ? L.roughness : 1);
+    const rough = base => typeof own.markRoughness === 'number' ? own.markRoughness * base / 1.4 : base * f;
+    const bow = typeof own.markBowing === 'number' ? own.markBowing : 1.2 * f;
+    const o = (x) => Object.assign({ stroke: 'currentColor', strokeWidth: sw, roughness: rough(1.4), bowing: bow, seed: 7 + p.i * 13 + p.marks.indexOf(m) * 3 }, x);
     const add = n => { if (n) [...(n.childNodes.length ? n.childNodes : [n])].forEach(c => g.appendChild(c)); };
     const rc = R ? R.svg(svg) : null;
     m.kinds.forEach(kind => {
@@ -155,9 +161,9 @@
         g.appendChild(r); return;
       }
       if (kind === 'circle') add(rc.ellipse(b.l + b.w / 2, b.t + b.h / 2, b.w + 44, b.h + 30, o()));
-      else if (kind === 'box') add(rc.rectangle(b.l - 14, b.t - 8, b.w + 28, b.h + 16, o({ roughness: 1.2 })));
-      else if (kind === 'underline') { const pts = []; for (let x = b.l - 4, i = 0; x <= b.l + b.w + 8; x += 16, i++) pts.push([x, b.t + b.h + 6 + (i % 2 ? -4 : 4)]); add(rc.curve(pts, o({ roughness: .6, disableMultiStroke: true }))); }
-      else if (kind === 'strike') add(rc.line(b.l - 6, b.t + b.h * .55, b.l + b.w + 6, b.t + b.h * .45, o({ roughness: .8 })));
+      else if (kind === 'box') add(rc.rectangle(b.l - 14, b.t - 8, b.w + 28, b.h + 16, o({ roughness: rough(1.2) })));
+      else if (kind === 'underline') { const pts = []; for (let x = b.l - 4, i = 0; x <= b.l + b.w + 8; x += 16, i++) pts.push([x, b.t + b.h + 6 + (i % 2 ? -4 : 4)]); add(rc.curve(pts, o({ roughness: rough(.6), disableMultiStroke: true }))); }
+      else if (kind === 'strike') add(rc.line(b.l - 6, b.t + b.h * .55, b.l + b.w + 6, b.t + b.h * .45, o({ roughness: rough(.8) })));
       else if (kind === 'cross') { add(rc.line(b.l, b.t, b.l + b.w, b.t + b.h, o())); add(rc.line(b.l + b.w, b.t, b.l, b.t + b.h, o())); }
       else warn(`data-mark="${kind}" 不认识，可选 circle、box、underline、strike、cross`);
     });

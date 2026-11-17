@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="li-talk-engine" content="0.1.0">
+<meta name="li-talk-mascot" content="duoduo">
+<title>最小测试课件</title>
+<!-- 测试课件：3 页（封面、内容、结尾），方格纸 + 朵朵。验证开场、点击涟漪、最后一页署名、不进拍的元素、外框不出滚动条。
+     引擎、风格、形象、vendor 直接引用模板里的，不复制。
+     地址参数：?scene=probe 所有页临时换成测试用的小风格 probe（probe.js，只写了 intro 和 ripple）；
+     ?crowd=text|mascot|all 在结尾页底部加东西挤署名（见 slides/basic.js） -->
+<script>/* 自检用：记下页面里的报错和加载失败 */window.__deckErrors=[];addEventListener('error',function(e){var t=e.target;__deckErrors.push(t&&t!==window&&(t.src||t.href)?'加载失败：'+(t.src||t.href):String(e.message))},true);(function(c){var o=c.error;c.error=function(){__deckErrors.push([].slice.call(arguments).join(' '));return o.apply(c,arguments)}})(console);</script>
+<link rel="stylesheet" href="../../../../skills/li-talk-skills/template/vendor/fonts/wenkai-lite.css">
+<link rel="stylesheet" href="../../../../skills/li-talk-skills/template/engine/engine.css">
+<link rel="stylesheet" href="../../../../skills/li-talk-skills/template/scenes/paper.css">
+<!-- 章节样式（开始） -->
+<link rel="stylesheet" href="slides/basic.css">
+<!-- 章节样式（结束） -->
+</head>
+<body class="loading">
+<script src="../../../../skills/li-talk-skills/template/vendor/gsap.min.js"></script>
+<script src="../../../../skills/li-talk-skills/template/vendor/rough.min.js"></script>
+<script src="../../../../skills/li-talk-skills/template/engine/core.js"></script>
+<script src="../../../../skills/li-talk-skills/template/engine/build.js"></script>
+<script src="../../../../skills/li-talk-skills/template/engine/beats.js"></script>
+<script src="../../../../skills/li-talk-skills/template/engine/mascot.js"></script>
+<script src="../../../../skills/li-talk-skills/template/engine/pages.js"></script>
+<script src="../../../../skills/li-talk-skills/template/engine/ui.js"></script>
+<script src="../../../../skills/li-talk-skills/template/engine/presenter.js"></script>
+<!-- engine/selftest.js 在任务 6 才有，到时在这里加一行 -->
+<script src="../../../../skills/li-talk-skills/template/scenes/paper.js"></script>
+<script src="probe.js"></script>
+<script src="../../../../skills/li-talk-skills/template/mascots/duoduo.js"></script>
+<!-- 章节（开始）：页面顺序 = 引入顺序；新增一章就在这里和上面的章节样式里各加一行 -->
+<script src="slides/basic.js"></script>
+<!-- 章节（结束） -->
+</body>
+</html>

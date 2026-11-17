@@ -4,7 +4,8 @@
    - 负责：共享常量、工具函数、可变状态 I.state、外壳元素表 I.dom、
      页面注册 Deck.add、风格注册 Deck.scene（注册表 I.SCENES，内置朴素风格 plain）、
      形象注册 Deck.mascot（注册表 I.MASCOTS）与选形象 pickMascot（选中的键名在 I.state.mascot）、
-     提示条 toast、等字体、主题行缩字、风格混用检查、启动 boot、对外接口
+     提示条 toast、等字体、主题行缩字、风格混用检查、启动 boot、对外接口；
+     点了不进拍的元素 NO_ADVANCE、署名的链接 SIGN_URL、开场时长上限 INTRO_MAX
    - 引入顺序固定：vendor/gsap.min.js → vendor/rough.min.js → engine/core.js → build.js
      → beats.js → mascot.js → pages.js → ui.js → presenter.js → selftest.js
      → scenes/*.js → mascots/*.js → 各章 slides/*.js
@@ -30,6 +31,14 @@
   const QS = new URLSearchParams(location.search);
   const FORCE = QS.has('read') ? 'read' : QS.has('show') ? 'show' : '';
   const SHOW_NOTES = QS.get('notes') === '1';   // 阅读模式默认不公开讲词；?notes=1 才显示
+  const SELFTEST = QS.has('selftest');          // 自检模式（selftest.js）：不播开场
+  const INTRO_MAX = 2.4;                        // 开场（风格的 intro 加上形象落下）总时长上限（秒），超了就整体加速
+  /* 点到这些元素（或它们里面）不进拍：可复制的命令、署名、形象、链接、视频音频、截图位、展开详情、表单、按钮，
+     以及页面自己标了 data-noclick（旧写法 .no-advance）的元素；页面和风格要加「点了不翻拍」的元素，标 data-noclick 即可。
+     其中 [data-copy]、截图位、形象另有自己的反应（复制、看大图、蹦一下），在 ui.js 的点击处理里先于这条判断 */
+  const NO_ADVANCE = '[data-copy], .li-sign, .mascot, .kid, a, video, audio, .shot, details, summary, input, textarea, select, button, label, [data-noclick], .no-advance, #toast, #lightbox';
+  /* 最后一页的署名链接（build.js 的 addSign 加上，ui.js 的 placeSign 找位置） */
+  const SIGN_URL = 'https://github.com/xiaoli1999/li-talk-skills';
 
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -62,8 +71,9 @@
     mascot: null,             // 这份课件用的形象（键名）；没有可用的形象时为 null（pickMascot 选出）
     mascotWarns: [],          // 选形象时攒下的提醒：页面真的用到形象时才说（mascot.js 的 warnMascotOnce）
     lastAct: 0,               // 最近一次有人操作（按键、点击、触屏、滚轮、移动鼠标、翻拍）的时刻：形象的空闲动作和打盹看它
+    signAt: null,             // 署名在最后一页上的位置 { x, y, at: 'right' | 'left' | 'center' }（ui.js 的 placeSign 启动时量一次）
   };
-  /* 外壳里的元素：build.js 的 buildShell 填上；bg 是各风格的背景层（键名 → 元素） */
+  /* 外壳里的元素：build.js 的 buildShell 填上；bg 是各风格的背景层（键名 → 元素）；sign 是最后一页的署名（build.js 的 addSign） */
   const dom = { bg: {} };
   const motion = () => !!G && !RMQ.matches && !S.reading;
 
@@ -83,7 +93,9 @@
     mount: 'function', unmount: 'function', ripple: 'function', zones: 'array', defs: 'string',
   };
   /* 手绘线的默认参数（风格的 rough 只写要改的项）：strokeWidth 线宽、roughness 粗糙度、bowing 弯曲度，
-     hachureGap / hachureAngle / fillWeight 填充线的间距、角度、粗细，markWidth 圈注的线宽 */
+     hachureGap / hachureAngle / fillWeight 填充线的间距、角度、粗细，markWidth 圈注的线宽；
+     可选 markRoughness / markBowing 圈注的粗糙度、弯曲度（不写时：roughness ≥ 1 用圈注的默认 1.4 / 1.2，
+     小于 1 按 roughness 的比例变直，见 beats.js 的 buildMark） */
   const ROUGH = { strokeWidth: 2.6, roughness: 1.1, bowing: 1, hachureGap: 9, hachureAngle: -41, fillWeight: 2.6, markWidth: 3.5 };
   /* 内置的朴素风格：浅色底、墨色字、无装饰；样子写在 engine.css 里，只用 CSS 变量的默认值 */
   SCENES.plain = { key: 'plain', label: '朴素', family: 'modern', enter: 'rise', titleIn: 'fade' };
@@ -268,10 +280,11 @@
     fontsReady().then(() => {
       fitTopics();
       I.fit();
+      I.placeSign();          // 字体、缩放都定下来了，再给署名找空位
       if (!S.reading) {
         const r = I.parseHash();
-        if (r) I.go(r.p, r.b, { anim: false });
-        else { S.cur = { p: -1, b: 0 }; I.go(0, 0, { dir: 1 }); }
+        if (r) I.go(r.p, r.b, { anim: false });   // 带 #页/拍 打开：直接摆好，不播开场
+        else { S.cur = { p: -1, b: 0 }; I.go(0, 0, { dir: 1, intro: !SELFTEST }); }   // 第一次进第一页：风格写了 intro 就播开场
       } else { const r = I.parseHash(); if (r) { S.cur = { p: clamp(r.p, 0, PAGES.length - 1), b: 0 }; I.scrollToPage(S.cur.p); } }
       document.body.classList.remove('loading');
       I.tick();
@@ -284,7 +297,7 @@
      ================================================================= */
   Object.assign(I, {
     W, H, NS, MAX_BEAT, NEXT_KEYS, PREV_KEYS,
-    G, R, RMQ, QS, FORCE, SHOW_NOTES,
+    G, R, RMQ, QS, FORCE, SHOW_NOTES, SELFTEST, INTRO_MAX, NO_ADVANCE, SIGN_URL,
     $, $$, clamp, esc, warn, toInt, el,
     DEFS, PAGES, state: S, dom, motion,
     SCENES, FAMILY, ROUGH, sc, roughOf, hook, sceneList, checkFamilies,

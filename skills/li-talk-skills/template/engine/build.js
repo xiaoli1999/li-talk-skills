@@ -2,15 +2,17 @@
    演示稿引擎 · 构建（build.js）
    - 搭外壳 buildShell：#app、#world、每个注册风格一层背景（建好后调风格的 backdrop）、#stage、#slides、
      外框（章节、页码、节拍格、计时）、提示条、看大图层、各风格和各形象 defs 里的 SVG 滤镜、
-     各风格 recede 对应的 --recede、当前形象的大小（--mascot-w、--mascot-k、--mascot-foot）；建好的元素填进 I.dom
+     各风格 recede 对应的 --recede、深色底风格的署名颜色 --sign-color、
+     当前形象的大小（--mascot-w、--mascot-k、--mascot-foot）；建好的元素填进 I.dom
    - 建页面 buildPage：选风格 pickScene（地址 ?scene= 优先；没注册的退回朴素样子 plain），
-     把 Deck.add 注册的定义建成 section.slide，再依次 upgrade（补全组件标记、手绘线）
+     把 Deck.add 注册的定义建成 section.slide（最前面放一层点击涟漪层 .ripple-layer），再依次 upgrade（补全组件标记、手绘线）
      → collect（节拍单元、重点词、圈注、形象的落脚点、拍数）→ normalizeNotes（讲词）→ 风格的 decorate
+     → 最后一页加署名 addSign（位置由 ui.js 的 placeSign 在字体加载完后定）
    - 演讲者视图要用的 autoShow、keysOf；位置换算 boxIn
    - 依赖总线：core 的常量和工具、风格注册表（I.SCENES、I.sc、I.roughOf、I.hook、I.sceneList）、I.dom、I.state；
      形象注册表 I.MASCOTS；mascot.js 的 I.mascotDef、I.mascotEl、I.initMascotEl、I.bindMascot、I.warnMascotOnce
      （调用时才取，所以引入顺序在它前面也没关系）
-   - 挂到总线：buildShell、buildPage、boxIn、autoShow、keysOf
+   - 挂到总线：buildShell、buildPage、addSign、boxIn、autoShow、keysOf
    ===================================================================== */
 (function () {
   'use strict';
@@ -45,6 +47,8 @@
     document.body.insertAdjacentHTML('beforeend', `<svg class="deck-defs" aria-hidden="true"><defs>${defs.join('\n')}</defs></svg>`);
     // 各风格「讲过的拍变到多淡」（风格的 recede）写成 --recede；用 :where 不加优先级，页面 CSS 还能改
     const rc = scenes.filter(s => typeof s.recede === 'number').map(s => `:where([data-scene="${s.key}"]){--recede:${s.recede}}`);
+    // 深色底的风格（dark: true）：署名默认改用浅色；风格的 CSS 里写了 --sign-color 就以风格的为准
+    scenes.filter(s => s.dark).forEach(s => rc.push(`:where([data-scene="${s.key}"]){--sign-color:rgba(255,255,255,.55)}`));
     // 当前形象的大小：size 的宽写成 --mascot-w、高宽比写成 --mascot-k，foot 写成 --mascot-foot（落地压扁的原点）
     const md = I.mascotDef();
     if (md) rc.push(`:root{--mascot-w:${md.size[0]}px;--mascot-k:${+(md.size[1] / md.size[0]).toFixed(4)};--mascot-foot:${+(md.foot * 100).toFixed(1)}%}`);
@@ -72,6 +76,8 @@
     s.setAttribute('aria-label', d.title || d.id);
     s.innerHTML = (d.topic ? `<div class="s-topic"><span class="tc">${esc(d.chapterShort)}</span><span class="ts">›</span><span class="tt">${esc(d.topic)}</span></div>` : '')
       + (d.noTitle ? '' : `<h2 class="s-title">${d.titleHtml || esc(d.title || '')}</h2>`) + d.html;
+    // 点击涟漪层：压在这一页所有内容下面（engine.css 里 z-index:-1，页面 isolation:isolate），风格的 ripple 往里放东西
+    const rl = el('div', 'ripple-layer'); rl.setAttribute('aria-hidden', 'true'); s.prepend(rl);
     if (d.recede === false) s.dataset.recede = 'off';
     frame.appendChild(s);
     item.append(head, frame);
@@ -81,9 +87,21 @@
     collect(p);
     normalizeNotes(p);
     I.hook(I.sc(key), 'decorate', s, p);   // 风格给每页加装饰（不进拍）
+    if (i === I.DEFS.length - 1) addSign(p);
     const notesEl = el('details', 'r-notes', `<summary>讲词</summary><ol>${p.notes.filter(n => n.say).map(n => `<li><b>${n.beat === 0 ? '开场' : '第 ' + n.beat + ' 拍'}</b>${esc(n.say)}</li>`).join('')}</ol>`);
     if (SHOW_NOTES && p.notes.some(n => n.say)) item.appendChild(notesEl);
     return p;
+  }
+
+  /* 最后一页的署名（设计文档 5.4）：不进拍、第 0 拍就在、点它复制链接（ui.js 的点击处理走 data-copy，拦下跳转）；
+     不提供关闭的开关。颜色用 --sign-color，风格可以在自己的 CSS 里改；位置由 ui.js 的 placeSign 定 */
+  function addSign(p) {
+    const a = el('a', 'li-sign', `由 li-talk-skills 提供支持 · ${esc(I.SIGN_URL.replace(/^https?:\/\//, ''))}`);
+    a.href = I.SIGN_URL; a.target = '_blank'; a.rel = 'noopener';
+    a.dataset.copy = I.SIGN_URL;
+    a.title = '点一下复制链接';
+    p.el.appendChild(a);
+    dom.sign = a;
   }
 
   /* 把组件的简写标记补全 */
@@ -261,5 +279,5 @@
     return { l, t, w: node.offsetWidth || 0, h: node.offsetHeight || 0 };
   }
 
-  Object.assign(I, { buildShell, buildPage, boxIn, autoShow, keysOf });
+  Object.assign(I, { buildShell, buildPage, addSign, boxIn, autoShow, keysOf });
 })();
