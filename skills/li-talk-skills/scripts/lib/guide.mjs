@@ -24,6 +24,7 @@ import { metaPath, readMeta, STEPS, STEP_NAMES } from './meta.mjs';
 import { collectPages, readDeck, scriptPageHeads } from './deck.mjs';
 import { mascotList, sceneIndex } from './new.mjs';
 import { cacheDir, loadManifest } from './fonts.mjs';
+import { describeLastCheck, installKind } from './update.mjs';
 
 /* ------------------------------------------------------------------
    公用的小工具（materials、styles 也用）
@@ -331,6 +332,8 @@ function envLine() {
   const parts = [`Node ${process.versions.node} 可以用`];
   parts.push(VERSION ? `li-talk-skills ${VERSION}` : 'skill 没装完整（缺 version.txt），请先重新安装');
   parts.push(fontState().text);
+  // 上次检查更新的时间和结果；在开发中的仓库里运行不自动更新，不显示
+  if (installKind() !== 'repo') parts.push(`上次检查更新：${describeLastCheck()}`);
   return '环境：' + parts.join('；');
 }
 

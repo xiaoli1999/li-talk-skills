@@ -7,7 +7,9 @@
 
 - 15 种风格、15 个形象；4 种样板页（封面、清单、步骤、结尾）；最后一页自动署名。
 - 课件：按拍出现、讲过的变淡、主题行、一句话解释、重点词、圈注、多种出场、手绘线稿、散落再归位、自定义动画；形象走位、眨眼、悬停、点击反应、空闲小动作、5 分钟打盹；点击复制；截图点开看大图；演讲者视图（S）、计时（T / R）、全屏（F）；彩排模式（演讲者视图里按 H：每页用时、按讲词字数估的建议用时、超时变红、小结可复制给 AI）；总览跳页（O）、黑屏（B 或「.」）、激光笔（L）、底部进度条（按章节分段）；换风格转场；竖屏阅读模式；刷新不丢位置；触屏滑动；减少动态；开场、点击涟漪；`?scene=`、`?mascot=` 临时切换。
-- 命令：`guide`、`styles`、`materials`、`new`、`open`、`confirm`、`check`、`check --browser`、`fonts`、`version`。
+- 命令：`guide`、`styles`、`materials`、`new`、`open`、`confirm`、`check`、`check --browser`、`fonts`、`version`、`update`。
+- 自动更新：每天第一次运行命令时同时读 GitHub 和 jsDelivr 主分支的 `manifest.json`，只下载变了的文件，在临时目录拼出完整新版、整体校验后整包替换，转述 CHANGELOG 要点；仓库里运行跳过，插件安装的提示 `claude plugin update`；`version` 显示安装位置和上次检查，`update` 立即更新。
+- 发版脚本：`build.mjs --manifest`（生成文件清单和校验值）、`--check`（干净度检查：本机路径、内部词、版本号和 CHANGELOG、清单、换行、是否都进了 git）、`--release`（发版前一条龙，含全量测试）。
 - 后台自检：5 个尺寸逐页逐拍量溢出、重叠、挡字、禁区、字号、收回、报错，出中文报告，可截图。
 
 ## 1. 现场工具
@@ -50,8 +52,6 @@
 |---|---|---|
 | P1 | 打包 `pack` | 生成能单独发出去的目录和压缩包：只带用到的文件和用到的字体块；现在一份课件带全部 194 块字体，约 10 MB |
 | P2 | 升级课件 `upgrade` | 先列出会替换哪些文件、版本从几升到几；确认后才替换，原文件备份；`slides/` 和讲稿永远不动。旧课件的 index.html 要补上 `engine/tools.js` 一行（排在 `presenter.js` 之后、`selftest.js` 之前），不然没有总览、黑屏、激光笔和进度条 |
-| P2 | 自动更新、`version` / `update` | 每天第一次运行时同时读 GitHub 和 jsDelivr 的 `manifest.json`，只下载变了的文件，校验后整体替换，转述 CHANGELOG 要点；插件安装的提示 `claude plugin update` |
-| P2 | 发版脚本 | `build.mjs` 生成文件清单和校验值、干净度检查（不含分享内容、公司信息、本机路径） |
 | P2 | 完整的 README、英文 README | 风格一览图、三种安装方式、怎么对 AI 说 |
 | P2 | 插件方式安装 | `.claude-plugin/` |
 | P3 | 像素字体按需下载 | 现在完整字体（约 679KB）随 skill 带；以后有切块来源时改成和霞鹜文楷一样按需下载 |

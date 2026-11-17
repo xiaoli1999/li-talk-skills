@@ -1,7 +1,7 @@
 {
   "version": "0.1.0",
   "files": {
-    "SKILL.md": "ea43d3c4e23b3400b731034712d5581920a797610a617c5ab09d95fbf0278a2c",
+    "SKILL.md": "82770867b751b3d294147c0d39c5d3b51be5791994f2415b52b00744d0cf7ce3",
     "fonts/wenkai.json": "1df3f00d2ef1218f9e4991fedb8925ea97154f581a4bed248ca18c39a8910bb3",
     "references/authoring.md": "431369e4093f68dfa68c127139ef31556a82154fb4b42585f44c26f1cb23ebfc",
     "references/checklist.md": "9e7dea0ac167209f428ed3cb0db830726d8030fae66eefa7dfc9a2cba8cfc330",
@@ -15,7 +15,7 @@
     "scripts/lib/cli.mjs": "08a2400f8b0291bba1fecd2477a2d1bd2ec7789d2cf1b1bcd892b37e0f5ac31b",
     "scripts/lib/deck.mjs": "0f30187465f35d9fa7791143f1497e81aa6d6dd5a2bbafb25156c326e3b46db4",
     "scripts/lib/fonts.mjs": "a8187c029af284d547d4ab02b94c124c860ce532d9467afa88680844079e3963",
-    "scripts/lib/guide.mjs": "33c829a1ad212fd027befadb228a4ca17222dfec68414fb0ba4ec92fce0109d1",
+    "scripts/lib/guide.mjs": "81a03db45bd0039d2e7161893f064d8394de0f1b54e5f1ea4d5f6f365f222816",
     "scripts/lib/imagesize.mjs": "09be9d2da34853e5480070c59bd5ed91584b50968a2f52dbe2bc3e4d0ddef77d",
     "scripts/lib/manifest.mjs": "dedcf2de89200f6ab7314d0eedd0e83c7e5e764f27817842b08372a253e16748",
     "scripts/lib/materials.mjs": "e2371eb0ffc54353abe3702ee9d0006911431469352988574e5a023eba4672df",
