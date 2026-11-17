@@ -81,16 +81,16 @@
    有硬阴影的组件：卡片、小格、步骤的每一项、终端、截图位、命令
    粗黑描边 + 无模糊硬阴影；悬停离阴影远一点、朝鼠标那侧歪一点（--bz-rz 由 brutal.js 写），按下压进阴影
    ===================================================================== */
-[data-scene="brutal"] :is(.card,.cell,.steps>li,.term,.shot,.copy){--bz-s:8px;
+[data-scene="brutal"] :is(.card,.cell,.steps>li,.term,.shot,.copy,.bz-tile,.bz-step,.bz-sign,.bz-btn){--bz-s:8px;
   border:4px solid var(--ink);
-  box-shadow:calc(var(--bz-s) - var(--bz-h) - var(--bz-k) + var(--bz-a)) calc(var(--bz-s) - var(--bz-h) - var(--bz-k) + var(--bz-a)) 0 var(--ink);
+  box-shadow:calc(var(--bz-s) - var(--bz-h) - var(--bz-k) + var(--bz-a)) calc(var(--bz-s) - var(--bz-h) - var(--bz-k) + var(--bz-a)) 0 var(--bz-sc,var(--ink));
   translate:calc(var(--bz-h) + var(--bz-k)) calc(var(--bz-h) + var(--bz-k) + var(--bz-j));
   transition:translate .14s ease-out,rotate .14s ease-out,--bz-h .14s ease-out,opacity .35s ease,background-color .15s}
 @media (hover:hover){
-  [data-scene="brutal"] :is(.card,.cell,.steps>li,.term,.shot):hover{--bz-h:-4px;rotate:calc(var(--r) + var(--bz-rz,0deg))}
+  [data-scene="brutal"] :is(.card,.cell,.steps>li,.term,.shot,.bz-tile,.bz-step,.bz-sign,.bz-btn):hover{--bz-h:-4px;rotate:calc(var(--r) + var(--bz-rz,0deg))}
   [data-scene="brutal"] .copy:hover{--bz-h:-3px;background-color:#EDF2FF}
 }
-[data-scene="brutal"] :is(.card,.cell,.steps>li,.term,.shot,.copy):active{--bz-h:7px;transition-duration:.05s}
+[data-scene="brutal"] :is(.card,.cell,.steps>li,.term,.shot,.copy,.bz-tile,.bz-step,.bz-sign,.bz-btn):active{--bz-h:7px;transition-duration:.05s}
 
 /* ---------- 卡片：白面板，顶上一条色带（有 .lab 时色带里写小标签） ---------- */
 [data-scene="brutal"] .card{padding:52px 40px 36px;border-radius:14px;background:var(--paper);color:var(--card-ink)}
@@ -238,3 +238,113 @@
 
 /* 阅读模式：每页一圈墨线框，页与页分得开 */
 [data-scene="brutal"].slide:is(.reading *){box-shadow:inset 0 0 0 6px var(--ink)}
+
+/* =====================================================================
+   新粗野主义自己的版式组件（.bz-*）：价签、标签贴、色块格、台阶、海报色块、色带、警示牌、大按钮和大光标
+   用法和每拍的动作见 brutal.js 开头的组件清单，样板页 samples/brutal.js 把每个都用了一遍。
+   可读性约定：字只压在实色上（墨字压黄、粉、蓝、奶白，奶黄字压墨色）；点阵、斜纹只铺在没有字的地方；
+   海报色块错开的是黑框，字留在色块里、离框线 40px 以上；有字的块倾斜不超过 2°
+   ===================================================================== */
+/* 两个推动用的量：--bz-p 色块压印到几成（0 没印、1 印好；颜色层按它错开、显出来），--bz-o 海报色块的黑框错开多远。
+   要给 ::before / ::after 读到，所以注册成会继承的 */
+@property --bz-p{syntax:"<number>";inherits:true;initial-value:1}
+@property --bz-o{syntax:"<length>";inherits:true;initial-value:22px}
+
+/* ---------- 有硬阴影的块：色块格、台阶上的步骤、警示牌、大按钮（偏移变量和卡片同一套，见上面「有硬阴影的组件」） ---------- */
+[data-scene="brutal"].slide :is(.bz-tile,.bz-step,.bz-sign,.bz-btn){--bz-s:12px;border-width:6px;border-radius:18px;background-color:var(--paper);color:var(--ink);rotate:var(--r)}
+/* 颜色层：实色铺满，跟着 --bz-p 错开半截再到位（色块压印）；警示牌本身是白的，不印 */
+[data-scene="brutal"] :is(.bz-tile,.bz-step,.bz-btn){isolation:isolate;overflow:hidden}
+[data-scene="brutal"] :is(.bz-tile,.bz-step,.bz-btn)::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:var(--tint,var(--t-yellow));
+  opacity:clamp(0,calc(var(--bz-p) * 4),1);translate:calc((1 - var(--bz-p)) * 28px) calc((1 - var(--bz-p)) * 28px)}
+/* 实色块上的重点词贴纸换成奶白（同色的贴纸压在同色的块上看不出来） */
+[data-scene="brutal"] :is(.bz-tag,.bz-tile,.bz-step,.bz-btn,.bz-slab) .key{--tint:var(--paper)}
+[data-scene="brutal"] :is(.bz-tile,.bz-step) h3{margin:0 0 6px;font:900 64px/1.15 var(--f-hand);letter-spacing:.01em;color:var(--ink)}
+[data-scene="brutal"] :is(.bz-tile,.bz-step) p{font:700 36px/1.4 var(--f-hand);color:var(--ink)}
+
+/* ---------- 色块格 .bz-tile：页面写死 width、height；左上角编号图章 .bz-no，插画 .bz-art ---------- */
+[data-scene="brutal"] .bz-tile{padding:30px 36px}
+[data-scene="brutal"] .bz-no{position:absolute;left:26px;top:24px;z-index:1;padding:10px 16px 12px;border-radius:10px;background:var(--ink);color:var(--bg);
+  font:800 44px/1 var(--f-mono);letter-spacing:.02em;rotate:-3deg}
+/* 形象待的格子：墨色底加一层奶黄点阵，不进拍、不放字 */
+[data-scene="brutal"] .bz-tile.bz-dots{background:radial-gradient(circle,rgba(255,243,214,.3) 0 3px,rgba(255,243,214,0) 3.6px) 0 0/30px 30px,var(--ink)}
+[data-scene="brutal"] .bz-tile.bz-dots::before{display:none}
+
+/* ---------- 简笔插画 .bz-art：墨线描边、实色平涂，整张一道硬投影 ---------- */
+[data-scene="brutal"] .bz-art{position:absolute;display:block;pointer-events:none}
+[data-scene="brutal"] .bz-art svg{display:block;width:100%;height:auto;overflow:visible;filter:drop-shadow(8px 8px 0 #15120F)}
+[data-scene="brutal"] .bz-art :is(path,rect,circle,ellipse){stroke:var(--ink);stroke-width:8;stroke-linejoin:round;stroke-linecap:round}
+[data-scene="brutal"] .bz-art .w{fill:var(--paper)}
+[data-scene="brutal"] .bz-art .y{fill:var(--t-yellow)}
+[data-scene="brutal"] .bz-art .p{fill:var(--t-pink)}
+[data-scene="brutal"] .bz-art .b{fill:var(--t-blue)}
+[data-scene="brutal"] .bz-art .k{fill:var(--ink)}
+[data-scene="brutal"] .bz-art .n{fill:none}
+[data-scene="brutal"] .bz-art .lf path{stroke-width:6}
+
+/* ---------- 价签 .bz-tag：尖角 + 孔 + 绳子，整块一道硬投影（drop-shadow 跟着尖角走） ----------
+   --bz-pt 尖角多宽、--bz-hole 孔离左边多远；外形是 ::before（墨色，当描边）和 ::after（底色，往里缩 7px）两层裁出来的 */
+[data-scene="brutal"] .bz-tag{--bz-s:16px;--bz-pt:120px;--bz-hole:72px;position:absolute;isolation:isolate;color:var(--ink);rotate:var(--r);transform-origin:var(--bz-hole) 50%;
+  filter:drop-shadow(calc(var(--bz-s) - var(--bz-k) + var(--bz-a)) calc(var(--bz-s) - var(--bz-k) + var(--bz-a)) 0 #15120F)}
+[data-scene="brutal"] .bz-tag::before,
+[data-scene="brutal"] .bz-tag::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none}
+[data-scene="brutal"] .bz-tag::before{background:var(--ink);clip-path:polygon(var(--bz-pt) 0,100% 0,100% 100%,var(--bz-pt) 100%,0 50%)}
+[data-scene="brutal"] .bz-tag::after{background:radial-gradient(circle at var(--bz-hole) 50%,var(--bg) 0 19px,var(--ink) 19.5px 28px,rgba(21,18,15,0) 28.5px),var(--tint,var(--t-yellow));
+  clip-path:polygon(calc(var(--bz-pt) + 5px) 7px,calc(100% - 7px) 7px,calc(100% - 7px) calc(100% - 7px),calc(var(--bz-pt) + 5px) calc(100% - 7px),8px 50%)}
+/* 绳子：从孔里往上穿出去、弯到舞台外（左边一道、上边一道，左上角圆过去） */
+[data-scene="brutal"] .bz-string{position:absolute;left:calc(var(--bz-hole) - 5px);bottom:calc(50% - 4px);width:320px;height:760px;
+  border:solid var(--ink);border-width:10px 0 0 10px;border-top-left-radius:320px 760px;pointer-events:none}
+/* 一道粗墨线、条形码（纯装饰，没有字） */
+[data-scene="brutal"] .bz-rule{position:absolute;display:block;height:12px;background:var(--ink)}
+[data-scene="brutal"] .bz-bars{position:absolute;display:block;
+  background:linear-gradient(90deg,var(--ink) 0 9px,rgba(21,18,15,0) 9px 15px,var(--ink) 15px 19px,rgba(21,18,15,0) 19px 27px,var(--ink) 27px 39px,rgba(21,18,15,0) 39px 44px,
+    var(--ink) 44px 48px,rgba(21,18,15,0) 48px 58px,var(--ink) 58px 65px,rgba(21,18,15,0) 65px 69px,var(--ink) 69px 73px,rgba(21,18,15,0) 73px 84px) 0 0/84px 100% repeat-x}
+
+/* ---------- 标签贴 .bz-sticker：一句话的贴纸，描边加硬阴影，颜色类换底色（默认粉） ---------- */
+[data-scene="brutal"] .bz-sticker{display:inline-block;padding:14px 32px 16px;border:5px solid var(--ink);border-radius:12px;background:var(--tint,var(--t-pink));color:var(--ink);
+  font:900 42px/1.2 var(--f-hand);white-space:nowrap;box-shadow:8px 8px 0 var(--ink);rotate:var(--r)}
+
+/* ---------- 台阶 .bz-riser：墨色实心块，顶上一道颜色类的踏面；.bz-num 是台阶上的大号数字（步骤序号），颜色跟踏面 ---------- */
+[data-scene="brutal"] .bz-riser{position:absolute;background:var(--ink)}
+[data-scene="brutal"] .bz-riser::before{content:"";position:absolute;left:0;right:0;top:0;height:16px;background:var(--tint,var(--t-yellow))}
+[data-scene="brutal"] .bz-num{position:absolute;display:block;font:900 var(--bz-nf,300px)/.8 var(--f-sans);color:var(--tint,var(--t-yellow));letter-spacing:-.02em}
+/* 台阶上的步骤 .bz-step：实色块（颜色压印），用 bottom 定位、底边落在台阶顶上 */
+[data-scene="brutal"] .bz-step{padding:26px 34px 28px}
+/* 放在墨色块上的命令：硬投影换成黄色 */
+[data-scene="brutal"] .copy.bz-lit{--bz-sc:var(--t-yellow)}
+
+/* ---------- 海报色块 .bz-slab：实色、不描边，一道粗黑框错开 --bz-o 压在上面（套印没对准）；里面只放大字、大数字 ---------- */
+[data-scene="brutal"] .bz-slab{position:absolute;background:var(--tint,var(--t-yellow));color:var(--ink);font-weight:900;white-space:nowrap;rotate:var(--r)}
+[data-scene="brutal"] .bz-slab::after{content:"";position:absolute;inset:0;border:10px solid var(--ink);translate:var(--bz-o) var(--bz-o);pointer-events:none}
+
+/* ---------- 色带 .bz-band：横贯整页的墨色带，奶黄大字，项目之间一个黄色小方块，底下一道粉色硬投影 ---------- */
+[data-scene="brutal"] .bz-band{position:absolute;display:flex;justify-content:center;align-items:center;gap:44px;padding:18px 0 20px;background:var(--ink);color:var(--bg);
+  font:900 50px/1.1 var(--f-hand);white-space:nowrap;box-shadow:0 12px 0 var(--t-pink);rotate:var(--r)}
+[data-scene="brutal"] .bz-band>i{flex:none;width:22px;height:22px;background:var(--t-yellow);rotate:45deg}
+
+/* ---------- 警示牌 .bz-sign：警示条 .bz-haz、粉色面板 .bz-bad（叉号图章 .bz-x）、粗箭头 .bz-down、对的做法 .bz-fix（对勾图章 .bz-ok） ---------- */
+[data-scene="brutal"].slide .bz-sign{--bz-s:14px;display:flex;flex-direction:column;overflow:hidden;text-align:center}
+[data-scene="brutal"] .bz-haz{flex:none;display:block;height:46px;border-bottom:6px solid var(--ink);background:repeating-linear-gradient(-45deg,var(--ink) 0 20px,var(--t-yellow) 20px 40px)}
+[data-scene="brutal"] .bz-bad{flex:none;display:flex;align-items:center;justify-content:center;gap:26px;padding:30px 20px;border-bottom:6px solid var(--ink);background:var(--t-pink)}
+[data-scene="brutal"] .bz-bad>b{font:900 84px/1.05 var(--f-hand);color:var(--ink);white-space:nowrap}
+[data-scene="brutal"] .bz-x{flex:none;position:relative;display:block;width:92px;height:92px;border-radius:14px;background:var(--ink);rotate:-5deg}
+[data-scene="brutal"] .bz-x::before,
+[data-scene="brutal"] .bz-x::after{content:"";position:absolute;left:14px;top:38px;width:64px;height:16px;border-radius:3px;background:var(--paper);rotate:45deg}
+[data-scene="brutal"] .bz-x::after{rotate:-45deg}
+[data-scene="brutal"] .bz-down{flex:none;display:block;width:76px;height:66px;margin:22px auto 4px;background:var(--ink);clip-path:polygon(30% 0,70% 0,70% 44%,100% 44%,50% 100%,0 44%,30% 44%)}
+[data-scene="brutal"] .bz-fix{flex:1;display:flex;align-items:center;justify-content:center;gap:20px;padding:10px 20px 30px;font:900 60px/1.2 var(--f-hand);color:var(--ink);white-space:nowrap}
+[data-scene="brutal"] .bz-ok{flex:none;position:relative;display:block;width:76px;height:76px;border:5px solid var(--ink);border-radius:12px;background:var(--t-blue);box-shadow:5px 5px 0 var(--ink);rotate:4deg}
+[data-scene="brutal"] .bz-ok::before{content:"";position:absolute;left:21px;top:6px;width:18px;height:38px;border:solid var(--ink);border-width:0 9px 9px 0;rotate:45deg}
+/* 第 0 拍就在的虚线槽位：牌子砸进槽里 */
+[data-scene="brutal"] .bz-slot{position:absolute;display:block;border:5px dashed var(--idle);border-radius:18px}
+
+/* ---------- 问号气泡 .bz-ask：带尾巴的实色气泡（左下一个尖），里面一个超大的问号；纯装饰 ---------- */
+[data-scene="brutal"] .bz-ask{position:absolute;display:grid;place-items:center;width:300px;height:250px;border:6px solid var(--ink);border-radius:30px;background:var(--tint,var(--t-blue));
+  box-shadow:14px 14px 0 var(--ink);color:var(--ink);font:900 210px/1 var(--f-hand);rotate:var(--r)}
+[data-scene="brutal"] .bz-ask::after{content:"";position:absolute;left:52px;bottom:-31px;width:52px;height:52px;border:solid var(--ink);border-width:0 6px 6px 0;background:inherit;rotate:45deg}
+
+/* ---------- 大按钮 .bz-btn 和大光标 .bz-cursor ---------- */
+[data-scene="brutal"].slide .bz-btn{--bz-s:16px;display:inline-flex;align-items:center;gap:30px;padding:34px 52px 36px;border-radius:24px;font:900 66px/1.15 var(--f-hand);white-space:nowrap}
+[data-scene="brutal"] .bz-btn>i{flex:none;display:block;width:86px;height:58px;background:var(--ink);clip-path:polygon(0 36%,58% 36%,58% 0,100% 50%,58% 100%,58% 64%,0 64%)}
+[data-scene="brutal"] .bz-cursor{position:absolute;display:block;width:120px;pointer-events:none;filter:drop-shadow(7px 7px 0 #15120F)}
+[data-scene="brutal"] .bz-cursor svg{display:block;width:100%;height:auto;overflow:visible}
+[data-scene="brutal"] .bz-cursor path{fill:var(--ink);stroke:var(--paper);stroke-width:7;stroke-linejoin:round}
