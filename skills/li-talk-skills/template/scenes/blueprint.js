@@ -508,7 +508,7 @@
   function fillTitleBlock(tb, p) {
     if (tb.classList.contains('bp-on')) return;
     const name = cut(p && p.def ? (p.def.topic || p.def.title) : '', 9) || '—';
-    const who = cut(tb.dataset.speaker, 5) || '—';
+    const who = cut(tb.dataset.speaker, 8) || '—';   // 讲者名字要看全：占位的「〈你的名字〉」6 个字也放得下
     const total = p && p.total ? p.total : 0;
     tb.classList.add('bp-on');
     tb.setAttribute('data-small', '');
