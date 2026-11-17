@@ -54,12 +54,12 @@ const chapter = ids => ids.map((id, i) =>
   `notes: [{ beat: 0, say: '甲' }, { beat: 1, say: '乙' }] });`).join('\n') + '\n';
 
 // 搭好骨架、确认到风格为止的课件
-async function builtDeck({ scriptPages = 5, confirm = [] } = {}) {
+async function builtDeck({ scriptPages = 5, confirm = [], scenes = ['paper'] } = {}) {
   const dir = join(tmp(), '我的分享');
   mkdirSync(dir);
   writeFileSync(join(dir, '讲稿.md'), script(scriptPages));
   for (const s of ['outline', 'script']) confirmStep(dir, s);
-  confirmStep(dir, 'style', { scenes: ['paper'] });
+  confirmStep(dir, 'style', { scenes });
   await createDeck(dir, { title: '怎么泡好一杯茶' }, offline());
   for (const s of confirm) confirmStep(dir, s);
   return dir;
@@ -622,6 +622,19 @@ test('先做 3 页：刚搭好只有封面，写到 3 页再自检', async () =>
   assert.match(t, /现在 1 页/);
   assert.ok(t.includes(fwd(SKILL_DIR) + '/references/templates.md'), t);
   assert.ok(t.includes(cmd('check', q(dir), '--browser')), t);
+  checkShape(t);
+});
+
+test('先做 3 页：选的风格有自己的样板页时，先照它写，再看规矩和通用样板', async () => {
+  const dir = await builtDeck({ scenes: ['ink'] });
+  const t = guideText(dir);
+  assert.match(t, /⑥ 先做 3 页/);
+  const own = fwd(SKILL_DIR) + '/template/samples/ink.js';
+  assert.ok(t.includes(own), t);
+  assert.match(t, /风格自己的样板页/);
+  assert.match(t, /可读性底线/);
+  assert.ok(t.indexOf(own) < t.indexOf(fwd(SKILL_DIR) + '/references/authoring.md'), '先读风格样板，再读规矩');
+  assert.ok(t.includes(fwd(SKILL_DIR) + '/references/templates.md'), t);
   checkShape(t);
 });
 

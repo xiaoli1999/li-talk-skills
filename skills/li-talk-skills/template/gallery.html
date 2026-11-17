@@ -4,12 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>li-talk-skills 样册</title>
-<!-- 样册：全部风格、全部形象、4 种样板页（封面、清单、步骤、结尾）。
+<!-- 样册：全部风格、全部形象，以及两套样板页：
+     - 每种风格自己的样板页 samples/<键名>.js、.css：同一个虚构主题，按这种风格自己的版式和每拍动作做，用了风格的专用组件。
+       地址带 ?scene=<键名>、这种风格有自己的样板时，样册只放它自己的样板页（见下面引入章节前后的两段小脚本）。
+     - 通用样板页 samples/samples.js、.css（封面、清单、步骤、结尾 4 页）：只用通用组件，哪种风格都能用。
+       地址不带 ?scene=，或者这种风格还没有自己的样板时放它；它保持通用，不加只有某种风格认的东西。
      直接打开（地址不带 ?scene=、?selftest、#页/拍）先显示风格总览：每种风格一张卡片，按三家分组，点一张就用 ?scene=<键名> 从第一页看。
-     地址加 ?scene=<键名> 整份换成那个风格看；左下角的小条点一下也是这样换（一律回到第一页、播开场），点「全部风格」回到总览。
+     地址加 ?scene=<键名> 换成那个风格看；左下角的小条点一下也是这样换（一律回到第一页、播开场），点「全部风格」回到总览。
      不写 li-talk-mascot：形象跟着风格走（每种风格用自己的默认形象，见 scenes/index.json）。
-     样板页保持通用：不加只有某种风格认的东西（比如杂志复古的封面色块 .mag-cover）。
-     引入顺序照入口模板 index.html（接口约定 G）；样板页放在两对「章节」注释之间，check 读模板目录时查的就是它们 -->
+     引入顺序照入口模板 index.html（接口约定 G）；通用样板页放在两对「章节」注释之间，不开浏览器的 check 读模板目录时查的是它们；
+     各风格自己的样板页由各自的预览课件 test/fixtures/decks/native-<键名>/ 检查 -->
 <script>/* 自检用：记下页面里的报错和加载失败 */window.__deckErrors=[];addEventListener('error',function(e){var t=e.target;__deckErrors.push(t&&t!==window&&(t.src||t.href)?'加载失败：'+(t.src||t.href):String(e.message))},true);(function(c){var o=c.error;c.error=function(){__deckErrors.push([].slice.call(arguments).join(' '));return o.apply(c,arguments)}})(console);</script>
 <link rel="stylesheet" href="vendor/fonts/wenkai-lite.css">
 <link rel="stylesheet" href="engine/engine.css">
@@ -147,9 +151,29 @@
 <script src="mascots/xiaoqi.js"></script>
 <script src="mascots/quanquan.js"></script>
 <script src="mascots/daodao.js"></script>
-<!-- 章节（开始）：样板页（samples/samples.js），页面顺序 = 引入顺序 -->
+<script>
+/* 每种风格自己的样板页：地址带 ?scene=<键名>、NATIVE 里有这种风格时，只放它自己的样板页（id 以 t-<键名>- 开头），
+   下面通用样板页的 Deck.add 在这里拦下；引入它自己的样板文件在章节注释后面那段。
+   新做好一种风格的样板，就把键名加进 NATIVE（test/gallery.test.mjs 会对照 samples/ 里的文件） */
+(function () {
+  var NATIVE = ['ink', 'magazine', 'pixel'];
+  var k = new URLSearchParams(location.search).get('scene');
+  if (!k || NATIVE.indexOf(k) < 0 || !window.Deck) return;
+  window.LI_TALK_SAMPLES = k;
+  var add = Deck.add, own = 't-' + k + '-';
+  Deck.add = function (def) { if (def && typeof def.id === 'string' && def.id.indexOf(own) === 0) return add.apply(this, arguments); };
+})();
+</script>
+<!-- 章节（开始）：通用样板页（samples/samples.js），页面顺序 = 引入顺序 -->
 <script src="samples/samples.js"></script>
 <!-- 章节（结束） -->
+<script>
+/* 这种风格自己的样板页：样册是双击打开的本地文件，不能 fetch，用 document.write 同步引入（引擎启动前就加好页）。
+   标签名拆开写：不开浏览器的 check 会把这里当成引入行去找文件 */
+if (window.LI_TALK_SAMPLES) (function (b) {
+  document.write('<' + 'link rel="stylesheet" href="' + b + '.css"><' + 'script src="' + b + '.js"></' + 'script>');
+})('samples/' + window.LI_TALK_SAMPLES);
+</script>
 <script>
 /* 风格总览用的风格说明：从 scenes/index.json 抄来的 key、label、family、mascot、look、fit。
    样册是双击打开的本地文件，不能 fetch，所以写在这里；改了 index.json 要同步改这里（test/gallery.test.mjs 会对照） */

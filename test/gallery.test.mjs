@@ -150,7 +150,30 @@ test('样册：风格总览只在不带 ?scene=、?selftest、#页/拍 时显示
   assert.match(html, /全部风格/);
 });
 
-// 真实浏览器：样板页在 15 种风格下（1920×1080）都没有错误、没有提醒。完整的 5 个尺寸用
+// 每种风格自己的样板页：gallery.html 里 NATIVE 列出的风格，样册带 ?scene= 时只放 samples/<键名>.js 里的页
+const NATIVE = (() => {
+  const m = /var NATIVE = (\[[^\]]*\]);/.exec(readFileSync(join(TPL, 'gallery.html'), 'utf8'));
+  return m ? JSON.parse(m[1].replace(/'/g, '"')) : [];
+})();
+const nativeIds = key => (readFileSync(join(TPL, 'samples', key + '.js'), 'utf8').match(/^\s*id: '([^']+)'/gm) || []).map(s => /'([^']+)'/.exec(s)[1]);
+
+test('样册里列出的风格样板：文件都在、页面 id 带风格前缀、有预览课件，不开浏览器的检查没有错误和提醒', async () => {
+  assert.ok(NATIVE.length >= 3, '没读到 gallery.html 里的 NATIVE');
+  for (const key of NATIVE) {
+    assert.ok(SCENES.includes(key), key + ' 不是样册里的风格');
+    for (const ext of ['.js', '.css']) assert.ok(existsSync(join(TPL, 'samples', key + ext)), `缺 samples/${key}${ext}`);
+    const ids = nativeIds(key);
+    assert.ok(ids.length >= 5 && ids.length <= 6, `${key} 的样板页要 5–6 页，现在 ${ids.length} 页`);
+    assert.ok(ids.every(id => id.startsWith('t-' + key + '-')), `${key}：页面 id 要以 t-${key}- 开头：${ids}`);
+    const dir = join(ROOT, 'test', 'fixtures', 'decks', 'native-' + key);
+    assert.ok(existsSync(join(dir, 'index.html')), `缺预览课件 test/fixtures/decks/native-${key}/`);
+    const st = await checkStatic(dir);
+    assert.equal(st.errors, 0, st.text);
+    assert.equal(st.warnings, 0, st.text);
+  }
+});
+
+// 真实浏览器：样板页在 15 种风格下（1920×1080）都没有错误、没有提醒；有自己样板的风格放的是它自己的页。完整的 5 个尺寸用
 // node skills/li-talk-skills/scripts/li-talk.mjs check skills/li-talk-skills/template --browser --scene <键名>
 const browser = findBrowser();
 test('真实浏览器：样板页在 15 种风格下自检清零', { skip: !browser && '本机没找到 Edge / Chrome' }, async () => {
@@ -158,7 +181,8 @@ test('真实浏览器：样板页在 15 种风格下自检清零', { skip: !brow
   try {
     for (const scene of SCENES) {
       const r = await b.selftest(TPL, { w: 1920, h: 1080, scene, entry: 'gallery.html' });
-      assert.equal(r.pages, 4, scene);
+      if (NATIVE.includes(scene)) assert.deepEqual(r.list.map(p => p.id), nativeIds(scene), scene + ' 要放它自己的样板页');
+      else assert.equal(r.pages, 4, scene);
       assert.ok(r.list.every(p => p.scene === scene), `${scene}：${JSON.stringify(r.list)}`);
       assert.deepEqual(r.issues, [], `${scene}：${JSON.stringify(r.issues, null, 2)}`);
     }

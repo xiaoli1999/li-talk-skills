@@ -895,6 +895,21 @@ function checkSteps(s, lead) {
   ];
 }
 
+// 所选风格自己的样板页（template/samples/<键名>.js）：同一个虚构主题按这种风格的版式和组件写好的几页。
+// 有就让 AI 先照它写；没有（自定义的风格）就只看通用样板页 templates.md
+function nativeSamples(s) {
+  return s.meta.scenes.map(k => join(TPL_DIR, 'samples', k + '.js')).filter(f => existsSync(f)).map(posix);
+}
+function readSteps(s, first) {
+  const own = nativeSamples(s);
+  if (!own.length) return [[first ? '先读两份说明：样板页（照着改，少从零写）、写页面的规矩：' : '写法和前 3 页一样：先找最接近的样板照着改，规矩见：', refDoc('templates.md'), refDoc('authoring.md')]];
+  return [
+    [(first ? '先读你选的风格自己的样板页，照它的版式、组件和每拍的动作写（不要退回通用的卡片排法）。' : '写法和前 3 页一样：照你选的风格自己的样板页写。') +
+      '每页开头的注释写了这页是什么版式、为什么适合这种风格、抄过去改哪里：', ...own],
+    ['写页面的规矩（第 0 节第 9 条是可读性底线：形态照风格来，但讲过的要点要留在页上、句子横排、一条阅读顺序），样板里没有的版式再看通用样板页：', refDoc('authoring.md'), refDoc('templates.md')],
+  ];
+}
+
 // ⑥ 先做 3 页
 function stageTrial(s) {
   const info = sceneInfo();
@@ -908,7 +923,7 @@ function stageTrial(s) {
   if (n < 3) {
     const hasCover = s.pages.some(p => p.def.id === 'p01');
     const steps = [
-      ['先读两份说明：样板页（照着改，少从零写）、写页面的规矩：', refDoc('templates.md'), refDoc('authoring.md')],
+      ...readSteps(s, true),
       '写到 3 页：封面，加讲稿里最典型的两页——从讲稿里挑一页步骤或图示（有先后、有箭头的）和一页清单（并列的几件事），' +
         `优先挑内容最多、最能代表这份课件的那两页。${hasCover ? '封面 p01 已经有了（new 生成的），照讲稿第 1 页改文字。' : ''}`,
       `写在 ${posix(s.dir)}/slides/ch1.js 里（每页一个 Deck.add，页面顺序就是写的顺序）。id 用讲稿的页号：讲稿第 5 页就写 id: 'p05'，以后写全稿再按顺序把中间的页补上。` +
@@ -956,7 +971,7 @@ function stageFull(s) {
       : '';
     const steps = [
       `照讲稿把剩下的页写完，还差 ${want - n} 页${list}。id 用讲稿的页号（第 3 页就是 'p03'），按讲稿的顺序放在对应位置（页面顺序 = 章节的引入顺序 + 文件里 Deck.add 的顺序）。`,
-      ['写法和前 3 页一样：先找最接近的样板照着改，规矩见：', refDoc('templates.md'), refDoc('authoring.md')],
+      ...readSteps(s, false),
       `按讲稿的章节分文件：第二章建 ${posix(s.dir)}/slides/ch2.js 和 ch2.css，再在 index.html 里两对「章节」注释之间各加一行引入（照 ch1 那两行写）。`,
       ['每写完一章，跑一次不开浏览器的检查（几秒）：', cli('check', quote(s.dir))],
       ['全部写完跑后台自检，错误改到 0 个，提醒逐条判断：要么改，要么跟用户说明为什么不改：', cli('check', quote(s.dir), '--browser')],
