@@ -1,0 +1,240 @@
+/* =====================================================================
+   风格 · 新粗野主义 brutal 的样子（行为在 brutal.js）
+   奶黄底加一层很淡的墨点阵；字、描边、硬阴影都是同一种墨黑；强调色只有黄、粉、蓝三种，每张卡片只带一种。
+   所有选择器的第一段都带 [data-scene="brutal"]
+   - 硬阴影：组件自己的 box-shadow，无模糊，偏移 = --bz-s（基础偏移，各组件自己写）
+       − --bz-h（悬停 -4px 离远、按下 +7px 压进，CSS 过渡）− --bz-k（落地、复制时压进阴影，brutal.js 推动）
+       + --bz-a（在空中时离得更远，brutal.js 推动）；
+     组件本身跟着 --bz-h、--bz-k 平移（用 CSS 的 translate，不碰 gsap 管的 transform），--bz-j 是被旁边落地的组件震一下。
+     几个量注册成长度、不继承：才能平滑过渡，也不会从外层组件漏进里面的组件
+   - 卡片颜色 t-yellow / t-pink / t-blue 是卡片顶上那条色带（t-mint 归到蓝、t-peach 归到粉、t-white 是白色带）；
+     重点词贴纸、步骤序号也取所在卡片的颜色 --tint
+   - --recede（讲过的拍变到多淡）由 brutal.js 的 recede 写入（.56），这里不写
+   ===================================================================== */
+
+@property --bz-s{syntax:"<length>";inherits:false;initial-value:0px}
+@property --bz-h{syntax:"<length>";inherits:false;initial-value:0px}
+@property --bz-k{syntax:"<length>";inherits:false;initial-value:0px}
+@property --bz-a{syntax:"<length>";inherits:false;initial-value:0px}
+@property --bz-j{syntax:"<length>";inherits:false;initial-value:0px}
+
+/* 变量：奶黄底、墨黑字，强调色黄、粉、蓝 */
+[data-scene="brutal"]{
+  --f-hand:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --f-sans:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  /* 等宽字后面补上黑体：命令里的中文不至于落到宋体 */
+  --f-mono:"JetBrains Mono","Cascadia Mono",Consolas,"SF Mono",Menlo,"PingFang SC","Microsoft YaHei","Noto Sans SC",monospace;
+  --rough-r:12px;
+  --bg:#FFF3D6; --ink:#15120F; --ink-2:#3A342E; --ink-3:#7A7064; --line:#15120F;
+  --mark:#FF7DB4; --key-ink:#15120F; --hl:#FFCC2F; --accent:#FFCC2F;
+  --card-ink:#15120F; --card-ink-2:#3A342E; --paper:#FFFDF7;
+  /* 只有三种强调色：薄荷归到蓝、桃色归到粉 */
+  --t-yellow:#FFCC2F; --t-mint:#6E9CFF; --t-pink:#FF7DB4; --t-blue:#6E9CFF; --t-white:#FFFDF7; --t-peach:#FF7DB4;
+  --term-bg:#24201B; --term-ink:#FFF3D6;
+  --human:#FF7DB4; --ai:#6E9CFF; --idle:#8A8073;
+  --sign-color:rgba(21,18,15,.62);
+  /* 背景：奶黄底 + 墨点阵（舞台单位 40px 一格，以舞台中心对齐；阅读模式里每页也用它） */
+  --scene-bg:radial-gradient(circle,rgba(21,18,15,.085) 0 2px,rgba(21,18,15,0) 2.6px) 50% 50%/40px 40px,#FFF3D6;
+}
+
+/* 正文：黑体，比普通的粗一档 */
+[data-scene="brutal"].slide{font-weight:500}
+
+/* =====================================================================
+   主题行、标题、解释句
+   ===================================================================== */
+/* 主题行：章节名是一块墨黑的小方块，奶黄字（样页的 crumb） */
+[data-scene="brutal"] .s-topic{gap:14px}
+[data-scene="brutal"] .s-topic .tc{padding:7px 14px 8px;border-radius:8px;background:var(--ink);color:var(--bg);font:800 26px/1.1 var(--f-hand)}
+[data-scene="brutal"] .s-topic .ts{font:900 32px/1 var(--f-hand);color:var(--ink)}
+[data-scene="brutal"] .s-topic .tt{font-weight:800;color:var(--ink)}
+
+[data-scene="brutal"] .s-title{font-weight:900;letter-spacing:.01em;color:var(--ink)}
+/* 逐字砸下时临时拆出来的单字（brutal.js 的 smash，播完拆回原样） */
+[data-scene="brutal"] .bz-ch{display:inline-block}
+
+/* 一句话解释：左边一块带描边和硬阴影的小黄条 */
+[data-scene="brutal"] .explain{padding-left:36px;color:var(--ink-2)}
+[data-scene="brutal"] .explain::before{left:0;top:.16em;bottom:.12em;width:16px;border:3px solid var(--ink);border-radius:4px;background:var(--t-yellow);box-shadow:3px 3px 0 var(--ink)}
+[data-scene="brutal"] .explain b{font-weight:900;color:var(--ink)}
+[data-scene="brutal"] .muted{color:var(--ink-2)}
+[data-scene="brutal"] .faint{color:var(--ink-3)}
+/* 强调色的字：粉色字在奶黄底上太浅，压深一点 */
+[data-scene="brutal"] .c-mark:not(svg *){color:#D63F86}
+
+/* 大字金句：最粗的黑体 */
+[data-scene="brutal"] .quote{font-weight:900;letter-spacing:.01em;color:var(--ink)}
+
+/* =====================================================================
+   重点词：一块带描边和硬阴影的贴纸色块，「啪」地拍在字底下（样页的 .kw）
+   引擎在那一拍把 --k 从 0 推到 1：贴纸从镜头前（放大、多歪一点、透明）拍到位；退一拍时 --k 收回，贴纸飞回镜头前
+   颜色取所在卡片的 --tint，没有就是黄；单数个歪 -2°、双数个歪 1.6°
+   ===================================================================== */
+[data-scene="brutal"] .key{--bz-kr:-2deg;padding:0 .22em;margin:0 .14em;line-height:1.3;font-weight:900;color:var(--key-ink)}
+[data-scene="brutal"] .key:nth-of-type(2n){--bz-kr:1.6deg}
+[data-scene="brutal"] .key::before{content:"";position:absolute;left:0;right:0;top:.04em;bottom:-.02em;z-index:-1;pointer-events:none;
+  border:3px solid var(--ink);border-radius:8px;background:var(--tint,var(--t-yellow));box-shadow:4px 4px 0 var(--ink);
+  opacity:clamp(0,calc(var(--k) * 6),1);
+  transform:rotate(calc(var(--bz-kr) - 14deg * (1 - var(--k)))) scale(calc(1 + .9 * (1 - var(--k)) * (1 - var(--k))))}
+
+/* =====================================================================
+   有硬阴影的组件：卡片、小格、步骤的每一项、终端、截图位、命令
+   粗黑描边 + 无模糊硬阴影；悬停离阴影远一点、朝鼠标那侧歪一点（--bz-rz 由 brutal.js 写），按下压进阴影
+   ===================================================================== */
+[data-scene="brutal"] :is(.card,.cell,.steps>li,.term,.shot,.copy){--bz-s:8px;
+  border:4px solid var(--ink);
+  box-shadow:calc(var(--bz-s) - var(--bz-h) - var(--bz-k) + var(--bz-a)) calc(var(--bz-s) - var(--bz-h) - var(--bz-k) + var(--bz-a)) 0 var(--ink);
+  translate:calc(var(--bz-h) + var(--bz-k)) calc(var(--bz-h) + var(--bz-k) + var(--bz-j));
+  transition:translate .14s ease-out,rotate .14s ease-out,--bz-h .14s ease-out,opacity .35s ease,background-color .15s}
+@media (hover:hover){
+  [data-scene="brutal"] :is(.card,.cell,.steps>li,.term,.shot):hover{--bz-h:-4px;rotate:calc(var(--r) + var(--bz-rz,0deg))}
+  [data-scene="brutal"] .copy:hover{--bz-h:-3px;background-color:#EDF2FF}
+}
+[data-scene="brutal"] :is(.card,.cell,.steps>li,.term,.shot,.copy):active{--bz-h:7px;transition-duration:.05s}
+
+/* ---------- 卡片：白面板，顶上一条色带（有 .lab 时色带里写小标签） ---------- */
+[data-scene="brutal"] .card{padding:52px 40px 36px;border-radius:14px;background:var(--paper);color:var(--card-ink)}
+[data-scene="brutal"] .card::before,
+[data-scene="brutal"] .card.tape::before,
+[data-scene="brutal"] .card.pin::before{content:"";position:absolute;left:0;right:0;top:0;width:auto;height:24px;margin:0;rotate:none;z-index:0;
+  border-radius:10px 10px 0 0;border-bottom:4px solid var(--ink);background:var(--tint,var(--t-yellow));box-shadow:none}
+[data-scene="brutal"] .card:has(> .lab){padding-top:34px}
+[data-scene="brutal"] .card:has(> .lab)::before{display:none}
+[data-scene="brutal"] .card h3{font-weight:900;letter-spacing:.01em;color:var(--ink)}
+[data-scene="brutal"] .card :is(p,li){color:var(--card-ink-2)}
+[data-scene="brutal"] .card li::before{left:.1em;top:.56em;width:.34em;height:.34em;border-radius:2px;rotate:none;opacity:1;background:var(--ink)}
+/* 卡片上沿的小标签：变成卡片顶上的色带（样页的 card-strip） */
+[data-scene="brutal"] .lab{position:relative;top:auto;left:auto;z-index:1;display:block;margin:-34px -40px 24px;padding:10px 40px 12px;
+  border-radius:10px 10px 0 0;border-bottom:4px solid var(--ink);background:var(--tint,var(--t-yellow));color:var(--ink);
+  font:800 var(--fs-min)/1.2 var(--f-hand);letter-spacing:.06em;text-align:left}
+
+/* ---------- 带序号的步骤：每一项是一张小卡，颜色按黄、粉、蓝轮换；竖排时序号是一块带阴影的方块 ---------- */
+[data-scene="brutal"] .steps>li{padding:24px 30px 26px 24px;border-radius:14px;background:var(--paper);--tint:var(--t-yellow)}
+[data-scene="brutal"] .steps>li:nth-child(3n+2){--tint:var(--t-pink)}
+[data-scene="brutal"] .steps>li:nth-child(3n){--tint:var(--t-blue)}
+[data-scene="brutal"] .steps>li.t-yellow{--tint:var(--t-yellow)}
+[data-scene="brutal"] .steps>li:is(.t-pink,.t-peach){--tint:var(--t-pink)}
+[data-scene="brutal"] .steps>li:is(.t-blue,.t-mint){--tint:var(--t-blue)}
+[data-scene="brutal"] .steps>li.t-white{--tint:var(--t-white)}
+[data-scene="brutal"] .steps>li::before{width:62px;height:62px;border:4px solid var(--ink);border-radius:10px;background:var(--tint);box-shadow:4px 4px 0 var(--ink);
+  font:900 34px/1 var(--f-hand);color:var(--ink)}
+[data-scene="brutal"] .steps>li>b{font-weight:900;color:var(--ink)}
+[data-scene="brutal"] .steps>li>span{color:var(--ink-2)}
+/* 横排：序号换成压在上沿的一枚色块贴纸，写着「STEP 01」（样页卡片顶上的英文小标签；写在伪元素里，不算正文字号）。
+   贴纸一半在卡片外面（往上 22px），卡片本身和别的风格差不多高，下面放命令、说明也不会被顶到 */
+[data-scene="brutal"] .steps.h>li{position:relative;grid-template-columns:minmax(0,1fr);padding:38px 30px 26px}
+[data-scene="brutal"] .steps.h>li::before{content:"STEP " counter(st,decimal-leading-zero);position:absolute;left:22px;top:-22px;grid-row:auto;box-sizing:border-box;
+  display:flex;align-items:center;justify-content:flex-start;width:auto;height:42px;margin:0;padding:0 14px;
+  border:3px solid var(--ink);border-radius:8px;background:var(--tint);box-shadow:3px 3px 0 var(--ink);font:700 22px/1 var(--f-mono);letter-spacing:.12em}
+
+/* ---------- 左右对比：中间一块歪着的黄色方块贴纸 ---------- */
+[data-scene="brutal"] .vs::before{width:84px;height:84px;display:grid;place-items:center;border:4px solid var(--ink);border-radius:14px;background:var(--t-yellow);
+  box-shadow:5px 5px 0 var(--ink);font:900 48px/1 var(--f-hand);color:var(--ink);rotate:-6deg}
+
+/* ---------- 一排小格：白格子；AI 的格子整块蓝、需要人的整块粉，不用管的虚线框、没有阴影 ---------- */
+[data-scene="brutal"] .cell{--bz-s:6px;padding:22px 14px 20px;border-radius:12px;background:var(--tint,var(--paper))}
+[data-scene="brutal"] .cell>i{display:inline-block;margin-bottom:10px;padding:5px 10px 6px;border-radius:6px;background:var(--ink);color:var(--bg);font:800 24px/1 var(--f-hand)}
+[data-scene="brutal"] .cell>b{font-weight:900;color:var(--ink)}
+[data-scene="brutal"] .cell>span{color:var(--ink-2)}
+[data-scene="brutal"] .cell.ai{border-color:var(--ink);background:var(--ai)}
+[data-scene="brutal"] .cell.human{border-color:var(--ink);background:var(--human)}
+[data-scene="brutal"] .cell:is(.ai,.human)>span{color:var(--ink)}
+[data-scene="brutal"] .cell.human::after{top:-15px;right:-15px;width:30px;height:30px;border:3px solid var(--ink);background:var(--t-yellow);box-shadow:3px 3px 0 var(--ink)}
+[data-scene="brutal"] .cell.idle{--bz-s:0px;border-style:dashed;border-color:var(--idle);background:transparent;color:var(--idle)}
+[data-scene="brutal"] .cell.idle>:is(b,span){color:var(--idle)}
+[data-scene="brutal"] .cell.idle>i{background:var(--idle)}
+[data-scene="brutal"] .cell.idle>b{text-decoration-thickness:4px}
+
+/* ---------- 标签：一枚小贴纸 ---------- */
+[data-scene="brutal"] .tag{padding:5px 18px 7px;border:3px solid var(--ink);border-radius:8px;background:var(--tint,var(--t-yellow));color:var(--ink);font-weight:800;box-shadow:4px 4px 0 var(--ink)}
+
+/* 图例圆点：加一圈墨线 */
+[data-scene="brutal"] .dot{border:3px solid var(--ink)}
+
+/* ---------- 终端：墨色窗口，白色标题栏里三个方块（粉、黄、蓝） ---------- */
+[data-scene="brutal"] .term{padding:0 0 26px;border-radius:14px;background:var(--term-bg);color:var(--term-ink);font-weight:500}
+[data-scene="brutal"] .term-bar{height:56px;margin-bottom:20px;padding:0 22px;gap:10px;background:var(--paper);border-bottom:4px solid var(--ink);font:700 24px/1 var(--f-mono);color:var(--ink)}
+[data-scene="brutal"] .term-bar i{width:18px;height:18px;border:3px solid var(--ink);border-radius:4px;background:var(--t-pink)}
+[data-scene="brutal"] .term-bar i:nth-child(2){background:var(--t-yellow)}
+[data-scene="brutal"] .term-bar i:nth-child(3){background:var(--t-blue);margin-right:14px}
+[data-scene="brutal"] .term p{padding:0 32px}
+[data-scene="brutal"] .term .in::before{color:var(--t-yellow)}
+[data-scene="brutal"] .term .cc::before{color:var(--t-pink)}
+[data-scene="brutal"] .term .dim{color:#A99F91}
+[data-scene="brutal"] .term .ok{color:#9DBBFF}
+[data-scene="brutal"] .term .warn{color:var(--t-pink)}
+[data-scene="brutal"] .term .hi{color:var(--t-yellow)}
+
+/* ---------- 一行可复制的命令：一颗能按下去的大按钮（样页的 .cmd） ---------- */
+[data-scene="brutal"] .copy{--bz-s:6px;padding:18px 28px 18px 26px;border-radius:12px;background-color:var(--paper);color:var(--ink);font:700 var(--fs-min)/1.2 var(--f-mono)}
+[data-scene="brutal"] .copy .ps{color:var(--ink-3);opacity:1}
+[data-scene="brutal"] .copy .ic{background:var(--ink);opacity:.8}
+/* 复制那一下：按钮被按到底时面板闪成黄色（brutal.js 的 copied 加上 .bz-hit） */
+[data-scene="brutal"] .copy.bz-hit{background-color:var(--t-yellow);transition-duration:0s}
+[data-scene="brutal"] .copy.is-copied .ic{opacity:1;
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.4' stroke-linecap='square'%3E%3Cpath d='M4.5 12.5l5 5L20 7'/%3E%3C/svg%3E");
+          mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.4' stroke-linecap='square'%3E%3Cpath d='M4.5 12.5l5 5L20 7'/%3E%3C/svg%3E")}
+[data-scene="brutal"] .copy:focus-visible{outline:3px dashed var(--ink);outline-offset:10px}
+
+/* 「已复制」：一枚黄贴纸，描边加硬阴影，歪着贴（出场见 brutal.js 的 copied） */
+[data-scene="brutal"] .copied-tip{gap:8px;padding:7px 16px 8px 12px;border:3px solid var(--ink);border-radius:8px;background:var(--t-yellow);box-shadow:4px 4px 0 var(--ink);
+  color:var(--ink);font:900 30px/1 var(--f-hand)}
+[data-scene="brutal"] .copied-tip svg{width:30px;height:25px}
+[data-scene="brutal"] .copied-tip path{stroke:var(--ink);stroke-width:6;stroke-linecap:square;stroke-linejoin:miter}
+
+/* ---------- 截图位：白面板相框，图片外一圈墨线，不贴胶带 ---------- */
+[data-scene="brutal"] .shot{padding:12px;border-radius:14px;background:var(--paper)}
+[data-scene="brutal"] .shot::before{display:none}
+[data-scene="brutal"] .shot-img{border:3px solid var(--ink);border-radius:8px;background:var(--term-bg)}
+[data-scene="brutal"] .shot figcaption{padding:14px 6px 4px;font:700 30px/1.3 var(--f-hand);color:var(--ink-2)}
+[data-scene="brutal"] .shot-miss{font:800 30px/1.4 var(--f-hand);color:var(--ink-2);background:repeating-linear-gradient(-45deg,#FFF3D6 0 14px,#FFE9B8 14px 28px)}
+[data-scene="brutal"] .shot-miss small{color:var(--ink-3)}
+[data-scene="brutal"] .shot-zoom{right:26px;top:26px;padding:7px 12px 8px;border-radius:8px;background:var(--ink);color:var(--bg);font:800 22px/1 var(--f-hand)}
+
+/* ---------- 线稿与圈注：线几乎是直的粗墨线（brutal.js 的 rough）；圈注是粗粉线，再加一道无模糊的墨色硬投影 ---------- */
+[data-scene="brutal"] svg.marks g{filter:drop-shadow(3px 3px 0 #15120F)}
+
+/* ---------- 形象：一道无模糊的墨色硬投影（朝左时引擎把画像镜像，投影方向这里反过来，光向不变） ---------- */
+[data-scene="brutal"] .mascot{--mascot-outline:#FFFDF7;--mascot-shadow:drop-shadow(5px 5px 0 #15120F)}
+[data-scene="brutal"] .mascot[data-face="left"]:not(.self-flip){--mascot-shadow:drop-shadow(-5px 5px 0 #15120F)}
+
+/* ---------- 形象说的话：白贴纸，描边加硬阴影 ---------- */
+[data-scene="brutal"] .mascot-say{padding:8px 20px 10px;border:3px solid var(--ink);border-radius:10px;background:var(--paper);color:var(--ink);font-family:var(--f-hand);font-weight:900;box-shadow:4px 4px 0 var(--ink)}
+[data-scene="brutal"] .mascot-say::after{bottom:-11px;width:16px;height:16px;background:var(--paper);border-right:3px solid var(--ink);border-bottom:3px solid var(--ink)}
+
+/* 冲击线（brutal.js：落地、复制在 .bz-fx 层，点击在涟漪层），播完即删 */
+[data-scene="brutal"] .bz-fx{position:absolute;inset:0;z-index:25;pointer-events:none}
+[data-scene="brutal"] .bz-spark{position:absolute;display:block;pointer-events:none;color:var(--ink)}
+[data-scene="brutal"] .bz-spark svg{display:block;width:100%;height:100%;overflow:visible}
+
+/* 署名：粗一点 */
+[data-scene="brutal"] .li-sign{font-weight:700}
+
+/* =====================================================================
+   常驻信息：章节、页码、节拍指示（右上一枚带硬阴影的小按钮，每拍一个方格依次填上黄、粉、蓝）、计时
+   ===================================================================== */
+#stage[data-scene="brutal"] .chap{top:30px}
+#stage[data-scene="brutal"] .chap span{padding:7px 14px 8px;border-radius:8px;background:var(--ink);color:var(--bg);font:800 26px/1.1 var(--f-hand)}
+#stage[data-scene="brutal"] .meta{top:20px;gap:22px;font:800 26px/1 var(--f-hand);color:var(--ink-2)}
+#stage[data-scene="brutal"] .pageno{color:var(--ink-2)}
+#stage[data-scene="brutal"] .pageno b{color:var(--ink);font-weight:900}
+#stage[data-scene="brutal"] .meter{--bz-s:5px;gap:16px;padding:10px 20px 10px 14px;border:3px solid var(--ink);border-radius:12px;background:var(--paper);
+  box-shadow:calc(var(--bz-s) - var(--bz-k)) calc(var(--bz-s) - var(--bz-k)) 0 var(--ink)}
+#stage[data-scene="brutal"] .meter .dots{gap:8px}
+#stage[data-scene="brutal"] .dots i{display:block;width:24px;height:24px;border:3px solid var(--ink);border-radius:5px;background:transparent;transition:background-color .15s}
+#stage[data-scene="brutal"] .dots i.on{background:var(--t-yellow)}
+#stage[data-scene="brutal"] .dots i.on:nth-child(3n+2){background:var(--t-pink)}
+#stage[data-scene="brutal"] .dots i.on:nth-child(3n){background:var(--t-blue)}
+/* 新点亮的格子「盖章」：从大、歪砸到位（只播一次） */
+#stage[data-scene="brutal"] .dots i.now{animation:bz-stamp .32s cubic-bezier(.34,1.8,.64,1)}
+@keyframes bz-stamp{from{transform:scale(1.7) rotate(-18deg)}to{transform:none}}
+#stage[data-scene="brutal"] .meter .ml{display:none}
+#stage[data-scene="brutal"] .meter .ms{display:inline-flex;align-items:baseline;gap:2px;font:800 26px/1 var(--f-hand);color:var(--ink)}
+/* 换拍时引擎会重写数字，新数字从上面掉进来（只播一次） */
+#stage[data-scene="brutal"] .meter .ms b{display:inline-block;min-width:.6em;text-align:right;font:900 34px/1 var(--f-hand);color:var(--ink);font-variant-numeric:tabular-nums;
+  animation:bz-drop .26s cubic-bezier(.34,1.6,.64,1)}
+@keyframes bz-drop{from{opacity:0;transform:translateY(-70%)}to{opacity:1;transform:none}}
+#stage[data-scene="brutal"] .timer{font:700 24px/1 var(--f-mono);color:var(--ink-3)}
+
+/* 阅读模式：每页一圈墨线框，页与页分得开 */
+[data-scene="brutal"].slide:is(.reading *){box-shadow:inset 0 0 0 6px var(--ink)}
