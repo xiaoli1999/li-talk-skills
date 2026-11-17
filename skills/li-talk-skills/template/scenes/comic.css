@@ -238,12 +238,12 @@
 [data-scene="comic"] .li-sign{font-weight:700}
 
 /* =====================================================================
-   常驻信息：章节、页码、节拍指示（页脚右下一排分镜小缩略格，像漫画原稿角上的页码）、计时
+   常驻信息：章节、页码、节拍指示（右上角一排分镜小缩略格，位置和别的风格一样，用引擎的 .meta 位置）、计时
    缩略格：没讲到的是蓝铅笔虚线草稿框，讲过的上了墨，当前这一格描粗、铺上网点；
    换拍时新的当前格「啪」地放大落定，拍号从上面掉下来（都只播一次）
    ===================================================================== */
 #stage[data-scene="comic"] .chap span{padding:4px 16px 7px;background:var(--ink);color:var(--cm-white);font:700 26px/1.2 var(--f-hand)}
-#stage[data-scene="comic"] .meta{top:auto;bottom:40px;right:72px;gap:22px;font:400 24px/1 var(--f-hand);color:var(--ink-3)}
+#stage[data-scene="comic"] .meta{gap:22px;font:400 24px/1 var(--f-hand);color:var(--ink-3)}
 #stage[data-scene="comic"] .pageno{color:var(--ink-3)}
 #stage[data-scene="comic"] .pageno b{color:var(--ink);font-weight:700}
 #stage[data-scene="comic"] .meter{gap:14px}

@@ -21,13 +21,13 @@
         格框先描出 → 内容弹入 → 大字砸下 → 气泡最后冒出
      6. 「横切入」dash（新增，大标题和命令用它）：带着一点斜从左边冲进来；命令冲进来时身后拖几道速度线
      7. 复制（copied）：命令被按进网点阴影里 → 朱红锯齿形的「已复制！」爆炸气泡从小炸开（样页的 burst）
-     8. 节拍指示：页脚右下一排分镜小缩略格（样页的缩略分镜）：没讲到的是蓝铅笔虚线草稿框，讲过的上了墨，
-        当前这一格描粗、铺网点；换拍时当前格「啪」地落定、拍号掉下来（comic.css）。页码也在页脚，像原稿角上的页码
+     8. 节拍指示：一排分镜小缩略格（样页页脚的缩略分镜，位置照引擎放在右上角，和别的风格一致，按章混用时不跳位置）：
+        没讲到的是蓝铅笔虚线草稿框，讲过的上了墨，当前这一格描粗、铺网点；换拍时当前格「啪」地落定、拍号掉下来（comic.css）
      9. 悬停：格子整个抬起一点、网点阴影留在原地变宽（comic.css），右上角冒出三道钴蓝效果线（和叨叨开心时头顶的线一家；
         mount 时挂 pointerover）；按下时压进阴影
      10. 退一拍（onBack）：网点阴影先沉回去，四条墨线倒着收掉，同时整格淡出
      11. 点击处一圈很淡的冲击星（ripple）；翻页（pageTurn）：新页像漫画里切一刀那样斜着横切进来，刀口是一道墨线
-     12. 开场（intro）：裁切线和角标浮出 → 主题行的格号标签弹出、主题滑入 → 页脚缩略格一格格描出 → 大标题横切入 →
+     12. 开场（intro）：裁切线和角标浮出 → 主题行的格号标签弹出、主题滑入 → 右上角的页码落下、缩略格一格格弹出 → 大标题横切入 →
          第 0 拍按「格框 → 内容 → 大字 → 气泡」的顺序出场 → 重点词贴网点；之后引擎让形象落下
    - 没搬的：速度线、集中线做的背景（太满，只在大字落地、命令冲进来时闪一下）；不规则斜格（任意页面套不进去，
      格子一律是矩形，要破格就用 .cm-panel 让里面的东西伸出去）；形象的走位、反应、空闲动作（引擎的形象部分统一做）
@@ -37,9 +37,8 @@
    - 集中线、速度线放在每页一层 .cm-fx 里（第一次用时加到页面最后，在内容上面、不接收指针），播完即删
    - 禁区（zones，舞台坐标 1920×1080）：
      · 左上角主题行（engine.css 的 .s-topic：x 120 起，宽到 1260，y 18–78）
-     · 右下角页脚的页码和缩略格（.meta 在这里改到 right 72、bottom 40；按每页最多 4 拍、两位数页码量，留出余量后是 x 1340–1856、y 992–1050）
+     · 右上角页码和缩略格（engine.css 的 .meta：右边距 64、top 40；按每页最多 4 拍、两位数页码量，留出余量后是 x 1340–1856、y 30–90）
      · 四边的裁切线以外（离舞台边 24px 以内）
-     · 右上角原来放页码的地方空出来了，不是禁区
    - 样子在 comic.css 里
    ===================================================================== */
 (function () {
@@ -387,7 +386,7 @@
       tl.fromTo(tip, { autoAlpha: 0, scale: .2, rotation: -16 }, { autoAlpha: 1, scale: 1, rotation: -3, duration: .38, ease: 'back.out(3.2)' }, .05);
     },
 
-    // 开场（约 1.2 秒）：裁切线浮出 → 主题行格号弹出、主题滑入 → 页脚缩略格一格格描出 → 大标题横切入 →
+    // 开场（约 1.2 秒）：裁切线浮出 → 主题行格号弹出、主题滑入 → 右上角页码落下、缩略格一格格弹出 → 大标题横切入 →
     // 第 0 拍按「格框 → 内容 → 大字 → 气泡」出场 → 重点词贴网点；之后引擎让形象落下
     intro(ctx) {
       const tl = ctx && ctx.tl, page = ctx && ctx.page;
@@ -402,8 +401,8 @@
         if (rest.length) tl.fromTo(rest, { autoAlpha: 0, x: -22 }, { autoAlpha: 1, x: 0, duration: .26, stagger: .05, ease: 'power2.out', immediateRender: true, onComplete: () => rest.forEach(clean) }, .14);
       }
       const stage = root.closest('#stage'), meta = stage && stage.querySelector(':scope > .chrome .meta');
-      if (meta) tl.fromTo(meta, { autoAlpha: 0 }, { autoAlpha: 1, duration: .25, ease: 'power1.out', immediateRender: true, onComplete: () => clean(meta) }, .1);
-      // 左上角的章节标签（没有主题行的页，比如封面）和页脚的缩略格：引擎在开场排好以后才写进外框，所以到时候再找、单独播
+      if (meta) tl.fromTo(meta, { autoAlpha: 0, y: -14 }, { autoAlpha: 1, y: 0, duration: .3, ease: 'back.out(2)', immediateRender: true, onComplete: () => clean(meta) }, .1);
+      // 左上角的章节标签（没有主题行的页，比如封面）和右上角的缩略格：引擎在开场排好以后才写进外框，所以到时候再找、单独播
       if (stage) {
         const pop = (els, o) => { if (els.length && !still()) G.fromTo(els, o.from, Object.assign({ immediateRender: true, onComplete: () => els.forEach(clean) }, o.to)); };
         if (!topic) tl.call(() => pop([...stage.querySelectorAll(':scope > .chrome .chap span')],
@@ -451,7 +450,7 @@
 
     zones: [
       { x: 120, y: 18, w: 1260, h: 60, name: '主题行' },
-      { x: 1340, y: 992, w: 516, h: 58, name: '页脚的页码和缩略格' },
+      { x: 1340, y: 30, w: 516, h: 60, name: '页码和缩略格' },
       { x: 0, y: 0, w: 1920, h: 24, name: '裁切线外（上）' },
       { x: 0, y: 1056, w: 1920, h: 24, name: '裁切线外（下）' },
       { x: 0, y: 24, w: 24, h: 1032, name: '裁切线外（左）' },
