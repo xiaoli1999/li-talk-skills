@@ -1,0 +1,709 @@
+// guide 命令：看课件目录的实际状态，告诉 AI 现在在哪一步、下一步做什么、该问用户什么
+//   guide [课件目录]        不写目录就看当前目录
+//
+// 进度全部从文件推断（讲稿.md、.li-talk.json、engine/、slides/、.li-talk/selftest.json），
+// 所以中途换对话、换模型也能接着做。阶段按顺序找第一个没完成的：
+//   ① 起点     目录不存在，或者既没有 讲稿.md 也没有 .li-talk.json
+//   ② 提纲     confirmed.outline 不为 true
+//   ③ 讲稿     confirmed.script 不为 true
+//   ④ 风格     confirmed.style 不为 true
+//   ⑤ 搭骨架   没有 engine/ 或没有 index.html
+//   ⑥ 先做 3 页 confirmed.trial 不为 true（页数不够 3 → 写；自检没跑、过期或有错 → 跑 check --browser；都好了 → 给用户看）
+//   ⑦ 写全稿   章节运行出错、页数少于讲稿里「## 第 N 页」的个数，或者自检没跑、过期、有错
+//   ⑧ 过稿     confirmed.review 不为 true
+//   ⑨ 完成
+//
+// 输出固定四块：【现在在哪一步】【下一步做什么】【问用户】【可以这样对 AI 说】。
+// 较弱的模型会照着一步步做，所以：命令写全（skill 和课件都用绝对路径、正斜杠，各种终端都认），
+// 问题带编号选项、推荐项放第一个并标（推荐…），每个问题最多 4 个选项（Claude Code 的提问卡片最多放 4 个）。
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { basename, join, resolve } from 'node:path';
+import { UserError } from './cli.mjs';
+import { SKILL_DIR, TPL_DIR, VERSION } from './paths.mjs';
+import { metaPath, readMeta, STEPS, STEP_NAMES } from './meta.mjs';
+import { collectPages, readDeck } from './deck.mjs';
+import { mascotList, sceneIndex } from './new.mjs';
+import { cacheDir, loadManifest } from './fonts.mjs';
+
+/* ------------------------------------------------------------------
+   公用的小工具（materials、styles 也用）
+   ------------------------------------------------------------------ */
+
+/** 路径换成正斜杠：Windows 的 PowerShell、cmd、Git Bash 和 macOS、Linux 的终端都认 */
+export function posix(p) { return String(p).replace(/\\/g, '/'); }
+/** 加双引号的路径，放进命令里 */
+export function quote(p) { return `"${posix(p)}"`; }
+/** 一条完整的命令：node "<skill 目录>/scripts/li-talk.mjs" 参数… */
+export function cli(...parts) { return [`node ${quote(join(SKILL_DIR, 'scripts', 'li-talk.mjs'))}`, ...parts].join(' '); }
+/** 字数：中文按字、英文和数字按词（和常见的字数统计一样，标点不算） */
+export function textCount(s) {
+  const han = (String(s).match(/[㐀-䶿一-鿿豈-﫿]/g) || []).length;
+  const words = (String(s).match(/[A-Za-z0-9]+(?:['’.-][A-Za-z0-9]+)*/g) || []).length;
+  return han + words;
+}
+
+const refDoc = name => posix(join(SKILL_DIR, 'references', name));
+
+export const STAGES = ['起点', '提纲', '讲稿', '风格', '搭骨架', '先做 3 页', '写全稿', '过稿', '完成'];
+const MARK = ['①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨'];
+const SCRIPT = '讲稿.md';
+const NOTE = '截图说明.md';
+// 搭骨架前课件目录里允许已有的东西，和 new 的规矩一致（. 开头的一律放过）
+const ALLOWED = new Set([SCRIPT, '素材', '.li-talk.json', '.li-talk']);
+const OS_JUNK = new Set(['thumbs.db', 'desktop.ini']);
+const IMG_RE = /\.(png|jpe?g|gif|webp|svg|heic|heif|bmp|tiff?)$/i;
+
+/* ------------------------------------------------------------------
+   读状态
+   ------------------------------------------------------------------ */
+
+/**
+ * 读讲稿：{ title（第一个一级标题）, pages: [{ no, title }], sayChars（讲词字数）, hasOutline }；没有讲稿.md 返回 null
+ * 页数靠「## 第 N 页 页标题」这样的二级标题来数。
+ */
+export function readScript(dir) {
+  const file = join(dir, SCRIPT);
+  if (!existsSync(file)) return null;
+  let text;
+  try { text = readFileSync(file, 'utf8').replace(/^﻿/, ''); } catch (e) { return null; }
+  const h1 = /^#[ \t]+(.+?)[ \t#]*$/m.exec(text);
+  const pages = [];
+  const at = [];
+  const re = /^##[ \t]*第[ \t]*(\d+)[ \t]*页[ \t]*(.*)$/gm;
+  let m;
+  while ((m = re.exec(text))) { pages.push({ no: Number(m[1]), title: m[2].trim() }); at.push(m.index); }
+  let sayChars = 0;
+  at.forEach((start, i) => {
+    const body = text.slice(start, i + 1 < at.length ? at[i + 1] : text.length);
+    const k = body.indexOf('**讲词**');
+    if (k >= 0) sayChars += textCount(body.slice(k + 6).replace(/【第\s*\d+\s*拍】/g, ''));
+  });
+  const hasOutline = /^#{1,3}[ \t]*(给组织方|提纲|大纲)/m.test(text) || /^[-*]?[ \t]*大纲[:：]/m.test(text);
+  return { title: h1 ? h1[1].trim() : '', pages, sayChars, hasOutline };
+}
+
+// 目录里 new 不允许的东西（搭骨架前只能有 讲稿.md、素材/）
+function foreignFiles(dir) {
+  try {
+    return readdirSync(dir).filter(n => {
+      const k = n.normalize('NFC');
+      return !k.startsWith('.') && !ALLOWED.has(k) && !OS_JUNK.has(k.toLowerCase());
+    });
+  } catch (e) { return []; }
+}
+
+// 素材/ 里有几个文件、几张图，有没有截图说明表
+function materialsOf(dir) {
+  const root = join(dir, '素材');
+  const r = { files: 0, images: 0, note: existsSync(join(root, NOTE)) };
+  const visit = abs => {
+    let names;
+    try { names = readdirSync(abs); } catch (e) { return; }
+    for (const n of names) {
+      if (n.startsWith('.') || OS_JUNK.has(n.toLowerCase()) || (abs === root && n === NOTE)) continue;
+      const p = join(abs, n);
+      let st;
+      try { st = statSync(p); } catch (e) { continue; }
+      if (st.isDirectory()) visit(p);
+      else { r.files++; if (IMG_RE.test(n)) r.images++; }
+    }
+  };
+  visit(root);
+  return r;
+}
+
+// 下一级目录里已有的课件（有 .li-talk.json 的）
+function decksUnder(dir) {
+  try {
+    return readdirSync(dir, { withFileTypes: true })
+      .filter(e => e.isDirectory() && !e.name.startsWith('.') && existsSync(join(dir, e.name, '.li-talk.json')))
+      .map(e => join(dir, e.name)).sort().slice(0, 5);
+  } catch (e) { return []; }
+}
+
+const pad2 = n => String(n).padStart(2, '0');
+function fmtTime(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '时间不明';
+  return `${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+
+/**
+ * 上次自检的情况：{ kind: 'none' | 'stale' | 'errors' | 'ok', text }
+ * 过期：slides 下最新的修改时间比自检时记的新，或者 index.html 在自检之后改过（比如加了一章）。
+ */
+function selftestState(dir, deck) {
+  let rec = null;
+  try { rec = JSON.parse(readFileSync(join(dir, '.li-talk', 'selftest.json'), 'utf8')); } catch (e) { rec = null; }
+  if (!rec || typeof rec.slidesMtime !== 'number' || typeof rec.errors !== 'number') {
+    return { kind: 'none', text: '还没跑过后台自检' };
+  }
+  const when = fmtTime(rec.at);
+  const atMs = Date.parse(rec.at);
+  let indexMs = 0;
+  try { indexMs = statSync(join(dir, 'index.html')).mtimeMs; } catch (e) { indexMs = 0; }
+  // 自检记录的时间是跑完时记的，给 1 秒余量，免得同一时刻写的文件被误判
+  if (deck.slidesMtime > rec.slidesMtime || (atMs && indexMs - atMs > 1000)) {
+    return { kind: 'stale', text: `上次自检（${when}）之后页面又改过了` };
+  }
+  const warn = Number(rec.warnings) || 0;
+  if (rec.errors > 0) return { kind: 'errors', text: `上次自检（${when}）还有 ${rec.errors} 个错误${warn ? `、${warn} 个提醒` : ''}` };
+  return { kind: 'ok', text: `上次自检（${when}）0 个错误${warn ? `，${warn} 个提醒` : ''}` };
+}
+
+/**
+ * 看课件目录做到哪一步。返回状态对象，stage 是 1–9（见文件开头）。
+ * 目录是个文件、进度文件写坏了时抛 UserError。
+ */
+export function inspect(target) {
+  const dir = resolve(String(target || '.'));
+  const s = { dir, given: !!target, stage: 1 };
+  s.exists = existsSync(dir);
+  if (s.exists && !statSync(dir).isDirectory()) {
+    throw new UserError(`${dir} 是一个文件，不是目录。guide 后面写课件目录（放 讲稿.md 的那个目录）。`);
+  }
+  s.hasMeta = s.exists && existsSync(metaPath(dir));
+  s.meta = readMeta(dir);
+  s.script = s.exists ? readScript(dir) : null;
+  s.materials = s.exists ? materialsOf(dir) : { files: 0, images: 0, note: false };
+  s.engine = s.exists && existsSync(join(dir, 'engine'));
+  s.index = s.exists && existsSync(join(dir, 'index.html'));
+  if (!s.exists || (!s.script && !s.hasMeta)) return s;
+
+  const c = s.meta.confirmed;
+  if (!c.outline) return { ...s, stage: 2 };
+  if (!c.script) return { ...s, stage: 3 };
+  if (!c.style) return { ...s, stage: 4 };
+  if (!s.engine || !s.index) return { ...s, stage: 5 };
+
+  // 搭好骨架以后：数页面、看自检
+  try {
+    const deck = readDeck(dir);
+    const r = collectPages(deck);
+    s.pages = r.pages;
+    s.failures = r.failures;
+    s.st = selftestState(dir, deck);
+  } catch (e) {
+    s.pages = [];
+    s.failures = [{ file: 'index.html', message: (e && (e.userMessage || e.message)) || String(e) }];
+    s.st = { kind: 'none', text: '还没跑过后台自检' };
+  }
+  if (!c.trial) return { ...s, stage: 6 };
+  const want = s.script ? s.script.pages.length : 0;
+  if (s.failures.length || s.pages.length < want || s.st.kind !== 'ok') return { ...s, stage: 7 };
+  if (!c.review) return { ...s, stage: 8 };
+  return { ...s, stage: 9 };
+}
+
+/* ------------------------------------------------------------------
+   排版
+   ------------------------------------------------------------------ */
+
+const ASK_HOW = '有选项卡片（比如 Claude Code 的提问卡片）就用卡片，一次问一个，推荐项放第一个；' +
+  '没有卡片就把问题和编号选项原样发给用户，请用户回一个数字或直接说。';
+
+/**
+ * body: { where: [行], steps: [文字 | [文字, 接着的行…]], asks: [{ q, opts: [], when }], noAsk, say }
+ * 接着的行（命令、格式样例）单独成行、缩进对齐，方便原样复制。
+ */
+function render(stage, body) {
+  const out = [`【现在在哪一步】${MARK[stage - 1]} ${STAGES[stage - 1]}（共 9 步）`];
+  for (const l of body.where) out.push('  ' + l);
+  out.push('【下一步做什么】');
+  body.steps.forEach((st, i) => {
+    const [first, ...rest] = Array.isArray(st) ? st : [st];
+    out.push(`  ${i + 1}. ${first}`);
+    for (const l of rest) out.push('     ' + l);
+  });
+  const asks = body.asks || [];
+  out.push('【问用户】' + (asks.length ? ASK_HOW : body.noAsk || '这一步不用问用户，直接做。'));
+  asks.forEach((a, i) => {
+    if (a.when) out.push(`  （${a.when}）`);
+    out.push(`  问题 ${i + 1}：${a.q}`);
+    a.opts.forEach((o, j) => out.push(`    ${j + 1}. ${o}`));
+  });
+  out.push(`【可以这样对 AI 说】「${body.say}」`);
+  return out.join('\n');
+}
+
+// 已确认 / 还没确认的环节
+function progress(meta) {
+  const yes = STEPS.filter(k => meta.confirmed[k]).map(k => STEP_NAMES[k]);
+  const no = STEPS.filter(k => !meta.confirmed[k]).map(k => STEP_NAMES[k]);
+  return `已确认：${yes.join('、') || '还没有'}；还没确认：${no.join('、') || '没有了'}`;
+}
+
+const guideStep = dir => ['做完这一步，再运行 guide 看下一步：', cli('guide', quote(dir))];
+
+// 讲词字数换算成时长（每分钟 220–250 字）
+function minutes(chars) {
+  const hi = chars / 220;
+  if (hi < 1) return '不到 1 分钟';
+  return `${Math.max(1, Math.round(chars / 250))}～${Math.max(1, Math.round(hi))} 分钟`;
+}
+
+// 机器读到的风格、形象说明（读不到时给空的，不让 guide 因为模板问题整个报错）
+function sceneInfo() {
+  let index = [];
+  let mascots = [];
+  try { index = sceneIndex(TPL_DIR); } catch (e) { index = []; }
+  try { mascots = mascotList(TPL_DIR); } catch (e) { mascots = []; }
+  const ready = index.filter(s => existsSync(join(TPL_DIR, 'scenes', s.key + '.js')));
+  const label = k => { const x = index.find(s => s.key === k); return x ? `${x.label}（${k}）` : k; };
+  const mascot = k => { const x = mascots.find(m => m.key === k); return x ? `${x.label}（${k}）` : k; };
+  return { index, ready, label, mascot };
+}
+
+// 本机的字体缓存是否齐全（只看文件在不在，不校验，很快）
+function fontState() {
+  try {
+    const m = loadManifest();
+    const dir = cacheDir(m);
+    const missing = m.files.filter(f => !existsSync(join(dir, f.path.split('/').pop()))).length;
+    const mb = (m.files.reduce((a, f) => a + f.size, 0) / 1024 / 1024).toFixed(1);
+    return missing
+      ? { ok: false, mb, text: `本机还没有霞鹜文楷完整字体（约 ${mb} MB），搭骨架时会自动下载，下载不了先用自带的常用字小字库` }
+      : { ok: true, mb, text: '霞鹜文楷完整字体已在本机' };
+  } catch (e) {
+    return { ok: false, mb: '?', text: '读不到字体清单，搭骨架时先用自带的常用字小字库' };
+  }
+}
+
+function envLine() {
+  const parts = [`Node ${process.versions.node} 可以用`];
+  parts.push(VERSION ? `li-talk-skills ${VERSION}` : 'skill 没装完整（缺 version.txt），请先重新安装');
+  parts.push(fontState().text);
+  return '环境：' + parts.join('；');
+}
+
+/* ------------------------------------------------------------------
+   各阶段
+   ------------------------------------------------------------------ */
+
+// ① 起点
+function stageStart(s) {
+  const foreign = s.exists ? foreignFiles(s.dir) : [];
+  const decks = s.exists ? decksUnder(s.dir) : [];
+  // 目录里已经有别的文件：课件要单独一个目录，在里面另起一个没被占用的名字
+  let dir = s.dir;
+  if (foreign.length) {
+    const names = ['我的分享', '我的分享-2', '我的分享-3', '我的分享-4', '我的分享-5'];
+    dir = join(s.dir, names.find(n => !existsSync(join(s.dir, n))) || '我的分享-' + Date.now());
+  }
+  const mat = dir === s.dir ? s.materials : { files: 0, images: 0, note: false };
+  const shown = list => list.slice(0, 5).join('、') + (list.length > 5 ? ` 等 ${list.length} 项` : '');
+
+  const where = [`课件目录：${posix(dir)}${existsSync(dir) ? '（已经有了，里面还没有 讲稿.md）' : '（还没建）'}`];
+  if (foreign.length) where.push(`${posix(s.dir)} 里已经有别的东西（${shown(foreign.map(n => n.normalize('NFC')))}），课件要单独放一个目录，所以用上面这个子目录（名字可以换成主题）`);
+  if (decks.length) where.push(`这里已经有课件：${decks.map(d => basename(d)).join('、')}`);
+  if (mat.files) where.push(`素材/ 里已经有 ${mat.files} 个文件`);
+  where.push(envLine());
+
+  const steps = [];
+  if (decks.length) {
+    steps.push(['用户要接着做以前的课件，就对那个目录运行 guide，不用从头来：', ...decks.map(d => cli('guide', quote(d)))]);
+  }
+  const askDir = !s.given || foreign.length > 0;
+  steps.push(`先问用户手上有什么（问题 1）${askDir ? '，再确认课件放在哪（问题 2）' : ''}。`);
+  steps.push([`建好课件目录和里面的 素材 子目录，再写讲稿文件（第一行写「# 〈主题〉」，主题用用户的话；还不清楚就先写「# 我的分享」）：`,
+    `${posix(dir)}/讲稿.md`]);
+  steps.push(['按用户的回答做：',
+    '选「只有一个主题」：讲稿.md 先只写标题，下一步一问一答问场合、起提纲。',
+    `选「有想法、笔记或截图」：问清材料在哪，复制进 ${posix(dir)}/素材/（原文件别动、别删），然后运行：`,
+    `  ${cli('materials', quote(join(dir, '素材')))}`,
+    '  读完它列出的文字材料。在线文档、链接也算素材；AI 读不了的格式（Word、PDF 等），请用户导出成文字。',
+    `选「已经有讲稿了」：把讲稿内容放进 ${posix(dir)}/讲稿.md（原文件别动）；Word、PDF 读不了的，请用户导出成文字或直接贴过来。`]);
+  steps.push(['做完上面这些，运行 guide 进入 ② 提纲：', cli('guide', quote(dir))]);
+
+  const have = ['只有一个主题，不知道怎么做', '有想法、笔记或截图', '已经有讲稿了'];
+  const opts = mat.files
+    ? [`${have[1]}（推荐：素材/ 里已经有文件了）`, have[0], have[2]]
+    : [`${have[0]}（推荐：拿不准就选这个，一问一答带着做）`, have[1], have[2]];
+  const asks = [{ q: '你手上现在有什么？', opts }];
+  if (askDir) asks.push({ q: '课件放在哪个目录？', opts: [`${posix(dir)}（推荐）`, '换个位置或名字：直接告诉我'] });
+
+  return render(1, {
+    where, steps, asks,
+    say: mat.files ? '材料都放进素材文件夹了，你先看看，缺什么再问我' : '我想做一个 20 分钟的分享，讲……；笔记和截图在桌面的「分享素材」文件夹里',
+  });
+}
+
+const OUTLINE_TPL = [
+  '# 〈课件标题〉',
+  '## 给组织方',
+  '- 一句话简介：……',
+  '- 适合谁听：……',
+  '- 时间与时长：……（讲多久，在什么场合、什么屏幕上讲）',
+  '- 听完能带走什么：……',
+  '- 大纲：',
+  '  1. 〈第一部分〉（约 N 页）：这部分讲什么',
+  '  2. 〈第二部分〉（约 N 页）：……',
+  '- 合计：约 N 页',
+];
+
+// ② 提纲
+function stageOutline(s) {
+  const sc = s.script;
+  const n = sc ? sc.pages.length : 0;
+  const where = [`课件目录：${posix(s.dir)}`, progress(s.meta)];
+  if (!sc) where.push('还没有 讲稿.md');
+  else if (n) where.push(`讲稿.md 里已经有 ${n} 页讲稿`);
+  else where.push(sc.hasOutline ? '讲稿.md 里好像已经写了提纲，还没给用户确认' : '讲稿.md 里还没有提纲');
+  if (s.materials.files) where.push(`素材/ 里有 ${s.materials.files} 个文件`);
+
+  const steps = [];
+  if (s.materials.files) {
+    steps.push([`先读素材：运行 materials 列清单${s.materials.images && !s.materials.note ? '、生成截图说明表' : '（跑过就不用再跑）'}，读完文字材料。素材里已经有答案的问题不再问，只问缺的：`,
+      cli('materials', quote(join(s.dir, '素材')))]);
+  }
+  if (n) steps.push(`讲稿.md 里已经有 ${n} 页讲稿：从中整理出提纲（分几部分、每部分几页、每部分讲什么），场合信息讲稿里没有的再问用户（问题 1～4，只问缺的）。原来的讲稿别删，提纲写在它前面。`);
+  else if (sc && sc.hasOutline) steps.push('讲稿.md 里好像已经写了提纲：对照问题 1～4 看还缺什么，缺的再问，补齐后给用户确认。');
+  else steps.push('一问一答问场合（问题 1～4，一次问一个）。');
+  steps.push([`把提纲写在 ${posix(s.dir)}/${SCRIPT} 的最前面（第一行是「# 课件标题」，已经写了就别重复），照这个格式：`, ...OUTLINE_TPL]);
+  steps.push('页数按时长估：大约每分钟 1 页（20 分钟约 20 页），第一页封面、最后一页结尾。不写没有依据的数字和案例。');
+  steps.push(['提纲写好后给用户看（问题 5），必须等用户明确说可以；要改就改完再问。用户没确认，不要往下写讲稿。用户确认后运行：',
+    cli('confirm', quote(s.dir), 'outline')]);
+  steps.push(guideStep(s.dir));
+
+  const asks = [
+    { when: '先问这 4 个，素材或讲稿里已经有答案的跳过', q: '这次讲给谁听？', opts: [
+      '技术和非技术的同事都有（推荐：拿不准就选这个）', '技术同事（开发、测试、运维等）', '非技术同事（产品、运营、业务等）', '外部的人（客户、社区、学生等）'] },
+    { q: '讲多久？', opts: ['15～20 分钟（推荐：最常见的长度）', '10 分钟以内', '30 分钟左右', '45 分钟以上'] },
+    { q: '在什么场合、什么屏幕上讲？', opts: ['会议室投影或大屏（推荐）', '线上会议共享屏幕', '大会场，台下人很多', '笔记本或平板，当面给几个人看'] },
+    { q: '最想让听众听完带走什么？', opts: [
+      '直接用一句话告诉我（推荐：越具体越好，比如「学会用某个工具自动生成周报」）', '学会一件具体的事，回去能照着做', '知道一个新东西是什么、值不值得用', '认同一个想法或做法'] },
+    { when: '提纲写好以后问', q: '提纲这样可以吗？', opts: ['可以，就按这个写讲稿（推荐）', '要改：说改哪里'] },
+  ];
+  return render(2, { where, steps, asks, say: '讲给组里的后端同事，20 分钟，会议室投影，想让大家学会用新工具排查线上问题' });
+}
+
+const SCRIPT_TPL = [
+  '## 第 N 页 页标题',
+  '章节标记：……　风格：……（④ 选完风格再填）',
+  '主题：章节短名 › 本页主题',
+  '**屏幕**（投出来的字，原样使用）',
+  '- 主题行：章节短名 › 本页主题',
+  '- 标题：……',
+  '**节拍**',
+  '- 第 0 拍：翻到这页就在的内容｜重点词：……',
+  '- 第 1 拍：出现什么｜重点词：……',
+  '**画面**（怎么画、怎么动、形象做什么；要用截图的写明用哪张）',
+  '**讲词**（照着讲，不投出来；按拍分段，重点词加粗）',
+  '【第 0 拍】……',
+  '【第 1 拍】……',
+];
+
+// ③ 讲稿
+function stageScript(s) {
+  const sc = s.script || { pages: [], sayChars: 0 };
+  const n = sc.pages.length;
+  const where = [`课件目录：${posix(s.dir)}`, progress(s.meta)];
+  if (n) {
+    const a = sc.pages[0];
+    const b = sc.pages[n - 1];
+    where.push(`讲稿.md 现在有 ${n} 页（第 ${a.no} 页「${a.title}」到第 ${b.no} 页「${b.title}」），讲词约 ${sc.sayChars} 字，按每分钟 220～250 字算约 ${minutes(sc.sayChars)}`);
+  } else {
+    where.push('讲稿.md 现在有 0 页，还没开始写');
+  }
+
+  const steps = [];
+  steps.push(['先读讲稿格式说明（格式、规则、两页完整示例都在里面）：', refDoc('script-format.md')]);
+  steps.push([(n ? `接着往下写：照提纲一页一页写进讲稿.md，接在第 ${n} 页后面。` : '照提纲一页一页写进 讲稿.md，接在提纲后面。') +
+    '每页的标题行必须写成「## 第 N 页 页标题」（guide 靠它数页数），下面四段：', ...SCRIPT_TPL]);
+  steps.push('最容易错的几条：每页 2～4 拍（封面、结尾 1～2 拍），讲词按拍分段、和节拍一一对上；每拍一个重点词，讲词里加粗；' +
+    '新概念第一次出现的那页，第 0 拍先用一句大白话解释；不写没有依据的数字、百分比、案例和用户反馈；讲词用第一人称、短句，每拍三四句以内。');
+  steps.push('用总字数控制时长：按每分钟 220～250 字估，比如 20 分钟约 4400～5000 字。超了就删，不够再补。');
+  if (s.materials.images) {
+    steps.push(s.materials.note
+      ? '「画面」一段要用截图时，写 素材/截图说明.md 里的文件名。'
+      : ['「画面」一段要用截图时写文件名。素材里有图但还没有截图说明表，先运行：', cli('materials', quote(join(s.dir, '素材')))]);
+  }
+  steps.push('页数多（超过 15 页）时，可以先写完第一部分给用户看一眼语气对不对，再接着写。');
+  steps.push(['写完给用户看（问题 1），必须等用户明确说可以；要改就改完再问。用户确认后运行：', cli('confirm', quote(s.dir), 'script')]);
+  steps.push(guideStep(s.dir));
+
+  const asks = [{ when: '讲稿写完以后问', q: '讲稿写好了，你看一遍，可以吗？', opts: [
+    '可以，就按这个做课件（推荐）', '要改：说哪页改什么', '太长或太短：说要加还是要减'] }];
+  return render(3, { where, steps, asks, say: '第 3 页的讲词太书面了，改口语一点；第 5、6 页合成一页' });
+}
+
+// 按讲稿里的词粗估推荐哪种风格（只是起点，AI 读过讲稿可以换）。
+// 不放「开场」「收尾」这类几乎每份提纲都有的章节名，免得什么讲稿都推同一种
+const HINTS = {
+  dark: /代码|(?<!非)技术|架构|接口|API|部署|性能|开发者|命令行|终端|工程师/g,
+  board: /安装|命令|教程|教学|培训|步骤|配置|课程/g,
+  watercolor: /新手|新人|新同事|入职|入门|非技术|小白|上手|温和/g,
+  desk: /经历|故事|协作|团队|复盘|踩坑/g,
+  journal: /原理|角色|示意图|机制/g,
+  paper: /总览|愿景|规划|展望|全景|路线图/g,
+};
+const DEFAULT_ORDER = ['paper', 'watercolor', 'board', 'dark', 'desk', 'journal'];
+
+function rankScenes(ready, text) {
+  const rank = ready.map((s, i) => {
+    const hits = {};
+    const re = HINTS[s.key];
+    if (re) for (const m of text.match(re) || []) hits[m] = (hits[m] || 0) + 1;
+    const score = Object.values(hits).reduce((a, b) => a + b, 0);
+    const order = DEFAULT_ORDER.includes(s.key) ? DEFAULT_ORDER.indexOf(s.key) : DEFAULT_ORDER.length + i;
+    const words = Object.entries(hits).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([w]) => `「${w}」`);
+    return { s, score, order, words };
+  });
+  return rank.sort((a, b) => b.score - a.score || a.order - b.order);
+}
+
+// 已经搭好骨架以后换风格的做法（④ 和 ⑥ 用）
+function switchLines(s, info) {
+  const old = s.meta.scenes[0] || '〈现在的风格〉';
+  const tplScenes = posix(join(TPL_DIR, 'scenes'));
+  // 命令单独占一行，后面不跟说明，免得复制时把说明也带进去
+  return [
+    `a. 记下新风格（把〈新风格〉换成键名，比如 board${s.meta.mascot ? `；形象先不换，还用${info.mascot(s.meta.mascot)}` : ''}）：`,
+    `   ${cli('confirm', quote(s.dir), 'style', '--scenes', '〈新风格〉', ...(s.meta.mascot ? ['--mascot', s.meta.mascot] : []))}`,
+    `b. 把 ${tplScenes}/〈新风格〉.js 和 〈新风格〉.css 复制到 ${posix(s.dir)}/scenes/`,
+    `c. 把 ${posix(s.dir)}/index.html 里 scenes/${old}.css、scenes/${old}.js 这两行的文件名换成新风格（只有换风格时才动章节区以外的这两行）`,
+    `d. 把 ${posix(s.dir)}/slides/ 里每页的 scene: '${old}' 换成新风格`,
+    'e. 重跑后台自检，错误改到 0 个：',
+    `   ${cli('check', quote(s.dir), '--browser')}`,
+  ];
+}
+
+// ④ 风格
+function stageStyle(s) {
+  const info = sceneInfo();
+  const where = [`课件目录：${posix(s.dir)}`, progress(s.meta)];
+  if (s.script) where.push(`讲稿.md 有 ${s.script.pages.length} 页`);
+  if (s.engine) where.push(`已经搭好骨架，用的风格：${s.meta.scenes.map(info.label).join('、') || '没记下'}；形象：${s.meta.mascot ? info.mascot(s.meta.mascot) : '没记下'}`);
+
+  // 推荐：已经记下的风格优先（搭好的骨架就是它），否则按讲稿里的词粗估
+  let text = '';
+  try { text = readFileSync(join(s.dir, SCRIPT), 'utf8'); } catch (e) { text = ''; }
+  const ranked = rankScenes(info.ready, text);
+  const fit = sc => (sc.fit ? `：适合${sc.fit}` : '');
+  let first;
+  let recKeys;
+  const recorded = s.meta.scenes.filter(k => info.ready.some(x => x.key === k));
+  if (recorded.length) {
+    const scs = recorded.map(k => info.ready.find(x => x.key === k));
+    recKeys = recorded.join(',');
+    first = `${scs.map(x => x.label).join(' + ')}（${recKeys}）${scs.length === 1 ? fit(scs[0]) : ''}（推荐：${s.engine ? '已经搭好的骨架用的就是它，不用改文件' : '之前记下的就是它'}）`;
+  } else if (ranked.length) {
+    const top = ranked[0];
+    recKeys = top.s.key;
+    const why = top.score ? `讲稿里有${top.words.join('')}这些词` : '讲稿里看不出明显偏向，先推通用的';
+    first = `${top.s.label}（${top.s.key}）${fit(top.s)}（推荐：${why}）`;
+  } else {
+    recKeys = '〈风格键名〉';
+    first = '照 styles 列出的挑一个（推荐）';
+  }
+  const others = ranked.filter(r => !recKeys.split(',').includes(r.s.key)).slice(0, 2).map(r => `${r.s.label}（${r.s.key}）${fit(r.s)}`);
+  const opts = [first, ...others, '先看样册再定'];
+
+  // 各风格默认的形象：「方格纸、黑板用朵朵（duoduo），科技暗黑用微光（weiguang）」
+  const byMascot = {};
+  for (const sc of info.ready) (byMascot[sc.mascot] = byMascot[sc.mascot] || []).push(sc.label);
+  const mascotNote = Object.entries(byMascot).map(([k, labels]) => `${labels.join('、')}用${info.mascot(k)}`).join('，');
+
+  const steps = [];
+  steps.push(['运行 styles，看所有风格的样子、适合讲什么、不适合什么、属于哪一家：', cli('styles')]);
+  steps.push('对照讲稿每部分讲什么，从「适合」里挑一个主推，跟用户说一句理由。下面问题 1 的推荐是按讲稿里的词粗估的；' +
+    '你读过讲稿，觉得别的更合适，就把它换到第一个、标上（推荐）。');
+  steps.push('内容跨度大时，可以按章用不同风格：最多 3 种，只在同一家里混（手绘家和现代家不混用）；一份课件只用一个形象。');
+  steps.push(['打开样册给用户看（样册还没做好时它会说明，那就把 styles 的文字说明讲给用户听）：', cli('styles', '--open')]);
+  steps.push(['用户选定后（必须等用户明确选了）运行，--scenes 后面写风格的键名，多种用逗号隔开：',
+    cli('confirm', quote(s.dir), 'style', '--scenes', recKeys),
+    `形象默认跟第一种风格走（${mascotNote}）；用户想换形象再加 --mascot 键名。`]);
+  if (s.engine) steps.push(['已经搭好骨架了：用户选的和现在的一样，就照上面运行 confirm；选了别的风格，照这样换：', ...switchLines(s, info)]);
+  steps.push(guideStep(s.dir));
+
+  const label = recorded.length ? recorded.map(k => info.ready.find(x => x.key === k).label).join('和') : ranked.length ? ranked[0].s.label : '推荐的那个';
+  return render(4, {
+    where, steps,
+    asks: [{ q: '这份课件用哪种风格？', opts }],
+    say: `先打开样册让我看看，没问题就用${label}`,
+  });
+}
+
+// ⑤ 搭骨架
+function stageBuild(s) {
+  const info = sceneInfo();
+  const font = fontState();
+  const where = [`课件目录：${posix(s.dir)}`, progress(s.meta)];
+  if (s.meta.scenes.length) where.push(`风格：${s.meta.scenes.map(info.label).join('、')}；形象：${s.meta.mascot ? info.mascot(s.meta.mascot) : '跟着风格走'}`);
+  where.push(`字体：${font.text}`);
+
+  // 标题：讲稿的一级标题 > 记下的标题 > 目录名；去掉会被终端特殊处理的字符
+  const title = String((s.script && s.script.title) || s.meta.title || basename(s.dir)).replace(/["`$\\]/g, '').trim() || '我的分享';
+  const scenes = s.meta.scenes.join(',') || '〈风格键名〉';
+  const newCmd = cli('new', quote(s.dir), '--title', `"${title}"`, '--scenes', scenes);
+
+  const steps = [];
+  if (s.engine && !s.index) {
+    steps.push(['目录里有 engine/ 却没有 index.html，骨架不完整；new 不会在已有 engine/ 的目录里重搭。' +
+      '把 讲稿.md、素材/、.li-talk.json 挪到一个新目录，再对新目录运行（下面命令里的目录换成新目录）：', newCmd]);
+    steps.push(['搭好后对新目录运行 guide 看下一步。', cli('guide', '"〈新目录〉"')]);
+    return render(5, { where, steps, noAsk: '这一步不用问用户；挪目录前告诉用户一声。', say: '骨架坏了就换个目录重新搭吧' });
+  }
+  const foreign = foreignFiles(s.dir);
+  if (foreign.length) {
+    steps.push(`目录里有别的文件（${foreign.slice(0, 5).join('、')}${foreign.length > 5 ? ` 等 ${foreign.length} 项` : ''}），new 会拒绝：搭骨架前课件目录里只能有 讲稿.md 和 素材/。先把这些文件挪进 素材/（或挪走）。`);
+  }
+  if (!s.meta.scenes.length) steps.push('风格确认过，但没记下是哪种：问用户选的是哪种（或者翻对话记录），把下面命令里的〈风格键名〉换成它，比如 paper。');
+  steps.push(['运行搭骨架（标题取讲稿.md 的第一行标题，用户想换就改 --title 后面的字）：', newCmd]);
+  if (!font.ok) steps.push(`第一次搭骨架会下载霞鹜文楷完整字体（约 ${font.mb} MB），要等一会儿；下载不了会先用自带的常用字小字库，不影响往下做。`);
+  steps.push(['new 会复制引擎、选中的风格和形象，生成 index.html 和一页封面（slides/ch1.js）。搭好后运行 guide 看下一步：', cli('guide', quote(s.dir))]);
+  return render(5, { where, steps, noAsk: '这一步不用问用户，直接运行上面的命令。', say: `课件标题就叫《${title}》，开始搭吧` });
+}
+
+// 页面一览：「p01「封面」、p02「…」」
+function pageList(pages) {
+  const shown = pages.slice(0, 8).map(p => `${p.def.id || '（没写 id）'}「${p.def.title == null ? '' : String(p.def.title)}」`);
+  return shown.join('、') + (pages.length > 8 ? ` 等 ${pages.length} 页` : '');
+}
+
+// 章节运行出错时（⑥、⑦ 共用）
+function failSteps(s) {
+  return [
+    ['有章节运行出错，出错之后的页没加载上：', ...s.failures.map(f => `${f.file}：${f.message}`)],
+    ['运行不开浏览器的检查，看详细的出错位置，改好：', cli('check', quote(s.dir))],
+    guideStep(s.dir),
+  ];
+}
+
+// 自检没跑、过期、有错误时（⑥、⑦ 共用）
+function checkSteps(s, lead) {
+  return [
+    [`${lead}${s.st.text}。运行后台自检（5 个尺寸逐页逐拍量一遍，要等一会儿）：`, cli('check', quote(s.dir), '--browser')],
+    '把报告里的错误一条条改掉，再跑，直到 0 个错误。每条都写了在哪、什么问题、怎么改；看不了图就照报告改，不要猜。' +
+      '提醒逐条判断：要么改，要么跟用户说明为什么不改。能看图的话加 --shots 看截图（存在 .li-talk/shots/）。',
+    guideStep(s.dir),
+  ];
+}
+
+// ⑥ 先做 3 页
+function stageTrial(s) {
+  const info = sceneInfo();
+  const n = s.pages.length;
+  const where = [`课件目录：${posix(s.dir)}`, progress(s.meta), `现在 ${n} 页${n ? '：' + pageList(s.pages) : ''}`, `自检：${s.st.text}`];
+  const waitSay = '先把 3 页做出来、自检清零了再给我看';
+
+  if (s.failures.length) {
+    return render(6, { where, steps: failSteps(s), noAsk: '先把出错的章节改好，现在不用问用户。', say: waitSay });
+  }
+  if (n < 3) {
+    const hasCover = s.pages.some(p => p.def.id === 'p01');
+    const steps = [
+      ['先读两份说明：样板页（照着改，少从零写）、写页面的规矩：', refDoc('templates.md'), refDoc('authoring.md')],
+      `写到 3 页：封面，加讲稿里最典型的两页——一页图示（步骤、组成或关系）、一页清单。${hasCover ? '封面 p01 已经有了（new 生成的），照讲稿第 1 页改文字。' : ''}`,
+      `写在 ${posix(s.dir)}/slides/ch1.js 里（每页一个 Deck.add，页面顺序就是写的顺序）。id 用讲稿的页号：讲稿第 5 页就写 id: 'p05'，以后写全稿再按顺序把中间的页补上。` +
+        `页面样式写在同一目录的 ch1.css 里，选择器以 [data-id="p05"] 这样开头。`,
+      '只改 slides/ 里的文件和 index.html 里两对「章节」注释之间的行，不碰 engine/、scenes/、mascots/、vendor/。',
+      ['写完运行后台自检，把报告里的错误一条条改掉、再跑，直到 0 个错误；提醒逐条判断：要么改，要么跟用户说明为什么不改。能看图的话加 --shots，截图存在 .li-talk/shots/：',
+        cli('check', quote(s.dir), '--browser')],
+      guideStep(s.dir),
+    ];
+    return render(6, { where, steps, noAsk: '先把 3 页做出来、自检清零，再给用户看；现在不用问。', say: waitSay });
+  }
+  if (s.st.kind !== 'ok') {
+    return render(6, { where, steps: checkSteps(s, ''), noAsk: '自检清零以前不要给用户看，现在不用问。', say: waitSay });
+  }
+  const steps = [
+    ['用浏览器打开课件给用户看：', cli('open', quote(s.dir))],
+    '告诉用户怎么看：→ 或空格下一拍，← 上一拍，S 打开演讲者视图（看讲词），F 全屏。',
+    '问用户这 3 页行不行（问题 1），必须等用户明确说可以。用户要改：改完重跑 check --browser 清零，再请用户看。',
+    ['用户认可后运行：', cli('confirm', quote(s.dir), 'trial')],
+    ['用户想换个风格（问题 1 选 3）：先打开样册让用户比较，定了要换再照下面改：', cli('styles', '--open'), ...switchLines(s, info)],
+    guideStep(s.dir),
+  ];
+  return render(6, {
+    where, steps,
+    asks: [{ q: '这 3 页的样子行吗？', opts: ['可以，照这个样子写全稿（推荐）', '要改：说哪页改什么', '想换个风格看看'] }],
+    say: '封面可以；清单那页字太多，删短一点',
+  });
+}
+
+// ⑦ 写全稿
+function stageFull(s) {
+  const want = s.script ? s.script.pages.length : 0;
+  const n = s.pages.length;
+  const where = [`课件目录：${posix(s.dir)}`, progress(s.meta), `讲稿 ${want} 页，课件现在 ${n} 页`, `自检：${s.st.text}`];
+  const say = '照讲稿把剩下的页都写完，自检清零后再给我看';
+  const noAsk = '这一步不用问用户；全稿写完、自检清零后进入过稿，再请用户看。';
+
+  if (s.failures.length) return render(7, { where, steps: failSteps(s), noAsk, say });
+  if (n < want) {
+    // 页面 id 照讲稿页号写（p03）时，能列出还没写的是哪几页
+    const ids = new Set(s.pages.map(p => String(p.def.id)));
+    const missing = s.script.pages.filter(p => !ids.has('p' + pad2(p.no)) && !ids.has('p' + p.no));
+    const list = missing.length === want - n
+      ? '：' + missing.slice(0, 10).map(p => `第 ${p.no} 页「${p.title}」`).join('、') + (missing.length > 10 ? ` 等 ${missing.length} 页` : '')
+      : '';
+    const steps = [
+      `照讲稿把剩下的页写完，还差 ${want - n} 页${list}。id 用讲稿的页号（第 3 页就是 'p03'），按讲稿的顺序放在对应位置（页面顺序 = 章节的引入顺序 + 文件里 Deck.add 的顺序）。`,
+      ['写法和前 3 页一样：先找最接近的样板照着改，规矩见：', refDoc('templates.md'), refDoc('authoring.md')],
+      `按讲稿的章节分文件：第二章建 ${posix(s.dir)}/slides/ch2.js 和 ch2.css，再在 index.html 里两对「章节」注释之间各加一行引入（照 ch1 那两行写）。`,
+      ['每写完一章，跑一次不开浏览器的检查（几秒）：', cli('check', quote(s.dir))],
+      ['全部写完跑后台自检，错误改到 0 个，提醒逐条判断：要么改，要么跟用户说明为什么不改：', cli('check', quote(s.dir), '--browser')],
+      guideStep(s.dir),
+    ];
+    return render(7, { where, steps, noAsk, say });
+  }
+  const lead = want ? `页数够了（讲稿 ${want} 页，课件 ${n} 页），` : '讲稿.md 里没找到「## 第 N 页」这样的标题，数不出讲稿有几页，确认照讲稿写完了以后，';
+  return render(7, { where, steps: checkSteps(s, lead), noAsk, say });
+}
+
+// ⑧ 过稿
+function stageReview(s) {
+  const where = [`课件目录：${posix(s.dir)}`, progress(s.meta), `课件 ${s.pages.length} 页`, `自检：${s.st.text}`];
+  const steps = [
+    ['用浏览器打开整份课件给用户过稿：', cli('open', quote(s.dir))],
+    '告诉用户怎么看：→ 或空格下一拍，← 上一拍，S 演讲者视图（看讲词、重点词和下一拍，可以在那里试讲一遍看时长），T 计时开始或暂停，R 计时归零，F 全屏。',
+    '问用户行不行（问题 1），必须等用户明确说可以。用户提意见就照着改，改完重跑 check --browser 清零，再请用户看，直到用户认可。',
+    ['用户认可后运行：', cli('confirm', quote(s.dir), 'review')],
+    guideStep(s.dir),
+  ];
+  return render(8, {
+    where, steps,
+    asks: [{ q: '整份课件过一遍，可以了吗？', opts: ['可以了（推荐）', '要改：说哪页改什么', '讲起来太长或太短：说要删还是要加'] }],
+    say: '第 7 页太挤了，拆成两页；结尾那句话换一下',
+  });
+}
+
+// ⑨ 完成
+function stageDone(s) {
+  const where = [`课件目录：${posix(s.dir)}`, '提纲、讲稿、风格、3 页试做、过稿都确认了', `课件 ${s.pages.length} 页`, `自检：${s.st.text}`];
+  const steps = [
+    ['告诉用户怎么讲（双击 index.html 就能打开，不用联网）：',
+      '→ ↓ 空格 PageDown Enter 或点击：下一拍；← ↑ PageUp：上一拍',
+      'Home / End：第一页 / 最后一页',
+      'S：演讲者视图（另开一个窗口，看讲词、重点词和下一拍）',
+      'T：计时开始或暂停；R：计时归零',
+      'F：全屏'],
+    ['想再看一遍就打开：', cli('open', quote(s.dir))],
+    '发给别人：把整个课件目录拷走（或压缩成 zip），对方双击 index.html 就能看。',
+    ['以后再改：改完跑后台自检清零，再运行 guide 看一眼：', cli('check', quote(s.dir), '--browser')],
+  ];
+  return render(9, {
+    where, steps,
+    asks: [{ q: '还要做什么吗？', opts: ['不用了，就这样（推荐）', '再改改：说改哪里'] }],
+    say: '再从头帮我看一遍讲词，有没有错别字',
+  });
+}
+
+const RENDER = [null, stageStart, stageOutline, stageScript, stageStyle, stageBuild, stageTrial, stageFull, stageReview, stageDone];
+
+/**
+ * guide 的输出文字。target 是课件目录，不写就用当前目录。
+ */
+export function guideText(target) {
+  const s = inspect(target);
+  return RENDER[s.stage](s);
+}
+
+// guide 命令
+export async function run(args = {}, opts = {}) {
+  const log = opts.log || (s => console.log(s));
+  const target = args._ && args._[0];
+  log(guideText(target ? String(target) : undefined));
+  return 0;
+}
