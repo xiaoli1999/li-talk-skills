@@ -4,7 +4,7 @@
 //   node build.mjs --check          干净度检查：本机绝对路径、内部词、版本号和 CHANGELOG、清单和文件、换行、是否都进了 git
 //   node build.mjs --release        发版前一条龙：--check、--manifest、全量测试，最后打印下一步
 //   node build.mjs --install-local  把 skill 装到本机 ~/.claude/skills/li-talk-skills 供作者试用，并写一份本机安装记录
-// 发版：改 version.txt、写 CHANGELOG → node build.mjs --release → 提交、推 dev → 作者把 dev 合进 main（合进去就是发版）。
+// 发版：改 version.txt、写 CHANGELOG → node build.mjs --release → 提交、推 dev → 作者把 dev 合进 master（合进去就是发版）。
 // 只用 Node 18 自带的模块。
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync, copyFileSync, renameSync, realpathSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -172,7 +172,7 @@ function release() {
 ${manifest.version} 的发版检查都过了。下一步：
   1. 确认 CHANGELOG.md 最上面一版写好了要点（自动更新时会转述给用户），把改动连同 ${SKILL_REL}/manifest.json 一起提交。
   2. 推开发分支：git push origin dev:dev
-  3. 作者在 GitHub 上把 dev 合进 main。合进去就是发版：自动更新只读 main，用户每天第一次运行命令时会更新到 ${manifest.version}。
+  3. 作者在 GitHub 上把 dev 合进 master。合进去就是发版：自动更新只读 master，用户每天第一次运行命令时会更新到 ${manifest.version}。
   4. 合并几分钟后，在临时目录装一份旧版，运行任意命令，确认能自动更新到 ${manifest.version}。`);
   return 0;
 }

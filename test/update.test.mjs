@@ -124,10 +124,10 @@ test('CHANGELOG 要点：只取 (旧, 新] 之间各版本顶格的条目，每�
   assert.deepEqual(up.formatNotes([{ version: '0.3.0', items: ['只有一版'] }]), ['  · 只有一版'], '只有一版时不列版本号');
 });
 
-test('来源：默认读 GitHub 和 jsDelivr 的主分支；LI_TALK_UPDATE_BASE 可以换成本地目录或 http 地址', () => {
+test('来源：默认读 GitHub 和 jsDelivr 的主分支（master）；LI_TALK_UPDATE_BASE 可以换成本地目录或 http 地址', () => {
   assert.deepEqual(up.DEFAULT_SOURCES.map(s => s.base + up.SKILL_PATH + 'manifest.json'), [
-    'https://raw.githubusercontent.com/xiaoli1999/li-talk-skills/main/skills/li-talk-skills/manifest.json',
-    'https://cdn.jsdelivr.net/gh/xiaoli1999/li-talk-skills@main/skills/li-talk-skills/manifest.json',
+    'https://raw.githubusercontent.com/xiaoli1999/li-talk-skills/master/skills/li-talk-skills/manifest.json',
+    'https://cdn.jsdelivr.net/gh/xiaoli1999/li-talk-skills@master/skills/li-talk-skills/manifest.json',
   ]);
   assert.equal(up.sourcesFromEnv({}), null);
   const s = up.sourcesFromEnv({ LI_TALK_UPDATE_BASE: 'https://mirror.test/repo, ./some/dir' });

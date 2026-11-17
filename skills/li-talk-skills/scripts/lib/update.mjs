@@ -1,4 +1,4 @@
-// 自动更新：每天第一次运行命令时，读 GitHub 和 jsDelivr 上主分支的 manifest.json，有新版就整包更新
+// 自动更新：每天第一次运行命令时，读 GitHub 和 jsDelivr 上主分支（master）的 manifest.json，有新版就整包更新
 //
 // 怎么保证不会留下新旧混在一起的一套：
 //   1. 按新清单比对本地文件的实际校验值，只下载变了的和新增的，逐个校验 sha256 后写进临时目录；
@@ -24,7 +24,7 @@ import { SKILL_DIR, DATA_DIR } from './paths.mjs';
 import { MANIFEST, hashFiles, listFiles, readManifest, sha256, skipName } from './manifest.mjs';
 
 export const REPO = 'xiaoli1999/li-talk-skills';
-export const BRANCH = 'main';
+export const BRANCH = 'master';
 export const SKILL_PATH = 'skills/li-talk-skills/';
 export const PLUGIN_UPDATE = 'claude plugin update li-talk-skills@li-talk-skills';
 // 来源的 base 是仓库根目录：清单在 base + skills/li-talk-skills/manifest.json，更新说明在 base + CHANGELOG.md
@@ -480,7 +480,7 @@ async function checkAndApply(ctx, auto) {
   if (!best) {
     const msg = `没读到新版清单：${triedText(tried)}`;
     writeRecord(ctx, { ...base, ok: false, result: msg });
-    if (!auto) ctx.log(`${msg}。连不上或超时多半是网络问题，等网络好了再运行 update；HTTP 404 说明主分支上还没有发布的版本。`);
+    if (!auto) ctx.log(`${msg}。连不上或超时多半是网络问题，等网络好了再运行 update；HTTP 404 说明主分支（master）上还没有发布的版本。`);
     return { ok: false, exitCode: 2, message: msg };
   }
   const src = best.source.name;

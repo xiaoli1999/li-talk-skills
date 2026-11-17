@@ -26,7 +26,7 @@
     "scripts/lib/report.mjs": "d6ff494d3d17f42e4b341fbbd369536d310bcf8538ab1045fee60e803748395c",
     "scripts/lib/selftest-run.mjs": "04bc69eb4b1da743c36e36a7bd87be5dbcd90a4be496a7e7a9e00b515cd5d8b6",
     "scripts/lib/styles.mjs": "9c81cbb7baa3d88d7e4bb2f41dbe98cadfc8313dd42db85d8a9209398eafc962",
-    "scripts/lib/update.mjs": "3fef02d2796a3d678fa4fc64752b596132112c2069810aaf533b214228406358",
+    "scripts/lib/update.mjs": "698ba50d09367e4b26f068c03cf0e5470932ab7be149a9ceeeee5f8c92dcf686",
     "scripts/lib/version.mjs": "5d8ad510aaf950ff515152284833ca3ce2a853f8365c6a45e92a6022ba0fc2c9",
     "template/engine/beats.js": "48f64680a0543f539dc25e16373900e28b4e02c3b8bd4521e9a101080873292f",
     "template/engine/build.js": "fc53ccf7039b179c674575d3f3526becde8c110fac0b781629d0d86ce7d9cd7a",
