@@ -50,7 +50,7 @@ export async function run(args = {}, opts = {}) {
   }
   if (await opener(file)) {
     log(`已用浏览器打开：${file}`);
-    log('翻页用 → / 空格，S 打开演讲者视图，F 全屏。');
+    log('翻页用 → / 空格，O 总览跳页，B 黑屏，L 激光笔，S 打开演讲者视图（在那里按 H 彩排），F 全屏。');
     return 0;
   }
   log(`打不开浏览器，请手动双击打开：${file}`);

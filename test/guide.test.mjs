@@ -608,6 +608,8 @@ test('完成：告诉用户怎么讲', async () => {
   const t = guideText(dir);
   assert.match(t, /【现在在哪一步】⑨ 完成/);
   for (const k of [/S/, /T/, /F/, /空格/]) assert.match(t, k);
+  // 现场工具和彩排：O 总览、B（或「.」）黑屏、L 激光笔、H 彩排，并提醒正式讲之前先彩排
+  for (const k of [/O：总览跳页/, /B 或「\.」：黑屏/, /L：激光笔/, /H：在演讲者视图里开始或结束彩排/, /先按 H 彩排一遍/]) assert.match(t, k);
   checkShape(t);
 });
 
