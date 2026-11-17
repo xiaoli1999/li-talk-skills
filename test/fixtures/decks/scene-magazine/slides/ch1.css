@@ -1,0 +1,10 @@
+/* 杂志复古测试课件的页面样式：每条都以 [data-id="…"] 开头，只写大小和位置，颜色用风格的变量 */
+/* 封面：封面色块里的大字、一小道强调色短线、引言（都放在色块里，色块是定位的参照） */
+[data-id="m1"] .cover-t{left:64px;top:48px;margin:0;font:900 140px/1.14 var(--f-hand);white-space:nowrap;letter-spacing:-.01em}
+[data-id="m1"] .cover-bar{left:66px;top:574px;width:72px;height:6px;background:var(--accent)}
+[data-id="m1"] .cover-deck{left:66px;top:604px;margin:0;font-size:42px;line-height:1.5;white-space:nowrap}
+/* 清单：三张卡片一样高；圈注的词前后留点空 */
+[data-id="m2"] .card{min-height:270px}
+[data-id="m2"] [data-mark]{margin:0 .5em}
+/* 对比：两张卡片一样高 */
+[data-id="m7"] .vs>.card{min-height:240px}

@@ -1,0 +1,280 @@
+/* =====================================================================
+   风格 · 杂志复古 magazine 的样子（行为在 magazine.js）
+   米白纸底，墨绿、橘红撞色，另加墨黑字与纸白；全页只用这些和它们的深浅。宋体为主，小字黑体，命令等宽。
+   所有选择器的第一段都带 [data-scene="magazine"]
+   - 纸条：卡片、步骤的每一项、截图位是一张纸白（带极淡纸纹）的纸条，用一截牛皮纸胶带贴在页面上；
+     歪多少、左右怎么错开由页面的 --r 和位置决定，风格只给纸条和胶带的样子
+   - 几个状态量写成 CSS 变量，出场时由 magazine.js 推动，平时就是下面的默认值：
+     --mag-tp 胶带按上去（0–1，横向拉开）、--mag-lf 纸条悬空的程度（0–1，影子变大变淡）、
+     --mag-gx / --mag-gy 大序号背后那层橘红套印偏出去多少、--mag-sc 剪刀就位（0–1）、--mag-cut 剪刀沿虚线走到哪、
+     --mag-so 剪刀的不透明度、--mag-ds / --mag-dr / --mag-do 封面色块后面那枚网点圆的缩放、转角、不透明度、
+     --mag-rule 页眉栏线拉开的程度（0–1）
+   - --mag-thin：系统里没有带粗体的宋体、只能退回 Windows 的 SimSun 时，magazine.js 在 <html> 上写成 1，
+     宋体的字按字号描一圈边加粗（样页的做法），黑体、等宽字不描
+   - --recede（讲过的拍变到多淡）由 magazine.js 的 recede 写入，这里不写
+   ===================================================================== */
+
+/* 变量 */
+[data-scene="magazine"]{
+  --f-hand:"Songti SC","Noto Serif SC","Source Han Serif SC","Source Han Serif CN","思源宋体","Noto Serif CJK SC","STSong","SimSun","宋体",serif;
+  --f-sans:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  /* 等宽字后面补上黑体：命令里的中文不至于落到细宋体 */
+  --f-mono:"JetBrains Mono","Cascadia Mono",Consolas,"SF Mono",Menlo,"PingFang SC","Microsoft YaHei","Noto Sans SC",monospace;
+  --rough-r:0;
+  /* 杂志的几种颜色：米白纸底、纸白、墨绿底上的米白字、墨黑、墨绿、橘红（和它们的深浅） */
+  --mag-paper:#EFE7D6; --mag-white:#FBF8F0; --mag-cream:#F4EEE1; --mag-ink:#1C1A17;
+  --mag-green:#1F4B3B; --mag-orange:#E0532B; --mag-orange-d:#BC421F;
+  --mag-tape:linear-gradient(180deg,rgba(226,212,182,.94),rgba(211,195,160,.94));
+  --mag-zig:polygon(0 0,100% 0,97% 17%,100% 34%,97% 50%,100% 66%,97% 83%,100% 100%,0 100%,3% 83%,0 66%,3% 50%,0 34%,3% 17%);
+  --bg:#EFE7D6; --ink:#1C1A17; --ink-2:#4E4942; --ink-3:#8C857A; --line:#1C1A17;
+  --mark:#E0532B; --key-ink:#FBF8F0; --hl:rgba(224,83,43,.85); --accent:#E0532B;
+  --card-ink:#1C1A17; --card-ink-2:#4E4942; --paper:#FBF8F0;
+  /* 纸条的几种颜色：纸白、旧报纸的米色，墨绿、橘红各一档很浅的纸（不加别的颜色） */
+  --t-yellow:#F7EFDC; --t-mint:#DFE7DA; --t-pink:#F6E1D6; --t-blue:#E5EBE1; --t-white:#FBF8F0; --t-peach:#F4D9CA;
+  --term-bg:#FBF8F0; --term-ink:#1C1A17;
+  /* 「需要人」橘红、「AI」墨绿、「不用管」灰 */
+  --human:#E0532B; --ai:#1F4B3B; --idle:#9A9286;
+  --sign-color:rgba(28,26,23,.58);
+  /* 极淡纸纹（背景和纸条共用，静态 SVG 噪点） */
+  --mag-grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .2  0 0 0 0 .15  0 0 0 0 .08  0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.3'/%3E%3C/svg%3E");
+  /* 剪刀：合上、张开两张遮罩图（颜色由 background-color 给） */
+  --mag-sc-shut:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 30' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='7' cy='8' r='5'/%3E%3Cpath d='M11 11L35 25.6'/%3E%3Ccircle cx='7' cy='22' r='5'/%3E%3Cpath d='M11 19L35 4.4'/%3E%3C/svg%3E");
+  --mag-sc-open:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 30' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Cg transform='rotate(10 17.6 15)'%3E%3Ccircle cx='7' cy='8' r='5'/%3E%3Cpath d='M11 11L35 25.6'/%3E%3C/g%3E%3Cg transform='rotate(-10 17.6 15)'%3E%3Ccircle cx='7' cy='22' r='5'/%3E%3Cpath d='M11 19L35 4.4'/%3E%3C/g%3E%3C/svg%3E");
+  /* 背景：四角一点旧纸的暗边 + 纸纹 + 米白纸色（阅读模式里每页也用它） */
+  --scene-bg:radial-gradient(ellipse 75% 70% at 50% 45%,rgba(120,88,48,0) 55%,rgba(120,88,48,.08) 100%),var(--mag-grain),#EFE7D6;
+}
+
+/* 正文：宋体，字重 600（样页的正文就是这么重，投影上不发虚） */
+[data-scene="magazine"].slide{font-weight:600}
+/* 只有细宋体时按字号描边加粗（--mag-thin 由 magazine.js 判断后写在 <html> 上；黑体、等宽字在后面改回 0） */
+[data-scene="magazine"].slide,[data-scene="magazine"].slide *{-webkit-text-stroke:calc(var(--mag-thin,0) * .018em) currentColor}
+[data-scene="magazine"] :is(.s-title,.quote,.t-xl,.cover-title){-webkit-text-stroke-width:calc(var(--mag-thin,0) * .022em)}
+[data-scene="magazine"] :is(.copy,.copy *,.term,.term *,.tag,.lab,.s-topic .tc,.copied-tip,.copied-tip *,.shot figcaption,.shot-zoom,.shot-miss,.shot-miss *,.cell>i,.mascot-say,.li-sign){-webkit-text-stroke-width:0}
+
+/* =====================================================================
+   页眉：主题行，下面一粗一细两道栏线（整页的装饰，画在每页的 ::before 上；开场时从左往右拉开）
+   ===================================================================== */
+[data-scene="magazine"].slide::before{content:"";position:absolute;left:120px;top:80px;width:1680px;height:11px;z-index:4;pointer-events:none;
+  border-top:4px solid var(--mag-ink);border-bottom:1.5px solid var(--mag-ink);transform-origin:0 50%;transform:scaleX(var(--mag-rule,1))}
+[data-scene="magazine"] .s-topic{gap:14px}
+[data-scene="magazine"] .s-topic .tc{padding:7px 12px 6px;background:var(--mag-green);color:var(--mag-cream);font:700 24px/1 var(--f-sans);letter-spacing:.12em}
+[data-scene="magazine"] .s-topic .ts{font:400 30px/1 var(--f-hand);color:var(--mag-orange)}
+[data-scene="magazine"] .s-topic .tt{font:900 34px/1.2 var(--f-hand);color:var(--mag-ink);letter-spacing:.02em}
+
+/* 大标题：宋体 900，墨黑 */
+[data-scene="magazine"] .s-title{font-weight:900;letter-spacing:.01em;color:var(--ink)}
+/* 一句话解释：左边一道墨绿竖条 */
+[data-scene="magazine"] .explain{padding-left:28px;font-weight:600;color:var(--ink-2)}
+[data-scene="magazine"] .explain::before{width:8px;border-radius:0;top:.16em;bottom:.12em;background:var(--mag-green)}
+[data-scene="magazine"] .explain b{font-weight:900;color:var(--ink)}
+[data-scene="magazine"] .muted{color:var(--ink-2)}
+[data-scene="magazine"] .c-mark{color:var(--mag-orange)}
+[data-scene="magazine"] .dot{border-radius:0}
+
+/* =====================================================================
+   重点词：一条剪下来的橘红纸条贴到字底下，字反白
+   引擎在那一拍把 --k 从 0 推到 1：纸条从左往右贴过去（scaleX 跟着 --k），纸条盖过一半以后字从墨色变成纸白
+   --mag-k0 是没贴纸条时字的颜色（就是周围的 --ink：在封面色块里是米白）
+   ===================================================================== */
+[data-scene="magazine"] .key{--mag-k0:var(--ink);color:var(--mag-k0);padding:0 .1em;margin:0 .08em}
+[data-scene="magazine"] .key::before{content:"";position:absolute;z-index:-1;left:-.04em;right:-.04em;top:.1em;bottom:.02em;pointer-events:none;
+  background:var(--mag-orange);transform-origin:0 50%;transform:rotate(-1.2deg) scaleX(var(--k));
+  clip-path:polygon(1% 5%,99% 0,100% 30%,98.6% 54%,100% 78%,99% 100%,0 96%,1.2% 70%,0 46%,1% 22%)}
+@supports (color:color-mix(in srgb,red 50%,blue)){
+  [data-scene="magazine"] .key{color:color-mix(in srgb,var(--key-ink) clamp(0%,calc((var(--k) - .5) * 300%),100%),var(--mag-k0))}
+}
+
+/* =====================================================================
+   纸条：卡片、步骤的每一项、截图位、小格（纸白 + 纸纹 + 贴纸的影子；--mag-lf 是悬空的程度）
+   ===================================================================== */
+[data-scene="magazine"] :is(.card,.steps>li,.shot){--mag-tp:1;--mag-lf:0;border:0;border-radius:0;
+  box-shadow:0 1px 1px rgba(50,35,15,.1),0 calc(12px + var(--mag-lf) * 22px) calc(18px + var(--mag-lf) * 26px) calc(-14px + var(--mag-lf) * -4px) rgba(50,35,15,calc(.38 + var(--mag-lf) * .06));
+  transition:translate .35s cubic-bezier(.2,.7,.2,1),box-shadow .3s}
+/* 胶带：牛皮纸色，两端剪成锯齿；出场时横向拉开（--mag-tp）。默认贴在左上角，偶数张贴在右上角 */
+[data-scene="magazine"] .card::before,
+[data-scene="magazine"] .steps>li::after,
+[data-scene="magazine"] .shot::before{content:"";position:absolute;z-index:2;left:-40px;right:auto;top:-14px;width:132px;height:34px;margin:0;border:0;border-radius:0;box-shadow:none;pointer-events:none;
+  background:var(--mag-tape);clip-path:var(--mag-zig);rotate:-9deg;transform-origin:0 50%;transform:scaleX(var(--mag-tp));opacity:min(1,calc(var(--mag-tp) * 4))}
+[data-scene="magazine"] .card:nth-child(even)::before,
+[data-scene="magazine"] .steps>li:nth-child(even)::after{left:auto;right:-40px;rotate:8deg;transform-origin:100% 50%}
+/* 上沿有小标签的卡片：胶带一律贴右上角，不压标签；写了 tape 的卡片和截图位：胶带贴在上沿正中 */
+[data-scene="magazine"] .card:has(> .lab)::before{left:auto;right:-40px;rotate:8deg;transform-origin:100% 50%}
+[data-scene="magazine"] :is(.card.tape,.shot)::before{left:50%;right:auto;margin-left:-66px;top:-17px;rotate:-2.5deg;transform-origin:50% 50%}
+
+/* ---------- 卡片 ---------- */
+[data-scene="magazine"] .card{padding:34px 40px 36px;color:var(--card-ink);background:var(--mag-grain),var(--tint,var(--paper))}
+[data-scene="magazine"] .card h3{font-weight:900;letter-spacing:.02em;color:var(--card-ink)}
+[data-scene="magazine"] .card :is(p,li){font-weight:600}
+[data-scene="magazine"] .card :is(.sm,small){font-weight:500;color:var(--card-ink-2)}
+[data-scene="magazine"] .card li::before{left:.1em;top:.6em;width:.3em;height:.3em;border-radius:0;rotate:none;opacity:1;background:var(--mag-green)}
+/* 卡片上沿的标签：一小条墨绿纸，米白黑体字 */
+[data-scene="magazine"] .lab{top:-22px;left:26px;padding:3px 16px 5px;background:var(--mag-green);color:var(--mag-cream);font:700 var(--fs-min)/1.2 var(--f-sans);letter-spacing:.06em}
+
+/* ---------- 带序号的步骤：每一项是一张纸条，大号序号（01、02…）墨绿，背后一层橘红没套准（套印错位） ---------- */
+[data-scene="magazine"] .steps>li{--mag-gx:4px;--mag-gy:3px;position:relative;grid-template-columns:96px minmax(0,1fr);column-gap:22px;padding:26px 34px 28px 26px;
+  background:var(--mag-grain),var(--paper)}
+[data-scene="magazine"] .steps>li::before{content:counter(st,decimal-leading-zero);display:block;width:auto;height:auto;border:0;border-radius:0;background:none;
+  font:400 84px/1 var(--f-hand);letter-spacing:-.02em;color:var(--mag-green);text-shadow:var(--mag-gx) var(--mag-gy) 0 var(--mag-orange)}
+[data-scene="magazine"] .steps>li>b{font-weight:900;color:var(--ink)}
+[data-scene="magazine"] .steps>li>span{font-weight:600;color:var(--ink-2)}
+/* 横排：每张纸条窄，序号小一号、边距收一点，字的宽度留给标题和说明（三步各宽 480 时，说明一行约 9 个字） */
+[data-scene="magazine"] .steps.h>li{grid-template-columns:80px minmax(0,1fr);column-gap:16px;padding:24px 22px 26px}
+[data-scene="magazine"] .steps.h>li::before{font-size:72px}
+
+/* ---------- 左右对比：中间一个墨绿的宋体符号 ---------- */
+[data-scene="magazine"] .vs::before{font:900 64px/1 var(--f-hand);color:var(--mag-green)}
+
+/* ---------- 一排小格：纸白小格、墨黑细框；AI 的格子顶上一道墨绿、需要人的一道橘红加一枚网点小圆贴 ---------- */
+[data-scene="magazine"] .cell{--mag-lf:0;padding:22px 14px 20px;border:2px solid var(--mag-ink);border-radius:0;background:var(--mag-grain),var(--tint,var(--paper));
+  box-shadow:0 1px 1px rgba(50,35,15,.1),0 calc(10px + var(--mag-lf) * 14px) calc(14px + var(--mag-lf) * 16px) -12px rgba(50,35,15,.32);
+  transition:translate .35s cubic-bezier(.2,.7,.2,1),box-shadow .3s}
+[data-scene="magazine"] .cell>i{font:700 26px/1 var(--f-sans);letter-spacing:.08em;color:var(--mag-orange)}
+[data-scene="magazine"] .cell>b{font-weight:900;color:var(--ink)}
+[data-scene="magazine"] .cell>span{font-weight:600;color:var(--ink-2)}
+[data-scene="magazine"] .cell.ai{border-color:var(--mag-ink);border-top:10px solid var(--mag-green)}
+[data-scene="magazine"] .cell.ai>b{color:var(--mag-green)}
+[data-scene="magazine"] .cell.human{border-color:var(--mag-ink);border-top:10px solid var(--mag-orange)}
+[data-scene="magazine"] .cell.human::after{top:-17px;right:-14px;width:30px;height:30px;box-shadow:none;
+  background:radial-gradient(circle,var(--mag-orange-d) 1.5px,rgba(188,66,31,0) 1.9px) 0 0/6px 6px,var(--mag-orange)}
+[data-scene="magazine"] .cell.idle{border:2px dashed var(--ink-3);background:transparent;box-shadow:none;color:var(--idle)}
+[data-scene="magazine"] .cell.idle>:is(b,span,i){color:var(--idle)}
+[data-scene="magazine"] .cell.idle>b{text-decoration-thickness:3px}
+[data-scene="magazine"] .dot.human{background:var(--human)}[data-scene="magazine"] .dot.ai{background:var(--ai)}[data-scene="magazine"] .dot.idle{background:var(--idle)}
+
+/* ---------- 标签：一小块墨绿纸（暖色系的 t-* 换成橘红纸），米白黑体字 ---------- */
+[data-scene="magazine"] .tag{--mag-tag:var(--mag-green);padding:4px 18px 6px;border:0;border-radius:0;background:var(--mag-tag);color:var(--mag-cream);font:700 var(--fs-min)/1.2 var(--f-sans);letter-spacing:.08em}
+[data-scene="magazine"] .tag:is(.t-yellow,.t-peach,.t-pink){--mag-tag:var(--mag-orange);color:var(--mag-white)}
+[data-scene="magazine"] .tag.t-white{background:var(--mag-white);color:var(--mag-ink);box-shadow:inset 0 0 0 2px var(--mag-ink)}
+
+/* ---------- 大字金句：夹在一粗一细两道栏线中间（和页眉同一种栏线） ---------- */
+[data-scene="magazine"] .quote{font-weight:900;letter-spacing:.02em;color:var(--ink);padding:.22em .2em .28em;border-top:6px solid var(--ink);border-bottom:2px solid var(--ink)}
+
+/* ---------- 终端：一张纸白的纸，墨黑细框；标题栏是一道墨黑，三个小方块；字是墨黑等宽（投影上比深底清楚） ---------- */
+[data-scene="magazine"] .term{border-radius:0;color:var(--term-ink);font-weight:500;background:var(--mag-grain),var(--term-bg);
+  box-shadow:0 0 0 2px var(--mag-ink),0 14px 22px -14px rgba(50,35,15,.42)}
+[data-scene="magazine"] .term-bar{height:50px;background:var(--mag-ink);color:var(--mag-cream);font:600 24px/1 var(--f-mono);letter-spacing:.04em}
+[data-scene="magazine"] .term-bar i{width:14px;height:14px;border-radius:0;background:var(--mag-orange)}
+[data-scene="magazine"] .term-bar i:nth-child(2){background:var(--mag-cream)}
+[data-scene="magazine"] .term-bar i:nth-child(3){background:transparent;box-shadow:inset 0 0 0 2px var(--mag-cream)}
+[data-scene="magazine"] .term .in::before{color:var(--mag-orange)}
+[data-scene="magazine"] .term .cc::before{color:var(--mag-green)}
+[data-scene="magazine"] .term .dim{color:#7A7368}
+[data-scene="magazine"] .term .ok{color:var(--mag-green)}
+[data-scene="magazine"] .term .warn{color:var(--mag-orange-d)}
+[data-scene="magazine"] .term .hi{color:var(--mag-ink);background:linear-gradient(transparent 62%,rgba(224,83,43,.4) 62%,rgba(224,83,43,.4) 92%,transparent 92%)}
+
+/* ---------- 可复制的一行：一张剪角券（纸白、墨黑虚线框），一把剪刀骑在上沿的虚线上 ----------
+   ::before 是剪刀下面垫的一小块纸白（盖住那一段虚线），::after 是剪刀；两个都跟着 --mag-cut 沿上沿走。
+   悬停时虚线和剪刀变橘红、刀口张开；复制时 magazine.js 让剪刀一开一合沿虚线剪过去，券被剪下来（.mag-cut）翘起一点 */
+[data-scene="magazine"] .copy{--mag-sc:1;--mag-cut:0px;--mag-so:1;gap:0;padding:14px 30px 16px;border:2.5px dashed var(--mag-ink);border-radius:0;
+  background:var(--mag-white);color:var(--mag-ink);font:600 var(--fs-min)/1.3 var(--f-mono)}
+[data-scene="magazine"] .copy :is(.ps,.ic){display:none}
+[data-scene="magazine"] .copy::before,
+[data-scene="magazine"] .copy::after{content:"";position:absolute;left:12px;top:-17px;width:50px;height:32px;pointer-events:none;
+  translate:calc(var(--mag-cut) + (1 - var(--mag-sc)) * -24px) 0;opacity:calc(var(--mag-sc) * var(--mag-so))}
+[data-scene="magazine"] .copy::before{background:var(--mag-white)}
+[data-scene="magazine"] .copy::after{background:var(--mag-ink);
+  -webkit-mask:var(--mag-sc-shut) center/40px 30px no-repeat;mask:var(--mag-sc-shut) center/40px 30px no-repeat}
+@media (hover:hover){
+  [data-scene="magazine"] .copy:hover{border-color:var(--mag-orange)}
+  [data-scene="magazine"] .copy:hover::after{background:var(--mag-orange);-webkit-mask-image:var(--mag-sc-open);mask-image:var(--mag-sc-open)}
+}
+[data-scene="magazine"] .copy:focus-visible{outline:2px solid var(--mag-orange);outline-offset:6px}
+/* 剪的时候：剪刀橘红，一开一合（.mag-open 由 magazine.js 来回切） */
+[data-scene="magazine"] .copy.mag-cutting::after{background:var(--mag-orange);-webkit-mask-image:var(--mag-sc-shut);mask-image:var(--mag-sc-shut)}
+[data-scene="magazine"] .copy.mag-cutting.mag-open::after{-webkit-mask-image:var(--mag-sc-open);mask-image:var(--mag-sc-open)}
+/* 剪下来了：虚线没了，券翘起一点、底下有影子；.mag-back 是放回去时的过渡 */
+[data-scene="magazine"] .copy.mag-cut{border-color:transparent;translate:0 -7px;rotate:calc(var(--r) - 1.4deg);box-shadow:0 16px 20px -12px rgba(50,35,15,.4);
+  transition:translate .26s cubic-bezier(.3,1.6,.5,1),rotate .26s cubic-bezier(.3,1.6,.5,1),box-shadow .26s,border-color .2s}
+[data-scene="magazine"] .copy.mag-back{transition:translate .3s ease,rotate .3s ease,box-shadow .3s,border-color .3s}
+/* 剪刀走过的地方弹起的碎纸屑（magazine.js 临时放进券里，落下就删掉） */
+[data-scene="magazine"] .mag-bit{position:absolute;top:-4px;left:0;width:13px;height:7px;z-index:3;pointer-events:none;background:var(--mag-white);border:1.5px solid rgba(28,26,23,.25)}
+[data-scene="magazine"] .mag-bit.o{background:var(--mag-orange);border-color:var(--mag-orange)}
+
+/* 「已复制」：一张橘红小标签，上面一截胶带（出场见 magazine.js 的 copied） */
+[data-scene="magazine"] .copied-tip{--mag-tp:1;gap:0;padding:8px 20px 9px;background:var(--mag-orange);color:var(--mag-white);font:700 30px/1.1 var(--f-sans);letter-spacing:.12em;
+  box-shadow:0 8px 14px -8px rgba(50,35,15,.45)}
+[data-scene="magazine"] .copied-tip svg{display:none}
+[data-scene="magazine"] .copied-tip::before{content:"";position:absolute;left:50%;top:-13px;width:64px;height:22px;margin-left:-32px;
+  background:rgba(232,221,195,.92);clip-path:var(--mag-zig);transform-origin:0 50%;transform:scaleX(var(--mag-tp))}
+[data-scene="magazine"] .copied-tip.fail::before{display:none}
+
+/* ---------- 截图位：纸白相框，上沿正中一截胶带；图注是左对齐的黑体小字，前面一个橘红小方块 ---------- */
+[data-scene="magazine"] .shot{padding:14px 14px 0;background:var(--mag-grain),var(--mag-white)}
+[data-scene="magazine"] .shot-img{background:#D9D0BE}
+[data-scene="magazine"] .shot figcaption{padding:12px 4px 16px;text-align:left;font:600 28px/1.3 var(--f-sans);color:var(--ink-2);letter-spacing:.02em}
+[data-scene="magazine"] .shot figcaption::before{content:"";display:inline-block;width:.42em;height:.42em;margin-right:.45em;background:var(--mag-orange);vertical-align:.08em}
+[data-scene="magazine"] .shot-miss{font:600 30px/1.4 var(--f-sans);color:var(--ink-3);background:repeating-linear-gradient(-45deg,#E9E0CC 0 14px,#E2D8C2 14px 28px)}
+[data-scene="magazine"] .shot-miss small{color:var(--ink-3)}
+[data-scene="magazine"] .shot-zoom{border-radius:0;background:var(--mag-ink);color:var(--mag-cream);font-family:var(--f-sans)}
+
+/* ---------- 线稿与圈注：线稿墨黑，圈注橘红（rough 参数在 magazine.js） ---------- */
+[data-scene="magazine"] svg.sketch{color:var(--line)}
+[data-scene="magazine"] svg.marks{color:var(--mark)}
+
+/* =====================================================================
+   悬停：纸条被「揭起」一点（往上抬、歪得少一点、影子变大）；按下时压一下
+   只在悬停、讲过的拍上给倾斜和不透明度加过渡：平时不加，免得和出场时 gsap 改的样式打架
+   ===================================================================== */
+[data-scene="magazine"] :is(.card,.cell,.steps>li,.shot,.copy).past{transition:opacity .45s ease,translate .35s cubic-bezier(.2,.7,.2,1),box-shadow .3s}
+@media (hover:hover){
+  [data-scene="magazine"] :is(.card,.cell,.steps>li,.shot):hover{translate:0 -6px;rotate:calc(var(--r) * .3);--mag-lf:.7;
+    transition:opacity .45s ease,translate .35s cubic-bezier(.2,.7,.2,1),rotate .35s cubic-bezier(.2,.7,.2,1),box-shadow .3s}
+}
+[data-scene="magazine"] :is(.card,.cell,.steps>li):active{translate:0 1px;transition-duration:.08s}
+
+/* =====================================================================
+   封面色块（可选组件）：<div class="mag-cover abs" style="left:…;top:…;width:…;height:…">…</div>
+   一大块撕边的墨绿纸，背后压着一枚橘红半调网点圆；放在里面的字自动反成米白（重新定义了 --ink 一系列变量）。
+   默认右边是撕边、网点圆从右下探出来；加 left 撕边和网点圆换到左边；加 no-disc 不要网点圆。
+   要放在页面 html 的最前面（它是一块底，后面的内容压在它上面）；别的风格不认识这个类，只是一个透明的容器
+   ::after 是墨绿纸（撕边条 + 纯色 + 底边一道影子），::before 是网点圆（压在纸下面）
+   ===================================================================== */
+[data-scene="magazine"] .mag-cover{--ink:#F4EEE1;--ink-2:rgba(244,238,225,.88);--ink-3:rgba(244,238,225,.62);--line:#F4EEE1;--card-ink:#1C1A17;
+  --mag-tag:var(--mag-orange);--mag-ds:1;--mag-dr:0deg;--mag-do:1;
+  isolation:isolate;padding:60px 64px;color:var(--ink)}
+[data-scene="magazine"] .mag-cover:not(.abs){position:relative}
+[data-scene="magazine"] .mag-cover .tag{--mag-tag:var(--mag-orange);color:var(--mag-white)}
+[data-scene="magazine"] .mag-cover::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 816' preserveAspectRatio='none'%3E%3Cpath d='M0 0L30.4 0.0L31.6 10.1L30.3 25.3L25.1 34.8L32.2 55.0L27.5 65.9L27.3 84.7L31.0 105.5L30.8 122.4L28.2 143.4L32.6 166.0L35.8 182.3L35.1 195.0L36.6 207.9L36.3 222.1L32.9 241.6L29.6 259.8L31.5 274.1L34.0 292.9L27.8 304.6L29.7 315.1L31.9 335.2L37.3 345.5L36.1 358.3L35.1 374.9L33.3 389.4L34.9 410.5L28.6 427.3L31.0 447.2L32.1 462.5L31.6 474.7L34.3 485.3L32.2 499.6L29.1 517.2L29.7 532.3L30.1 542.5L32.0 559.3L29.2 581.3L29.1 600.4L31.2 617.6L28.1 631.5L33.3 652.8L28.1 673.6L34.2 687.8L31.1 699.6L34.5 720.5L35.1 732.2L32.2 752.1L35.6 768.4L33.6 782.7L32.8 805.1L29.2 816.0L0 816Z' fill='%233C280F' fill-opacity='.16'/%3E%3Cpath d='M0 0L27.4 0.0L28.6 10.1L27.3 25.3L22.1 34.8L29.2 55.0L24.5 65.9L24.3 84.7L28.0 105.5L27.8 122.4L25.2 143.4L29.6 166.0L32.8 182.3L32.1 195.0L33.6 207.9L33.3 222.1L29.9 241.6L26.6 259.8L28.5 274.1L31.0 292.9L24.8 304.6L26.7 315.1L28.9 335.2L34.3 345.5L33.1 358.3L32.1 374.9L30.3 389.4L31.9 410.5L25.6 427.3L28.0 447.2L29.1 462.5L28.6 474.7L31.3 485.3L29.2 499.6L26.1 517.2L26.7 532.3L27.1 542.5L29.0 559.3L26.2 581.3L26.1 600.4L28.2 617.6L25.1 631.5L30.3 652.8L25.1 673.6L31.2 687.8L28.1 699.6L31.5 720.5L32.1 732.2L29.2 752.1L32.6 768.4L30.6 782.7L29.8 805.1L26.2 816.0L0 816Z' fill='%23F8F3E7'/%3E%3Cpath d='M0 0L23.9 0.0L26.4 10.1L25.3 25.3L20.1 34.8L27.2 55.0L22.5 65.9L22.3 84.7L25.9 105.5L25.8 122.4L23.2 143.4L25.4 166.0L30.5 182.3L28.8 195.0L28.7 207.9L26.9 222.1L25.1 241.6L20.6 259.8L20.2 274.1L21.7 292.9L16.6 304.6L19.3 315.1L19.4 335.2L24.2 345.5L22.1 358.3L21.1 374.9L20.7 389.4L23.3 410.5L16.2 427.3L17.3 447.2L18.1 462.5L17.6 474.7L20.3 485.3L19.9 499.6L18.7 517.2L21.3 532.3L24.1 542.5L25.5 559.3L22.6 581.3L20.4 600.4L22.4 617.6L18.6 631.5L23.5 652.8L20.2 673.6L24.9 687.8L22.8 699.6L26.9 720.5L28.6 732.2L25.5 752.1L30.6 768.4L28.1 782.7L27.7 805.1L24.2 816.0L0 816Z' fill='%231F4B3B'/%3E%3C/svg%3E") right top/44px calc(100% - 5px) no-repeat,
+    linear-gradient(#1F4B3B,#1F4B3B) left top/calc(100% - 36px) calc(100% - 5px) no-repeat,
+    linear-gradient(rgba(60,40,15,.16),rgba(60,40,15,.16)) 3px 100%/calc(100% - 46px) 5px no-repeat}
+[data-scene="magazine"] .mag-cover.left::after{transform:scaleX(-1)}
+[data-scene="magazine"] .mag-cover::before{content:"";position:absolute;z-index:-2;right:-168px;bottom:12%;width:336px;height:336px;pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 336 336'%3E%3Ccircle cx='168' cy='168' r='168' fill='%23E0532B'/%3E%3Cg fill='%23BC421F'%3E%3Ccircle cx='312' cy='104' r='0.82'/%3E%3Ccircle cx='305.5' cy='110.5' r='0.82'/%3E%3Ccircle cx='318.5' cy='110.5' r='0.96'/%3E%3Ccircle cx='299' cy='117' r='0.82'/%3E%3Ccircle cx='312' cy='117' r='0.96'/%3E%3Ccircle cx='292.5' cy='123.5' r='0.82'/%3E%3Ccircle cx='305.5' cy='123.5' r='0.96'/%3E%3Ccircle cx='318.5' cy='123.5' r='1.12'/%3E%3Ccircle cx='286' cy='130' r='0.82'/%3E%3Ccircle cx='299' cy='130' r='0.96'/%3E%3Ccircle cx='312' cy='130' r='1.12'/%3E%3Ccircle cx='325' cy='130' r='1.27'/%3E%3Ccircle cx='279.5' cy='136.5' r='0.82'/%3E%3Ccircle cx='292.5' cy='136.5' r='0.96'/%3E%3Ccircle cx='305.5' cy='136.5' r='1.12'/%3E%3Ccircle cx='318.5' cy='136.5' r='1.27'/%3E%3Ccircle cx='273' cy='143' r='0.82'/%3E%3Ccircle cx='286' cy='143' r='0.96'/%3E%3Ccircle cx='299' cy='143' r='1.12'/%3E%3Ccircle cx='312' cy='143' r='1.27'/%3E%3Ccircle cx='325' cy='143' r='1.43'/%3E%3Ccircle cx='266.5' cy='149.5' r='0.82'/%3E%3Ccircle cx='279.5' cy='149.5' r='0.96'/%3E%3Ccircle cx='292.5' cy='149.5' r='1.12'/%3E%3Ccircle cx='305.5' cy='149.5' r='1.27'/%3E%3Ccircle cx='318.5' cy='149.5' r='1.43'/%3E%3Ccircle cx='260' cy='156' r='0.82'/%3E%3Ccircle cx='273' cy='156' r='0.96'/%3E%3Ccircle cx='286' cy='156' r='1.12'/%3E%3Ccircle cx='299' cy='156' r='1.27'/%3E%3Ccircle cx='312' cy='156' r='1.43'/%3E%3Ccircle cx='325' cy='156' r='1.6'/%3E%3Ccircle cx='253.5' cy='162.5' r='0.82'/%3E%3Ccircle cx='266.5' cy='162.5' r='0.96'/%3E%3Ccircle cx='279.5' cy='162.5' r='1.12'/%3E%3Ccircle cx='292.5' cy='162.5' r='1.27'/%3E%3Ccircle cx='305.5' cy='162.5' r='1.43'/%3E%3Ccircle cx='318.5' cy='162.5' r='1.6'/%3E%3Ccircle cx='247' cy='169' r='0.82'/%3E%3Ccircle cx='260' cy='169' r='0.96'/%3E%3Ccircle cx='273' cy='169' r='1.12'/%3E%3Ccircle cx='286' cy='169' r='1.27'/%3E%3Ccircle cx='299' cy='169' r='1.43'/%3E%3Ccircle cx='312' cy='169' r='1.6'/%3E%3Ccircle cx='325' cy='169' r='1.77'/%3E%3Ccircle cx='240.5' cy='175.5' r='0.82'/%3E%3Ccircle cx='253.5' cy='175.5' r='0.96'/%3E%3Ccircle cx='266.5' cy='175.5' r='1.12'/%3E%3Ccircle cx='279.5' cy='175.5' r='1.27'/%3E%3Ccircle cx='292.5' cy='175.5' r='1.43'/%3E%3Ccircle cx='305.5' cy='175.5' r='1.6'/%3E%3Ccircle cx='318.5' cy='175.5' r='1.77'/%3E%3Ccircle cx='234' cy='182' r='0.82'/%3E%3Ccircle cx='247' cy='182' r='0.96'/%3E%3Ccircle cx='260' cy='182' r='1.12'/%3E%3Ccircle cx='273' cy='182' r='1.27'/%3E%3Ccircle cx='286' cy='182' r='1.43'/%3E%3Ccircle cx='299' cy='182' r='1.6'/%3E%3Ccircle cx='312' cy='182' r='1.77'/%3E%3Ccircle cx='325' cy='182' r='1.94'/%3E%3Ccircle cx='227.5' cy='188.5' r='0.82'/%3E%3Ccircle cx='240.5' cy='188.5' r='0.96'/%3E%3Ccircle cx='253.5' cy='188.5' r='1.12'/%3E%3Ccircle cx='266.5' cy='188.5' r='1.27'/%3E%3Ccircle cx='279.5' cy='188.5' r='1.43'/%3E%3Ccircle cx='292.5' cy='188.5' r='1.6'/%3E%3Ccircle cx='305.5' cy='188.5' r='1.77'/%3E%3Ccircle cx='318.5' cy='188.5' r='1.94'/%3E%3Ccircle cx='221' cy='195' r='0.82'/%3E%3Ccircle cx='234' cy='195' r='0.96'/%3E%3Ccircle cx='247' cy='195' r='1.12'/%3E%3Ccircle cx='260' cy='195' r='1.27'/%3E%3Ccircle cx='273' cy='195' r='1.43'/%3E%3Ccircle cx='286' cy='195' r='1.6'/%3E%3Ccircle cx='299' cy='195' r='1.77'/%3E%3Ccircle cx='312' cy='195' r='1.94'/%3E%3Ccircle cx='325' cy='195' r='2.11'/%3E%3Ccircle cx='214.5' cy='201.5' r='0.82'/%3E%3Ccircle cx='227.5' cy='201.5' r='0.96'/%3E%3Ccircle cx='240.5' cy='201.5' r='1.12'/%3E%3Ccircle cx='253.5' cy='201.5' r='1.27'/%3E%3Ccircle cx='266.5' cy='201.5' r='1.43'/%3E%3Ccircle cx='279.5' cy='201.5' r='1.6'/%3E%3Ccircle cx='292.5' cy='201.5' r='1.77'/%3E%3Ccircle cx='305.5' cy='201.5' r='1.94'/%3E%3Ccircle cx='318.5' cy='201.5' r='2.11'/%3E%3Ccircle cx='208' cy='208' r='0.82'/%3E%3Ccircle cx='221' cy='208' r='0.96'/%3E%3Ccircle cx='234' cy='208' r='1.12'/%3E%3Ccircle cx='247' cy='208' r='1.27'/%3E%3Ccircle cx='260' cy='208' r='1.43'/%3E%3Ccircle cx='273' cy='208' r='1.6'/%3E%3Ccircle cx='286' cy='208' r='1.77'/%3E%3Ccircle cx='299' cy='208' r='1.94'/%3E%3Ccircle cx='312' cy='208' r='2.11'/%3E%3Ccircle cx='325' cy='208' r='2.29'/%3E%3Ccircle cx='201.5' cy='214.5' r='0.82'/%3E%3Ccircle cx='214.5' cy='214.5' r='0.96'/%3E%3Ccircle cx='227.5' cy='214.5' r='1.12'/%3E%3Ccircle cx='240.5' cy='214.5' r='1.27'/%3E%3Ccircle cx='253.5' cy='214.5' r='1.43'/%3E%3Ccircle cx='266.5' cy='214.5' r='1.6'/%3E%3Ccircle cx='279.5' cy='214.5' r='1.77'/%3E%3Ccircle cx='292.5' cy='214.5' r='1.94'/%3E%3Ccircle cx='305.5' cy='214.5' r='2.11'/%3E%3Ccircle cx='318.5' cy='214.5' r='2.29'/%3E%3Ccircle cx='195' cy='221' r='0.82'/%3E%3Ccircle cx='208' cy='221' r='0.96'/%3E%3Ccircle cx='221' cy='221' r='1.12'/%3E%3Ccircle cx='234' cy='221' r='1.27'/%3E%3Ccircle cx='247' cy='221' r='1.43'/%3E%3Ccircle cx='260' cy='221' r='1.6'/%3E%3Ccircle cx='273' cy='221' r='1.77'/%3E%3Ccircle cx='286' cy='221' r='1.94'/%3E%3Ccircle cx='299' cy='221' r='2.11'/%3E%3Ccircle cx='312' cy='221' r='2.29'/%3E%3Ccircle cx='188.5' cy='227.5' r='0.82'/%3E%3Ccircle cx='201.5' cy='227.5' r='0.96'/%3E%3Ccircle cx='214.5' cy='227.5' r='1.12'/%3E%3Ccircle cx='227.5' cy='227.5' r='1.27'/%3E%3Ccircle cx='240.5' cy='227.5' r='1.43'/%3E%3Ccircle cx='253.5' cy='227.5' r='1.6'/%3E%3Ccircle cx='266.5' cy='227.5' r='1.77'/%3E%3Ccircle cx='279.5' cy='227.5' r='1.94'/%3E%3Ccircle cx='292.5' cy='227.5' r='2.11'/%3E%3Ccircle cx='305.5' cy='227.5' r='2.29'/%3E%3Ccircle cx='318.5' cy='227.5' r='2.48'/%3E%3Ccircle cx='182' cy='234' r='0.82'/%3E%3Ccircle cx='195' cy='234' r='0.96'/%3E%3Ccircle cx='208' cy='234' r='1.12'/%3E%3Ccircle cx='221' cy='234' r='1.27'/%3E%3Ccircle cx='234' cy='234' r='1.43'/%3E%3Ccircle cx='247' cy='234' r='1.6'/%3E%3Ccircle cx='260' cy='234' r='1.77'/%3E%3Ccircle cx='273' cy='234' r='1.94'/%3E%3Ccircle cx='286' cy='234' r='2.11'/%3E%3Ccircle cx='299' cy='234' r='2.29'/%3E%3Ccircle cx='312' cy='234' r='2.48'/%3E%3Ccircle cx='175.5' cy='240.5' r='0.82'/%3E%3Ccircle cx='188.5' cy='240.5' r='0.96'/%3E%3Ccircle cx='201.5' cy='240.5' r='1.12'/%3E%3Ccircle cx='214.5' cy='240.5' r='1.27'/%3E%3Ccircle cx='227.5' cy='240.5' r='1.43'/%3E%3Ccircle cx='240.5' cy='240.5' r='1.6'/%3E%3Ccircle cx='253.5' cy='240.5' r='1.77'/%3E%3Ccircle cx='266.5' cy='240.5' r='1.94'/%3E%3Ccircle cx='279.5' cy='240.5' r='2.11'/%3E%3Ccircle cx='292.5' cy='240.5' r='2.29'/%3E%3Ccircle cx='305.5' cy='240.5' r='2.48'/%3E%3Ccircle cx='169' cy='247' r='0.82'/%3E%3Ccircle cx='182' cy='247' r='0.96'/%3E%3Ccircle cx='195' cy='247' r='1.12'/%3E%3Ccircle cx='208' cy='247' r='1.27'/%3E%3Ccircle cx='221' cy='247' r='1.43'/%3E%3Ccircle cx='234' cy='247' r='1.6'/%3E%3Ccircle cx='247' cy='247' r='1.77'/%3E%3Ccircle cx='260' cy='247' r='1.94'/%3E%3Ccircle cx='273' cy='247' r='2.11'/%3E%3Ccircle cx='286' cy='247' r='2.29'/%3E%3Ccircle cx='299' cy='247' r='2.48'/%3E%3Ccircle cx='162.5' cy='253.5' r='0.82'/%3E%3Ccircle cx='175.5' cy='253.5' r='0.96'/%3E%3Ccircle cx='188.5' cy='253.5' r='1.12'/%3E%3Ccircle cx='201.5' cy='253.5' r='1.27'/%3E%3Ccircle cx='214.5' cy='253.5' r='1.43'/%3E%3Ccircle cx='227.5' cy='253.5' r='1.6'/%3E%3Ccircle cx='240.5' cy='253.5' r='1.77'/%3E%3Ccircle cx='253.5' cy='253.5' r='1.94'/%3E%3Ccircle cx='266.5' cy='253.5' r='2.11'/%3E%3Ccircle cx='279.5' cy='253.5' r='2.29'/%3E%3Ccircle cx='292.5' cy='253.5' r='2.48'/%3E%3Ccircle cx='305.5' cy='253.5' r='2.66'/%3E%3Ccircle cx='156' cy='260' r='0.82'/%3E%3Ccircle cx='169' cy='260' r='0.96'/%3E%3Ccircle cx='182' cy='260' r='1.12'/%3E%3Ccircle cx='195' cy='260' r='1.27'/%3E%3Ccircle cx='208' cy='260' r='1.43'/%3E%3Ccircle cx='221' cy='260' r='1.6'/%3E%3Ccircle cx='234' cy='260' r='1.77'/%3E%3Ccircle cx='247' cy='260' r='1.94'/%3E%3Ccircle cx='260' cy='260' r='2.11'/%3E%3Ccircle cx='273' cy='260' r='2.29'/%3E%3Ccircle cx='286' cy='260' r='2.48'/%3E%3Ccircle cx='299' cy='260' r='2.66'/%3E%3Ccircle cx='149.5' cy='266.5' r='0.82'/%3E%3Ccircle cx='162.5' cy='266.5' r='0.96'/%3E%3Ccircle cx='175.5' cy='266.5' r='1.12'/%3E%3Ccircle cx='188.5' cy='266.5' r='1.27'/%3E%3Ccircle cx='201.5' cy='266.5' r='1.43'/%3E%3Ccircle cx='214.5' cy='266.5' r='1.6'/%3E%3Ccircle cx='227.5' cy='266.5' r='1.77'/%3E%3Ccircle cx='240.5' cy='266.5' r='1.94'/%3E%3Ccircle cx='253.5' cy='266.5' r='2.11'/%3E%3Ccircle cx='266.5' cy='266.5' r='2.29'/%3E%3Ccircle cx='279.5' cy='266.5' r='2.48'/%3E%3Ccircle cx='292.5' cy='266.5' r='2.66'/%3E%3Ccircle cx='143' cy='273' r='0.82'/%3E%3Ccircle cx='156' cy='273' r='0.96'/%3E%3Ccircle cx='169' cy='273' r='1.12'/%3E%3Ccircle cx='182' cy='273' r='1.27'/%3E%3Ccircle cx='195' cy='273' r='1.43'/%3E%3Ccircle cx='208' cy='273' r='1.6'/%3E%3Ccircle cx='221' cy='273' r='1.77'/%3E%3Ccircle cx='234' cy='273' r='1.94'/%3E%3Ccircle cx='247' cy='273' r='2.11'/%3E%3Ccircle cx='260' cy='273' r='2.29'/%3E%3Ccircle cx='273' cy='273' r='2.48'/%3E%3Ccircle cx='286' cy='273' r='2.66'/%3E%3Ccircle cx='136.5' cy='279.5' r='0.82'/%3E%3Ccircle cx='149.5' cy='279.5' r='0.96'/%3E%3Ccircle cx='162.5' cy='279.5' r='1.12'/%3E%3Ccircle cx='175.5' cy='279.5' r='1.27'/%3E%3Ccircle cx='188.5' cy='279.5' r='1.43'/%3E%3Ccircle cx='201.5' cy='279.5' r='1.6'/%3E%3Ccircle cx='214.5' cy='279.5' r='1.77'/%3E%3Ccircle cx='227.5' cy='279.5' r='1.94'/%3E%3Ccircle cx='240.5' cy='279.5' r='2.11'/%3E%3Ccircle cx='253.5' cy='279.5' r='2.29'/%3E%3Ccircle cx='266.5' cy='279.5' r='2.48'/%3E%3Ccircle cx='279.5' cy='279.5' r='2.66'/%3E%3Ccircle cx='130' cy='286' r='0.82'/%3E%3Ccircle cx='143' cy='286' r='0.96'/%3E%3Ccircle cx='156' cy='286' r='1.12'/%3E%3Ccircle cx='169' cy='286' r='1.27'/%3E%3Ccircle cx='182' cy='286' r='1.43'/%3E%3Ccircle cx='195' cy='286' r='1.6'/%3E%3Ccircle cx='208' cy='286' r='1.77'/%3E%3Ccircle cx='221' cy='286' r='1.94'/%3E%3Ccircle cx='234' cy='286' r='2.11'/%3E%3Ccircle cx='247' cy='286' r='2.29'/%3E%3Ccircle cx='260' cy='286' r='2.48'/%3E%3Ccircle cx='273' cy='286' r='2.66'/%3E%3Ccircle cx='123.5' cy='292.5' r='0.82'/%3E%3Ccircle cx='136.5' cy='292.5' r='0.96'/%3E%3Ccircle cx='149.5' cy='292.5' r='1.12'/%3E%3Ccircle cx='162.5' cy='292.5' r='1.27'/%3E%3Ccircle cx='175.5' cy='292.5' r='1.43'/%3E%3Ccircle cx='188.5' cy='292.5' r='1.6'/%3E%3Ccircle cx='201.5' cy='292.5' r='1.77'/%3E%3Ccircle cx='214.5' cy='292.5' r='1.94'/%3E%3Ccircle cx='227.5' cy='292.5' r='2.11'/%3E%3Ccircle cx='240.5' cy='292.5' r='2.29'/%3E%3Ccircle cx='253.5' cy='292.5' r='2.48'/%3E%3Ccircle cx='266.5' cy='292.5' r='2.66'/%3E%3Ccircle cx='117' cy='299' r='0.82'/%3E%3Ccircle cx='130' cy='299' r='0.96'/%3E%3Ccircle cx='143' cy='299' r='1.12'/%3E%3Ccircle cx='156' cy='299' r='1.27'/%3E%3Ccircle cx='169' cy='299' r='1.43'/%3E%3Ccircle cx='182' cy='299' r='1.6'/%3E%3Ccircle cx='195' cy='299' r='1.77'/%3E%3Ccircle cx='208' cy='299' r='1.94'/%3E%3Ccircle cx='221' cy='299' r='2.11'/%3E%3Ccircle cx='234' cy='299' r='2.29'/%3E%3Ccircle cx='247' cy='299' r='2.48'/%3E%3Ccircle cx='260' cy='299' r='2.66'/%3E%3Ccircle cx='110.5' cy='305.5' r='0.82'/%3E%3Ccircle cx='123.5' cy='305.5' r='0.96'/%3E%3Ccircle cx='136.5' cy='305.5' r='1.12'/%3E%3Ccircle cx='149.5' cy='305.5' r='1.27'/%3E%3Ccircle cx='162.5' cy='305.5' r='1.43'/%3E%3Ccircle cx='175.5' cy='305.5' r='1.6'/%3E%3Ccircle cx='188.5' cy='305.5' r='1.77'/%3E%3Ccircle cx='201.5' cy='305.5' r='1.94'/%3E%3Ccircle cx='214.5' cy='305.5' r='2.11'/%3E%3Ccircle cx='227.5' cy='305.5' r='2.29'/%3E%3Ccircle cx='240.5' cy='305.5' r='2.48'/%3E%3Ccircle cx='253.5' cy='305.5' r='2.66'/%3E%3Ccircle cx='104' cy='312' r='0.82'/%3E%3Ccircle cx='117' cy='312' r='0.96'/%3E%3Ccircle cx='130' cy='312' r='1.12'/%3E%3Ccircle cx='143' cy='312' r='1.27'/%3E%3Ccircle cx='156' cy='312' r='1.43'/%3E%3Ccircle cx='169' cy='312' r='1.6'/%3E%3Ccircle cx='182' cy='312' r='1.77'/%3E%3Ccircle cx='195' cy='312' r='1.94'/%3E%3Ccircle cx='208' cy='312' r='2.11'/%3E%3Ccircle cx='221' cy='312' r='2.29'/%3E%3Ccircle cx='234' cy='312' r='2.48'/%3E%3Ccircle cx='110.5' cy='318.5' r='0.96'/%3E%3Ccircle cx='123.5' cy='318.5' r='1.12'/%3E%3Ccircle cx='136.5' cy='318.5' r='1.27'/%3E%3Ccircle cx='149.5' cy='318.5' r='1.43'/%3E%3Ccircle cx='162.5' cy='318.5' r='1.6'/%3E%3Ccircle cx='175.5' cy='318.5' r='1.77'/%3E%3Ccircle cx='188.5' cy='318.5' r='1.94'/%3E%3Ccircle cx='201.5' cy='318.5' r='2.11'/%3E%3Ccircle cx='214.5' cy='318.5' r='2.29'/%3E%3Ccircle cx='227.5' cy='318.5' r='2.48'/%3E%3Ccircle cx='130' cy='325' r='1.27'/%3E%3Ccircle cx='143' cy='325' r='1.43'/%3E%3Ccircle cx='156' cy='325' r='1.6'/%3E%3Ccircle cx='169' cy='325' r='1.77'/%3E%3Ccircle cx='182' cy='325' r='1.94'/%3E%3Ccircle cx='195' cy='325' r='2.11'/%3E%3Ccircle cx='208' cy='325' r='2.29'/%3E%3C/g%3E%3C/svg%3E") center/100% 100% no-repeat;transform:scale(var(--mag-ds)) rotate(var(--mag-dr));opacity:var(--mag-do)}
+[data-scene="magazine"] .mag-cover.left::before{right:auto;left:-168px;transform:scale(var(--mag-ds)) rotate(var(--mag-dr)) scaleX(-1)}
+[data-scene="magazine"] .mag-cover.no-disc::before{display:none}
+
+/* 结尾署名：黑体小字（颜色是 --sign-color） */
+[data-scene="magazine"] .li-sign{font-family:var(--f-sans);letter-spacing:.04em}
+
+/* 点击处一圈很淡的橘红网点（magazine.js 的 ripple 放进内容下面的涟漪层） */
+[data-scene="magazine"] .mag-ripple{position:absolute;left:0;top:0;width:120px;height:120px;margin:-60px 0 0 -60px;overflow:visible;pointer-events:none;fill:var(--mag-orange)}
+
+/* ---------- 形象：一点贴纸的影子；说的话是纸白小标签、墨黑框 ---------- */
+[data-scene="magazine"] .mascot{--mascot-outline:#F7F2E6;--mascot-shadow:drop-shadow(0 4px 3px rgba(50,35,15,.24))}
+[data-scene="magazine"] .mascot-say{padding:8px 20px 10px;border:2.5px solid var(--mag-ink);border-radius:0;background:var(--mag-white);color:var(--mag-ink);font-family:var(--f-sans);font-weight:700}
+[data-scene="magazine"] .mascot-say::after{background:var(--mag-white);border-right:2.5px solid var(--mag-ink);border-bottom:2.5px solid var(--mag-ink)}
+
+/* =====================================================================
+   常驻信息：章节（封面、结尾这类没有主题行的页，墨绿小条）、页码、节拍指示、计时
+   节拍格是几小片纸：讲过的墨黑、当前的橘红、没到的只留一道浅框；换拍时当前那片「啪」地贴上，拍号从下面滚上来
+   右上角整组的右边和栏线对齐（right 120），竖直方向和主题行同一条中线（y 48）
+   ===================================================================== */
+#stage[data-scene="magazine"] .chap{top:30px}
+#stage[data-scene="magazine"] .chap span{padding:7px 12px 6px;background:var(--mag-green);color:var(--mag-cream);font:700 24px/1 var(--f-sans);letter-spacing:.12em}
+#stage[data-scene="magazine"] .meta{right:120px;top:28px;height:40px;gap:20px;font:600 26px/40px var(--f-sans);color:var(--ink-2);letter-spacing:.02em}
+#stage[data-scene="magazine"] .pageno{color:var(--ink-2)}
+#stage[data-scene="magazine"] .pageno b{color:var(--mag-ink);font-weight:700}
+#stage[data-scene="magazine"] .meter{gap:14px}
+#stage[data-scene="magazine"] .meter .dots{gap:7px}
+#stage[data-scene="magazine"] .dots i{display:block;width:26px;height:11px;border:1.5px solid rgba(28,26,23,.25);transition:background-color .3s,border-color .3s}
+#stage[data-scene="magazine"] .dots i.on{background:var(--mag-ink);border-color:var(--mag-ink)}
+#stage[data-scene="magazine"] .dots i.now{background:var(--mag-orange);border-color:var(--mag-orange);animation:magTick .4s cubic-bezier(.3,1.8,.5,1)}
+#stage[data-scene="magazine"] .meter .ml{display:none}
+#stage[data-scene="magazine"] .meter .ms{display:inline-flex;align-items:baseline;gap:2px;color:var(--ink-2)}
+#stage[data-scene="magazine"] .meter .ms b{display:inline-block;color:var(--mag-orange);font-weight:700;animation:magRoll .34s cubic-bezier(.2,.8,.2,1)}
+#stage[data-scene="magazine"] .timer{font:600 24px/1 var(--f-mono);color:var(--ink-3)}
+@keyframes magTick{from{transform:scale(1.7) rotate(-14deg)}to{transform:none}}
+@keyframes magRoll{from{transform:translateY(80%);opacity:0}to{transform:none;opacity:1}}
