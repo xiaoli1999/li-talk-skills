@@ -1,0 +1,311 @@
+/* =====================================================================
+   风格 · 像素游戏 pixel 的样子（行为在 pixel.js）
+   一块 8-bit 游戏的标题画面：所有东西对齐同一张 4px 网格，字用缝合像素字体（12px 点阵）。
+   正文 48px（每个字点 1 格）、大标题和金句 96px（每个字点 2 格），主题行、页码、「已复制」等小字 24px。
+   配色只用 16 色：夜空蓝 7 级（--px-k、--px-n1…n6）+ 暖白 --px-w + 金橙 4 级（a y o r）+ 绿 3 级（l g d）+ 玫红 --px-p。
+   所有选择器的第一段都带 [data-scene="pixel"]
+   - 窗口（卡片、小格、步骤每一项、终端、截图位）：窗框画在伪元素上（四角各切一格），硬阴影用 drop-shadow 往右下错开两格；
+     窗框颜色是 --ring（平常暖白、悬停金色，带颜色的卡片换成对应的颜色）
+   - 背景纹理、图标、金色字面由 pixel.js 生成成 data URI，写在 :root 的 --px-* 变量里
+   - --recede（讲过的拍变到多淡）由 pixel.js 的 recede 写入，这里不写
+   ===================================================================== */
+
+/* 缝合像素字体（OFL，见 vendor/fonts/pixel/ 里的许可证）：相对这份 CSS 的位置找字体文件 */
+@font-face{font-family:"FusionPixel";src:url("../vendor/fonts/pixel/fusion-pixel-12px-proportional-zh_hans.woff2") format("woff2");font-display:block}
+
+/* 变量：16 色调色板、字体、组件颜色 */
+[data-scene="pixel"]{
+  --px-k:#0B0B1E; --px-n1:#141634; --px-n2:#1D2250; --px-n3:#2B3375; --px-n4:#46529E; --px-n5:#7F8DD0; --px-n6:#C3CBF0;
+  --px-w:#F7F1E1; --px-a:#FFF2A6; --px-y:#FFCB3D; --px-o:#F08A2C; --px-r:#A9432A;
+  --px-l:#A8F07A; --px-g:#4CC764; --px-d:#23805A; --px-p:#F2727F;
+  /* 像素圆角：四个角各切掉一格 */
+  --px-notch:polygon(4px 0,calc(100% - 4px) 0,calc(100% - 4px) 4px,100% 4px,100% calc(100% - 4px),calc(100% - 4px) calc(100% - 4px),calc(100% - 4px) 100%,4px 100%,4px calc(100% - 4px),0 calc(100% - 4px),0 4px,4px 4px);
+  /* 字体：像素字体加载不到时退回系统黑体（字会变宽） */
+  --f-hand:"FusionPixel","PingFang SC","HarmonyOS Sans SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --f-sans:"FusionPixel","PingFang SC","HarmonyOS Sans SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --f-mono:"FusionPixel",Consolas,"Cascadia Mono",Menlo,"PingFang SC","Microsoft YaHei",monospace;
+  --fs-title:96px; --fs-xl:96px; --fs-lg:48px; --fs-md:48px; --fs-body:48px; --fs-min:48px;
+  --rough-r:0;
+  --bg:#141634; --ink:#F7F1E1; --ink-2:#C3CBF0; --ink-3:#7F8DD0; --line:#C3CBF0;
+  --mark:#FFCB3D; --key-ink:#FFCB3D; --hl:rgba(255,203,61,.35); --accent:#FFCB3D;
+  --card-ink:#F7F1E1; --card-ink-2:#C3CBF0; --paper:#1D2250;
+  /* 带颜色的卡片：窗框换成对应的颜色（窗口本身都是夜空蓝） */
+  --t-yellow:#FFCB3D; --t-mint:#A8F07A; --t-pink:#F2727F; --t-blue:#7F8DD0; --t-white:#F7F1E1; --t-peach:#F08A2C;
+  --term-bg:#0B0B1E; --term-ink:#F7F1E1;
+  --human:#F08A2C; --ai:#4CC764; --idle:#46529E;
+  --sign-color:#7F8DD0;
+  /* 夜空：深到浅三级，交界各一条有序抖动带（44%、87% 处）；阅读模式里每页也用它 */
+  --scene-bg:
+    var(--px-d12) 0 44%/16px 24px repeat-x,
+    var(--px-d23) 0 87%/16px 24px repeat-x,
+    linear-gradient(#141634 0 calc(.44 * (100% - 24px) + 12px),#1D2250 0 calc(.87 * (100% - 24px) + 12px),#2B3375 0);
+}
+
+/* 背景层（pixel.js 的 backdrop 放进去）：星星按舞台 1920×1080 居中平铺（舞台在背景层里居中），远山近山贴底平铺 */
+[data-scene="pixel"] .px-stars{position:absolute;inset:0;background:var(--px-stars) 50% 50%/1920px 1080px repeat}
+[data-scene="pixel"] .px-hills{position:absolute;left:0;right:0;bottom:0;background-repeat:repeat-x;background-position:50% 100%}
+[data-scene="pixel"] .px-far{height:160px;background-image:var(--px-far);background-size:480px 160px}
+[data-scene="pixel"] .px-near{height:80px;background-image:var(--px-near);background-size:320px 80px}
+
+/* 正文：像素字不加粗、不做假粗体，每段字一格深色硬投影 */
+[data-scene="pixel"].slide{color:var(--px-w);letter-spacing:0;font-weight:400;font-synthesis:none;-webkit-font-smoothing:none;text-shadow:4px 4px 0 var(--px-k)}
+[data-scene="pixel"] :is(b,strong,h3,.b){font-weight:400}
+[data-scene="pixel"] svg{shape-rendering:crispEdges}
+/* 讲过的拍：分三步暗下去（不平滑） */
+[data-scene="pixel"] .past{transition:opacity .24s steps(3)}
+@media (hover:hover){[data-scene="pixel"] .past:hover{opacity:1}}
+/* 像素风格不歪：页面里写的 --r 倾斜在这里不用 */
+[data-scene="pixel"] :is(.card,.cell,.tag,.quote,.term,.copy,.shot,.tilt){rotate:none}
+
+/* =====================================================================
+   主题行、大标题、解释句
+   ===================================================================== */
+[data-scene="pixel"] .s-topic{gap:12px;text-shadow:4px 4px 0 var(--px-k)}
+[data-scene="pixel"] .s-topic::before{content:"";flex:none;width:20px;height:20px;background:var(--px-gem) center/100% 100% no-repeat}
+[data-scene="pixel"] .s-topic .tc{padding:0;font:400 24px/24px var(--f-hand);color:var(--px-n5)}
+/* 分隔符 ›：像素字体里没有这个字，换成一个画出来的像素箭头 */
+[data-scene="pixel"] .s-topic .ts{width:16px;height:24px;font-size:0;background:var(--px-sep) center/100% 100% no-repeat}
+[data-scene="pixel"] .s-topic .tt{padding:0;font:400 24px/24px var(--f-hand);color:var(--px-n5)}
+
+/* 大标题：游戏标题画面式的像素字标。字面是抖动金色（浅金 → 金 → 橙），
+   字板和厚度用一串 drop-shadow 逐格外扩：先往四周各扩两格深色（字板），再往下错一格锈红、一格深色（厚度）；
+   字板压在厚度上面，锈红只露在整块字板的下沿。不支持把背景裁成字形的浏览器就是纯金色 */
+[data-scene="pixel"] .s-title{top:88px;font:400 var(--fs-title)/1 var(--f-hand);letter-spacing:0;color:var(--px-y);text-shadow:none;
+  filter:drop-shadow(8px 0 0 #0B0B1E) drop-shadow(-8px 0 0 #0B0B1E) drop-shadow(0 8px 0 #0B0B1E) drop-shadow(0 -8px 0 #0B0B1E) drop-shadow(0 8px 0 #A9432A) drop-shadow(0 4px 0 #0B0B1E)}
+[data-scene="pixel"] .s-title .key{padding:0;margin:0}
+@supports ((-webkit-background-clip:text) or (background-clip:text)){
+  [data-scene="pixel"] .s-title{color:transparent;background:var(--px-gold-t) 0 0/.08334em 1em repeat;-webkit-background-clip:text;background-clip:text}
+  /* 开场拆成单字掉下来时：每个字自己裁一份金色字面，外层的先不画（免得字还没掉到就先亮出来） */
+  [data-scene="pixel"] .s-title.px-split{background:none}
+  [data-scene="pixel"] .s-title .px-ch{display:inline-block;color:transparent;background:var(--px-gold-t) 0 0/.08334em 1em repeat;-webkit-background-clip:text;background-clip:text}
+}
+/* 标题角上的闪光（开场时 pixel.js 放一个，播完删掉） */
+[data-scene="pixel"] .px-spark{position:absolute;z-index:7;width:28px;height:28px;visibility:hidden;pointer-events:none;background:var(--px-spark) center/100% 100% no-repeat}
+
+/* 一句话解释：大标题是 96px，往下让到 y 220；左边一道金色像素竖条 */
+[data-scene="pixel"] .explain{top:220px;padding-left:32px;font:400 48px/48px var(--f-hand);color:var(--px-n6);letter-spacing:0}
+[data-scene="pixel"] .explain::before{width:8px;top:4px;bottom:4px;border-radius:0;background:var(--px-y);box-shadow:4px 4px 0 var(--px-k)}
+[data-scene="pixel"] .explain b{color:var(--px-w)}
+
+/* 文字工具 */
+[data-scene="pixel"] .lead{font-size:48px;line-height:64px;color:var(--px-n6)}
+[data-scene="pixel"] :is(.t-lg,.t-md,.t-sm){font-size:48px;line-height:64px}
+[data-scene="pixel"] .t-xl{font-size:96px;line-height:1.25}
+[data-scene="pixel"] .muted{color:var(--px-n6)}
+[data-scene="pixel"] .faint{color:var(--px-n5)}
+[data-scene="pixel"] .dot{border-radius:0;width:.5em;height:.5em;box-shadow:4px 4px 0 var(--px-k)}
+
+/* =====================================================================
+   重点词：到拍时反白闪两下（金底深字），落定成金色 + 一格像素下划线，角上蹦一颗星。
+   引擎在那一拍把 --k 从 0 推到 1（0.45 秒，先快后慢）：两次反白落在 --k 0–.25、.46–.64，
+   下划线在 .64–.89 之间分四格拉出，星星在 .17–.89 之间出现（中间一段放大一格）。
+   引擎还会把重点词放大一下再缩回，像素不缩放，这里关掉
+   ===================================================================== */
+[data-scene="pixel"] .key{
+  --px-f1:calc(clamp(0,(var(--k) - .01) * 1000,1) * clamp(0,(.25 - var(--k)) * 1000,1));
+  --px-f2:calc(clamp(0,(var(--k) - .46) * 1000,1) * clamp(0,(.64 - var(--k)) * 1000,1));
+  --px-fl:calc(var(--px-f1) + var(--px-f2));
+  --px-ul:clamp(0,(var(--k) - .64) * 4,1);
+  --px-st:calc(clamp(0,(var(--k) - .17) * 1000,1) * clamp(0,(.89 - var(--k)) * 1000,1));
+  --px-big:calc(clamp(0,(var(--k) - .395) * 1000,1) * clamp(0,(.739 - var(--k)) * 1000,1));
+  padding:0;margin:0;font-weight:400;
+  color:rgb(calc(255 - 244 * var(--px-fl)) calc(203 - 192 * var(--px-fl)) calc(61 - 31 * var(--px-fl)));
+  background-color:rgba(255,203,61,var(--px-fl));
+  text-shadow:4px 4px 0 rgba(11,11,30,calc(1 - var(--px-fl)));
+  transform:none!important}
+[data-scene="pixel"] .key::after{content:"";position:absolute;left:0;right:0;bottom:-4px;height:4px;background:var(--px-y);box-shadow:0 4px 0 var(--px-k);
+  transform-origin:0 50%;transform:scaleX(var(--px-ul))}
+@supports (transform:scaleX(round(down,1.5,1))){
+  [data-scene="pixel"] .key::after{transform:scaleX(calc(round(down,var(--px-ul) * 4,1) / 4))}
+}
+[data-scene="pixel"] .key::before{content:"";position:absolute;right:-24px;top:-20px;width:28px;height:28px;pointer-events:none;
+  background:var(--px-spark) center/100% 100% no-repeat;opacity:var(--px-st);transform:scale(calc(.5 + .5 * var(--px-big)))}
+
+/* =====================================================================
+   窗口：卡片、小格、步骤的每一项、截图位（终端另写）
+   窗框画在 ::before 上（步骤的 ::before 是序号，窗框改用 ::after）：
+   深色描边一格 → 窗框色一格 → 内衬一格 → 顶上一格亮蓝高光；硬阴影是整个组件的 drop-shadow。
+   定位不在这里改（卡片、小格、截图位、终端本来就是相对定位，页面写了 .abs 时要保持绝对定位）；
+   drop-shadow 本身就让组件自成一层，z-index:-1 的窗框压在组件里的字下面、不会掉到页面背后
+   ===================================================================== */
+[data-scene="pixel"] :is(.card,.cell,.shot,.steps>li){--ring:var(--tint,var(--px-w));background:none;border:0;border-radius:0;box-shadow:none;
+  filter:drop-shadow(8px 8px 0 #0B0B1E)}
+[data-scene="pixel"] :is(.card,.cell,.shot)::before,
+[data-scene="pixel"] .steps>li::after{content:"";position:absolute;inset:0;z-index:-1;width:auto;height:auto;margin:0;rotate:none;border-radius:0;pointer-events:none;
+  background:var(--px-n2);clip-path:var(--px-notch);
+  box-shadow:inset 0 0 0 4px var(--px-k),inset 0 0 0 8px var(--ring),inset 0 0 0 12px var(--px-n1),inset 0 16px 0 0 var(--px-n3);
+  transition:box-shadow .12s steps(2)}
+/* 悬停：窗框变金色；按下时压一格（照样进拍） */
+@media (hover:hover){
+  [data-scene="pixel"] :is(.card,.cell,.shot,.steps>li):hover{--ring:var(--px-y)}
+}
+[data-scene="pixel"] :is(.card,.cell,.steps>li):active{translate:4px 4px}
+/* 悬停时窗口左边出现 RPG 菜单的选择箭头（只滑入一次，不循环） */
+[data-scene="pixel"] .card::after{content:"";position:absolute;left:-44px;top:36px;width:24px;height:36px;visibility:hidden;pointer-events:none;
+  background:var(--px-cursor) center/100% 100% no-repeat}
+@media (hover:hover){
+  [data-scene="pixel"] .card:hover::after{visibility:visible;animation:px-cur .16s steps(2)}
+}
+@keyframes px-cur{from{transform:translateX(-8px)}to{transform:none}}
+
+/* ---------- 卡片 ---------- */
+[data-scene="pixel"] .card{padding:40px 40px 40px;color:var(--px-w)}
+[data-scene="pixel"] .card h3{margin:0 0 8px;font:400 48px/64px var(--f-hand);color:var(--px-w)}
+[data-scene="pixel"] .card :is(p,li){font-size:48px;line-height:64px;color:var(--px-w)}
+[data-scene="pixel"] .card :is(.sm,small){font-size:48px;line-height:64px;color:var(--px-n6)}
+[data-scene="pixel"] .card li{padding-left:32px}
+[data-scene="pixel"] .card li::before{left:0;top:24px;width:12px;height:12px;border-radius:0;rotate:none;opacity:1;background:var(--px-y);box-shadow:4px 4px 0 var(--px-k)}
+/* 卡片上沿的标签：一块深色小牌，金字，暖白像素框 */
+[data-scene="pixel"] .lab{top:-28px;left:32px;padding:4px 16px;font:400 48px/48px var(--f-hand);color:var(--px-y);background:var(--px-k);
+  box-shadow:0 -4px 0 0 var(--px-w),0 4px 0 0 var(--px-w),-4px 0 0 0 var(--px-w),4px 0 0 0 var(--px-w)}
+
+/* ---------- 带序号的步骤：每一项一扇窗口，序号是一块金色像素牌 ---------- */
+[data-scene="pixel"] .steps>li{position:relative;grid-template-columns:64px 1fr;column-gap:24px;padding:24px 28px 24px 24px}
+[data-scene="pixel"] .steps>li::before{width:64px;height:64px;margin-top:0;padding-bottom:4px;font:400 48px/1 var(--f-hand);color:var(--px-k);text-shadow:none;border:0;border-radius:0;
+  background:var(--px-y);clip-path:var(--px-notch);box-shadow:inset 0 -8px 0 0 var(--px-o),inset 0 4px 0 0 var(--px-a)}
+[data-scene="pixel"] .steps>li>b{font:400 48px/56px var(--f-hand);color:var(--px-w)}
+[data-scene="pixel"] .steps>li>span{font-size:48px;line-height:56px;color:var(--px-n6)}
+
+/* ---------- 左右对比：中间一个金色像素符号 ---------- */
+[data-scene="pixel"] .vs::before{font:400 96px/1 var(--f-hand);color:var(--px-y);text-shadow:8px 8px 0 var(--px-k)}
+
+/* ---------- 一排小格：小窗口；AI 绿框、需要人橘框（角上一颗橘色像素点）、不用了灰框加删除线 ---------- */
+[data-scene="pixel"] .cell{--ring:var(--tint,var(--px-n5));padding:32px 16px 32px}
+[data-scene="pixel"] .cell>i{margin-bottom:8px;font:400 24px/24px var(--f-hand);color:var(--px-n5)}
+[data-scene="pixel"] .cell>b{font:400 48px/56px var(--f-hand);color:var(--px-w)}
+[data-scene="pixel"] .cell>span{margin-top:8px;font-size:48px;line-height:56px;color:var(--px-n6)}
+[data-scene="pixel"] .cell.ai{--ring:var(--px-g)}
+[data-scene="pixel"] .cell.human{--ring:var(--px-o)}
+[data-scene="pixel"] .cell.human::after{top:20px;right:20px;width:12px;height:12px;border-radius:0;background:var(--px-o);box-shadow:4px 4px 0 var(--px-k)}
+[data-scene="pixel"] .cell.idle{--ring:var(--px-n4)}
+[data-scene="pixel"] .cell.idle,[data-scene="pixel"] .cell.idle>:is(b,span,i){color:var(--px-n5)}
+[data-scene="pixel"] .cell.idle>b{text-decoration:line-through;text-decoration-thickness:4px;text-decoration-color:var(--px-n4)}
+
+/* ---------- 标签：一块深蓝像素牌，浅金字 ---------- */
+[data-scene="pixel"] .tag{padding:4px 20px;border:0;border-radius:0;font:400 48px/56px var(--f-hand);color:var(--px-a);background:var(--px-n3);
+  box-shadow:0 -4px 0 0 var(--px-n5),0 4px 0 0 var(--px-n5),-4px 0 0 0 var(--px-n5),4px 0 0 0 var(--px-n5),8px 8px 0 0 var(--px-k)}
+
+/* ---------- 大字金句：和大标题一样的金色抖动字面，字板外扩一格、锈红厚度一格 ---------- */
+[data-scene="pixel"] .quote{font:400 var(--fs-xl)/1.25 var(--f-hand);letter-spacing:0;color:var(--px-y);text-shadow:none;
+  filter:drop-shadow(4px 0 0 #0B0B1E) drop-shadow(-4px 0 0 #0B0B1E) drop-shadow(0 4px 0 #0B0B1E) drop-shadow(0 -4px 0 #0B0B1E) drop-shadow(0 8px 0 #A9432A) drop-shadow(0 4px 0 #0B0B1E)}
+@supports ((-webkit-background-clip:text) or (background-clip:text)){
+  [data-scene="pixel"] .quote{color:transparent;background:var(--px-gold-q) 0 0/.08334em 1.25em repeat;-webkit-background-clip:text;background-clip:text}
+}
+[data-scene="pixel"] .quote .key{padding:0;margin:0}
+
+/* ---------- 终端：深色窗口，暖白字；标题栏一条亮蓝，三个方块灯 ---------- */
+[data-scene="pixel"] .term{padding:0 0 28px;border-radius:0;color:var(--px-w);font:400 48px/64px var(--f-mono);text-shadow:none;
+  background:none;box-shadow:none;filter:drop-shadow(8px 8px 0 #0B0B1E)}
+[data-scene="pixel"] .term::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:var(--px-k);clip-path:var(--px-notch);
+  box-shadow:inset 0 0 0 4px var(--px-n4)}
+[data-scene="pixel"] .term-bar{height:48px;margin:4px 4px 20px;padding:0 20px;gap:12px;background:var(--px-n3);font:400 24px/24px var(--f-mono);color:var(--px-n6)}
+[data-scene="pixel"] .term-bar i{width:12px;height:12px;border-radius:0;background:var(--px-p)}
+[data-scene="pixel"] .term-bar i:nth-child(2){background:var(--px-y)}
+[data-scene="pixel"] .term-bar i:nth-child(3){background:var(--px-g);margin-right:12px}
+[data-scene="pixel"] .term p{padding:0 32px}
+[data-scene="pixel"] .term .in::before{content:"$ ";color:var(--px-g)}
+[data-scene="pixel"] .term .cc::before{content:"> ";color:var(--px-y)}
+[data-scene="pixel"] .term .dim{color:var(--px-n5)}
+[data-scene="pixel"] .term .ok{color:var(--px-l)}
+[data-scene="pixel"] .term .warn{color:var(--px-o)}
+[data-scene="pixel"] .term .hi{color:var(--px-a)}
+
+/* ---------- 一行可复制的命令：一颗像素按钮。悬停抬起一格、边框变金；按下压一格；复制成功边框变绿 ---------- */
+[data-scene="pixel"] .copy{--cb:var(--px-n4);height:72px;padding:0 20px;gap:16px;border-radius:0;color:var(--px-w);background:var(--px-k);
+  font:400 48px/64px var(--f-mono);text-shadow:none;
+  box-shadow:0 -4px 0 0 var(--cb),0 4px 0 0 var(--cb),-4px 0 0 0 var(--cb),4px 0 0 0 var(--cb),8px 8px 0 0 var(--px-k);
+  transition:translate .08s steps(2),box-shadow .08s steps(2)}
+[data-scene="pixel"] .copy .ps{color:var(--px-g);opacity:1}
+[data-scene="pixel"] .copy .ct{white-space:pre}
+[data-scene="pixel"] .copy .ic{width:28px;height:28px;opacity:1;background:var(--px-n5);
+  -webkit-mask:var(--px-copy) center/100% 100% no-repeat;mask:var(--px-copy) center/100% 100% no-repeat}
+@media (hover:hover){
+  [data-scene="pixel"] .copy:hover{--cb:var(--px-y);translate:-4px -4px;
+    box-shadow:0 -4px 0 0 var(--cb),0 4px 0 0 var(--cb),-4px 0 0 0 var(--cb),4px 0 0 0 var(--cb),12px 12px 0 0 var(--px-k)}
+  [data-scene="pixel"] .copy:hover .ps{color:var(--px-y)}
+  [data-scene="pixel"] .copy:hover .ic{background:var(--px-y)}
+}
+[data-scene="pixel"] .copy:active{translate:4px 4px;
+  box-shadow:0 -4px 0 0 var(--cb),0 4px 0 0 var(--cb),-4px 0 0 0 var(--cb),4px 0 0 0 var(--cb),4px 4px 0 0 var(--px-k)}
+[data-scene="pixel"] .copy:focus-visible{outline:4px dashed var(--px-y);outline-offset:12px}
+[data-scene="pixel"] .copy.is-copied{--cb:var(--px-g)}
+[data-scene="pixel"] .copy.is-copied .ic{background:var(--px-g);-webkit-mask-image:var(--px-tick);mask-image:var(--px-tick)}
+/* 复制时顶出来的金币（三帧轮换）和「+1」（pixel.js 的 copied 放进命令按钮里，播完删掉） */
+[data-scene="pixel"] .px-coin{position:absolute;right:24px;top:-44px;width:40px;height:40px;visibility:hidden;pointer-events:none}
+[data-scene="pixel"] .px-coin svg{display:none;width:100%;height:100%}
+[data-scene="pixel"] .px-coin:is([data-f="0"]) .f0,[data-scene="pixel"] .px-coin:is([data-f="1"]) .f1,[data-scene="pixel"] .px-coin:is([data-f="2"]) .f2{display:block}
+[data-scene="pixel"] .px-plus{position:absolute;right:20px;top:-96px;font:400 48px/48px var(--f-hand);color:var(--px-y);visibility:hidden;pointer-events:none;
+  text-shadow:-4px 0 0 var(--px-k),4px 0 0 var(--px-k),0 -4px 0 var(--px-k),0 4px 0 var(--px-k),4px 4px 0 var(--px-k)}
+/* 像素粒子（点击、金币碎开） */
+[data-scene="pixel"] .px-bit{position:absolute;left:0;top:0;pointer-events:none}
+
+/* 「已复制」：一扇绿框小窗，像素对勾（出场见 pixel.js 的 copied） */
+[data-scene="pixel"] .copied-tip{height:56px;padding:0 24px 0 20px;gap:12px;color:var(--px-w);background:var(--px-n2);font:400 24px/24px var(--f-hand);text-shadow:none;
+  clip-path:var(--px-notch);transform-origin:0 50%;
+  box-shadow:inset 0 0 0 4px var(--px-k),inset 0 0 0 8px var(--px-g),inset 0 0 0 12px var(--px-n1)}
+[data-scene="pixel"] .copied-tip svg{display:none}
+[data-scene="pixel"] .copied-tip::before{content:"";flex:none;width:36px;height:32px;background:var(--px-check) center/100% 100% no-repeat}
+[data-scene="pixel"] .copied-tip.fail::before{display:none}
+
+/* ---------- 截图位：一扇窗口里嵌着截图，图注是小字 ---------- */
+[data-scene="pixel"] .shot{padding:16px 16px 0}
+[data-scene="pixel"] .shot-img{background:var(--px-k)}
+[data-scene="pixel"] .shot-img img{image-rendering:pixelated}
+[data-scene="pixel"] .shot figcaption{padding:16px 8px 20px;font:400 24px/32px var(--f-hand);color:var(--px-n6)}
+[data-scene="pixel"] .shot-miss{font:400 24px/32px var(--f-hand);color:var(--px-n6);text-shadow:4px 4px 0 var(--px-k);background:var(--px-dith-12) 0 0/8px 8px}
+[data-scene="pixel"] .shot-miss small{font:400 24px/32px var(--f-mono);color:var(--px-n5)}
+[data-scene="pixel"] .shot-zoom{right:28px;top:28px;padding:8px 12px;border-radius:0;font:400 24px/24px var(--f-hand);color:var(--px-w);background:var(--px-k);
+  box-shadow:0 -4px 0 0 var(--px-n5),0 4px 0 0 var(--px-n5),-4px 0 0 0 var(--px-n5),4px 0 0 0 var(--px-n5)}
+[data-scene="pixel"] .shot-zoom::before{content:"";display:inline-block;width:20px;height:20px;margin-right:8px;vertical-align:-2px;background:var(--px-zoom) center/100% 100% no-repeat}
+
+/* ---------- 线稿与圈注：直线、正圆（rough 粗糙度 0），套像素化滤镜变成一格一格的方块；线稿浅紫、圈注金色 ---------- */
+[data-scene="pixel"] :is(svg.sketch,svg.marks) path{stroke-linecap:square;stroke-linejoin:miter}
+[data-scene="pixel"] :is(svg.sketch,svg.marks){filter:url(#pixel-px)}
+/* 舞台缩得太小（pixel.js 给舞台加 .px-lores）、阅读模式里页面缩得很小：滤镜取样会漏掉线条，关掉，退回普通直线 */
+[data-scene="pixel"].px-lores :is(svg.sketch,svg.marks),[data-scene="pixel"].slide:is(.reading *) :is(svg.sketch,svg.marks){filter:none}
+
+/* ---------- 形象：一格往下的硬影子；自己不带亮边的形象（outline 没写 false）由引擎描一圈浅紫 ---------- */
+[data-scene="pixel"] .mascot{--mascot-outline:#C3CBF0;--mascot-shadow:drop-shadow(0 4px 0 rgba(11,11,30,.45))}
+
+/* ---------- 形象说的话：一扇 RPG 对话框，一格格弹出 ---------- */
+[data-scene="pixel"] .mascot-say{padding:12px 20px;border-radius:0;color:var(--px-w);background:var(--px-n2);font:400 24px/24px var(--f-hand);text-shadow:none;transition:opacity .1s steps(1);
+  box-shadow:0 -4px 0 0 var(--px-w),0 4px 0 0 var(--px-w),-4px 0 0 0 var(--px-w),4px 0 0 0 var(--px-w),
+    0 -8px 0 0 var(--px-k),0 8px 0 0 var(--px-k),-8px 0 0 0 var(--px-k),8px 0 0 0 var(--px-k),-4px -4px 0 0 var(--px-k),4px -4px 0 0 var(--px-k),-4px 4px 0 0 var(--px-k),4px 4px 0 0 var(--px-k)}
+[data-scene="pixel"] .mascot-say.on{transition:none;animation:px-pop .16s steps(2) both}
+@keyframes px-pop{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:none}}
+[data-scene="pixel"] .mascot-say::after{rotate:0deg;left:20px;bottom:-16px;width:8px;height:8px;background:var(--px-w);box-shadow:8px -4px 0 var(--px-w),-4px 4px 0 var(--px-k),4px 4px 0 var(--px-k)}
+[data-scene="pixel"] .mascot[data-face="left"] .mascot-say::after{left:auto;right:20px;box-shadow:-8px -4px 0 var(--px-w),4px 4px 0 var(--px-k),-4px 4px 0 var(--px-k)}
+
+/* =====================================================================
+   常驻信息：章节、页码、节拍指示（像素经验条）、计时
+   经验条：EXP + 一格格经验（暖白像素框）+ 「1/3 拍」。进一拍时那一格逐格灌满、白闪一下、冒三颗小星，
+   拍号从上面落一格；退一拍时逐格放掉（引擎写 .on / .now，重写拍号）
+   ===================================================================== */
+#stage[data-scene="pixel"] .chap span{font:400 24px/24px var(--f-hand);color:var(--px-n5);text-shadow:4px 4px 0 var(--px-k)}
+#stage[data-scene="pixel"] .meta{top:24px;height:48px;gap:24px;font:400 24px/24px var(--f-hand);color:var(--px-n5);text-shadow:4px 4px 0 var(--px-k);font-synthesis:none}
+#stage[data-scene="pixel"] .pageno{letter-spacing:0;color:var(--px-n5)}
+#stage[data-scene="pixel"] .pageno b{font-weight:400;color:var(--px-n6)}
+#stage[data-scene="pixel"] .meter{gap:20px}
+#stage[data-scene="pixel"] .meter::before{content:"EXP";color:var(--px-y)}
+#stage[data-scene="pixel"] .meter .dots{gap:4px;padding:4px;background:var(--px-k);
+  box-shadow:0 -4px 0 0 var(--px-w),0 4px 0 0 var(--px-w),-4px 0 0 0 var(--px-w),4px 0 0 0 var(--px-w),
+    0 -8px 0 0 var(--px-k),0 8px 0 0 var(--px-k),-8px 0 0 0 var(--px-k),8px 0 0 0 var(--px-k),-4px -4px 0 0 var(--px-k),4px -4px 0 0 var(--px-k),-4px 4px 0 0 var(--px-k),4px 4px 0 0 var(--px-k)}
+#stage[data-scene="pixel"] .dots i{position:relative;width:32px;height:24px;background:var(--px-dith-23) 0 0/8px 8px}
+/* 一格经验：上亮一格、下暗一格的立体条，逐格灌满 */
+#stage[data-scene="pixel"] .dots i::after{content:"";position:absolute;inset:0;transform:scaleX(0);transform-origin:0 50%;
+  background:linear-gradient(var(--px-l) 0 4px,var(--px-g) 4px 16px,var(--px-d) 16px);transition:transform .2s steps(4)}
+#stage[data-scene="pixel"] .dots i.on::after{transform:scaleX(1)}
+#stage[data-scene="pixel"] .dots i.now::after{animation:px-xp .36s steps(1)}
+@keyframes px-xp{0%,76%{filter:none}77%,93%{filter:brightness(2.2)}94%,100%{filter:none}}
+/* 刚灌满的一格冒三颗小星（一次） */
+#stage[data-scene="pixel"] .dots i.now::before{content:"";position:absolute;left:14px;top:-4px;width:4px;height:4px;z-index:1;visibility:hidden;pointer-events:none;
+  box-shadow:-12px -4px 0 var(--px-l),0 -12px 0 var(--px-a),12px -4px 0 var(--px-w);animation:px-pop3 .3s steps(3) .28s}
+@keyframes px-pop3{from{visibility:visible;transform:translateY(0)}to{visibility:visible;transform:translateY(-12px)}}
+#stage[data-scene="pixel"] .meter .ml{display:none}
+#stage[data-scene="pixel"] .meter .ms{display:inline-flex;align-items:baseline;gap:0;font:400 48px/48px var(--f-hand);color:var(--px-w)}
+#stage[data-scene="pixel"] .meter .ms b{display:inline-block;font-weight:400;color:var(--px-y);animation:px-num .16s steps(3)}
+@keyframes px-num{from{transform:translateY(-12px)}to{transform:none}}
+#stage[data-scene="pixel"] .timer{font:400 24px/24px var(--f-mono);color:var(--px-n5);text-shadow:4px 4px 0 var(--px-k)}
+
+/* 阅读模式：每页底下压一道深色像素线，页与页分得开 */
+[data-scene="pixel"].slide:is(.reading *){box-shadow:inset 0 -8px 0 var(--px-k)}

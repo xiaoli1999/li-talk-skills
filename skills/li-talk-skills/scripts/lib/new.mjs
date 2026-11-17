@@ -1,6 +1,7 @@
 // new 命令：按选中的风格搭一份课件的骨架
 //   new <课件目录> --title 标题 --scenes 风格[,风格] [--mascot 形象]
-// 复制引擎、选中的风格、用到的形象、vendor、起步章节，装字体，按模板生成 index.html，记下 .li-talk.json。
+// 复制引擎、选中的风格、用到的形象、vendor、起步章节，装字体（选中的风格自带字体的，比如像素游戏，
+// 把 template/vendor/fonts/<风格键名>/ 一起带上），按模板生成 index.html，记下 .li-talk.json。
 // 目录可以已经存在，但里面只能有 讲稿.md、素材/、.li-talk.json、.li-talk/（以及 . 开头的文件）；
 // 已经有 engine/ 的说明搭过了，不重搭，免得覆盖写好的页面。
 import {
@@ -93,6 +94,12 @@ export function resolveMascot(input, scenes = [], tplDir = TPL_DIR) {
    文件
    ------------------------------------------------------------------ */
 
+// 风格自带的字体目录 template/vendor/fonts/<风格键名>/：有就返回它的路径，没有返回 null
+function sceneFontDir(tplDir, key) {
+  const d = join(tplDir, 'vendor', 'fonts', key);
+  return existsSync(d) && statSync(d).isDirectory() ? d : null;
+}
+
 // 递归复制目录；跳过占位文件 .gitkeep，以及 skip(名字) 为真的顶层条目
 function copyTree(src, dst, skip = () => false) {
   mkdirSync(dst, { recursive: true });
@@ -151,7 +158,7 @@ function checkTarget(dir) {
  *   opts    { log, fonts, download, tplDir }：
  *           log 输出函数；fonts 原样传给 ensureCache、installFonts（测试用来换清单、缓存目录、fetch）；
  *           download: false 时不下载字体，只用本机已有的缓存；tplDir 模板目录（测试用）
- * 返回 { dir, title, scenes: [键名], mascot: 键名, font: 'full' | 'lite' }。
+ * 返回 { dir, title, scenes: [键名], mascot: 键名, font: 'full' | 'lite', sceneFonts: [带了自带字体的风格键名] }。
  * 用法错误、目录不合适、风格或形象不认识时抛 UserError，这时不会在目录里留下任何东西。
  */
 export async function createDeck(dir, choice = {}, opts = {}) {
@@ -226,6 +233,10 @@ export async function createDeck(dir, choice = {}, opts = {}) {
 
     // 字体装进 vendor/fonts/：本机缓存完整就装完整字体，否则用自带的小字库
     const font = installFonts(deckDir, fontOpts);
+    // 风格自带的字体（比如像素游戏的缝合像素字体）：模板里有 vendor/fonts/<风格键名>/ 就整个复制过去，
+    // 风格的 CSS 用 ../vendor/fonts/<风格键名>/… 引用它；没选这个风格就不带
+    const sceneFonts = keys.filter(k => sceneFontDir(tplDir, k));
+    for (const k of sceneFonts) copyTree(sceneFontDir(tplDir, k), join(deckDir, 'vendor', 'fonts', k));
 
     // 入口 index.html
     let html = fill(readFileSync(join(tplDir, 'index.html'), 'utf8'), {
@@ -247,7 +258,7 @@ export async function createDeck(dir, choice = {}, opts = {}) {
     writeMeta(deckDir, { version: VERSION, title, scenes: keys, mascot: mascot.key });
 
     if (font !== 'full') log(liteNotice(cache ? cache.missing.length : undefined, deckDir));
-    return { dir: deckDir, title, scenes: keys, mascot: mascot.key, font };
+    return { dir: deckDir, title, scenes: keys, mascot: mascot.key, font, sceneFonts };
   } catch (e) {
     // 只删这次新建的条目；目录是这次建的、删完是空的，就连目录一起删
     try {
@@ -279,6 +290,10 @@ export async function run(args = {}, opts = {}) {
   log(`  标题：${r.title}`);
   log(`  风格：${labels}；形象：${m ? `${m.label}（${m.key}）` : r.mascot}`);
   log(`  字体：${r.font === 'full' ? '霞鹜文楷完整字体' : '自带的常用字小字库'}`);
+  if (r.sceneFonts && r.sceneFonts.length) {
+    const named = resolveScenes(r.sceneFonts, opts.tplDir || TPL_DIR).map(s => `${s.label}（vendor/fonts/${s.key}/）`).join('、');
+    log(`  风格自带的字体：${named}`);
+  }
   log(`  起步章节：slides/ch1.js（一页封面）`);
   log(`下一步：照 references/templates.md 先写 3 页（封面、一页图示、一页清单），然后运行 check ${target} --browser`);
   return 0;

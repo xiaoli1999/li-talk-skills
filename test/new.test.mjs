@@ -297,3 +297,83 @@ test('风格说明 index.json：6 种，字段齐全，和风格文件一致', (
     assert.ok(existsSync(join(TPL, 'mascots', s.mascot + '.js')), s.key + ' 的形象文件');
   }
 });
+
+/* ------------------------------------------------------------------
+   风格自带的字体：像素游戏的缝合像素字体放在 template/vendor/fonts/pixel/，
+   只有选了 pixel 时 new 才把它复制进课件
+   ------------------------------------------------------------------ */
+
+// 复制一份模板到临时目录（scenes/index.json 里还没有 pixel 时补一条），免得改到真的模板
+function tplWithPixel() {
+  const dst = join(tmp(), 'template');
+  const copy = (s, d) => {
+    mkdirSync(d, { recursive: true });
+    for (const e of readdirSync(s, { withFileTypes: true })) {
+      if (e.isDirectory()) copy(join(s, e.name), join(d, e.name));
+      else if (e.isFile()) writeFileSync(join(d, e.name), readFileSync(join(s, e.name)));
+    }
+  };
+  copy(TPL, dst);
+  const file = join(dst, 'scenes', 'index.json');
+  const list = JSON.parse(readFileSync(file, 'utf8'));
+  if (!list.some(s => s.key === 'pixel')) {
+    list.push({ key: 'pixel', label: '像素游戏', family: 'pixel', mascot: 'xiaoqi', look: '像素', fit: '新人引导', notFit: '严肃汇报', risk: '无' });
+    writeFileSync(file, JSON.stringify(list));
+  }
+  return dst;
+}
+
+test('模板里的像素字体：woff2 和许可证都在', () => {
+  const dir = join(TPL, 'vendor', 'fonts', 'pixel');
+  const woff = readFileSync(join(dir, 'fusion-pixel-12px-proportional-zh_hans.woff2'));
+  assert.equal(woff.subarray(0, 4).toString('latin1'), 'wOF2', '不是 woff2 文件');
+  assert.ok(woff.length > 500 * 1024, '完整简体字库应该有几百 KB');
+  for (const f of ['OFL-Fusion-Pixel-Font.txt', 'OFL-Fusion-Pixel-Font-upstream-ark-pixel.txt',
+    'OFL-Fusion-Pixel-Font-upstream-cubic-11.txt', 'OFL-Fusion-Pixel-Font-upstream-galmuri.txt']) {
+    assert.ok(existsSync(join(dir, f)), '缺少许可证 ' + f);
+  }
+  // 风格 CSS 引用的就是这个文件（相对 scenes/ 的位置）
+  const css = readFileSync(join(TPL, 'scenes', 'pixel.css'), 'utf8');
+  const m = /url\("(\.\.\/vendor\/fonts\/pixel\/[^"]+\.woff2)"\)/.exec(css);
+  assert.ok(m, 'pixel.css 里没找到像素字体的 @font-face');
+  assert.ok(existsSync(join(TPL, 'scenes', m[1])), 'pixel.css 引用的字体文件不存在：' + m[1]);
+});
+
+test('选了像素游戏：带上像素字体和许可证，形象默认小旗；字体和模板里的一字不差', async () => {
+  const tpl = tplWithPixel();
+  const dir = join(tmp(), '像素课件');
+  const out = [];
+  const r = await createDeck(dir, { title: '闯关', scenes: ['pixel'] }, { ...offline(), log: s => out.push(s), tplDir: tpl });
+  assert.deepEqual(r.scenes, ['pixel']);
+  assert.equal(r.mascot, 'xiaoqi');
+  assert.deepEqual(r.sceneFonts, ['pixel']);
+  const src = join(tpl, 'vendor', 'fonts', 'pixel');
+  const got = join(dir, 'vendor', 'fonts', 'pixel');
+  assert.deepEqual(readdirSync(got).sort(), readdirSync(src).sort());
+  for (const f of readdirSync(src)) assert.equal(sha256(readFileSync(join(got, f))), sha256(readFileSync(join(src, f))), f);
+  // 霞鹜文楷照常装（引擎的提示条、阅读模式还用它）
+  assert.ok(existsSync(join(dir, 'vendor', 'fonts', 'wenkai-lite.css')));
+  // 风格 CSS 按相对位置找得到字体；index.html 引入的文件都在
+  const css = readFileSync(join(dir, 'scenes', 'pixel.css'), 'utf8');
+  const m = /url\("(\.\.\/vendor\/fonts\/pixel\/[^"]+\.woff2)"\)/.exec(css);
+  assert.ok(m && existsSync(join(dir, 'scenes', m[1])), '课件里 pixel.css 引用的字体文件不存在');
+  const html = readFileSync(join(dir, 'index.html'), 'utf8');
+  assert.match(html, /scenes\/pixel\.css/);
+  assert.match(html, /mascots\/xiaoqi\.js/);
+  for (const f of indexRefs(html)) assert.ok(existsSync(join(dir, f)), 'index.html 引入了不存在的 ' + f);
+});
+
+test('没选像素游戏：不带像素字体', async () => {
+  const dir = join(tmp(), 'deck');
+  const r = await createDeck(dir, { title: 't', scenes: ['paper'] }, offline());
+  assert.deepEqual(r.sceneFonts, []);
+  assert.ok(!existsSync(join(dir, 'vendor', 'fonts', 'pixel')), '没选 pixel 不该带像素字体');
+});
+
+test('new 命令：选了像素游戏时说一声带了它的字体', async () => {
+  const tpl = tplWithPixel();
+  const out = [];
+  const code = await runNew({ _: [join(tmp(), 'px')], title: '闯关', scenes: 'pixel' }, { ...offline(), log: s => out.push(s), tplDir: tpl });
+  assert.equal(code, 0);
+  assert.match(out.join('\n'), /风格自带的字体：像素游戏（vendor\/fonts\/pixel\/）/);
+});
