@@ -1,0 +1,26 @@
+/* 漫画 comic 自己的样板页的页面样式（和 samples/comic.js 配套）
+   - 每条选择器都以 [data-id="t-comic-…"] 开头，只管那一页；抄样板时连同这里的规则一起抄，[data-id="…"] 换成新页面的 id
+   - 版式组件（.cm-*）的样子在 scenes/comic.css 里，这里只补这几页自己的字号、颜色；颜色用风格的变量（--ink、--ink-2 这些） */
+
+/* ---------- 扉页 ---------- */
+/* 「第 1 话」小一号；讲者一行 40px 墨色（只占字那么宽，叨叨才站得到它右边） */
+[data-id="t-comic-cover"] .t-comic-cover-ep{font-size:34px}
+[data-id="t-comic-cover"] .t-comic-cover-me{margin:0;font:400 40px/1.3 var(--f-hand);color:var(--ink);white-space:nowrap}
+
+/* ---------- 主角登场 ---------- */
+/* 格子里的说明：38px 次一级墨色，两行 */
+[data-id="t-comic-items"] .t-comic-items-txt{margin:0;font:400 38px/1.4 var(--f-hand);color:var(--ink-2);white-space:nowrap}
+[data-id="t-comic-items"] .t-comic-items-txt .key{margin:0;padding:0 .02em}
+
+/* ---------- 四格漫画 ---------- */
+/* 第 3 格的拟声字有 4 个字，再小一号（64px），躲开左上角的水壶 */
+[data-id="t-comic-strip"] .t-comic-strip-long{font-size:64px}
+
+/* ---------- 错误示范和正确示范 ---------- */
+/* 左边的 NG、OK 两个装饰大字；OK 格的破法旁白框不要格号，左右留白一样、40px（右边让给茶杯） */
+[data-id="t-comic-ngok"] .t-comic-ngok-row{font-size:96px}
+[data-id="t-comic-ngok"] .t-comic-ngok-fix{padding-left:22px;font-size:40px}
+
+/* ---------- 最后一格「完」 ---------- */
+/* 致谢气泡大一号（44px） */
+[data-id="t-comic-end"] .t-comic-end-thanks{padding:18px 44px 22px;font-size:44px}

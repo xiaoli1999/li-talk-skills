@@ -212,7 +212,7 @@
 /* =====================================================================
    漫画自己的可选组件（别的风格不认，换风格后只剩普通的字和块；写法见 references/styles.md）
    - .cm-panel 分镜格：和卡片一样的格子，但不管里面怎么排，里面的东西可以伸出格子（破格）
-   - .cm-say 对白气泡：白底椭圆、墨线、带一个小尾巴（默认尾巴在左下，加 .tail-r 换到右下）
+   - .cm-say 对白气泡：白底椭圆、墨线、带一个小尾巴（默认尾巴在左下，加 .tail-r 换到右下，加 .tail-e 从右边横着伸出去、指向右边说话的人）
    - .cm-sfx 拟声大字：朱红填充、粗墨边、一圈留白、墨影，默认歪 -6°（加 .cool 换成钴蓝）
    ===================================================================== */
 [data-scene="comic"] .cm-panel{display:block;padding:28px 34px;color:var(--ink)}
@@ -221,10 +221,59 @@
 [data-scene="comic"] .cm-say.abs{position:absolute}
 [data-scene="comic"] .cm-say::after{content:"";position:absolute;left:22%;top:calc(100% - 2px);width:44px;height:56px;pointer-events:none;background:var(--cm-tail) 0 0/100% 100% no-repeat}
 [data-scene="comic"] .cm-say.tail-r::after{left:auto;right:22%;transform:scaleX(-1)}
+[data-scene="comic"] .cm-say.tail-e::after{left:calc(100% - 3px);top:calc(50% + 22px);transform:rotate(-90deg);transform-origin:0 0}
+/* 漫画版式组件里的气泡、旁白框：重点词不额外加左右空（不然像多打了一个空格） */
+[data-scene="comic"] :is(.cm-say,.cm-cap,.cm-nar) .key{margin:0;padding:0 .02em}
 [data-scene="comic"] .cm-sfx{--r:-6deg;display:inline-block;rotate:var(--r);font:700 112px/1.05 var(--f-hand);letter-spacing:-.02em;white-space:nowrap;color:var(--cm-warm);
   -webkit-text-stroke:10px var(--ink);paint-order:stroke fill;
   filter:drop-shadow(4px 0 0 #FFFDF8) drop-shadow(-4px 0 0 #FFFDF8) drop-shadow(0 4px 0 #FFFDF8) drop-shadow(0 -4px 0 #FFFDF8) drop-shadow(6px 7px 0 #16130F)}
 [data-scene="comic"] .cm-sfx.cool{color:var(--cm-cool)}
+
+/* =====================================================================
+   漫画自己的版式组件（行为、用法在 comic.js「漫画自己的版式组件」一节；样板页 samples/comic.js 每个都用了一遍）
+   - .cm-cut 斜格：格框（网点阴影、留白、集中线、毛笔墨线）由 comic.js 画进第一个子元素 svg.cm-cut-f，垫在内容下面
+   - .cm-slot 分镜草稿位：第 0 拍是蓝铅笔虚线框，里面的 .cm-panel 上了墨就藏起来
+   - .cm-art 墨线插画、.cm-cap 旁白框（.cm-no 格号，.ink 墨黑底）、.cm-nar 大旁白框、.cm-logo 封面标题字、.cm-fin「完」字章、
+     .cm-sfx.ink 墨黑拟声字、.cm-sfx.sm 小一号拟声字
+   ===================================================================== */
+[data-scene="comic"] .cm-cut{position:absolute;isolation:isolate;color:var(--ink)}
+[data-scene="comic"] .cm-cut>svg.cm-cut-f{position:absolute;z-index:-1;overflow:visible;pointer-events:none}
+
+/* 草稿位：格子到拍后（.on）铅笔框等墨线描完再藏；退回去时格子收完、去掉 .on，铅笔框又露出来 */
+[data-scene="comic"] .cm-slot{position:absolute}
+[data-scene="comic"] .cm-slot::before{content:"";position:absolute;inset:0;border:3px dashed var(--cm-pencil);pointer-events:none;transition:opacity .15s}
+[data-scene="comic"] .cm-slot:has(>.on)::before{opacity:0;transition:opacity .2s .45s}
+[data-scene="comic"] .cm-slot>.cm-panel{position:absolute;inset:0;padding:0}
+
+/* 插画：宽度写在 style 里，高度按画布比例 */
+[data-scene="comic"] .cm-art{display:block;pointer-events:none}
+[data-scene="comic"] .cm-art>svg{display:block;width:100%;height:auto;overflow:visible}
+
+/* 旁白框：白底方框、墨线、错开的墨影；格号是墨黑的方块。.ink：墨黑底留白字，影子换成钴蓝 */
+[data-scene="comic"] .cm-cap{display:inline-block;margin:0;padding:5px 22px 8px;border:3.5px solid var(--ink);background:var(--cm-white);
+  box-shadow:5px 5px 0 var(--ink);color:var(--ink);font:700 var(--fs-md)/1.25 var(--f-hand);white-space:nowrap}
+[data-scene="comic"] .cm-cap .cm-no{display:inline-grid;place-items:center;vertical-align:top;min-width:48px;height:48px;margin:2px 14px 0 0;padding:0 8px 3px;box-sizing:border-box;background:var(--ink);color:var(--cm-white);font:700 34px/1 var(--f-hand)}
+[data-scene="comic"] .cm-cap:has(>.cm-no){padding-left:8px}
+[data-scene="comic"] .cm-cap.ink{padding:5px 20px 8px;background:var(--ink);color:var(--cm-white);box-shadow:4px 4px 0 var(--cm-cool)}
+
+/* 大旁白框：整句话横排、字大，墨影错开得更远 */
+[data-scene="comic"] .cm-nar{margin:0;padding:24px 48px 32px;border:4px solid var(--ink);background:var(--cm-white);box-shadow:11px 11px 0 var(--ink);
+  color:var(--ink);font:700 96px/1.3 var(--f-hand);letter-spacing:.02em;white-space:nowrap}
+
+/* 封面标题字：粗墨字、一圈留白、朱红错位影子（只给 8 个字以内的标题）；里面的重点词是朱红字带粗墨边 */
+[data-scene="comic"] .cm-logo{margin:0;font:700 160px/1.12 var(--f-hand);letter-spacing:.02em;white-space:nowrap;color:var(--ink);-webkit-text-stroke:2px var(--ink);
+  filter:drop-shadow(5px 0 0 #FFFDF8) drop-shadow(-5px 0 0 #FFFDF8) drop-shadow(0 5px 0 #FFFDF8) drop-shadow(0 -5px 0 #FFFDF8) drop-shadow(10px 10px 0 #E2452A)}
+[data-scene="comic"] .cm-logo .key{margin:0;padding:0;color:var(--cm-warm);color:color-mix(in srgb,var(--cm-warm) calc(var(--k) * 100%),var(--ink));-webkit-text-stroke:7px var(--ink);paint-order:stroke fill}
+[data-scene="comic"] .cm-logo .key::before{display:none}
+
+/* 「完」字圆章：毛笔圈、墨影，歪一点 */
+[data-scene="comic"] .cm-fin{--r:-8deg;display:grid;place-items:center;width:136px;height:136px;margin:0;padding-bottom:6px;box-sizing:border-box;border:8px solid var(--ink);
+  border-radius:52% 47% 50% 49%/49% 52% 47% 51%;background:var(--cm-white);box-shadow:6px 6px 0 var(--ink);color:var(--ink);font:700 76px/1 var(--f-hand);rotate:var(--r)}
+
+/* 墨黑拟声字：黑字、一圈留白、外面再一道细墨线（漫画里最常见的拟声字）；.sm 小一号 */
+[data-scene="comic"] .cm-sfx.ink{color:var(--ink);-webkit-text-stroke:9px #FFFDF8;
+  filter:drop-shadow(2px 0 0 #16130F) drop-shadow(-2px 0 0 #16130F) drop-shadow(0 2px 0 #16130F) drop-shadow(0 -2px 0 #16130F) drop-shadow(5px 6px 0 rgba(22,19,15,.25))}
+[data-scene="comic"] .cm-sfx.sm{font-size:72px}
 
 /* comic.js 用的层：集中线、速度线放在每页一层 .cm-fx 里（内容上面、不接收指针），播完即删；
    悬停时角上的三道效果线 .cm-hv；点击处的冲击星画在引擎的涟漪层里 */

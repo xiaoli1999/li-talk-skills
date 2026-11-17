@@ -29,10 +29,25 @@
      11. 点击处一圈很淡的冲击星（ripple）；翻页（pageTurn）：新页像漫画里切一刀那样斜着横切进来，刀口是一道墨线
      12. 开场（intro）：裁切线和角标浮出 → 主题行的格号标签弹出、主题滑入 → 右上角的页码落下、缩略格一格格弹出 → 大标题横切入 →
          第 0 拍按「格框 → 内容 → 大字 → 气泡」的顺序出场 → 重点词贴网点；之后引擎让形象落下
-   - 没搬的：速度线、集中线做的背景（太满，只在大字落地、命令冲进来时闪一下）；不规则斜格（任意页面套不进去，
-     格子一律是矩形，要破格就用 .cm-panel 让里面的东西伸出去）；形象的走位、反应、空闲动作（引擎的形象部分统一做）
-   - 漫画自己的可选组件（别的风格不认）：.cm-panel 分镜格、.cm-say 对白气泡（.tail-r 尾巴在右下）、.cm-sfx 拟声大字（.cool 钴蓝），
+   - 没搬的：速度线、集中线做的整页背景（太满，只在大字落地、命令冲进来时闪一下；集中线只在 .cm-cut 格子里、插画四周铺一圈）；
+     通用组件不做斜格（任意页面套不进去，格子一律是矩形，要斜格就用下面的 .cm-cut）；形象的走位、反应、空闲动作（引擎的形象部分统一做）
+   - 漫画自己的可选组件（别的风格不认）：.cm-panel 分镜格、.cm-say 对白气泡（.tail-r 尾巴在右下，.tail-e 尾巴从右边横着伸出去）、.cm-sfx 拟声大字（.cool 钴蓝），
      样子在 comic.css 末尾；普通页面不用它们也完全成立
+   - 漫画自己的版式组件（样板页 samples/comic.js 把每个都用了一遍，整段抄过去改字就行；写法见文件后半「漫画自己的版式组件」一节）：
+     · .cm-cut[data-cm-cut="x,y x,y …"]：斜格（任意凸多边形的分镜格，点是格子自己的坐标，顺时针从左上角写起）。四边是「中间粗两头收」的
+       毛笔墨线，右下错开网点阴影；写 data-cm-burst="cx,cy,r" 时格里铺一圈集中线（data-cm-burst-box="x0,y0,x1,y1" 限定铺在哪块，
+       别铺到字底下）。到拍时墨线一条条甩出来 → 网点阴影浮出来 → 集中线往里收 → 里面的东西依次出场
+     · .cm-slot > .cm-panel：分镜草稿位。第 0 拍是一个蓝铅笔虚线框（先把这页有几格交代清楚），到拍时格子上墨盖住它
+     · .cm-art[data-cm-art="名字"]：墨线插画（这里画好，建页时填进去，可选的见 ART）；到拍时墨线一笔笔描出来 → 网点上色 → 漫符弹出来
+     · .cm-cap：格子角上的旁白框（白底方框、墨影，<b class="cm-no">1</b> 是墨黑的格号；加 .ink 是墨黑底留白字）；从左边横切入
+     · .cm-nar：大旁白框（结尾金句这类整句话，字大、横排）；.cm-logo：封面标题字（粗墨字、留白、朱红错位影子，只给 8 个字以内的标题）；
+       .cm-fin：「完」字圆章；.cm-sfx.ink：墨黑拟声字（白边细墨线，漫画里最常见的那种）、.cm-sfx.sm 小一号
+     · 格子里的子元素按「旁白框、插画 → 拟声字 → 气泡」排先后，页面里只写结构和 data-beat，不写 onBeat、不写 data-in
+   - 版式组件的可读性约定：
+     · 气泡、旁白框一直留着，不轮换；气泡里写真话（做法、后果），不放只为热闹的口水话
+     · 拟声字、漫符、集中线是装饰：拟声字一格最多一个、8 个字以内，墨黑或钴蓝（朱红留给重点词）；集中线只铺在插画四周，
+       用 data-cm-burst-box 挡在字的外面
+     · 斜格只斜格框，里面的字一律横排、不歪，字离斜边至少留 30px；格号就是阅读顺序（1、2、3……）
    - 自己加的出场名：frame、boing、bam、bubble、dash，只在这个风格里认（别的风格会提醒并换成它的默认出场）
    - 集中线、速度线放在每页一层 .cm-fx 里（第一次用时加到页面最后，在内容上面、不接收指针），播完即删
    - 禁区（zones，舞台坐标 1920×1080）：
@@ -50,11 +65,13 @@
   const f1 = n => Math.round(n * 10) / 10;
   /* 分镜格（整格画在伪元素里的组件）；出场时不跟着动的子元素 */
   const PANEL = '.card, .cell, .steps > li, .term, .shot, .cm-panel';
-  const HOVER = '.card, .cell, .steps > li, .term, .shot, .copy, .cm-panel';
-  const SKIP = 'svg.marks, .mascot, .kid, .ripple-layer, .copied-tip, .cm-fx, .cm-hv, script, style';
-  /* 默认出场按组件类名分：格子和一排格子的容器「格框先描出」，命令「横切入」，金句和拟声字「大字砸下」，气泡「啵」，标签「弹入」 */
+  const HOVER = '.card, .cell, .steps > li, .term, .shot, .copy, .cm-panel, .cm-cut';
+  const SKIP = 'svg.marks, .mascot, .kid, .ripple-layer, .copied-tip, .cm-fx, .cm-hv, svg.cm-cut-f, script, style';
+  /* 默认出场按组件类名分：格子和一排格子的容器「格框先描出」，命令「横切入」，金句和拟声字「大字砸下」，气泡「啵」，标签「弹入」；
+     漫画自己的版式组件：斜格「格框先描出」、插画「描线」（走 frame 的分派）、旁白框「横切入」、封面标题字和「完」字章「大字砸下」 */
   const BY = { card: 'frame', cell: 'frame', term: 'frame', shot: 'frame', 'cm-panel': 'frame', steps: 'frame', cells: 'frame', grid: 'frame', row: 'frame', col: 'frame', vs: 'frame',
-    copy: 'dash', quote: 'bam', 'cm-sfx': 'bam', 'cm-say': 'bubble', tag: 'boing' };
+    copy: 'dash', quote: 'bam', 'cm-sfx': 'bam', 'cm-say': 'bubble', tag: 'boing',
+    'cm-cut': 'frame', 'cm-art': 'frame', 'cm-cap': 'dash', 'cm-nar': 'dash', 'cm-logo': 'bam', 'cm-fin': 'bam' };
   const DRAW = ['--cm-d1', '--cm-d2', '--cm-d3', '--cm-d4'];
   const VARS = DRAW.concat(['--cm-k', '--cm-p']);
   const PROPS = ['opacity', 'visibility', 'transform', 'translate', 'rotate', 'scale', 'clip-path', 'transform-origin'].concat(VARS);
@@ -62,8 +79,11 @@
   const isPanel = e => !!(e && e.matches && e.matches(PANEL));
   const isCopy = e => !!(e && e.matches && e.matches('.copy'));
   const isTag = e => !!(e && e.matches && e.matches('.tag'));
-  const isBig = e => !!(e && e.matches && e.matches('.quote, .cm-sfx'));
+  const isBig = e => !!(e && e.matches && e.matches('.quote, .cm-sfx, .cm-logo, .cm-fin'));
   const isSay = e => !!(e && e.matches && e.matches('.cm-say'));
+  const isCut = e => !!(e && e.matches && e.matches('.cm-cut'));
+  const isArt = e => !!(e && e.matches && e.matches('.cm-art'));
+  const isCap = e => !!(e && e.matches && e.matches('.cm-cap, .cm-nar'));
   /* 清掉出场留下的内联样式，回到 CSS 决定的样子 */
   const clean = e => { if (e && e.style) PROPS.forEach(k => e.style.removeProperty(k)); };
   const cleanVars = e => { if (e && e.style) VARS.forEach(k => e.style.removeProperty(k)); };
@@ -167,16 +187,25 @@
     appear(tl, e, t, vis, .12);
     DRAW.forEach((v, i) => tl.fromTo(e, { [v]: 0 }, { [v]: 1, duration: .1, ease: 'power1.in', immediateRender: true }, t + i * .08));
     tl.fromTo(e, { '--cm-k': 0 }, { '--cm-k': 1, duration: .26, ease: 'back.out(2.4)', immediateRender: true }, t + .3);
-    let end = .56;
+    const end = Math.min(Math.max(.56, kidsIn(tl, e, t, .26)), 1.1);
+    tl.call(() => clean(e), null, t + end);
+    return end;
+  }
+  /* 格子里的子元素依次出场，返回最后一个播完的时刻（相对 t）。漫画的版式组件按「旁白框、插画 → 拟声字 → 气泡」排：
+     旁白框横切入、插画描线、拟声字砸下（晚 .3 秒）、气泡最后冒出（晚 .44 秒）；别的照旧：格子描出、命令冲进来、终端里升上来、其余弹入 */
+  function kidsIn(tl, e, t, base) {
     const kids = kidsOf(e), soft = e.matches('.term, .shot');
-    const gap = kids.length ? Math.min(.07, .3 / kids.length) : 0;
-    kids.forEach((c, i) => {
-      const s = .26 + i * gap;
-      const d = isPanel(c) ? frameOne(tl, c, t + s, false) : isCopy(c) ? dashOne(tl, c, t + s, false, tiltOf(c)) : soft ? riseKid(tl, c, t + s) : popKid(tl, c, t + s);
+    const plain = kids.filter(c => !c.matches('.cm-sfx, .cm-say'));
+    const gap = plain.length ? Math.min(.07, .3 / plain.length) : 0;
+    let end = 0;
+    kids.forEach(c => {
+      const s = c.matches('.cm-sfx') ? base + .3 : c.matches('.cm-say') ? base + .44 : base + plain.indexOf(c) * gap;
+      const tilt = tiltOf(c);
+      const d = isCut(c) ? cutOne(tl, c, t + s, false) : isPanel(c) ? frameOne(tl, c, t + s, false) : isCopy(c) ? dashOne(tl, c, t + s, false, tilt)
+        : isArt(c) ? artIn(tl, c, t + s, false) : isCap(c) ? dashOne(tl, c, t + s, false, tilt) : isBig(c) ? bamOne(tl, c, t + s, false, tilt)
+        : isSay(c) ? bubbleOne(tl, c, t + s, false, tilt) : soft ? riseKid(tl, c, t + s) : popKid(tl, c, t + s);
       end = Math.max(end, s + d);
     });
-    end = Math.min(end, 1.1);
-    tl.call(() => clean(e), null, t + end);
     return end;
   }
 
@@ -202,10 +231,10 @@
     return .38;
   }
 
-  /* 大字砸下：从很大砸下来、压一下回弹，落地一瞬四周闪一圈集中线 */
+  /* 大字砸下：从很大砸下来、压一下回弹，落地一瞬四周闪一圈集中线（封面标题字本来就大，从 1.5 倍砸下） */
   function bamOne(tl, e, t, vis, tilt) {
     appear(tl, e, t, vis, .04);
-    tl.fromTo(e, { scale: 2.3, rotation: tilt - 9 }, { scale: .94, rotation: tilt, duration: .2, ease: 'power3.in', immediateRender: true }, t);
+    tl.fromTo(e, { scale: e.matches('.cm-logo') ? 1.5 : 2.3, rotation: tilt - 9 }, { scale: .94, rotation: tilt, duration: .2, ease: 'power3.in', immediateRender: true }, t);
     tl.to(e, { scale: 1, duration: .22, ease: 'back.out(3)' }, t + .2);
     tl.call(() => focusLines(e), null, t + .2);
     tl.call(() => clean(e), null, t + .42);
@@ -214,7 +243,7 @@
 
   /* 啵：气泡从尾巴那头弹性冒出来 */
   function bubbleOne(tl, e, t, vis, tilt) {
-    const o = !isSay(e) ? '50% 100%' : e.classList.contains('tail-r') ? '78% 115%' : '22% 115%';
+    const o = !isSay(e) ? '50% 100%' : e.classList.contains('tail-e') ? '108% 60%' : e.classList.contains('tail-r') ? '78% 115%' : '22% 115%';
     appear(tl, e, t, vis, .06);
     tl.fromTo(e, { scale: 0, rotation: tilt, transformOrigin: o }, { scale: 1, rotation: tilt, transformOrigin: o, duration: .5, ease: 'elastic.out(1.1,.5)', immediateRender: true }, t);
     tl.call(() => clean(e), null, t + .5);
@@ -241,10 +270,268 @@
   function route(tl, e, t, ctx, fallback) {
     if (e instanceof SVGElement) return fadeIn(tl, e, t);
     const tilt = ctx && ctx.tilt ? ctx.tilt() : tiltOf(e);
+    if (isCut(e)) return cutOne(tl, e, t, true);
     if (isPanel(e)) return frameOne(tl, e, t, true);
+    if (isArt(e)) return artIn(tl, e, t, true);
     if (isCopy(e)) return dashOne(tl, e, t, true, tilt);
     if (fallback === boingOne && hasParts(e)) return group(tl, e, t);
     return fallback(tl, e, t, true, tilt);
+  }
+
+  /* =================================================================
+     漫画自己的版式组件（.cm-*）：斜格、草稿位、墨线插画、旁白框、标题字、「完」字章。
+     样子在 comic.css 末尾同名的一节；样板页 samples/comic.js 把每个都用了一遍
+     ================================================================= */
+  const K = '#16130F', WH = '#FFFDF8', BL = '#1D6CB4', RD = '#E2452A', K2 = '#4A443B';
+  /* 网点（插画上色、斜格的阴影用）：放进引擎公用的 .deck-defs，id 都以 cm- 开头 */
+  const tone = (id, gap, r, c) => `<pattern id="${id}" width="${gap}" height="${gap}" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><circle cx="${gap / 2}" cy="${gap / 2}" r="${r}" fill="${c}"/></pattern>`;
+  const DEFS = tone('cm-tone', 6, 1.45, K) + tone('cm-tone-d', 5, 1.85, K) + tone('cm-tone-c', 6, 1.6, BL);
+
+  /* ---------- 墨线插画 .cm-art[data-cm-art="名字"] ----------
+     画法约定：.ln 是墨线（出场时一笔笔描出来），.tn 是网点、白线这类上色（描完再浮上来），.mp 是漫符、闪光（最后弹出来；.mp 自己不写 transform）。
+     插画里不放字 */
+  const SH = `fill="${WH}" stroke="${K}" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"`;
+  const LN = (w, c) => `fill="none" stroke="${c || K}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"`;
+  const TONE = id => `fill="url(#${id || 'cm-tone'})"`;
+  const at = (tf, s) => `<g transform="${tf}">${s}</g>`;
+  const steam = (x, y) => `<path class="ln" d="M${x} ${y}c-11-12 9-26 0-38c-9-12 11-26 2-40" ${LN(4.5, K2)}/>`;
+  const spark = (x, y, r) => `<path class="mp" d="M${x} ${y - r}Q${x} ${y} ${x + r} ${y}Q${x} ${y} ${x} ${y + r}Q${x} ${y} ${x - r} ${y}Q${x} ${y} ${x} ${y - r}Z" fill="${WH}" stroke="${K}" stroke-width="3.2" stroke-linejoin="round"/>`;
+  const leaf = (x, y, r, s, cls) => at(`translate(${x} ${y}) rotate(${r}) scale(${s})`,
+    `<path class="${cls || 'ln'}" d="M-24 0C-12-13 12-13 24 0C12 13-12 13-24 0Z" ${SH}/><path class="${cls || 'ln'}" d="M-19 0H18" ${LN(2.6)}/>`);
+  /* 水流：墨线描边、中间一道留白 */
+  const stream = d => `<path class="ln" d="${d}" ${LN(10)}/><path class="tn" d="${d}" ${LN(4, WH)}/>`;
+  /* 盖碗（碗口中心在 0,0）：o.lid 盖着盖子；不盖时 o.tea 是茶汤的网点（不写是空碗）、o.leaves 碗里有茶叶 */
+  function gaiwan(o) {
+    o = o || {};
+    let s = `<ellipse class="tn" cx="8" cy="124" rx="130" ry="15" ${TONE()} fill-opacity=".7"/>`
+      + `<ellipse class="ln" cx="0" cy="116" rx="136" ry="20" ${SH}/>`
+      + `<path class="ln" d="M-36 90L-32 107Q0 113 32 107L36 90" ${SH}/>`
+      + `<path class="ln" d="M-118 2C-112 60-62 96 0 96C62 96 112 60 118 2Z" ${SH}/>`
+      + `<path class="tn" d="M102 14C98 52 70 80 26 92C76 88 108 58 113 14Z" ${TONE()}/>`
+      + `<path class="ln" d="M-110 32Q0 76 110 32" ${LN(6, BL)}/><path class="ln" d="M-100 50Q0 90 100 50" ${LN(3, BL)}/>`;
+    if (o.lid) {
+      // 碗口 → 盖子（坐在碗口里，圆顶、青花一道、顶上一个圈足盖钮）→ 碗口前沿压在盖子前面
+      s += `<ellipse class="ln" cx="0" cy="0" rx="123" ry="22" ${SH}/>`
+        + `<path class="ln" d="M-104 2C-98-46-58-78 0-78C58-78 98-46 104 2A104 17 0 0 1-104 2Z" ${SH}/>`
+        + `<path class="tn" d="M60-64C86-48 98-26 101-4L82 3C80-22 72-44 60-64Z" ${TONE()}/>`
+        + `<path class="ln" d="M-93-24Q0-6 93-24" ${LN(4, BL)}/>`
+        + `<path class="ln" d="M-15-76L-19-88H19L15-76" ${SH}/><ellipse class="ln" cx="0" cy="-89" rx="23" ry="7" ${SH}/>`
+        + `<path class="ln" d="M-123 0A123 22 0 0 0 123 0" ${LN(5)}/>`;
+    } else {
+      s += `<ellipse class="ln" cx="0" cy="0" rx="123" ry="23" ${SH}/>`
+        + `<ellipse class="ln" cx="0" cy="2" rx="107" ry="16" fill="${o.tea ? `url(#${o.tea})` : WH}" stroke="${K}" stroke-width="3"/>`
+        + (o.tea ? '' : `<path class="tn" d="M-104 0A104 15 0 0 1 104 0A104 9 0 0 0-104 0Z" ${TONE()}/>`)
+        + (o.leaves ? leaf(-40, 6, 12, .62) + leaf(8, 8, -16, .58) + leaf(46, 4, 30, .5) : '');
+    }
+    return s;
+  }
+  /* 水壶（壶底中心在 0,0，壶嘴朝左；壶嘴尖大约在 -134,-130） */
+  function kettle() {
+    return `<path class="ln" d="M-56-116C-52-186 52-186 56-116" ${LN(12)}/><path class="tn" d="M-56-116C-52-186 52-186 56-116" ${LN(4, WH)}/>`
+      + `<path class="ln" d="M-80-58C-108-62-128-92-142-126L-126-134C-114-106-100-88-76-82Z" ${SH}/>`
+      + `<path class="ln" d="M-82-6C-96-66-66-124 0-124C66-124 96-66 82-6Q0 8-82-6Z" ${SH}/>`
+      + `<path class="tn" d="M48-114C78-94 92-58 84-12L66-10C72-50 66-88 48-114Z" ${TONE()}/>`
+      + `<path class="ln" d="M-90-28Q0-12 90-28" ${LN(4)}/>`
+      + `<ellipse class="ln" cx="0" cy="-124" rx="46" ry="10" ${SH}/><path class="ln" d="M-12-132Q0-152 12-132Z" ${SH}/>`;
+  }
+  /* 一芽两叶，插在一小碟干茶上（碟子中心在 0,0） */
+  function sprig() {
+    return `<ellipse class="tn" cx="8" cy="12" rx="92" ry="11" ${TONE()} fill-opacity=".7"/>`
+      + `<ellipse class="ln" cx="0" cy="4" rx="96" ry="16" ${SH}/>`
+      + `<path class="ln" d="M-64 2Q-36-26 0-26Q36-26 64 2Q0 12-64 2Z" fill="url(#cm-tone)" stroke="${K}" stroke-width="4" stroke-linejoin="round"/>`
+      + `<path class="ln" d="M-42-6q8-9 15 0M-16-14q8-9 15 0M14-12q8-9 15 0M34-4q8-9 15 0" ${LN(3)}/>`
+      + `<path class="ln" d="M0-24C4-52-4-84 0-112" ${LN(5)}/>`
+      + `<path class="ln" d="M-2-56C-26-50-64-64-88-102C-52-112-16-92-2-56Z" ${SH}/><path class="tn" d="M-8-60C-32-56-60-70-80-96C-58-82-32-68-8-60Z" ${TONE()}/><path class="ln" d="M-5-59Q-42-74-82-100" ${LN(3)}/>`
+      + `<path class="ln" d="M2-80C28-76 66-92 88-130C52-138 14-118 2-80Z" ${SH}/><path class="tn" d="M8-84C36-82 62-98 80-124C62-100 36-88 8-84Z" ${TONE()}/><path class="ln" d="M5-83Q42-100 82-128" ${LN(3)}/>`
+      + `<path class="ln" d="M0-110C-14-130-10-160 0-178C10-160 14-130 0-110Z" ${SH}/><path class="ln" d="M0-118V-166" ${LN(2.6)}/>`;
+  }
+  /* 茶匙：长柄朝左、匙头在右（匙头中心大约在 10,0） */
+  const spoon = `<path class="ln" d="M-118-6L-28-2" ${LN(10)}/><path class="tn" d="M-116-6L-30-2" ${LN(3.5, WH)}/>`
+    + `<path class="ln" d="M-30 0C-30-16-6-22 18-20C42-18 52-6 50 4C48 16 26 22 2 20C-20 18-30 12-30 0Z" ${SH}/>`
+    + `<path class="tn" d="M-22 5C-18 14 4 18 24 16C40 14 46 8 47 2C40 10 22 14 2 12C-12 11-20 9-22 5Z" ${TONE()}/>`;
+  /* 会做表情的茶杯（杯口中心在 0,0）：tea 是茶汤的网点（cm-tone-d 浓、cm-tone 淡），face 见下面 */
+  const blush = (x, y) => `<path class="ln" d="M${x - 10} ${y + 5}l5-9M${x - 2} ${y + 5}l5-9M${x + 6} ${y + 5}l5-9" ${LN(2.6, RD)}/>`;
+  const FACE = {
+    // 苦：眼睛 > <、嘴是锯齿；额头几道钴蓝阴沉线，杯口冒烫气
+    bitter: `<path class="ln" d="M-46 42L-24 53L-46 64M46 42L24 53L46 64" ${LN(5)}/><path class="ln" d="M-26 88L-17 80L-8 88L1 80L10 88L19 80L26 86" ${LN(4.5)}/>`
+      + `<g class="mp"><path d="M-30 15V32M-15 16V35M0 16V36M15 16V35M30 15V32" ${LN(3.2, BL)}/></g>`
+      + `<g class="mp"><path d="M-44-24l9-11-9-11 9-11M-4-30l9-11-9-11 9-11M36-24l9-11-9-11 9-11" ${LN(4)}/></g>`,
+    // 涩：眼睛挤成两道、嘴是波浪线；脸边一颗汗滴、两道发抖线
+    sour: `<path class="ln" d="M-48 52Q-34 42-20 54M20 54Q34 42 48 52" ${LN(5)}/><path class="ln" d="M-22 86Q-11 76 0 86Q11 96 22 86" ${LN(4.5)}/>`
+      + `<g class="mp"><path d="M72 24C62 40 62 52 72 54C82 52 82 40 72 24Z" fill="${WH}" stroke="${BL}" stroke-width="3.5" stroke-linejoin="round"/></g>`
+      + `<g class="mp"><path d="M-112 34l-15-5M-114 54h-17M-112 74l-15 5" ${LN(3.6)}/></g>`,
+    // 浓：蚊香眼、嘴张成 O；杯口冒出一堆茶叶
+    strong: `<path class="ln" d="M-46 54a12 12 0 1 0 24 0a9 9 0 1 0-18 0a6 6 0 1 0 12 0M22 54a12 12 0 1 0 24 0a9 9 0 1 0-18 0a6 6 0 1 0 12 0" ${LN(3.6)}/>`
+      + `<ellipse class="ln" cx="0" cy="88" rx="9" ry="11" fill="${K}" stroke="${K}" stroke-width="3"/>`
+      + `<g class="mp">${leaf(-44, -10, -28, .95, 'x')}${leaf(-12, -22, -72, 1, 'x')}${leaf(22, -16, -108, .95, 'x')}${leaf(52, -6, -150, .85, 'x')}</g>`,
+    // 笑：眼睛 ^ ^、张嘴笑（朱红舌头）、朱红腮红；四周几颗闪光
+    happy: `<path class="ln" d="M-46 56Q-33 40-20 56M20 56Q33 40 46 56" ${LN(5)}/>`
+      + `<path class="ln" d="M-24 72Q0 106 24 72Z" fill="${K}" stroke="${K}" stroke-width="4" stroke-linejoin="round"/><path d="M-11 90Q0 82 11 90Q0 98-11 90Z" fill="${RD}"/>`
+      + blush(-60, 70) + blush(60, 70) + spark(-120, -22, 15) + spark(118, -36, 19) + spark(128, 8, 10),
+    // 眨眼笑：一只眼 ^、一只眨着，嘴角上扬
+    wink: `<path class="ln" d="M-46 56Q-33 40-20 56M20 52Q33 48 46 54" ${LN(5)}/><path class="ln" d="M-22 74Q0 96 22 74" ${LN(5)}/>`
+      + blush(-60, 70) + blush(60, 70) + spark(-122, -10, 17) + spark(116, -30, 14) + spark(126, 14, 11),
+    // 满足：眯着眼、抿嘴笑；杯口一缕热气，旁边一颗闪光
+    calm: `<path class="ln" d="M-46 50Q-33 64-20 50M20 50Q33 64 46 50" ${LN(5)}/><path class="ln" d="M-16 78Q0 92 16 78" ${LN(5)}/>`
+      + blush(-60, 70) + blush(60, 70) + steam(-8, -22) + steam(14, -26) + spark(-118, -18, 16) + spark(120, -6, 13),
+  };
+  function cup(face, tea) {
+    return `<ellipse class="tn" cx="8" cy="132" rx="76" ry="10" ${TONE()} fill-opacity=".7"/>`
+      + `<path class="ln" d="M-30 108L-26 124Q0 129 26 124L30 108" ${SH}/>`
+      + `<path class="ln" d="M-92 2C-90 70-48 112 0 112C48 112 90 70 92 2Z" ${SH}/>`
+      + `<path class="tn" d="M78 16C76 54 56 86 22 104C62 96 86 62 88 16Z" ${TONE()}/>`
+      + `<ellipse class="ln" cx="0" cy="0" rx="94" ry="18" ${SH}/>`
+      + `<ellipse class="ln" cx="0" cy="2" rx="80" ry="12" fill="url(#${tea})" stroke="${K}" stroke-width="3"/>`
+      + (FACE[face] || '');
+  }
+  const CUP = '-150 -82 300 222';
+  const ART = {
+    // 封面、结尾：盖着盖子的盖碗，冒三缕热气，几颗闪光
+    cover: { vb: '-180 -204 360 354', svg: () => gaiwan({ lid: 1 }) + steam(-26, -104) + steam(0, -110) + steam(26, -104) + spark(-150, -70, 20) + spark(148, -116, 26) + spark(162, -32, 14) },
+    // 三样东西：盖碗、一芽两叶的干茶、水壶（壶嘴冒热气）
+    gaiwan: { vb: '-150 -102 300 244', svg: () => gaiwan({ lid: 1 }) },
+    sprig: { vb: '-115 -192 230 216', svg: sprig },
+    kettle: { vb: '-172 -222 286 236', svg: () => kettle() + steam(-150, -142) + steam(-126, -150) },
+    // 四格：温杯（壶往空碗里冲热水）、投茶（茶匙里的茶叶落进碗里）、注水（水沿碗边倒进去）、好茶（盖上盖子，热气、闪光）
+    'koma-warm': { vb: '0 0 360 260', svg: () => at('translate(140 170) scale(.74)', gaiwan()) + at('translate(300 126) rotate(-32) scale(.6)', kettle())
+      + stream('M190 102C188 120 178 140 168 164') + steam(84, 150) + steam(108, 142) },
+    'koma-drop': { vb: '0 0 360 260', svg: () => at('translate(200 172) scale(.76)', gaiwan({ leaves: 1 })) + at('translate(96 70) rotate(32) scale(.85)', spoon + leaf(4, -4, 10, .5) + leaf(24, 2, -14, .46))
+      + leaf(154, 114, 40, .62) + leaf(180, 130, -24, .58) + leaf(166, 150, 66, .52) + `<path class="ln" d="M146 84v18M160 96v16M186 110v16" ${LN(3)}/>` },
+    'koma-pour': { vb: '0 0 360 260', svg: () => at('translate(236 174) scale(.74)', gaiwan({ tea: 'cm-tone', leaves: 1 })) + at('translate(76 130) rotate(32) scale(-.56 .56)', kettle())
+      + stream('M178 110C176 132 168 152 162 170') + `<g class="mp"><path d="M204 180q34 9 68-2M218 170q22-7 44 1" ${LN(3.2)}/></g>` },
+    'koma-done': { vb: '0 0 360 260', svg: () => at('translate(180 184) scale(.76)', gaiwan({ lid: 1 })) + steam(158, 106) + steam(180, 100) + steam(202, 106)
+      + spark(56, 92, 18) + spark(300, 76, 22) + spark(318, 150, 12) + spark(44, 168, 10) },
+    // 错误示范、正确示范：会做表情的茶杯
+    'cup-bitter': { vb: CUP, svg: () => cup('bitter', 'cm-tone-d') },
+    'cup-sour': { vb: CUP, svg: () => cup('sour', 'cm-tone-d') },
+    'cup-strong': { vb: CUP, svg: () => cup('strong', 'cm-tone-d') },
+    'cup-happy': { vb: CUP, svg: () => cup('happy', 'cm-tone') },
+    'cup-wink': { vb: CUP, svg: () => cup('wink', 'cm-tone') },
+    'cup-calm': { vb: CUP, svg: () => cup('calm', 'cm-tone') },
+  };
+  function fillArt(el) {
+    const a = ART[el.dataset.cmArt];
+    if (!a) { console.warn(`[Deck] 漫画插画 data-cm-art="${el.dataset.cmArt}" 不认识，可选：${Object.keys(ART).join('、')}`); return; }
+    el.setAttribute('aria-hidden', 'true');
+    el.innerHTML = `<svg viewBox="${a.vb}" focusable="false">${a.svg()}</svg>`;
+  }
+
+  /* ---------- 斜格 .cm-cut[data-cm-cut]：建页时画上格框（一层 svg.cm-cut-f 垫在格子内容下面） ----------
+     一层里从下往上：右下错开的网点阴影 .cm-sh → 格子的留白 → 集中线 .cm-bl（裁在格子里，可以再用 data-cm-burst-box 限定）→ 每条边一道毛笔墨线 .cm-ed */
+  const nums = s => String(s || '').split(/[\s,]+/).filter(Boolean).map(Number);
+  function pointsOf(s) {
+    const v = nums(s), P = [];
+    for (let i = 0; i + 1 < v.length; i += 2) if (Number.isFinite(v[i]) && Number.isFinite(v[i + 1])) P.push([v[i], v[i + 1]]);
+    return P;
+  }
+  const ptsAttr = P => P.map(p => f1(p[0]) + ',' + f1(p[1])).join(' ');
+  /* 凸多边形裁进一个矩形（一条边一条边地裁） */
+  function clipBox(P, x0, y0, x1, y1) {
+    const lerp = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
+    const sides = [[p => p[0] >= x0, (a, b) => lerp(a, b, (x0 - a[0]) / (b[0] - a[0]))], [p => p[0] <= x1, (a, b) => lerp(a, b, (x1 - a[0]) / (b[0] - a[0]))],
+      [p => p[1] >= y0, (a, b) => lerp(a, b, (y0 - a[1]) / (b[1] - a[1]))], [p => p[1] <= y1, (a, b) => lerp(a, b, (y1 - a[1]) / (b[1] - a[1]))]];
+    let out = P;
+    sides.forEach(([inside, cut]) => {
+      const src = out; out = [];
+      src.forEach((cur, i) => {
+        const prev = src[(i + src.length - 1) % src.length];
+        if (inside(cur)) { if (!inside(prev)) out.push(cut(prev, cur)); out.push(cur); } else if (inside(prev)) out.push(cut(prev, cur));
+      });
+    });
+    return out;
+  }
+  /* 集中线：从格子边上一根根尖头朝里的楔形，收到中心 (cx, cy) 外面半径 r 的椭圆上（每次建页画得一样） */
+  function rays(cx, cy, r, seed) {
+    let s = (seed * 7919) % 233280 || 1;
+    const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+    let d = '';
+    for (let i = 0, n = 48; i < n; i++) {
+      const a = (i + rnd() * .8) / n * Math.PI * 2, c = Math.cos(a), sn = Math.sin(a), rr = r * (1 + rnd() * .3);
+      const ix = cx + c * rr, iy = cy + sn * rr * .84, D = 1100, w = 12 + rnd() * 22, ox = cx + c * D, oy = cy + sn * D;
+      d += `M${f1(ix)} ${f1(iy)}L${f1(ox - sn * w)} ${f1(oy + c * w)}L${f1(ox + sn * w)} ${f1(oy - c * w)}Z`;
+    }
+    return d;
+  }
+  let cutSeq = 0;
+  function buildCut(el) {
+    if (el.querySelector(':scope > svg.cm-cut-f')) return;
+    const P = pointsOf(el.dataset.cmCut);
+    if (P.length < 3) { console.warn('[Deck] 斜格 data-cm-cut 至少要三个点，写成 "x,y x,y x,y"（格子自己的坐标）'); return; }
+    const M = 32, W0 = Math.max(...P.map(p => p[0])) + M * 2, H0 = Math.max(...P.map(p => p[1])) + M * 2;
+    const EX = 7, BW = 6, pt = v => f1(v[0]) + ' ' + f1(v[1]);
+    let edges = '';
+    P.forEach((p, i) => {
+      const q = P[(i + 1) % P.length], dx = q[0] - p[0], dy = q[1] - p[1], L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L;
+      const a = [p[0] - ux * EX, p[1] - uy * EX], b = [q[0] + ux * EX, q[1] + uy * EX], c = (k, w) => [p[0] + dx * k - uy * w, p[1] + dy * k + ux * w];
+      edges += `<path class="cm-ed" data-o="${pt(a)}" d="M${pt(a)}C${pt(c(.3, BW * 1.1))} ${pt(c(.7, BW * .9))} ${pt(b)}C${pt(c(.7, -BW * .8))} ${pt(c(.3, -BW))} ${pt(a)}Z" fill="${K}"/>`;
+    });
+    let burst = '';
+    const bs = nums(el.dataset.cmBurst);
+    if (bs.length >= 3 && bs.every(Number.isFinite)) {
+      const bx = nums(el.dataset.cmBurstBox), box = bx.length === 4 && bx.every(Number.isFinite) ? bx : [-1e4, -1e4, 1e4, 1e4];
+      const id = 'cm-clip-' + (++cutSeq);
+      // 限定的那条边落在格子里面时，集中线到那条边前 120px 渐渐淡掉（不是一刀切齐）
+      const xs = P.map(p => p[0]), ys = P.map(p => p[1]), F = 120;
+      const fade = box[3] < Math.max(...ys) - 1 ? [0, box[3] - F, 0, box[3]] : box[0] > Math.min(...xs) + 1 ? [box[0] + F, 0, box[0], 0]
+        : box[2] < Math.max(...xs) - 1 ? [box[2] - F, 0, box[2], 0] : box[1] > Math.min(...ys) + 1 ? [0, box[1] + F, 0, box[1]] : null;
+      const fill = fade ? `url(#${id}g)` : K;
+      burst = `<clipPath id="${id}"><polygon points="${ptsAttr(clipBox(P, box[0], box[1], box[2], box[3]))}"/></clipPath>`
+        + (fade ? `<linearGradient id="${id}g" gradientUnits="userSpaceOnUse" x1="${fade[0]}" y1="${fade[1]}" x2="${fade[2]}" y2="${fade[3]}"><stop offset="0" stop-color="${K}" stop-opacity=".6"/><stop offset="1" stop-color="${K}" stop-opacity="0"/></linearGradient>` : '')
+        + `<g clip-path="url(#${id})"><g class="cm-bl" data-o="${bs[0]} ${bs[1]}"><path d="${rays(bs[0], bs[1], bs[2], cutSeq)}" fill="${fill}"${fade ? '' : ' fill-opacity=".6"'}/></g></g>`;
+    }
+    el.insertAdjacentHTML('afterbegin', `<svg class="cm-cut-f" viewBox="${-M} ${-M} ${W0} ${H0}" width="${W0}" height="${H0}" style="left:${-M}px;top:${-M}px" aria-hidden="true" focusable="false">`
+      + `<g class="cm-sh"><polygon points="${ptsAttr(P)}" transform="translate(14 14)" fill="url(#cm-tone)" fill-opacity=".55"/></g>`
+      + `<polygon points="${ptsAttr(P)}" fill="${WH}"/>${burst}${edges}</svg>`);
+  }
+  /* 斜格出场、退场时 gsap 留在 svg 里的变形和透明度，收尾时直接清掉（gsap 还会写上 translate/rotate/scale: none） */
+  const SVGP = ['opacity', 'transform', 'transform-origin', 'translate', 'rotate', 'scale'];
+  function cleanCut(f) {
+    f.querySelectorAll('.cm-ed, .cm-sh, .cm-bl').forEach(n => {
+      n.removeAttribute('transform'); n.removeAttribute('data-svg-origin');
+      SVGP.forEach(k => n.style.removeProperty(k));
+    });
+  }
+  /* 一格斜格：墨线一条条从起点甩出来 → 网点阴影从格子底下滑出来 → 集中线往里收 → 里面的东西依次出场 */
+  function cutOne(tl, e, t, vis) {
+    appear(tl, e, t, vis, .1);
+    const f = e.querySelector(':scope > svg.cm-cut-f');
+    let lines = .3;
+    if (f) {
+      const eds = [...f.querySelectorAll('.cm-ed')], sh = f.querySelector('.cm-sh'), bl = f.querySelector('.cm-bl');
+      const gap = Math.min(.08, .3 / Math.max(1, eds.length));
+      eds.forEach((p, i) => { const o = p.getAttribute('data-o'); tl.fromTo(p, { scale: 0, svgOrigin: o }, { scale: 1, svgOrigin: o, duration: .11, ease: 'power1.in', immediateRender: true }, t + i * gap); });
+      lines = eds.length * gap + .04;
+      if (sh) tl.fromTo(sh, { opacity: 0, x: -14, y: -14 }, { opacity: 1, x: 0, y: 0, duration: .26, ease: 'back.out(2.4)', immediateRender: true }, t + lines);
+      if (bl) { const o = bl.getAttribute('data-o'); tl.fromTo(bl, { opacity: 0, scale: 1.45, svgOrigin: o }, { opacity: 1, scale: 1, svgOrigin: o, duration: .32, ease: 'power3.out', immediateRender: true }, t + lines - .06); }
+      tl.call(() => cleanCut(f), null, t + lines + .34);
+    }
+    const end = Math.min(Math.max(lines + .34, kidsIn(tl, e, t, Math.min(lines, .3))), 1.15);
+    tl.call(() => clean(e), null, t + end);
+    return end;
+  }
+  /* 插画描线：墨线一笔笔描出来 → 网点、留白浮上来 → 漫符、闪光一个个弹出来 */
+  function artIn(tl, e, t, vis) {
+    appear(tl, e, t, vis, .06);
+    const svg = e.querySelector('svg');
+    if (!svg) return .1;
+    const lines = [...svg.querySelectorAll('.ln')], tones = [...svg.querySelectorAll('.tn')], mps = [...svg.querySelectorAll('.mp')];
+    const gap = lines.length ? Math.min(.022, .24 / lines.length) : 0;
+    lines.forEach((p, i) => {
+      let L = 0;
+      try { L = Math.ceil(p.getTotalLength()) + 2; } catch (err) { L = 0; }
+      if (L > 2) tl.fromTo(p, { strokeDasharray: L + ' ' + L, strokeDashoffset: L }, { strokeDashoffset: 0, duration: .3, ease: 'power1.inOut', immediateRender: true }, t + i * gap);
+    });
+    const drawn = lines.length * gap + .3;
+    if (tones.length) tl.fromTo(tones, { opacity: 0 }, { opacity: 1, duration: .2, ease: 'none', immediateRender: true }, t + drawn * .6);
+    mps.forEach((m, i) => tl.fromTo(m, { scale: 0, transformOrigin: '50% 50%' }, { scale: 1, duration: .3, ease: 'back.out(2.6)', immediateRender: true }, t + drawn - .04 + i * .05));
+    const end = Math.max(drawn, mps.length ? drawn - .04 + .3 + (mps.length - 1) * .05 : 0);
+    tl.call(() => { cleanArt(svg); clean(e); }, null, t + end + .01);
+    return end;
+  }
+  function cleanArt(svg) {
+    svg.querySelectorAll('.ln').forEach(p => { p.style.removeProperty('stroke-dasharray'); p.style.removeProperty('stroke-dashoffset'); });
+    svg.querySelectorAll('.tn').forEach(p => p.style.removeProperty('opacity'));
+    svg.querySelectorAll('.mp').forEach(m => { m.removeAttribute('transform'); m.removeAttribute('data-svg-origin'); SVGP.forEach(k => m.style.removeProperty(k)); });
   }
 
   const FX = {
@@ -343,12 +630,31 @@
     mount(stage) { stage.addEventListener('pointerover', onOver, { passive: true }); stage.addEventListener('pointerleave', unhover); },
     unmount(stage) { stage.removeEventListener('pointerover', onOver); stage.removeEventListener('pointerleave', unhover); unhover(); },
 
-    // 退一拍：网点阴影先沉回去，四条墨线倒着收掉，同时整格淡出（淡出由引擎做）
+    // 建页：墨线插画填进去、斜格画上格框（只看这一页里的）
+    defs: DEFS,
+    decorate(s) {
+      s.querySelectorAll('.cm-art[data-cm-art]').forEach(fillArt);
+      s.querySelectorAll('.cm-cut[data-cm-cut]').forEach(buildCut);
+    },
+
+    // 退一拍：网点阴影先沉回去，四条墨线倒着收掉，同时整格淡出（淡出由引擎做）；斜格也一样，墨线倒着一条条收回起点
     onBack({ tl, units }) {
-      const touched = [];
+      const touched = [], cuts = [];
       units.forEach(u => {
         const e = u.el;
         if (e instanceof SVGElement || e.matches(SKIP)) return;
+        if (isCut(e)) {
+          const f = e.querySelector(':scope > svg.cm-cut-f');
+          if (!f) return;
+          cuts.push(f);
+          const sh = f.querySelector('.cm-sh');
+          if (sh) tl.fromTo(sh, { opacity: 1 }, { opacity: 0, duration: .14, ease: 'power2.in', immediateRender: false }, 0);
+          [...f.querySelectorAll('.cm-ed')].reverse().forEach((p, j) => {
+            const o = p.getAttribute('data-o');
+            tl.fromTo(p, { scale: 1, svgOrigin: o }, { scale: 0, svgOrigin: o, duration: .08, ease: 'none', immediateRender: false }, .06 + j * .05);
+          });
+          return;
+        }
         const list = isPanel(e) || isCopy(e) ? [e] : kidsOf(e).filter(c => isPanel(c) || isCopy(c));
         list.forEach(p => {
           touched.push(p);
@@ -357,6 +663,7 @@
         });
       });
       if (touched.length) tl.call(() => touched.forEach(cleanVars), null, .44);
+      if (cuts.length) tl.call(() => cuts.forEach(cleanCut), null, .46);
       return { at: .12, gap: .03, y: 0, dur: .2 };
     },
 
@@ -413,6 +720,13 @@
       let end = .5;
       const title = root.querySelector(':scope > .s-title');
       if (title) end = Math.max(end, .12 + dashOne(tl, title, .12, false, 0));
+      // 分镜草稿位：蓝铅笔虚线框一格格浮出来（先交代这页有几格）
+      const slots = [...root.querySelectorAll('.cm-slot')];
+      if (slots.length) {
+        const off = () => slots.forEach(s => ['opacity', 'transform', 'translate'].forEach(k => s.style.removeProperty(k)));
+        tl.fromTo(slots, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: .26, stagger: .05, ease: 'power2.out', immediateRender: true, onComplete: off, onInterrupt: off }, .24);
+        end = Math.max(end, .5 + slots.length * .05);
+      }
       // 第 0 拍：只取最外层的，形象由引擎管；按「格框 → 内容 → 大字 → 气泡」排先后
       const zero = [...root.querySelectorAll('[data-beat]')].filter(e => (parseInt(e.dataset.beat, 10) || 0) === 0
         && !e.matches(SKIP) && !(e.parentElement && e.parentElement.closest('[data-beat]')));
