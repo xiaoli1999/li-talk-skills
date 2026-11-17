@@ -2,7 +2,8 @@
    演示稿引擎 · 核心（core.js）
    - 最先执行的引擎文件：建好 window.Deck 和内部总线 Deck._（各文件里记作 I）
    - 负责：共享常量、工具函数、可变状态 I.state、外壳元素表 I.dom、
-     页面注册 Deck.add、提示条 toast、等字体、主题行缩字、启动 boot、对外接口
+     页面注册 Deck.add、风格注册 Deck.scene（注册表 I.SCENES，内置朴素风格 plain）、
+     提示条 toast、等字体、主题行缩字、风格混用检查、启动 boot、对外接口
    - 引入顺序固定：vendor/gsap.min.js → vendor/rough.min.js → engine/core.js → build.js
      → beats.js → mascot.js → pages.js → ui.js → presenter.js → selftest.js
      → scenes/*.js → mascots/*.js → 各章 slides/*.js
@@ -20,10 +21,6 @@
   const I = {};
 
   const W = 1920, H = 1080, NS = 'http://www.w3.org/2000/svg';
-  const SCENES = ['paper', 'board', 'journal', 'desk'];
-  const SCENE_NAME = { paper: '方格纸', board: '黑板', journal: '像素手账', desk: '工位桌面' };
-  const SCENE_IN = { paper: 'rise', board: 'write', journal: 'write', desk: 'drop' };      // 各场景默认的出场动效
-  const TITLE_IN = { paper: 'write', board: 'write', journal: 'write', desk: 'fade' };     // 页标题的出场
   const MAX_BEAT = 1.2;                                                // 单拍动效总时长上限（秒）
   const NEXT_KEYS = new Set(['ArrowRight', 'ArrowDown', 'PageDown', ' ', 'Spacebar', 'Enter']);
   const PREV_KEYS = new Set(['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace']);
@@ -54,18 +51,90 @@
     cur: { p: 0, b: 0 },      // 当前第几页（从 0 起）、第几拍
     running: null,            // 正在播放的节拍动画（再按一下就快进到结尾）
     pageTl: null,             // 正在播放的翻页动画
-    curScene: null,           // 当前场景
-    sceneTl: null,            // 换场景时外框（章节、页码、节拍格）淡出再淡入的动画
+    curScene: null,           // 当前风格（键名）
+    mountedScene: null,       // 调用过 mount、还没 unmount 的风格（阅读模式下为 null）
+    forceScene: null,         // 地址 ?scene=<键名> 指定且已注册的风格：所有页面临时都用它
+    sceneTl: null,            // 换风格时外框（章节、页码、节拍格）淡出再淡入的动画
     pres: null,               // 演讲者窗口
     timer: { acc: 0, start: 0 },   // 计时（刷新后保留）：acc 已累计的毫秒，start 本轮开始的时刻
     toastT: 0,                // 提示条自动消失的定时器
   };
-  /* 外壳里的元素：build.js 的 buildShell 填上；bg 是各场景的背景层 */
+  /* 外壳里的元素：build.js 的 buildShell 填上；bg 是各风格的背景层（键名 → 元素） */
   const dom = { bg: {} };
   const motion = () => !!G && !RMQ.matches && !S.reading;
 
   /* =================================================================
-     注册
+     风格注册表：Deck.scene(key, opts)（接口约定 B）
+     - 每种风格是 scenes/ 下的 <键名>.js 和 <键名>.css，js 里调用 Deck.scene 注册
+     - 引擎只按注册表办事，不认识任何具体的风格；内置一个朴素风格 plain 兜底
+     ================================================================= */
+  const SCENES = {};
+  const FAMILY = { hand: '手绘', modern: '现代', pixel: '像素' };
+  /* 认识的字段和类型：类型不对的字段给提醒并丢掉，引擎改走默认做法 */
+  const SCENE_FIELDS = {
+    label: 'string', family: 'string', dark: 'boolean', mascot: 'string',
+    enter: 'string', enterBy: 'object', titleIn: 'string', ease: 'object', recede: 'number',
+    rough: 'object', fx: 'object', plan: 'function', decorate: 'function', backdrop: 'function',
+    onBack: 'function', pageTurn: 'function', copied: 'function', mascotSay: 'object', intro: 'function',
+    mount: 'function', unmount: 'function', ripple: 'function', zones: 'array', defs: 'string',
+  };
+  /* 手绘线的默认参数（风格的 rough 只写要改的项）：strokeWidth 线宽、roughness 粗糙度、bowing 弯曲度，
+     hachureGap / hachureAngle / fillWeight 填充线的间距、角度、粗细，markWidth 圈注的线宽 */
+  const ROUGH = { strokeWidth: 2.6, roughness: 1.1, bowing: 1, hachureGap: 9, hachureAngle: -41, fillWeight: 2.6, markWidth: 3.5 };
+  /* 内置的朴素风格：浅色底、墨色字、无装饰；样子写在 engine.css 里，只用 CSS 变量的默认值 */
+  SCENES.plain = { key: 'plain', label: '朴素', family: 'modern', enter: 'rise', titleIn: 'fade' };
+
+  const typeOf = v => Array.isArray(v) ? 'array' : v === null ? 'null' : typeof v;
+  function scene(key, opts) {
+    if (S.booted) { warn(`Deck.scene 要在页面加载完之前调用：把风格文件用 <script src> 写进 index.html。这次注册的「${key}」被忽略`); return; }
+    if (typeof key !== 'string' || !/^[a-z][a-z0-9-]*$/.test(key)) { warn('Deck.scene 的第一个参数是风格的键名：小写字母开头，只含小写字母、数字和 -。这次收到：', key); return; }
+    if (!opts || typeof opts !== 'object') { warn(`风格 ${key}：Deck.scene 的第二个参数要是一个对象，这次注册被忽略`); return; }
+    const o = { key };
+    Object.keys(opts).forEach(k => {
+      const want = SCENE_FIELDS[k];
+      if (!want) { warn(`风格 ${key}：不认识的字段「${k}」，已忽略。认识的字段：${Object.keys(SCENE_FIELDS).join('、')}`); return; }
+      const got = typeOf(opts[k]);
+      if (got !== want) { warn(`风格 ${key}：字段 ${k} 应该是 ${want}，这里是 ${got}，已忽略，改走默认做法`); return; }
+      o[k] = opts[k];
+    });
+    if (!o.label) { warn(`风格 ${key}：没写 label（给人看的名字），先叫它 ${key}`); o.label = key; }
+    if (!FAMILY[o.family]) { warn(`风格 ${key}：family 只能是 hand（手绘）、modern（现代）、pixel（像素），这里是「${o.family}」，先按 modern 处理`); o.family = 'modern'; }
+    if (o.recede != null && !(o.recede >= 0 && o.recede <= 1)) { warn(`风格 ${key}：recede 要在 0 到 1 之间，这里是 ${o.recede}，已忽略`); delete o.recede; }
+    if (SCENES[key]) warn(`风格 ${key} 重复注册了，以后注册的为准`);
+    SCENES[key] = o;
+  }
+  /* 按键名取风格；没注册的给朴素风格 */
+  const sc = key => SCENES[key] || SCENES.plain;
+  /* 某个风格的手绘线参数：默认值加上风格的 rough */
+  const roughOf = key => Object.assign({}, ROUGH, sc(key).rough);
+  /* 调用风格的钩子：钩子不存在返回 undefined；出错只记一条报错，不影响放映 */
+  function hook(s, name, ...args) {
+    const f = s && s[name];
+    if (typeof f !== 'function') return undefined;
+    try { return f.apply(s, args); } catch (e) { console.error(`[Deck] 风格 ${s.key} 的 ${name} 出错：`, e); return undefined; }
+  }
+  /* 已注册的风格（不含朴素），给提醒用：「已注册的风格：<label> <键名>、…」 */
+  function sceneList() {
+    const ks = Object.keys(SCENES).filter(k => k !== 'plain');
+    return ks.length ? '已注册的风格：' + ks.map(k => `${SCENES[k].label} ${k}`).join('、') : '还没有注册任何风格（index.html 里要引入 scenes/<键名>.js）';
+  }
+  /* 所有页面建好后：用到的风格不属于同一家时给提醒（退回朴素样子的页不算） */
+  function checkFamilies() {
+    const used = [];
+    PAGES.forEach(p => { if (!p.fallback && !used.includes(p.scene)) used.push(p.scene); });
+    const base = used[0];
+    if (!base) return;
+    const seen = new Set([sc(base).family]);
+    used.forEach(k => {
+      const f = sc(k).family;
+      if (seen.has(f)) return;
+      seen.add(f);
+      warn(`风格混用了不同的家：${sc(base).label}（${FAMILY[sc(base).family]}）和 ${sc(k).label}（${FAMILY[f]}）。同一份课件里最好只用同一家的风格`);
+    });
+  }
+
+  /* =================================================================
+     页面注册
      ================================================================= */
   function add(def) {
     if (S.booted) { warn('Deck.add 要在页面加载完之前调用：把章节文件用 <script src> 写进 index.html。这次调用被忽略：', def && def.id); return; }
@@ -74,7 +143,7 @@
     const no = DEFS.length + 1;
     if (!d.id) { d.id = 'page' + no; warn(`第 ${no} 页没写 id，先叫它 ${d.id}`); }
     if (DEFS.some(x => x.id === d.id)) { const nid = d.id + '-' + no; warn(`id「${d.id}」重复了，第 ${no} 页改叫「${nid}」`); d.id = nid; }
-    if (!SCENES.includes(d.scene)) { warn(`页面 ${d.id}：scene「${d.scene}」不认识，只能是 paper、board、journal、desk，先按 paper 显示`); d.scene = 'paper'; }
+    // 风格到 boot 时才对照注册表（build.js 的 pickScene），风格文件引入得晚一点也不要紧
     if (typeof d.html !== 'string') d.html = '';
     if (!d.title) warn(`页面 ${d.id}：没写 title（演讲者视图、阅读模式要用）`);
     d.topic = d.topic ? String(d.topic) : '';
@@ -113,9 +182,12 @@
   }
   function boot() {
     if (S.booted) return;
+    const force = QS.get('scene');
+    if (force) { if (SCENES[force]) S.forceScene = force; else warn(`地址里的 ?scene=${force} 没有注册，忽略。${sceneList()}`); }
     I.buildShell();
     DEFS.forEach((d, i) => PAGES.push(I.buildPage(d, i)));
     S.booted = true;
+    checkFamilies();
     if (!PAGES.length) { document.body.classList.remove('loading'); toast('还没有页面：在 index.html 里引入章节文件，文件里调用 Deck.add({...})', 10000); return; }
     I.restoreTimer();
     I.bindInput();
@@ -137,11 +209,12 @@
      挂到总线
      ================================================================= */
   Object.assign(I, {
-    W, H, NS, SCENES, SCENE_NAME, SCENE_IN, TITLE_IN, MAX_BEAT, NEXT_KEYS, PREV_KEYS,
+    W, H, NS, MAX_BEAT, NEXT_KEYS, PREV_KEYS,
     G, R, RMQ, QS, FORCE, SHOW_NOTES,
     $, $$, clamp, esc, warn, toInt, el,
     DEFS, PAGES, state: S, dom, motion,
-    add, toast, fontsReady, fitTopics, boot,
+    SCENES, FAMILY, ROUGH, sc, roughOf, hook, sceneList, checkFamilies,
+    add, scene, toast, fontsReady, fitTopics, boot,
   });
 
   /* =================================================================
@@ -151,6 +224,7 @@
   window.Deck = {
     version: '0.1.0',
     add,
+    scene,
     kid: opts => I.kid(opts),
     next: () => I.next(),
     prev: () => I.prev(),

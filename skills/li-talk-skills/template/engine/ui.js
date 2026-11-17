@@ -1,12 +1,14 @@
 /* =====================================================================
    演示稿引擎 · 交互（ui.js）
-   - 复制：copyText（先用同步老办法，再试剪贴板接口）、onCopy、「已复制」提示 copiedTip（找不挡字的位置 textRects）
+   - 复制：copyText（先用同步老办法，再试剪贴板接口）、onCopy、「已复制」提示 copiedTip（找不挡字的位置 textRects；
+     出场用风格的 copied，形象喊话用风格的 mascotSay.copied）
    - 看大图：openShot、closeShot
    - 输入：键盘 onKey、触屏滑动、点击翻拍、地址 #页/拍（parseHash、hashchange）
    - 屏幕适配：fit（横屏等比缩放铺满、窄的竖屏切阅读模式）、setMode、scrollToPage、pageInView
-   - 依赖总线：core 的常量和工具、I.PAGES、I.state（cur、reading、booted、curScene）、I.dom（lb、world、stage）、I.toast；
+   - 依赖总线：core 的常量和工具、I.sc（风格注册表）、I.PAGES、I.state（cur、reading、booted、curScene）、
+     I.dom（lb、world、stage）、I.toast；
      build.js 的 I.boxIn；beats.js 的 I.clearEl、I.setInstant、I.callOnBeat、I.finishRunning；
-     mascot.js 的 I.kidCheer；pages.js 的 I.next、I.prev、I.go、I.finishPageTl；
+     mascot.js 的 I.kidCheer；pages.js 的 I.next、I.prev、I.go、I.finishPageTl、I.mountScene；
      presenter.js 的 I.openPresenter、I.toggleTimer、I.resetTimer
    - 挂到总线：copyText、onCopy、textRects、copiedTip、openShot、closeShot、onKey、bindInput、parseHash、
      fit、setMode、scrollToPage、pageInView
@@ -60,14 +62,27 @@
     }
     return out;
   }
+  /* 「已复制」的默认出场：先打勾，再一格格写出「已复制」 */
+  function defaultCopied(tl, tip) {
+    const path = $('path', tip), txt = $('span', tip);
+    const L = path.getTotalLength() + 2;
+    tl.set(tip, { autoAlpha: 1 })
+      .fromTo(path, { strokeDasharray: L, strokeDashoffset: L }, { strokeDashoffset: 0, duration: .26, ease: 'power2.out' })
+      .fromTo(txt, { clipPath: 'inset(-20% 100% -20% 0)' }, { clipPath: 'inset(-20% -5% -20% 0)', duration: .32, ease: 'steps(3)' }, '-=.04');
+  }
+  /* 复制后的反馈。风格可以定制两处：
+     - copied(ctx)：「已复制」提示框怎么出场，ctx = { tl, tip, node, ok }，往 tl 里加动画；没写用默认的打勾
+     - mascotSay.copied：形象的口头禅；写了的话，复制成功且页上有形象时由形象喊这句，不再放提示框 */
   function copiedTip(node, slide, ok) {
     $$('.copied-tip', slide).forEach(t => t.remove());
-    // 手账：命令框变绿，小克蹦一下喊「已复制！」（样页 v3-3 的做法）；页上没有小克才放提示框
-    const pg0 = PAGES.find(x => x.el === slide);
-    if (ok && slide.dataset.scene === 'journal' && pg0 && pg0.kid && !S.reading) {
+    const pg = PAGES.find(x => x.el === slide);
+    const sc = I.sc(pg ? pg.scene : slide.dataset.scene);
+    const cheer = ok && pg && pg.kid && !S.reading;
+    const say = sc.mascotSay && sc.mascotSay.copied ? String(sc.mascotSay.copied) : '';
+    if (cheer && say) {
       node.classList.add('is-copied');
       clearTimeout(node._cpT); node._cpT = setTimeout(() => node.classList.remove('is-copied'), 1800);
-      I.kidCheer(pg0.kid, '已复制！');
+      I.kidCheer(pg.kid, say);
       return;
     }
     const b = I.boxIn(node, slide);
@@ -90,23 +105,18 @@
     if (x + tw > W - 10) { x = clamp(b.l + b.w - tw, 10, W - tw - 10); y = b.t + b.h + 10; }
     tip.style.left = x + 'px'; tip.style.top = y + 'px';
     node.classList.add('is-copied');
-    const scene = slide.dataset.scene;
     if (motion()) {
       const tl = G.timeline({ onComplete: () => { tip.remove(); node.classList.remove('is-copied'); } });
-      const path = $('path', tip), txt = $('span', tip);
-      if (scene === 'desk') tl.fromTo(tip, { autoAlpha: 0, scale: 2.2, rotation: -26 }, { autoAlpha: .92, scale: 1, rotation: -10, duration: .2, ease: 'power3.in' });   // 盖章
-      else if (scene === 'journal') tl.fromTo(tip, { autoAlpha: 0, scale: .3 }, { autoAlpha: 1, scale: 1, duration: .22, ease: 'steps(3)' });                     // 像素框一格格弹出
-      else {                                                                                                                                                     // 方格纸绿笔、黑板黄粉笔：先打勾，再写「已复制」
-        const L = path.getTotalLength() + 2;
-        tl.set(tip, { autoAlpha: 1 })
-          .fromTo(path, { strokeDasharray: L, strokeDashoffset: L }, { strokeDashoffset: 0, duration: .26, ease: 'power2.out' })
-          .fromTo(txt, { clipPath: 'inset(-20% 100% -20% 0)' }, { clipPath: 'inset(-20% -5% -20% 0)', duration: .32, ease: scene === 'board' ? 'none' : 'steps(3)' }, '-=.04');
+      let custom = false;
+      if (typeof sc.copied === 'function') {
+        try { sc.copied({ tl, tip, node, ok }); custom = true; }
+        catch (e) { console.error(`[Deck] 风格 ${sc.key} 的 copied 出错，改用默认的打勾：`, e); tl.clear(); }
       }
+      if (!custom) defaultCopied(tl, tip);
       tl.to(tip, { autoAlpha: 0, duration: .35 }, '+=1.4');
     } else setTimeout(() => { tip.remove(); node.classList.remove('is-copied'); }, 1800);
-    // 小克替你高兴一下（手账里还会喊一声）
-    const pg = PAGES.find(x => x.el === slide);
-    if (ok && pg && pg.kid && !S.reading) I.kidCheer(pg.kid, scene === 'journal' ? '已复制！' : '');
+    // 小克替你高兴一下
+    if (cheer) I.kidCheer(pg.kid, '');
   }
 
   /* =================================================================
@@ -211,6 +221,11 @@
     document.body.classList.toggle('reading', r);
     document.documentElement.classList.toggle('reading', r);
     if (r) {
+      // 阅读模式下没有「当前风格」：卸下风格挂的监听和元素；舞台也去掉 data-scene，
+      // 免得 [data-scene="…"] .card 这类规则经由舞台套到别的风格的页上（每页只认自己的风格）
+      I.mountScene(null);
+      if (S.sceneTl) { const t = S.sceneTl; S.sceneTl = null; t.progress(1); t.kill(); }
+      S.curScene = null; delete dom.stage.dataset.scene;
       PAGES.forEach(p => { p.el.classList.remove('active'); I.clearEl(p.el); I.setInstant(p, p.total); I.callOnBeat(p, p.total, 0); });
       requestAnimationFrame(() => scrollToPage(S.cur.p));
     } else if (S.booted && PAGES.length) {

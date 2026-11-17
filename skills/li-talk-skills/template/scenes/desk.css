@@ -1,0 +1,62 @@
+/* =====================================================================
+   风格 · 工位桌面 desk 的样子（行为在 desk.js）
+   很淡的米色桌面、墨色字、珊瑚红强调；纸落到桌上。所有选择器的第一段都带 [data-scene="desk"]
+   铅笔线、印章用 desk.js 的 defs 里的滤镜 #pencil、#stamp-ink
+   ===================================================================== */
+
+/* 变量：米色桌面（--recede 由 desk.js 的 recede 写入） */
+[data-scene="desk"]{
+  --bg:#EFEAE1; --ink:#2A2521; --ink-2:#71675C; --ink-3:#8A7F73; --line:#5B5650;
+  --mark:#EF6A43; --key-ink:#2A2521; --hl:rgba(239,106,67,.5); --accent:#EF6A43;
+  --card-ink:#2A2521; --card-ink-2:#71675C; --paper:#FFFDF9;
+  --t-yellow:#FBF1CF; --t-mint:#E6F1E6; --t-pink:#FBE4DD; --t-blue:#E4EDF3; --t-white:#FFFDF9; --t-peach:#FBE7D5;
+  --term-bg:#232120; --term-ink:#F3F0E9;
+  --human:#F59F00; --ai:#3D8F5F; --idle:#A39A8F;   /* 「需要人」用偏黄的橙，和珊瑚红强调色分开 */
+  --scene-bg:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.01 .5' numOctaves='2' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .35 0 0 0 0 .22 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E"),
+    #EFEAE1;
+}
+
+/* 主题行：章节贴在一截纸胶带上，主题下面一道珊瑚红马克笔 */
+[data-scene="desk"] .s-topic .tc{color:#2A2521;padding:4px 18px 6px;background:rgba(226,212,178,.95);rotate:-1.5deg;
+  clip-path:polygon(0 0,100% 0,98% 25%,100% 50%,98% 75%,100% 100%,0 100%,2% 75%,0 50%,2% 25%)}
+[data-scene="desk"] .s-topic .tt::before{content:"";position:absolute;z-index:-1;left:-.08em;right:-.08em;top:.62em;height:.42em;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M3 15 C40 9 120 6 197 11 L195 31 C130 36 62 38 5 34 C9 27 2 22 3 15Z' fill='%23ef6a43' fill-opacity='.42'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat}
+
+/* 重点词：珊瑚红马克笔 */
+[data-scene="desk"] .key{font-size:1.1em;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M3 15 C40 9 120 6 197 11 L195 31 C130 36 62 38 5 34 C9 27 2 22 3 15Z' fill='%23ef6a43' fill-opacity='.5'/%3E%3C/svg%3E");background-position:0 92%;background-size:calc(var(--k)*100%) 52%}
+
+/* 组件：落在桌上的纸（拿起来时 --lift 变大，投影跟着变远） */
+[data-scene="desk"] .card{background:var(--tint,var(--paper));filter:drop-shadow(0 calc(1px + var(--lift)*22px) calc(2px + var(--lift)*24px) rgba(80,60,35,calc(.2 - var(--lift)*.08)))}
+[data-scene="desk"] .card.tape::before{background:rgba(226,212,178,.82);box-shadow:none;clip-path:polygon(0 0,100% 0,97% 25%,100% 50%,97% 75%,100% 100%,0 100%,3% 75%,0 50%,3% 25%)}
+[data-scene="desk"] .lab{background:rgba(226,212,178,.92);color:#2A2521;rotate:-2deg;clip-path:polygon(0 0,100% 0,98% 30%,100% 60%,98% 100%,0 100%,2% 70%,0 40%)}
+[data-scene="desk"] .steps>li::before{border:2.5px solid var(--line);background:var(--paper);box-shadow:0 3px 5px rgba(80,60,35,.18)}
+[data-scene="desk"] .vs::before{color:var(--mark)}
+[data-scene="desk"] .cell{border:0;border-radius:2px;background:var(--tint,var(--paper));box-shadow:0 1px 2px rgba(80,60,35,.12),0 10px 14px -10px rgba(80,60,35,.35)}
+[data-scene="desk"] .cell.ai{box-shadow:inset 0 -5px 0 var(--ai),0 10px 14px -10px rgba(80,60,35,.35)}
+[data-scene="desk"] .cell.human{box-shadow:inset 0 -5px 0 var(--human),0 10px 14px -10px rgba(80,60,35,.35)}
+[data-scene="desk"] .cell.idle{background:#F3EEE6}
+[data-scene="desk"] .term{border-radius:4px;box-shadow:0 2px 3px rgba(80,60,35,.2),0 22px 30px -18px rgba(80,60,35,.5)}
+
+/* 可复制的命令：标签机打出来的黑条；「已复制」是红色印章 */
+[data-scene="desk"] .copy{color:#F3F0E9;padding:14px 32px 16px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.03) 0 3px,transparent 3px 6px),#232120;
+  clip-path:polygon(0 0,100% 0,99.4% 50%,100% 100%,0 100%,.6% 50%);text-shadow:0 1px 0 rgba(0,0,0,.6),0 -1px 0 rgba(255,255,255,.16)}
+[data-scene="desk"] .copied-tip svg{display:none}
+[data-scene="desk"] .copied-tip{padding:8px 20px 10px;color:#C8432A;border:5px solid #C8432A;border-radius:12px;outline:2px solid #C8432A;outline-offset:4px;font-size:38px;letter-spacing:.1em;filter:url(#stamp-ink)}
+[data-scene="desk"] .shot{background:var(--paper);box-shadow:none;filter:drop-shadow(0 calc(1px + var(--lift)*22px) calc(2px + var(--lift)*24px) rgba(80,60,35,calc(.22 - var(--lift)*.08)))}
+[data-scene="desk"] .shot::before{background:rgba(226,212,178,.82);box-shadow:none}
+
+/* 线稿和圈注：铅笔 */
+[data-scene="desk"] svg.sketch,[data-scene="desk"] svg.marks{filter:url(#pencil)}
+
+/* 形象：一圈白边加落在桌上的影子；说的话是一张小纸片 */
+[data-scene="desk"] .kid svg{filter:drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff) drop-shadow(0 4px 3px rgba(80,60,35,.22))}
+[data-scene="desk"] .kid-say{color:#2A2521;background:#FFFDF9;border-radius:3px;box-shadow:0 1px 2px rgba(80,60,35,.15),0 10px 14px -8px rgba(80,60,35,.4)}
+[data-scene="desk"] .kid-say::after{background:#FFFDF9}
+
+/* 节拍格：珊瑚红图钉，讲到哪一拍就按下一颗 */
+#stage[data-scene="desk"] .dots{gap:14px}
+#stage[data-scene="desk"] .dots i{position:relative;width:26px;height:26px}
+#stage[data-scene="desk"] .dots i::before{content:"";position:absolute;inset:9px;border-radius:50%;background:rgba(90,70,45,.28)}
+#stage[data-scene="desk"] .dots i::after{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 35% 32%,rgba(255,255,255,.7) 0 3px,transparent 4px),#EF6A43;box-shadow:3px 4px 3px rgba(80,60,35,.3),inset 0 -2px 0 rgba(0,0,0,.18);opacity:0;transform:translateY(-14px) scale(1.6);transition:opacity .2s,transform .35s cubic-bezier(.3,1.6,.5,1)}
+#stage[data-scene="desk"] .dots i.on::after{opacity:1;transform:none}

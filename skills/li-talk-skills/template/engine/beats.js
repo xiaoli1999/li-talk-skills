@@ -1,23 +1,28 @@
 /* =====================================================================
    演示稿引擎 · 节拍（beats.js）
-   - 出场动效：FX、FX_SCENE（场景微调）、addFx，以及配套的 tiltOf、clearEl、描线（setDrawn 等）
-   - 重点词强调 emphasize、圈注（buildMark、showMark、drawMark）
-   - 节拍推进：setInstant（直接摆到某一拍）、stepForward / stepBack（播一拍的进退动画）、
-     plan（同一拍里各块的先后，黑板先画线再写字）、eraserSweep（黑板板擦）、play（限制单拍时长）
-   - 依赖总线：core 的常量和工具、I.state（running）、I.dom（bg、eraserEl）；
+   - 出场动效：FX、addFx（风格可以用 fx 覆盖某种出场、用 ease 换缓动），以及配套的 tiltOf、clearEl、描线（setDrawn 等）
+   - 重点词强调 emphasize、圈注（buildMark、showMark、drawMark；线宽来自风格的 rough.markWidth）
+   - 节拍推进：setInstant（直接摆到某一拍）、stepForward / stepBack（播一拍的进退动画，退拍时调风格的 onBack）、
+     plan（同一拍里各块的先后，风格可以用 plan 改）、play（限制单拍时长）
+   - 依赖总线：core 的常量和工具、风格注册表（I.sc、I.roughOf、I.hook）、I.state（running）；
      build.js 的 I.boxIn；mascot.js 的 I.placeKid、I.hopKid、I.kidXY、I.spotFor
-   - 挂到总线：tiltOf、clearEl、setDrawn、addFx、emphasize、showMark、drawMark、
-     finishRunning、setClasses、applyRecede、setInstant、plan、eraserSweep、unionBox、
+   - 挂到总线：tiltOf、clearEl、setDrawn、drawDur、addFx、emphasize、showMark、drawMark、
+     finishRunning、setClasses、applyRecede、setInstant、plan、unionBox、
      callOnBeat、stepForward、stepBack、queueKeysAndMarks、play
    ===================================================================== */
 (function () {
   'use strict';
   const I = Deck._;
-  const { W, H, NS, SCENE_IN, MAX_BEAT, G, R, $, $$, clamp, warn, motion } = I;
-  const S = I.state, dom = I.dom;
+  const { W, H, NS, MAX_BEAT, G, R, $, $$, clamp, warn, motion } = I;
+  const S = I.state;
 
   /* =================================================================
      出场动效
+     - 风格的 fx[名字] 可以覆盖某种出场，也可以新增出场：
+       写成对象 { from, to, dur, ease }（和下面的 FX 同样的写法，from 可以是函数）；
+       或写成函数 (tl, e, t, ctx) => 时长，ctx = { name, scene, dur, ease, tilt(), done() }：
+       dur、ease 是引擎本来要用的时长和缓动，tilt() 取元素自己的倾斜角，done() 在动画结束时清掉内联样式
+     - 风格的 ease[名字] 换掉某种出场的缓动；draw 用在文字上时和 write 一样，读 ease.write
      ================================================================= */
   const FX = {
     rise:  { from: () => ({ autoAlpha: 0, y: 28 }), to: { autoAlpha: 1, y: 0 }, dur: .55, ease: 'power3.out' },
@@ -27,12 +32,10 @@
     slide: { from: e => { const f = e.dataset.from || 'left'; return { autoAlpha: 0, x: f === 'left' ? -90 : f === 'right' ? 90 : 0, y: f === 'top' ? -70 : f === 'bottom' ? 70 : 0 }; }, to: { autoAlpha: 1, x: 0, y: 0 }, dur: .55, ease: 'power3.out' },
     stamp: { from: () => ({ autoAlpha: 0, scale: 2.1, rotation: -12 }), to: { autoAlpha: 1, scale: 1, rotation: 0 }, dur: .3, ease: 'power4.in' },
   };
-  /* 场景微调：方格纸的上浮更轻（v3-1），桌面的纸落得更像样页（v3-2） */
-  const FX_SCENE = {
-    paper: { rise: { from: () => ({ autoAlpha: 0, y: 16 }), to: { autoAlpha: 1, y: 0 }, dur: .45, ease: 'power3.out' } },
-    desk: { drop: { from: () => ({ autoAlpha: 0, y: -50, scale: 1.08, rotation: 4, '--lift': 1 }), to: { autoAlpha: 1, y: 0, scale: 1, rotation: 0, '--lift': 0 }, dur: .55, ease: 'back.out(1.7)' } },
-  };
   const FX_NAMES = ['rise', 'fade', 'pop', 'drop', 'slide', 'stamp', 'write', 'type', 'print', 'draw', 'none'];
+  const TEXT_FX = ['draw', 'write', 'type', 'print'];
+  /* 这个风格认不认识这种出场：内置的，或风格在 fx 里自己加的 */
+  const fxOk = (fx, sc) => FX_NAMES.includes(fx) || !!(sc.fx && sc.fx[fx]);
   /* 元素自己的倾斜角（CSS rotate，来自 --r）。gsap 动画时会把 rotate 清成 none，所以把倾斜并进 gsap 的 rotation 里 */
   function tiltOf(e) {
     if (e instanceof SVGElement) return 0;
@@ -56,11 +59,44 @@
       const L = prepStroke(pth); pth.style.strokeDasharray = L ? L + ' ' + L : ''; pth.style.strokeDashoffset = L;
     });
   }
+  /* 描一个线稿元素要多久（按线的总长） */
+  function drawDur(e) { const ps = strokes(e); const total = ps.reduce((a, q) => a + prepStroke(q), 0) || 1; return clamp(total / 2600, .3, .8); }
+  /* 文字类出场（write、type、print、用在文字上的 draw）的时长和默认缓动 */
+  function textDur(e, fx) {
+    const txt = (e.textContent || '').trim();
+    return fx === 'type' ? clamp(txt.length * .035, .25, .8) : fx === 'print' ? .5 : clamp((e.offsetWidth || 600) / 1900 + .2, .3, .65);
+  }
+  function textEase(e, fx) {
+    const txt = (e.textContent || '').trim();
+    return fx === 'type' ? `steps(${clamp(txt.length, 4, 40)})` : fx === 'print' ? 'steps(14)' : 'power1.inOut';
+  }
   /* 把一个元素的出场加进时间线，返回时长 */
   function addFx(tl, e, fx, t, scene) {
-    if (!FX_NAMES.includes(fx)) { warn(`data-in="${fx}" 不认识，可选：${FX_NAMES.join('、')}`); fx = SCENE_IN[scene]; }
+    const sc = I.sc(scene);
+    if (!fxOk(fx, sc)) {
+      const names = FX_NAMES.concat(Object.keys(sc.fx || {}).filter(k => !FX_NAMES.includes(k)));
+      warn(`data-in="${fx}" 不认识，可选：${names.join('、')}`);
+      fx = fxOk(sc.enter, sc) ? sc.enter : 'rise';
+    }
     if (fx === 'none') return 0;
-    if (fx === 'draw' && e instanceof SVGElement) {
+    const svg = e instanceof SVGElement;
+    const easeKey = fx === 'draw' && !svg ? 'write' : fx;
+    const easeOf = dflt => (sc.ease && (sc.ease[fx] || sc.ease[easeKey])) || dflt;
+    const ov = sc.fx && sc.fx[fx];
+    // 风格用函数覆盖了这种出场
+    if (typeof ov === 'function') {
+      const dur = fx === 'draw' && svg ? drawDur(e) : TEXT_FX.includes(fx) ? textDur(e, fx) : FX[fx] ? FX[fx].dur : .5;
+      const ease = easeOf(TEXT_FX.includes(fx) && !(fx === 'draw' && svg) ? textEase(e, fx) : FX[fx] ? FX[fx].ease : 'power2.out');
+      try {
+        const d = ov.call(sc, tl, e, t, { name: fx, scene: sc.key, dur, ease, tilt: () => tiltOf(e), done: () => clearEl(e) });
+        return typeof d === 'number' && d >= 0 ? d : dur;
+      } catch (err) {
+        console.error(`[Deck] 风格 ${sc.key} 的出场 ${fx} 出错，改用默认做法：`, err);
+        if (!FX_NAMES.includes(fx)) fx = 'fade';
+      }
+    }
+    const obj = ov && typeof ov === 'object' && ov.to ? ov : null;
+    if (!obj && fx === 'draw' && svg) {
       const ps = strokes(e); if (!ps.length) return 0;
       const total = ps.reduce((a, q) => a + prepStroke(q), 0) || 1;
       const d = clamp(total / 2600, .3, .8);
@@ -74,23 +110,21 @@
       });
       return d;
     }
-    if (fx === 'draw' || fx === 'write' || fx === 'type' || fx === 'print') {
-      const txt = (e.textContent || '').trim();
-      const d = fx === 'type' ? clamp(txt.length * .035, .25, .8) : fx === 'print' ? .5 : clamp((e.offsetWidth || 600) / 1900 + .2, .3, .65);
-      const ease = fx === 'type' ? `steps(${clamp(txt.length, 4, 40)})` : fx === 'print' ? 'steps(14)' : scene === 'board' ? 'none' : scene === 'journal' ? 'power2.out' : 'power1.inOut';
+    if (!obj && TEXT_FX.includes(fx)) {
+      const d = textDur(e, fx), ease = easeOf(textEase(e, fx));
       const from = { autoAlpha: 1, clipPath: 'inset(-30% 100% -30% -6%)' }, to = { clipPath: 'inset(-30% -6% -30% -6%)', duration: d, ease, immediateRender: true, onComplete: () => clearEl(e) };
-      if (scene === 'journal' && fx === 'write' && !(e instanceof SVGElement)) { const tilt = tiltOf(e); from.y = 8; to.y = 0; if (tilt) { from.rotation = tilt; to.rotation = tilt; } }
       tl.fromTo(e, from, to, t);
       return d;
     }
-    const f = (FX_SCENE[scene] && FX_SCENE[scene][fx]) || FX[fx];
+    const f = obj || FX[fx] || FX.fade;
+    const dur = typeof f.dur === 'number' ? f.dur : .5;
     const tilt = tiltOf(e);
-    const from = f.from(e);
-    const to = Object.assign({}, f.to, { duration: f.dur, ease: f.ease, immediateRender: true, onComplete: () => clearEl(e) });
+    const from = typeof f.from === 'function' ? f.from(e) : Object.assign({}, f.from);
+    const to = Object.assign({}, f.to, { duration: dur, ease: easeOf(f.ease || 'power2.out'), immediateRender: true, onComplete: () => clearEl(e) });
     if (tilt) { from.rotation = (from.rotation || 0) + tilt; to.rotation = (to.rotation || 0) + tilt; }
-    if (e instanceof SVGElement) to.transformOrigin = '50% 50%';
+    if (svg) to.transformOrigin = '50% 50%';
     tl.fromTo(e, from, to, t);
-    return f.dur;
+    return dur;
   }
 
   /* =================================================================
@@ -110,7 +144,7 @@
     const svg = markLayer(p), b = I.boxIn(m.el, p.el);
     const g = document.createElementNS(NS, 'g');
     if (m.el.dataset.markColor) g.style.color = m.el.dataset.markColor;
-    const sw = { paper: 3, board: 4.6, journal: 3, desk: 2.8 }[p.scene] || 3.5;
+    const sw = I.roughOf(p.scene).markWidth;
     const o = (x) => Object.assign({ stroke: 'currentColor', strokeWidth: sw, roughness: 1.4, bowing: 1.2, seed: 7 + p.i * 13 + p.marks.indexOf(m) * 3 }, x);
     const add = n => { if (n) [...(n.childNodes.length ? n.childNodes : [n])].forEach(c => g.appendChild(c)); };
     const rc = R ? R.svg(svg) : null;
@@ -189,27 +223,21 @@
     applyRecede(p, n);
     p.beat = n;
   }
-  /* 黑板先画线、再写字（v3-4）：算出每个单元的开始时间 */
-  function drawDur(e) { const ps = strokes(e); const total = ps.reduce((a, q) => a + prepStroke(q), 0) || 1; return clamp(total / 2600, .3, .8); }
+  /* 一拍里各块什么时候出场：默认按各自的 start（同一拍里依次错开）；
+     风格的 plan(units, ctx) 可以改，ctx = { base, page, drawDur }，返回和 units 一一对应的开始时间（秒，含 base） */
   function plan(p, list, base = 0) {
     const m = new Map();
-    if (p.scene !== 'board') { list.forEach(u => m.set(u, base + u.start)); return m; }
-    let t = 0;
-    list.filter(u => u.el instanceof SVGElement && !u.child && u.fx === 'draw').forEach(u => { m.set(u, base + t); t += drawDur(u.el) * .85; });
-    list.forEach(u => { if (!m.has(u)) m.set(u, base + t * .9 + u.start); });
+    const sc = I.sc(p.scene);
+    if (typeof sc.plan === 'function' && list.length) {
+      const r = I.hook(sc, 'plan', list, { base, page: p, drawDur });
+      if (Array.isArray(r) && r.length === list.length) {
+        list.forEach((u, i) => { const v = +r[i]; m.set(u, Number.isFinite(v) ? v : base + u.start); });
+        return m;
+      }
+      if (r !== undefined) warn(`风格 ${sc.key} 的 plan 要返回和 units 一样长的数组（每块的开始时间），这次按默认顺序出场`);
+    }
+    list.forEach(u => m.set(u, base + u.start));
     return m;
-  }
-  /* 黑板的板擦：在一块区域上来回擦 */
-  function eraserSweep(tl, box, t) {
-    const rows = clamp(Math.round(box.h / 170), 1, 4), pts = [];
-    for (let i = 0; i < rows; i++) { const y = box.t + box.h * (i + .5) / rows; pts.push([i % 2 ? box.l + box.w : box.l, y], [i % 2 ? box.l : box.l + box.w, y]); }
-    const seg = .46 / pts.length, onLedge = $('.bd-ledge b', dom.bg.board);   // 槽里那块板擦被拿起来
-    tl.set(dom.eraserEl, { x: pts[0][0], y: pts[0][1], rotation: -6, opacity: 1 }, t);
-    if (onLedge) tl.set(onLedge, { opacity: 0 }, t);
-    pts.slice(1).forEach((q, i) => tl.to(dom.eraserEl, { x: q[0], y: q[1], rotation: i % 2 ? 7 : -8, duration: seg, ease: 'sine.inOut' }, t + i * seg));
-    tl.to(dom.eraserEl, { opacity: 0, duration: .12 }, t + .46);
-    if (onLedge) tl.set(onLedge, { opacity: 1 }, t + .58);
-    return .58;
   }
   function unionBox(p, list) {
     let l = Infinity, t = Infinity, r = -Infinity, b = -Infinity;
@@ -248,21 +276,25 @@
     p.keys.filter(k => k.beat === n).forEach(k => emphasize(tl, k, Math.max(0, endOf(k.el) - .12)));
     p.marks.filter(m => m.beat === n).forEach((m, i) => drawMark(tl, m, p, endOf(m.el) + i * .08));
   }
-  /* 往回一拍：这一拍的元素收回，小克回到上一拍的位置 */
+  /* 往回一拍：这一拍的元素收回，小克回到上一拍的位置。
+     风格的 onBack(ctx) 可以在收回时加动作，ctx = { tl, page, units（要收回的块）, box（这些块合起来的框，可能为 null）}；
+     它可以返回一个对象改收回的节奏：{ at 开始收回的时刻, gap 每块错开, y 收回时下移多少, dur 每块用时, childAt 逐个出场的子元素何时清掉 } */
+  const BACK = { at: 0, gap: 0, y: 10, dur: .2, childAt: .21 };
   function stepBack(p, n) {   // 从 n+1 退到 n
     const gone = n + 1;
     if (!motion()) { setInstant(p, n); callOnBeat(p, n, -1); return; }
     const tl = G.timeline();
     const goneUnits = p.units.filter(u => u.beat === gone && !u.child);
-    // 黑板：板擦在这一拍的内容上来回擦一遍
-    const eb = p.scene === 'board' ? unionBox(p, goneUnits) : null;
-    if (eb) eraserSweep(tl, { l: eb.l - 20, t: eb.t - 10, w: eb.w + 40, h: eb.h + 20 }, 0);
+    const sc = I.sc(p.scene);
+    let ov = null;
+    if (typeof sc.onBack === 'function') ov = I.hook(sc, 'onBack', { tl, page: p, units: goneUnits, box: unionBox(p, goneUnits) });
+    const o = Object.assign({}, BACK, ov && typeof ov === 'object' ? ov : null);
     goneUnits.forEach((u, i) => {
       const svgEl = u.el instanceof SVGElement;
       if (!svgEl) G.set(u.el, { rotation: tiltOf(u.el) });
-      tl.to(u.el, { autoAlpha: 0, y: svgEl || eb ? 0 : 10, duration: eb ? .16 : .2, ease: 'power1.in', onComplete: () => { u.el.classList.remove('on'); clearEl(u.el); if (u.el instanceof SVGElement) setDrawn(u.el, false); } }, eb ? .12 + i * .05 : 0);
+      tl.to(u.el, { autoAlpha: 0, y: svgEl ? 0 : o.y, duration: o.dur, ease: 'power1.in', onComplete: () => { u.el.classList.remove('on'); clearEl(u.el); if (u.el instanceof SVGElement) setDrawn(u.el, false); } }, o.at + i * o.gap);
     });
-    p.units.filter(u => u.beat === gone && u.child).forEach(u => tl.call(() => clearEl(u.el), null, eb ? .5 : .21));
+    p.units.filter(u => u.beat === gone && u.child).forEach(u => tl.call(() => clearEl(u.el), null, o.childAt));
     p.keys.filter(k => k.beat === gone).forEach(k => tl.to(k.el, { '--k': 0, duration: .15 }, 0));
     p.marks.filter(m => m.beat === gone && m.g).forEach(m => tl.to(m.g, { opacity: 0, duration: .15, onComplete: () => showMark(m, p, false) }, 0));
     p.arranges.filter(a => a.beat === gone).forEach(a => flipArrange(tl, a, false, 0));
@@ -280,8 +312,8 @@
   }
 
   Object.assign(I, {
-    tiltOf, clearEl, setDrawn, addFx, emphasize, showMark, drawMark,
-    finishRunning, setClasses, applyRecede, setInstant, plan, eraserSweep, unionBox,
+    tiltOf, clearEl, setDrawn, drawDur, addFx, emphasize, showMark, drawMark,
+    finishRunning, setClasses, applyRecede, setInstant, plan, unionBox,
     callOnBeat, stepForward, stepBack, queueKeysAndMarks, play,
   });
 })();

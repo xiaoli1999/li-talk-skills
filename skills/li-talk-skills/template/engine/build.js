@@ -1,20 +1,21 @@
 /* =====================================================================
    演示稿引擎 · 构建（build.js）
-   - 搭外壳 buildShell：#app、#world、各场景背景层、#stage、#slides、外框（章节、页码、节拍格、计时）、
-     板擦、提示条、看大图层、粉笔铅笔印章的 SVG 滤镜；建好的元素填进 I.dom
-   - 建页面 buildPage：把 Deck.add 注册的定义建成 section.slide，
-     再依次 upgrade（补全组件标记、手绘线）→ collect（节拍单元、重点词、圈注、小克落脚点、拍数）
-     → normalizeNotes（讲词）
+   - 搭外壳 buildShell：#app、#world、每个注册风格一层背景（建好后调风格的 backdrop）、#stage、#slides、
+     外框（章节、页码、节拍格、计时）、提示条、看大图层、各风格 defs 里的 SVG 滤镜、
+     各风格 recede 对应的 --recede；建好的元素填进 I.dom
+   - 建页面 buildPage：选风格 pickScene（地址 ?scene= 优先；没注册的退回朴素样子 plain），
+     把 Deck.add 注册的定义建成 section.slide，再依次 upgrade（补全组件标记、手绘线）
+     → collect（节拍单元、重点词、圈注、小克落脚点、拍数）→ normalizeNotes（讲词）→ 风格的 decorate
    - 演讲者视图要用的 autoShow、keysOf；位置换算 boxIn
-   - 依赖总线：core 的常量和工具、I.dom、I.state；
+   - 依赖总线：core 的常量和工具、风格注册表（I.SCENES、I.sc、I.roughOf、I.hook、I.sceneList）、I.dom、I.state；
      mascot.js 的 I.kidSvg、I.kid、I.bindKid（调用时才取，所以引入顺序在它前面也没关系）
    - 挂到总线：buildShell、buildPage、boxIn、autoShow、keysOf
    ===================================================================== */
 (function () {
   'use strict';
   const I = Deck._;
-  const { W, H, SCENES, SCENE_IN, SHOW_NOTES, R, $, $$, esc, warn, toInt, el } = I;
-  const dom = I.dom;
+  const { W, H, SHOW_NOTES, R, $, $$, esc, warn, toInt, el } = I;
+  const S = I.state, dom = I.dom;
 
   /* =================================================================
      外壳
@@ -23,14 +24,14 @@
     document.body.classList.add('loading');
     const app = el('div'); app.id = 'app';
     dom.world = el('div'); dom.world.id = 'world';
-    SCENES.forEach(s => { const b = el('div', 'bg'); b.dataset.scene = s; dom.bg[s] = b; dom.world.appendChild(b); });
-    dom.bg.board.innerHTML = `<div class="bd-ledge"><i style="left:300px;width:118px;--c:#F1EEE6;rotate:-2deg"></i><i style="left:450px;width:74px;--c:#FFDC6A;rotate:3deg"></i><b style="right:300px"></b></div>`;
+    const scenes = Object.values(I.SCENES);
+    // 每个注册的风格一层背景（叠放，当前的一层在上）；风格要往背景里放东西就写 backdrop(layer)
+    scenes.forEach(s => { const b = el('div', 'bg'); b.dataset.scene = s.key; dom.bg[s.key] = b; dom.world.appendChild(b); I.hook(s, 'backdrop', b); });
     dom.stage = el('div'); dom.stage.id = 'stage';
     dom.slidesBox = el('div'); dom.slidesBox.id = 'slides';
     dom.slidesBox.appendChild(el('div', 'r-top', `<b>${esc(document.title)}</b>竖屏阅读模式：每页的内容都已展开。横过来看就是演示模式。`));
     const chrome = el('div', 'chrome', `<div class="chap"></div><div class="meta"><div class="pageno"></div><div class="meter"><span class="dots"></span><span class="mnum"></span></div></div><div class="timer"></div>`);
-    dom.eraserEl = el('div', 'bd-eraser');
-    dom.stage.append(dom.slidesBox, chrome, dom.eraserEl);
+    dom.stage.append(dom.slidesBox, chrome);
     dom.world.appendChild(dom.stage);
     app.appendChild(dom.world);
     document.body.prepend(app);
@@ -38,40 +39,43 @@
     dom.toastEl = el('div'); dom.toastEl.id = 'toast'; document.body.appendChild(dom.toastEl);
     dom.lb = el('div', '', `<div class="lb-scroll"><img alt=""></div><button class="lb-close" type="button" aria-label="关闭">×</button><div class="lb-cap"></div>`);
     dom.lb.id = 'lightbox'; dom.lb.hidden = true; document.body.appendChild(dom.lb);
-    /* 粉笔、铅笔、印章的质感滤镜 */
-    document.body.insertAdjacentHTML('beforeend', `<svg class="deck-defs" aria-hidden="true"><defs>
-      <filter id="chalk-text" x="-4%" y="-12%" width="108%" height="124%" color-interpolation-filters="sRGB">
-        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" result="n"/>
-        <feDisplacementMap in="SourceGraphic" in2="n" scale="1.4" xChannelSelector="R" yChannelSelector="G" result="d"/>
-        <feTurbulence type="fractalNoise" baseFrequency="1.6" numOctaves="1" seed="11" result="g"/>
-        <feColorMatrix in="g" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  -4 0 0 0 3.5" result="ga"/>
-        <feComposite in="d" in2="ga" operator="in"/></filter>
-      <filter id="pencil"><feTurbulence type="fractalNoise" baseFrequency="1.6" numOctaves="1" seed="3"/><feDisplacementMap in="SourceGraphic" scale="1.6"/></filter>
-      <filter id="stamp-ink"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="8" result="t"/><feColorMatrix in="t" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1 1.45" result="holes"/><feComposite in="SourceGraphic" in2="holes" operator="in" result="ink"/><feDisplacementMap in="ink" in2="t" scale="2.5"/></filter>
-    </defs></svg>`);
+    // 各风格需要的 SVG 滤镜（风格的 defs）放进同一个隐藏的 svg
+    document.body.insertAdjacentHTML('beforeend', `<svg class="deck-defs" aria-hidden="true"><defs>${scenes.map(s => s.defs || '').join('\n')}</defs></svg>`);
+    // 各风格「讲过的拍变到多淡」（风格的 recede）写成 --recede；用 :where 不加优先级，页面 CSS 还能改
+    const rc = scenes.filter(s => typeof s.recede === 'number').map(s => `:where([data-scene="${s.key}"]){--recede:${s.recede}}`).join('\n');
+    if (rc) { const st = el('style', 'deck-scene-vars', rc); document.head.appendChild(st); }
   }
 
   /* =================================================================
      构建页面
      ================================================================= */
+  /* 这一页用哪个风格：地址 ?scene= 指定的优先；页面写的风格没注册（或没写）就提醒，退回朴素样子 plain */
+  function pickScene(d) {
+    let key = d.scene == null ? '' : String(d.scene), fallback = false;
+    if (!key) { warn(`页面 ${d.id}：没写 scene（风格），先按朴素样子显示。${I.sceneList()}`); key = 'plain'; fallback = true; }
+    else if (!I.SCENES[key]) { warn(`页面 ${d.id}：风格「${key}」没有注册，先按朴素样子显示。${I.sceneList()}。用这个风格的话，index.html 里要引入 scenes/${key}.js 和 scenes/${key}.css`); key = 'plain'; fallback = true; }
+    if (S.forceScene) { key = S.forceScene; fallback = false; }
+    return { key, fallback };
+  }
   function buildPage(d, i) {
+    const { key, fallback } = pickScene(d);
     const item = el('div', 'r-item');
     const head = el('div', 'r-head', `<b>${i + 1}</b><span>${esc(d.chapter || '')}</span>`);
     const frame = el('div', 'frame');
     const s = document.createElement('section');
-    s.className = 'slide'; s.id = 'slide-' + d.id; s.dataset.id = d.id; s.dataset.scene = d.scene;
+    s.className = 'slide'; s.id = 'slide-' + d.id; s.dataset.id = d.id; s.dataset.scene = key;
     s.setAttribute('aria-label', d.title || d.id);
-    s.innerHTML = (d.scene === 'paper' ? '<div class="pp-holes" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>' : '')
-      + (d.topic ? `<div class="s-topic"><span class="tc">${esc(d.chapterShort)}</span><span class="ts">›</span><span class="tt">${esc(d.topic)}</span></div>` : '')
+    s.innerHTML = (d.topic ? `<div class="s-topic"><span class="tc">${esc(d.chapterShort)}</span><span class="ts">›</span><span class="tt">${esc(d.topic)}</span></div>` : '')
       + (d.noTitle ? '' : `<h2 class="s-title">${d.titleHtml || esc(d.title || '')}</h2>`) + d.html;
     if (d.recede === false) s.dataset.recede = 'off';
     frame.appendChild(s);
     item.append(head, frame);
     dom.slidesBox.appendChild(item);
-    const p = { def: d, i, id: d.id, scene: d.scene, el: s, item, total: 0, beat: 0, units: [], keys: [], marks: [], targets: [], kid: null, notes: [] };
+    const p = { def: d, i, id: d.id, scene: key, fallback, el: s, item, total: 0, beat: 0, units: [], keys: [], marks: [], targets: [], kid: null, notes: [] };
     try { upgrade(p); } catch (e) { console.error(`[Deck] 页面 ${d.id} 组件初始化出错：`, e); }
     collect(p);
     normalizeNotes(p);
+    I.hook(I.sc(key), 'decorate', s, p);   // 风格给每页加装饰（不进拍）
     const notesEl = el('details', 'r-notes', `<summary>讲词</summary><ol>${p.notes.filter(n => n.say).map(n => `<li><b>${n.beat === 0 ? '开场' : '第 ' + n.beat + ' 拍'}</b>${esc(n.say)}</li>`).join('')}</ol>`);
     if (SHOW_NOTES && p.notes.some(n => n.say)) item.appendChild(notesEl);
     return p;
@@ -87,7 +91,7 @@
       k._pose = k.dataset.pose || 'idle';
       k.title = '小克';
     });
-    $$('.key', s).forEach(k => { k.dataset.k = k.textContent; });   // 黑板上黄粉笔描一遍要用
+    $$('.key', s).forEach(k => { k.dataset.k = k.textContent; });   // 有的风格要用 content:attr(data-k) 把重点词再描一遍
     $$('.copy', s).forEach(c => {
       const t = c.textContent.trim();
       if (!c.dataset.copy) c.dataset.copy = t;
@@ -105,21 +109,14 @@
       f.setAttribute('role', 'button'); f.tabIndex = -1;
     });
     $$('[data-copy]', s).forEach(c => { c.title = c.title || '点一下复制'; if (c.tagName !== 'BUTTON') { c.setAttribute('role', 'button'); c.tabIndex = -1; } });
-    $$('svg.sketch', s).forEach((svg, k) => roughen(svg, p.i * 100 + k * 17 + 1, p.scene));
+    $$('svg.sketch', s).forEach((svg, k) => roughen(svg, p.i * 100 + k * 17 + 1, I.roughOf(p.scene)));
   }
 
-  /* 各场景的线条手感：方格纸墨线、黑板粗粉笔、手账细墨线、桌面铅笔 */
-  const LINE = {
-    paper: { w: 2.6, rough: 1.1, bow: 1 },
-    board: { w: 4, rough: 1, bow: .9 },
-    journal: { w: 2.4, rough: 1.1, bow: .8 },
-    desk: { w: 2.2, rough: 1.3, bow: 1.2 },
-  };
-  /* 手绘线稿：把 svg.sketch 里的普通形状换成 rough.js 线条 */
-  function roughen(svg, seed0, scene) {
+  /* 手绘线稿：把 svg.sketch 里的普通形状换成 rough.js 线条；线的手感（L）来自风格的 rough */
+  function roughen(svg, seed0, L) {
     if (!svg.getAttribute('viewBox')) svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
     if (!R) return;
-    const rc = R.svg(svg), L = LINE[scene] || LINE.paper;
+    const rc = R.svg(svg);
     let seed = seed0;
     $$('rect,ellipse,circle,line,path,polyline,polygon', svg).forEach(sh => {
       if (sh.closest('defs') || sh.hasAttribute('data-plain') || sh.closest('[data-rough-done]')) return;
@@ -127,10 +124,10 @@
       const fillAttr = sh.getAttribute('fill');
       const o = {
         stroke: sh.getAttribute('stroke') || 'currentColor',
-        strokeWidth: parseFloat(sh.getAttribute('stroke-width')) || L.w,
-        roughness: parseFloat(sh.dataset.roughness) || L.rough, bowing: L.bow, seed: seed++,
+        strokeWidth: parseFloat(sh.getAttribute('stroke-width')) || L.strokeWidth,
+        roughness: parseFloat(sh.dataset.roughness) || L.roughness, bowing: L.bowing, seed: seed++,
       };
-      if (fillAttr && fillAttr !== 'none') { o.fill = fillAttr; o.fillStyle = sh.dataset.fillStyle || 'hachure'; o.hachureGap = scene === 'journal' ? 13 : 9; o.hachureAngle = scene === 'journal' ? -38 : -41; o.fillWeight = scene === 'journal' ? 3 : 2.6; }
+      if (fillAttr && fillAttr !== 'none') { o.fill = fillAttr; o.fillStyle = sh.dataset.fillStyle || 'hachure'; o.hachureGap = L.hachureGap; o.hachureAngle = L.hachureAngle; o.fillWeight = L.fillWeight; }
       if (sh.hasAttribute('stroke-dasharray')) o.strokeLineDash = sh.getAttribute('stroke-dasharray').split(/[\s,]+/).map(Number);
       let g = null;
       try {
@@ -179,17 +176,20 @@
     const beatOf = node => { const b = node.closest('[data-beat]'); return b && s.contains(b) ? (toInt(b.dataset.beat) || 0) : 0; };
     const cnt = {};
     const ord = n => { cnt[n] = (cnt[n] || 0) + 1; return cnt[n] - 1; };   // 同一拍里的第几个，用来错开出场
+    // 不写 data-in 时的默认出场：风格的 enterBy 按组件类名细分（如 { copy: 'print' }），其余用风格的 enter
+    const sc = I.sc(p.scene), by = sc.enterBy || {};
+    const enterOf = e => { for (const c in by) if (e.classList.contains(c)) return by[c]; return sc.enter || 'rise'; };
     $$('[data-beat]', s).forEach(e => {
       let n = toInt(e.dataset.beat);
       if (isNaN(n) || n < 0) { warn(`页面 ${p.id}：data-beat="${e.dataset.beat}" 不是 0 以上的整数，按 0 处理`, e); n = 0; }
       const svgEl = e instanceof SVGElement && !(e instanceof SVGSVGElement);
       const guide = e.classList.contains('kid') && e.classList.contains('guide');
-      const fx = guide ? 'none' : e.dataset.in || (svgEl ? 'draw' : e.classList.contains('kid') ? 'pop' : (p.scene === 'desk' && e.classList.contains('copy')) ? 'print' : SCENE_IN[p.scene]);
+      const fx = guide ? 'none' : e.dataset.in || (svgEl ? 'draw' : e.classList.contains('kid') ? 'pop' : enterOf(e));
       const start = ord(n) * .12 + (parseFloat(e.dataset.delay) || 0);
       if (e.hasAttribute('data-stagger')) {
         const step = parseFloat(e.dataset.stagger) || .1;
         p.units.push({ el: e, beat: n, fx: e.dataset.in || 'none', container: true, start });
-        [...e.children].forEach((c, k) => p.units.push({ el: c, beat: n, fx: c.dataset.in || (c instanceof SVGElement ? 'draw' : SCENE_IN[p.scene]), child: true, start: start + .08 + k * step + (parseFloat(c.dataset.delay) || 0) }));
+        [...e.children].forEach((c, k) => p.units.push({ el: c, beat: n, fx: c.dataset.in || (c instanceof SVGElement ? 'draw' : enterOf(c)), child: true, start: start + .08 + k * step + (parseFloat(c.dataset.delay) || 0) }));
       } else {
         p.units.push({ el: e, beat: n, fx, start });
       }

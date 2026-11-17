@@ -1,0 +1,64 @@
+/* =====================================================================
+   风格 · 像素手账 journal 的样子（行为在 journal.js）
+   很淡的点阵纸、墨绿字、琥珀强调；像素只给形象的对话框、提示框和节拍格
+   所有选择器的第一段都带 [data-scene="journal"]
+   ===================================================================== */
+
+/* 变量：点阵纸（--recede 由 journal.js 的 recede 写入） */
+[data-scene="journal"]{
+  --bg:#FAF8F2; --ink:#1F3B2F; --ink-2:#4E6559; --ink-3:#8A9A91; --line:#1F3B2F;
+  --mark:#F2A93B; --key-ink:#1F3B2F; --hl:rgba(255,196,64,.55); --accent:#F2A93B;
+  --card-ink:#1F3B2F; --card-ink-2:#4E6559; --paper:#FFFDF4;
+  --t-yellow:rgba(242,169,59,.16); --t-mint:rgba(79,174,98,.13); --t-pink:rgba(232,120,140,.12); --t-blue:rgba(90,150,210,.12); --t-white:#FFFDF4; --t-peach:rgba(242,169,59,.09);
+  --term-bg:#1E2A24; --term-ink:#ECEFE8;
+  --human:#E07A2E; --ai:#4FAE62; --idle:#A3ADA7;
+  --scene-bg:radial-gradient(circle,rgba(31,59,47,.10) 1.5px,transparent 2px) 18px 18px/36px 36px,#FAF8F2;
+}
+
+/* 主题行：章节是细线框带像素投影，主题下面一道琥珀荧光 */
+[data-scene="journal"] .s-topic .tc{color:var(--ink);border:2.5px solid var(--ink);border-radius:2px;box-shadow:4px 4px 0 rgba(31,59,47,.16);background:#FFFDF4}
+[data-scene="journal"] .s-topic .tt::before{content:"";position:absolute;z-index:-1;left:-.08em;right:-.08em;top:.52em;height:.46em;background:rgba(255,196,64,.55)}
+[data-scene="journal"] .explain{top:200px}   /* 大标题是 72px，往下让一点 */
+[data-scene="journal"] .s-title{font-weight:500;font-size:72px}
+
+/* 重点词：琥珀荧光带 */
+[data-scene="journal"] .key{font-size:1.1em;background-image:linear-gradient(transparent 52%,var(--hl) 52%,var(--hl) 94%,transparent 94%);background-size:calc(var(--k)*100%) 100%}
+
+/* 组件：细线框 */
+[data-scene="journal"] .card{background:var(--tint,transparent);border:2.5px solid var(--ink);border-radius:8px}
+[data-scene="journal"] .card.t-white{background:#FFFDF4}
+[data-scene="journal"] .card.tape::before{background:rgba(242,169,59,.35);box-shadow:none}
+[data-scene="journal"] .lab{background:var(--bg);padding:0 14px;top:-28px;left:22px}
+[data-scene="journal"] .steps>li::before{border-width:2.5px;border-radius:50%}
+[data-scene="journal"] .cell{border-width:2.5px;border-radius:8px;background:var(--tint,#FFFDF4)}
+[data-scene="journal"] .tag{border-radius:6px}
+[data-scene="journal"] .term{border-radius:8px;box-shadow:6px 8px 0 rgba(31,59,47,.12)}
+
+/* 可复制的命令：细线框；复制后变绿。「已复制」提示框是像素框 */
+[data-scene="journal"] .copy{color:var(--ink);background:#FFFDF4;border:2.5px solid var(--ink);border-radius:8px;font-weight:700}
+[data-scene="journal"] .copy .ps{color:#F2A93B;opacity:1}
+@media (hover:hover){[data-scene="journal"] .copy:hover{background:#FFF1CC}}
+[data-scene="journal"] .copy.is-copied{border-color:var(--ai);background:#EDF8EE}
+[data-scene="journal"] .copied-tip{padding:10px 18px 9px;color:#2F7A44;background:#FFFDF4;box-shadow:0 -5px 0 0 var(--ink),0 5px 0 0 var(--ink),-5px 0 0 0 var(--ink),5px 0 0 0 var(--ink),5px 10px 0 0 rgba(31,59,47,.14)}
+[data-scene="journal"] .copied-tip svg{display:none}
+[data-scene="journal"] .shot{background:#FFFDF4;border:2.5px solid var(--ink);border-radius:6px;box-shadow:6px 8px 0 rgba(31,59,47,.12)}
+[data-scene="journal"] .shot::before{display:none}
+[data-scene="journal"] .shot figcaption{color:var(--ink)}
+
+/* 形象：淡淡的落地影子；说的话是像素对话框，一格格弹出 */
+[data-scene="journal"] .kid svg{filter:drop-shadow(0 4px 3px rgba(30,43,72,.12))}
+[data-scene="journal"] .kid-say{padding:10px 18px 9px;color:var(--ink);background:#FFFDF4;border-radius:0;box-shadow:0 -6px 0 0 var(--ink),0 6px 0 0 var(--ink),-6px 0 0 0 var(--ink),6px 0 0 0 var(--ink),6px 12px 0 0 rgba(31,59,47,.14);transition:opacity .1s}
+[data-scene="journal"] .kid-say.on{transition:none;animation:pxPop .22s steps(3,end) both}
+@keyframes pxPop{from{opacity:0;transform:scale(.3)}}
+[data-scene="journal"] .kid-say::after{rotate:0deg;width:6px;height:6px;bottom:-18px;left:20px;background:var(--ink);box-shadow:6px -6px 0 var(--ink)}
+[data-scene="journal"] .kid[data-face="left"] .kid-say::after{left:auto;right:20px;box-shadow:-6px -6px 0 var(--ink)}
+
+/* 节拍格：像素格子，亮的填琥珀，当前一格蹦一下 */
+#stage[data-scene="journal"] .meta{font:700 26px/1 var(--f-mono)}
+#stage[data-scene="journal"] .meter .ml{display:none}#stage[data-scene="journal"] .meter .ms{display:inline}
+#stage[data-scene="journal"] .dots{gap:6px}
+#stage[data-scene="journal"] .dots i{width:22px;height:22px;box-shadow:inset 0 0 0 4px rgba(31,59,47,.5)}
+#stage[data-scene="journal"] .dots i.on{background:#F2A93B;box-shadow:inset 0 0 0 4px #1F3B2F}
+#stage[data-scene="journal"] .dots i.now{animation:cellHit .28s steps(3,end)}
+@keyframes cellHit{50%{transform:translateY(-8px)}}
+#stage[data-scene="journal"] .pageno{font:400 26px/1 var(--f-hand)}

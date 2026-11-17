@@ -4,14 +4,14 @@
    - 演讲者视图（按 S）：独立窗口，和主窗口同步当前页、当前拍、讲词、重点词和下一拍
      字号为旧稿演讲者视图的 80%（正文 30px → 24px）
    - 演讲者窗口里的脚本通过 window.opener.Deck 的 _key、_attach、_presenter、next、prev 和主窗口通信
-   - 依赖总线：core 的常量和工具、I.PAGES、I.state（cur、pres、timer）、I.dom（timerEl）、I.toast；
+   - 依赖总线：core 的常量和工具、I.sc（风格的 label）、I.PAGES、I.state（cur、pres、timer）、I.dom（timerEl）、I.toast；
      build.js 的 I.keysOf、I.autoShow
    - 挂到总线：timerMs、restoreTimer、toggleTimer、resetTimer、tick、openPresenter、attach、syncPresenter
    ===================================================================== */
 (function () {
   'use strict';
   const I = Deck._;
-  const { SCENE_NAME, esc, toast, PAGES } = I;
+  const { esc, toast, PAGES } = I;
   const S = I.state, dom = I.dom;
 
   /* =================================================================
@@ -24,6 +24,7 @@
   function resetTimer() { S.timer.acc = 0; S.timer.start = S.timer.start ? Date.now() : 0; saveTimer(); tick(); toast('计时归零', 1200); }
   const fmt = ms => { const s = Math.floor(ms / 1000); return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
   function tick() {
+    if (!dom.timerEl) return;   // 外壳还没建好（启动晚于第一次刷新）
     const ms = timerMs(), presOpen = S.pres && !S.pres.closed;
     dom.timerEl.textContent = (ms > 0 && !presOpen) ? fmt(ms) : '';
     dom.timerEl.classList.toggle('paused', !S.timer.start);
@@ -131,7 +132,7 @@
       d.getElementById('pg').textContent = `${p.i + 1} / ${PAGES.length}`;
       d.getElementById('tt').innerHTML = (p.def.topic ? `<span class="tp">${esc(p.def.chapterShort)} › ${esc(p.def.topic)}</span>` : '')
         + `${esc(p.def.title || p.id)}<small>${esc(p.def.chapter || '')}</small>`;
-      d.getElementById('sc').textContent = '场景：' + SCENE_NAME[p.scene];
+      d.getElementById('sc').textContent = '风格：' + I.sc(p.scene).label;
       const left = p.total - p.beat;
       d.getElementById('bar').innerHTML = p.total
         ? `<b>第 ${p.beat} 拍 / 共 ${p.total} 拍</b><span class="dots">${Array.from({ length: p.total }, (_, i) => `<i class="${i < p.beat ? 'on' : ''}${i === p.beat - 1 ? ' now' : ''}"></i>`).join('')}</span><span class="left">${left ? `再按 ${left} 下讲完这页` : '这页讲完了，再按一下翻页'}</span>`
@@ -149,7 +150,7 @@
       if (p.beat < p.total) {
         const n = p.beat + 1, ks = I.keysOf(p, n), show = p.notes.filter(x => x.beat === n).map(x => x.show).filter(Boolean).join(' · ') || I.autoShow(p, n);
         nx = `<b>下一拍 ▸</b> 第 ${n} 拍：${esc(show)}${ks.length ? `　重点词：<b>${ks.map(esc).join('、')}</b>` : ''}`;
-      } else if (np) nx = `<b>下一页 ▸</b> ${np.i + 1} · ${esc(np.def.title || np.id)}　（${SCENE_NAME[np.scene]}${np.scene !== p.scene ? '，换场景' : ''}，共 ${np.total} 拍）`;
+      } else if (np) nx = `<b>下一页 ▸</b> ${np.i + 1} · ${esc(np.def.title || np.id)}　（${esc(I.sc(np.scene).label)}${np.scene !== p.scene ? '，换风格' : ''}，共 ${np.total} 拍）`;
       else nx = '<b>已是最后一页</b>';
       d.getElementById('nx').innerHTML = nx;
       const now = d.querySelector('li.now');

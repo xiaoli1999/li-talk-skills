@@ -1,0 +1,63 @@
+/* =====================================================================
+   风格 · 方格纸 paper 的样子（行为在 paper.js）
+   浅色方格、墨色线框、黄色荧光笔、左侧活页孔；所有选择器的第一段都带 [data-scene="paper"]
+   ===================================================================== */
+
+/* 变量：浅色方格纸（--recede 由 paper.js 的 recede 写入） */
+[data-scene="paper"]{
+  --bg:#FBFBF7; --ink:#1E2B48; --ink-2:#4A5368; --ink-3:#8A8F98; --line:#1E2B48;
+  --mark:#4A5368; --key-ink:#1E2B48; --hl:#FFD43B; --accent:#FFD43B;
+  --card-ink:#1E2B48; --card-ink-2:#4A5368; --paper:#FFFFFF;
+  --t-yellow:#FFE27A; --t-mint:#D5F0DC; --t-pink:#FFDCE6; --t-blue:#D9EAFF; --t-white:#FFFFFF; --t-peach:#FFE4C8;
+  --term-bg:#22252B; --term-ink:#ECE8E0;
+  --human:#F76707; --ai:#2B8A3E; --idle:#9AA0A8;
+  --scene-bg:
+    radial-gradient(ellipse 50% 40% at 20% 26%,rgba(120,130,150,.05),transparent 70%),
+    linear-gradient(rgba(30,43,72,.035) 1px,transparent 1px) 0 0/48px 48px,
+    linear-gradient(90deg,rgba(30,43,72,.035) 1px,transparent 1px) 0 0/48px 48px,
+    #FBFBF7;
+}
+
+/* 翻页时翻过去的那张纸（paper.js 的 pageTurn 加 .pp-turning 和 .pp-shade） */
+[data-scene="paper"].slide.pp-turning{background:var(--scene-bg);box-shadow:0 0 40px rgba(0,0,0,.25)}
+[data-scene="paper"] .pp-shade{position:absolute;inset:0;z-index:60;pointer-events:none;opacity:0;background:linear-gradient(90deg,rgba(20,24,34,.05),rgba(20,24,34,.35))}
+/* 方格纸的签名：左侧一列活页孔（paper.js 的 decorate 放进每张方格纸页） */
+[data-scene="paper"] .pp-holes{position:absolute;left:36px;top:128px;bottom:128px;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none;z-index:1}
+[data-scene="paper"] .pp-holes i{display:block;width:22px;height:22px;border-radius:50%;background:#3A3C42;box-shadow:inset 0 3px 3px rgba(0,0,0,.55),inset 0 -1px 0 rgba(255,255,255,.12),0 1.5px 0 #fff,0 0 0 7px rgba(30,43,72,.035)}
+
+/* 主题行：章节是墨线框，主题下面一道荧光笔 */
+[data-scene="paper"] .s-topic .tc{color:var(--ink);border:2.4px solid var(--ink);border-radius:var(--rough-r)}
+[data-scene="paper"] .s-topic .tt::before{content:"";position:absolute;z-index:-1;left:-.1em;right:-.1em;top:.5em;height:.5em;background:rgba(255,212,59,.6);border-radius:3px 6px 4px 5px;rotate:-.6deg}
+[data-scene="paper"] .explain::before{background:#FFD43B}
+
+/* 重点词：黄色荧光笔斜着「划」过去 */
+[data-scene="paper"] .key::before{content:"";position:absolute;z-index:-1;left:-.12em;right:-.12em;top:.36em;height:.62em;mix-blend-mode:multiply;pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M10 3 L100 2 L198 5 L190 37 L100 36 L2 35 Z' fill='%23FFD43B' fill-opacity='.55'/%3E%3Cpath d='M10 3 L22 3 L14 35 L2 35Z' fill='%23FFD43B' fill-opacity='.4'/%3E%3Cpath d='M186 5 L198 5 L190 37 L178 37Z' fill='%23FFD43B' fill-opacity='.45'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat;
+  clip-path:polygon(0 -20%,calc(var(--k) * (100% + 24px)) -20%,calc(var(--k) * (100% + 24px) - 22px) 120%,0 120%)}
+
+/* 卡片：墨色线框；带颜色的就是贴上去的便签 */
+[data-scene="paper"] .card{background:transparent;border:2.6px solid var(--ink);border-radius:var(--rough-r)}
+[data-scene="paper"] .card:is(.t-yellow,.t-mint,.t-pink,.t-blue,.t-peach){border:0;border-radius:0;background:var(--tint);box-shadow:0 14px 16px -12px rgba(40,30,10,.4),0 1px 0 rgba(0,0,0,.05)}
+[data-scene="paper"] .card.t-white{background:#fff}
+[data-scene="paper"] .lab{background:rgba(255,226,122,.92);rotate:-2deg;color:#1E2B48}
+[data-scene="paper"] .cell{background:#fff}
+
+/* 可复制的命令：一张贴上去的黄便签，右下角翘起；「已复制」用绿笔 */
+[data-scene="paper"] .copy{background:#FFE27A;color:#1E2B48;padding:15px 36px 15px 28px;rotate:-.8deg;box-shadow:0 14px 16px -12px rgba(40,30,10,.4),0 1px 0 rgba(0,0,0,.05)}
+[data-scene="paper"] .copy .ps{color:#9A7B12;opacity:1}
+[data-scene="paper"] .copy .ic{display:none}
+[data-scene="paper"] .copy::before{content:"";position:absolute;top:-14px;left:46px;width:104px;height:28px;background:rgba(255,255,255,.62);box-shadow:0 1px 2px rgba(0,0,0,.1);rotate:-4deg}
+[data-scene="paper"] .copy::after{content:"";position:absolute;right:0;bottom:0;width:30px;height:30px;background:linear-gradient(315deg,#FBFBF7 0 47%,rgba(40,30,10,.12) 47% 52%,#EECB55 52%,#FBE7A2 100%)}
+[data-scene="paper"] .copied-tip{color:#2B8A3E;font-weight:500}
+
+/* 形象：淡淡的落地影子；说的话是墨线圆角框 */
+[data-scene="paper"] .kid svg{filter:drop-shadow(0 4px 3px rgba(30,43,72,.12))}
+[data-scene="paper"] .kid-say{background:#fff;color:var(--ink);border:2.6px solid var(--ink);border-radius:18px}
+[data-scene="paper"] .kid-say::after{background:#fff;border-right:2.6px solid var(--ink);border-bottom:2.6px solid var(--ink)}
+
+/* 节拍格：页码在前、铅笔小方格、「第几拍 / 共几拍」 */
+#stage[data-scene="paper"] .pageno{order:-1}
+#stage[data-scene="paper"] .dots i{width:16px;height:16px;border:2px solid #C9CCD2;border-radius:3px 5px 2px 4px;rotate:-5deg;transition:background-color .3s,border-color .3s,transform .3s cubic-bezier(.34,1.56,.64,1)}
+#stage[data-scene="paper"] .dots i:nth-child(even){rotate:4deg}
+#stage[data-scene="paper"] .dots i.on{background:#FFD43B;border-color:#4A5368}
+#stage[data-scene="paper"] .dots i.now{transform:scale(1.22);border-color:#1E2B48}
