@@ -157,6 +157,35 @@ test('提纲：讲稿.md 只有标题时问场合，确认后运行 confirm outl
   assert.ok(checkShape(t) >= 4);
 });
 
+test('提纲：讲稿或素材里已经写了讲多久、在哪讲，标出来，由 AI 判断不再问', () => {
+  // 第三次替身实测的原稿：第一行写了「大概 8 分钟」「用会议室的电视」，正文里还有番茄的「25 分钟」
+  const raw = '读书分享（大概 8 分钟，周五下午茶时间讲，用会议室的电视）\n\n定一个 25 分钟的闹钟，响了就休息 5 分钟。\n';
+  const dir = tmp();
+  writeFileSync(join(dir, '讲稿.md'), '# 读书分享\n\n' + raw);
+  const t = guideText(dir);
+  assert.match(t, /② 提纲/);
+  assert.match(t, /\n {2}讲稿里已写：大概 8 分钟；用会议室的电视（guide 粗略认出来的，你再核对）/);
+  assert.doesNotMatch(t, /已写：[^\n]*25 分钟/, '内容里光秃秃的「25 分钟」不当成讲多久');
+  assert.match(t, /由你（AI）先判断：对照素材和讲稿[^\n]*已经写了答案的问题不再问，直接用用户的原话写进提纲，并告诉用户「从你的讲稿里看到：……」；只把没写的问题放进【问用户】/);
+  assert.match(t, /（讲稿里已写「大概 8 分钟」：确认说的就是这个，就不问，直接写进提纲）\n {2}问题 2：讲多久？/);
+  assert.match(t, /（讲稿里已写「用会议室的电视」：确认说的就是这个，就不问，直接写进提纲）\n {2}问题 3：在什么场合、什么屏幕上讲？/);
+  checkShape(t);
+
+  // 写在素材里也认
+  const mat = tmp();
+  writeFileSync(join(mat, '讲稿.md'), '# 读书分享\n');
+  mkdirSync(join(mat, '素材'));
+  writeFileSync(join(mat, '素材', '我的讲稿.txt'), raw);
+  assert.match(guideText(mat), /\n {2}素材 我的讲稿\.txt里已写：大概 8 分钟；用会议室的电视/);
+
+  // 什么都没写：不标「已写」，问题照常列出
+  const none = tmp();
+  writeFileSync(join(none, '讲稿.md'), '# 读书分享\n');
+  const nt = guideText(none);
+  assert.doesNotMatch(nt, /已写/);
+  assert.ok(checkShape(nt) >= 4);
+});
+
 test('提纲：讲稿.md 里已经有讲稿时，从讲稿里整理提纲', () => {
   const dir = tmp();
   writeFileSync(join(dir, '讲稿.md'), script(3));
@@ -211,6 +240,8 @@ test('讲稿：按「给组织方」里的时长算目标字数；不到下限�
   assert.match(ask, /问题 1：讲稿现在约 32 字，只够讲约 0\.5 分钟（目标 5 分钟）。怎么办？\n {4}1\. 把现有的页讲细：我列出哪几页可以展开、需要你补哪些具体内容（例子、步骤、数字）（推荐）\n {4}2\. 加几页新内容：我列出提纲里还能加的方向，请你给要点\n {4}3\. 就讲这么短：把时长改成约 0\.5 分钟\n/);
   assert.match(ask, /（问题 1 处理完、讲稿改好以后问）\n {2}问题 2：讲稿写好了，你看一遍，可以吗？/);
   assert.match(t, /写完给用户看（问题 2：先问完问题 1、照用户选的改好，再问这个）/);
+  // 选「就讲这么短」：页数按约每分钟 1 页看，可以合并，但不删用户原稿的内容，调整也给用户看
+  assert.match(t, /选「就讲这么短」：把「给组织方」里的时长改成约 0\.5 分钟；再按约每分钟 1 页看一下提纲的页数，内容少的页可以合并，但不要为了对上页数删掉用户原稿里的内容；页数怎么调也要给用户看/);
   assert.equal(checkShape(t), 2);
 
   // 提纲还有页没写：先照提纲写完，写完还不够再问
@@ -327,6 +358,29 @@ test('风格：推荐理由只列讲稿里实际匹配到的词和次数；一�
   assert.equal(p.pairs.length, 0);
   assert.match(p.first, /（推荐：讲稿里没有明显的关键词，按适合讲什么挑的）/);
   assert.doesNotMatch(p.first, /「/);
+});
+
+test('风格：关键词只数内容（给组织方、屏幕、讲词），节拍、画面和「步骤 1：」这类格式字样不计分', () => {
+  // 每页「步骤」出现 6 次：屏幕里 2 个行首标签、节拍 2 次、画面 2 次，都是格式字样
+  const page = (i, say) => `\n## 第 ${i} 页 第${i}页\n\n**屏幕**（投出来的字，原样使用）\n- 标题：泡茶\n- 步骤 1：烧水｜水开了再等一会儿\n- 步骤 2：温杯｜先烫一下杯子\n\n` +
+    '**节拍**\n- 第 0 拍：标题｜重点词：泡茶\n- 第 1 拍：步骤 1 出现｜重点词：烧水\n- 第 2 拍：步骤 2 出现｜重点词：温杯\n\n' +
+    '**画面**（怎么画、怎么动）\n两个步骤横排，每拍出一个步骤，照步骤样板。\n\n' +
+    `**讲词**（照着讲，不投出来）\n【第 0 拍】${say}\n【第 1 拍】先烧水。\n【第 2 拍】再温杯。\n`;
+  const make = say1 => {
+    const d = tmp();
+    writeFileSync(join(d, '讲稿.md'), '# 泡茶\n\n## 给组织方\n- 一句话简介：讲泡茶\n' + page(1, say1) + page(2, '接着讲。'));
+    confirmStep(d, 'outline');
+    confirmStep(d, 'script');
+    return /问题 1：[^\n]*\n\s+1\. ([^\n]*)/.exec(guideText(d))[1];
+  };
+  const fmt = make('今天讲泡茶。');
+  assert.doesNotMatch(fmt, /（board）/, '只在节拍、画面、行首标签里的「步骤」不让黑板排第一');
+  assert.doesNotMatch(fmt, /步骤/);
+  assert.match(fmt, /^方格纸（paper）[^\n]*（推荐：讲稿里没有明显的关键词，按适合讲什么挑的）/);
+
+  // 讲词里真的讲到了「步骤」：算数，屏幕标签和节拍、画面里的仍然不算
+  const said = make('下面讲具体的步骤，一共两个步骤。');
+  assert.match(said, /^黑板（board）[^\n]*（推荐：讲稿里出现了「步骤」2 处）/);
 });
 
 test('风格：某个风格的关键词合计只命中 1 次，当作没有匹配，不会排第一、理由里也不列', () => {

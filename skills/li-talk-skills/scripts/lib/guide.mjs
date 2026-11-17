@@ -399,6 +399,33 @@ const OUTLINE_TPL = [
   '- 合计：约 N 页',
 ];
 
+// 讲稿、素材里能粗略认出来的场合信息（② 用）：讲多久、在哪讲。只是提示，最后由 AI 判断。
+// 讲多久只认带「大概」「约」「讲」「左右」这类字的「N 分钟」：光秃秃的「25 分钟」多半是内容里的数（比如一个番茄 25 分钟）
+const TALK_LEN = /(?:(?:大概|大约|约|讲|分享|时长[:：]?)[ \t]*)?\d+(?:\.\d+)?(?:[ \t]*[~～\-–到至][ \t]*\d+(?:\.\d+)?)?[ \t]*分钟(?:左右)?/g;
+const VENUE = /[^，,。；;！!？?、\s（）()「」【】]{0,8}(?:投影|投屏|电视|大屏|幕布|会议室)[^，,。；;！!？?、\s（）()「」【】]{0,6}/g;
+const TEXT_RE = /\.(md|txt|markdown)$/i;
+
+function clueOf(text) {
+  const uniq = list => [...new Set(list.map(x => x.trim()).filter(Boolean))].slice(0, 2);
+  const len = uniq((String(text).match(TALK_LEN) || []).filter(x => /大概|大约|约|讲|分享|时长|左右/.test(x)));
+  const venue = uniq(String(text).match(VENUE) || []);
+  return { len, venue };
+}
+
+// [{ src: '讲稿' | '素材 文件名', len: [], venue: [] }]，只列认出了东西的
+function outlineClues(s) {
+  const out = [];
+  const add = (src, text) => { const c = clueOf(text); if (c.len.length || c.venue.length) out.push({ src, ...c }); };
+  try { add('讲稿', readFileSync(join(s.dir, SCRIPT), 'utf8')); } catch (e) { /* 没有讲稿 */ }
+  const root = join(s.dir, '素材');
+  let names = [];
+  try { names = readdirSync(root).filter(n => TEXT_RE.test(n) && n !== NOTE).sort().slice(0, 5); } catch (e) { names = []; }
+  for (const n of names) {
+    try { if (statSync(join(root, n)).size < 300 * 1024) add(`素材 ${n}`, readFileSync(join(root, n), 'utf8')); } catch (e) { /* 读不了就跳过 */ }
+  }
+  return out;
+}
+
 // ② 提纲
 function stageOutline(s) {
   const sc = s.script;
@@ -408,26 +435,33 @@ function stageOutline(s) {
   else if (n) where.push(`讲稿.md 里已经有 ${n} 页讲稿`);
   else where.push(sc.hasOutline ? '讲稿.md 里好像已经写了提纲，还没给用户确认' : '讲稿.md 里还没有提纲');
   if (s.materials.files) where.push(`素材/ 里有 ${s.materials.files} 个文件`);
+  const clues = outlineClues(s);
+  for (const c of clues) where.push(`${c.src}里已写：${[...c.len, ...c.venue].join('；')}（guide 粗略认出来的，你再核对）`);
+  const lenAt = clues.find(c => c.len.length);
+  const venueAt = clues.find(c => c.venue.length);
 
   const steps = [];
   if (s.materials.files) {
-    steps.push([`先读素材：运行 materials 列清单${s.materials.images && !s.materials.note ? '、生成截图说明表' : '（跑过就不用再跑）'}，读完文字材料。素材里已经有答案的问题不再问，只问缺的：`,
+    steps.push([`先读素材：运行 materials 列清单${s.materials.images && !s.materials.note ? '、生成截图说明表' : '（跑过就不用再跑）'}，读完文字材料：`,
       cli('materials', quote(join(s.dir, '素材')))]);
   }
-  if (n) steps.push(`讲稿.md 里已经有 ${n} 页讲稿：从中整理出提纲（分几部分、每部分几页、每部分讲什么），场合信息讲稿里没有的再问用户（问题 1～4，只问缺的）。原来的讲稿别删，提纲写在它前面。`);
+  steps.push('问题 1～4 哪些要问，由你（AI）先判断：对照素材和讲稿（包括讲稿开头那几行），已经写了答案的问题不再问，' +
+    '直接用用户的原话写进提纲，并告诉用户「从你的讲稿里看到：……」；只把没写的问题放进【问用户】，一次问一个。' +
+    (clues.length ? '上面「已写」那几条是 guide 粗略认出来的，核对一下是不是讲多久、在哪讲；guide 认不出的（讲给谁、想让听众带走什么），你自己读了判断。' : ''));
+  if (n) steps.push(`讲稿.md 里已经有 ${n} 页讲稿：从中整理出提纲（分几部分、每部分几页、每部分讲什么）。原来的讲稿别删，提纲写在它前面。`);
   else if (sc && sc.hasOutline) steps.push('讲稿.md 里好像已经写了提纲：对照问题 1～4 看还缺什么，缺的再问，补齐后给用户确认。');
-  else steps.push('一问一答问场合（问题 1～4，一次问一个）。');
   steps.push([`把提纲写在 ${posix(s.dir)}/${SCRIPT} 的最前面（第一行是「# 课件标题」，已经写了就别重复），照这个格式：`, ...OUTLINE_TPL]);
   steps.push('页数按时长估：大约每分钟 1 页（20 分钟约 20 页），第一页封面、最后一页结尾。不写没有依据的数字和案例。');
   steps.push(['提纲写好后给用户看（问题 5），必须等用户明确说可以；要改就改完再问。用户没确认，不要往下写讲稿。用户确认后运行：',
     cli('confirm', quote(s.dir), 'outline')]);
   steps.push(guideStep(s.dir));
 
+  const skip = (c, what) => `${c.src}里已写「${(what === 'len' ? c.len : c.venue)[0]}」：确认说的就是这个，就不问，直接写进提纲`;
   const asks = [
-    { when: '先问这 4 个，素材或讲稿里已经有答案的跳过', q: '这次讲给谁听？', opts: [
+    { when: '先问这 4 个里还没有答案的；素材或讲稿里已经写了的，由你跳过，不要再问', q: '这次讲给谁听？', opts: [
       '技术和非技术的同事都有（推荐：拿不准就选这个）', '技术同事（开发、测试、运维等）', '非技术同事（产品、运营、业务等）', '外部的人（客户、社区、学生等）'] },
-    { q: '讲多久？', opts: ['15～20 分钟（推荐：最常见的长度）', '10 分钟以内', '30 分钟左右', '45 分钟以上'] },
-    { q: '在什么场合、什么屏幕上讲？', opts: ['会议室投影或大屏（推荐）', '线上会议共享屏幕', '大会场，台下人很多', '笔记本或平板，当面给几个人看'] },
+    { when: lenAt ? skip(lenAt, 'len') : '', q: '讲多久？', opts: ['15～20 分钟（推荐：最常见的长度）', '10 分钟以内', '30 分钟左右', '45 分钟以上'] },
+    { when: venueAt ? skip(venueAt, 'venue') : '', q: '在什么场合、什么屏幕上讲？', opts: ['会议室投影或大屏（推荐）', '线上会议共享屏幕', '大会场，台下人很多', '笔记本或平板，当面给几个人看'] },
     { q: '最想让听众听完带走什么？', opts: [
       '直接用一句话告诉我（推荐：越具体越好，比如「学会用某个工具自动生成周报」）', '学会一件具体的事，回去能照着做', '知道一个新东西是什么、值不值得用', '认同一个想法或做法'] },
     { when: '提纲写好以后问', q: '提纲这样可以吗？', opts: ['可以，就按这个写讲稿（推荐）', '要改：说改哪里'] },
@@ -517,7 +551,8 @@ function stageScript(s) {
       '问用户怎么办（问题 1），照用户选的做，不要自己往讲词里凑字：',
     '选「讲细」：对照提纲和素材，列出哪几页可以展开、每页要用户补什么（具体的例子、步骤、数字），用户给了再写进讲词。',
     '选「加页」：列出提纲里还能加的方向，请用户给要点，照要点加页；「给组织方」的大纲和合计页数跟着改。',
-    `选「就讲这么短」：把「给组织方」里的时长改成约 ${can} 分钟，再运行 guide。`]);
+    `选「就讲这么短」：把「给组织方」里的时长改成约 ${can} 分钟；再按约每分钟 1 页看一下提纲的页数，内容少的页可以合并，` +
+      '但不要为了对上页数删掉用户原稿里的内容；页数怎么调也要给用户看。改完再运行 guide。']);
   }
   if (long) {
     steps.push(`讲词现在 ${z} 字，超过目标上限（${goal.hi} 字）约 ${z - goal.hi} 字：问用户之前，先删到 ${goal.hi} 字以内（删重复的话、合并页）。` +
@@ -569,6 +604,29 @@ const DARK_PENALTY = 1000;
 // 一个风格的关键词在讲稿里合计至少命中这么多次才算数：只出现一次多半是顺口提到，不该左右推荐
 const MIN_HITS = 2;
 
+// 讲稿里算「内容」的部分（④ 推荐风格只数这些）：「给组织方」一节、每页的页标题、「屏幕」段和「讲词」段。
+// 「节拍」「画面」两段是照格式写的版式说明（「第 1 拍：步骤 1 出现」「三个步骤横排」），
+// 「屏幕」里「步骤 1：」「卡片 1：」这类行首标签和讲词里的【第 n 拍】也是格式字样，都不数，免得自己给自己打分。
+// 讲稿里没有「## 第 N 页」时（还没照格式写），整份都算。
+const SCREEN_LABEL = /^([ \t]*[-*][ \t]*)(?:主题行|标题|副标题|一句话解释|卡片[ \t]*\d*|步骤[ \t]*\d*|图注|命令)[ \t]*[:：]/gm;
+export function contentText(text) {
+  const t = String(text);
+  const heads = scriptPageHeads(t);
+  if (!heads.length) return t;
+  const parts = [organizerSection(t)];
+  heads.forEach((h, i) => {
+    const body = t.slice(h.index, i + 1 < heads.length ? heads[i + 1].index : t.length);
+    parts.push(h.title);
+    const marks = [...body.matchAll(/^\*\*(屏幕|节拍|画面|讲词)\*\*[^\n]*$/gm)];
+    marks.forEach((m, j) => {
+      if (m[1] !== '屏幕' && m[1] !== '讲词') return;
+      const seg = body.slice(m.index + m[0].length, j + 1 < marks.length ? marks[j + 1].index : body.length);
+      parts.push(m[1] === '屏幕' ? seg.replace(SCREEN_LABEL, '$1') : seg.replace(/【第\s*\d+\s*拍】/g, ''));
+    });
+  });
+  return parts.join('\n');
+}
+
 // 返回 [{ s, hits（关键词命中次数，不到 MIN_HITS 算 0）, score（扣分后）, penalized, order, words }]，按 score 从高到低
 function rankScenes(ready, text, { projector = false } = {}) {
   const rank = ready.map((s, i) => {
@@ -611,9 +669,9 @@ function stageStyle(s) {
   if (s.script) where.push(`讲稿.md 有 ${s.script.pages.length} 页`);
   if (s.engine) where.push(`已经搭好骨架，用的风格：${s.meta.scenes.map(info.label).join('、') || '没记下'}；形象：${s.meta.mascot ? info.mascot(s.meta.mascot) : '没记下'}`);
 
-  // 推荐：已经记下的风格优先（搭好的骨架就是它），否则按讲稿里的词粗估
+  // 推荐：已经记下的风格优先（搭好的骨架就是它），否则按讲稿内容里的词粗估（节拍、画面这些格式段不算）
   let text = '';
-  try { text = readFileSync(join(s.dir, SCRIPT), 'utf8'); } catch (e) { text = ''; }
+  try { text = contentText(readFileSync(join(s.dir, SCRIPT), 'utf8').replace(/^﻿/, '')); } catch (e) { text = ''; }
   const projector = PROJECTOR.test(text);
   const ranked = rankScenes(info.ready, text, { projector });
   const anyDark = ranked.some(r => r.penalized);
