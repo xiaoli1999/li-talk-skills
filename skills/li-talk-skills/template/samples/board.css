@@ -1,0 +1,43 @@
+/* 黑板自己的样板页的页面样式（和 samples/board.js 配套）
+   - 每条选择器都以 [data-id="t-board-…"] 开头，只管那一页；抄样板时连同这里的规则一起抄，[data-id="…"] 换成新页面的 id
+   - 只写大小、位置和用哪一档粉笔色：名字、数字用 --ink（白粉笔），说明用 --ink-2（浅灰绿），不用更淡的 --ink-3；
+     黄粉笔只通过重点词 .key、行首的点这些组件出现，页面里不另写黄色
+   - 组件（.bd-note、.bd-box、.bd-line、.bd-no、.bd-ul）的样子都在 scenes/board.css 末尾 */
+
+/* ---------- 封面 ---------- */
+/* 课题：140px 粉笔大字（一行 7 个字到 x 1130），底下双横线在 y 470–500 */
+[data-id="t-board-cover"] .cv-title{left:150px;top:292px;margin:0;font:700 140px/1.15 var(--f-hand);letter-spacing:.02em;white-space:nowrap;color:var(--ink)}
+[data-id="t-board-cover"] .cv-sub{left:156px;top:548px;font:700 56px/1.35 var(--f-hand);white-space:nowrap;color:var(--ink-2)}
+[data-id="t-board-cover"] .cv-sign{left:156px;top:716px;font:700 44px/1.4 var(--f-hand);white-space:nowrap;color:var(--ink-2)}
+
+/* ---------- 看图识物 ---------- */
+/* 三列：每列宽 500、居中，名字 56px 白粉笔，说明 40px 浅灰绿；简笔画在 y 270–580，字从 y 620 起 */
+[data-id="t-board-list"] .ls-it{top:620px;width:500px;text-align:center}
+[data-id="t-board-list"] .ls-name{font:700 56px/1.45 var(--f-hand);white-space:nowrap;color:var(--ink)}
+[data-id="t-board-list"] .ls-say{margin-top:4px;font:700 40px/1.45 var(--f-hand);white-space:nowrap;color:var(--ink-2)}
+/* 重点词前后的圈注、圈号和字之间空一点 */
+[data-id="t-board-list"] .ls-name .bd-no{margin-right:.4em}
+
+/* ---------- 主副板书 ---------- */
+/* 左边主板书：行首「一、」和步骤名 64px 白粉笔，说明 46px 浅灰绿；三行从 y 296 起每行差 160 */
+[data-id="t-board-steps"] .st-line{font:700 46px/1.3 var(--f-hand);color:var(--ink-2)}
+[data-id="t-board-steps"] .st-line>b{font-size:64px;color:var(--ink)}
+/* 右边副板书：「例：」和左边第一行对齐，数字和左边第 2、3 行对齐（名字 44px 浅灰绿、数字 76px 白粉笔） */
+[data-id="t-board-steps"] .st-eg-h{left:1200px;top:300px;font:700 52px/1.3 var(--f-hand);color:var(--ink-2)}
+[data-id="t-board-steps"] .st-eg{left:1240px;font:700 44px/1.3 var(--f-hand);white-space:nowrap;color:var(--ink-2)}
+[data-id="t-board-steps"] .st-eg .key{font-size:76px;color:var(--ink)}
+
+/* ---------- 知识框图 ---------- */
+/* 中间的椭圆框：「好茶」96px 居中 */
+[data-id="t-board-map"] .mp-core{text-align:center;font:700 96px/1.2 var(--f-hand);color:var(--ink)}
+/* 三个方框：宽 400，名字 44px 浅灰绿（带圈号），数字 88px 白粉笔，都居中 */
+[data-id="t-board-map"] .mp-node{width:400px;box-sizing:border-box;padding:18px 30px 22px;text-align:center}
+[data-id="t-board-map"] .mp-k{font:700 44px/1.3 var(--f-hand);white-space:nowrap;color:var(--ink-2)}
+[data-id="t-board-map"] .mp-v{font:700 88px/1.15 var(--f-hand);white-space:nowrap;color:var(--ink)}
+
+/* ---------- 小结框 ---------- */
+/* 结论两行 120px，框住；致谢 56px 在框下面 */
+[data-id="t-board-end"] .ed-box{box-sizing:border-box;padding:46px 70px 54px}
+[data-id="t-board-end"] .ed-q{font:700 120px/1.28 var(--f-hand);letter-spacing:.02em;white-space:nowrap;color:var(--ink)}
+[data-id="t-board-end"] .ed-q+.ed-q{padding-left:1em}
+[data-id="t-board-end"] .ed-thanks{left:230px;top:772px;font:700 56px/1.35 var(--f-hand);white-space:nowrap;color:var(--ink-2)}
