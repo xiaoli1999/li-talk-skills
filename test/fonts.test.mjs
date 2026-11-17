@@ -8,7 +8,7 @@ import { join, dirname } from 'node:path';
 import { buildCss, sha256, ensureCache, installFonts, run } from '../skills/li-talk-skills/scripts/lib/fonts.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const manifest = JSON.parse(readFileSync(join(ROOT, 'fonts', 'wenkai.json'), 'utf8'));
+const manifest = JSON.parse(readFileSync(join(ROOT, 'skills', 'li-talk-skills', 'fonts', 'wenkai.json'), 'utf8'));
 
 test('清单有常规和粗体，每块都有校验值', () => {
   assert.equal(manifest.family, 'WK');

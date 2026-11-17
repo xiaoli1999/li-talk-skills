@@ -409,10 +409,10 @@ Deck.scene('ink', {
 
 - **霞鹜文楷**（手绘家）：带完整字库。完整字体按字符范围切成很多小块，课件用 `unicode-range` 只加载用到的字所在的块，打包时也只带这些块，所以一个字都不缺，发出去的课件依然不大。
 - **缝合像素字体**（像素家）：同样切块。
-- 字体切块放在仓库的 `fonts/` 里，不进 skill 安装包。第一次做课件时下载到本机的 `~/.li-talk-skills/fonts/`，校验通过后一直复用；做课件时从这里复制进课件目录。
+- 字体文件不放进仓库和 skill，skill 里只带一份切块清单（`fonts/wenkai.json`，记着每块的路径、字重、unicode-range 和校验值）。霞鹜文楷取自 npm 包 lxgw-wenkai-webfont，版本固定，常规和粗体两个字重共 194 块、约 8.8 MB。第一次需要时按清单从 npmmirror、jsDelivr、unpkg 三个镜像依次下载（npmmirror 在国内最快，排第一），逐块校验后存到本机的 `~/.li-talk-skills/fonts/`，之后一直复用；做课件时从这里复制进课件目录，浏览器只加载用到的那几块。
 - 下载失败不卡流程：先用 skill 自带的常用字小字库，缺的字回退到系统楷体，下次再下载。
 - **现代家**用系统自带的黑体、宋体字体栈，等宽字用系统的等宽字体栈，不另带字体。
-- 两种字体都是 OFL 许可，许可证随字体一起放。完整字库和切块后的体积，实测后写进 README。
+- 两种字体都是 OFL 许可，许可证随字体一起放。像素字体的来源和体积，做像素游戏风格时实测后补进来。
 
 ## 10. 脚本命令与自检
 
@@ -491,11 +491,11 @@ li-talk-skills/                  仓库根（公开，MIT）
   LICENSE                         MIT；vendor 里各个库保留自己的许可证
   .claude-plugin/                 Claude Code 插件方式安装用
   docs/                           设计文档
-  fonts/                          字体切块，不进安装目录，首次使用时下载
   build.mjs                       发版前生成文件清单、做干净度检查
   skills/li-talk-skills/          真正装到用户机器上的部分
     SKILL.md                      给 AI 的操作手册，500 行以内
     manifest.json                 版本号和每个文件的校验值
+    fonts/wenkai.json             字体切块清单；字体文件首次使用时从镜像下载
     references/                   写页面的说明、讲稿格式、风格手册、样板页、自查清单、加新风格
     template/                     课件骨架：入口、引擎、风格、形象、样板页、vendor、形象工坊
     scripts/li-talk.mjs           唯一的脚本入口（另有 lib/ 下的模块）

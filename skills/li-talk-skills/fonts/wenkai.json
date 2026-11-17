@@ -3,8 +3,8 @@
   "version": "1.7.0",
   "family": "WK",
   "mirrors": [
-    "https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/",
     "https://registry.npmmirror.com/lxgw-wenkai-webfont/1.7.0/files/",
+    "https://cdn.jsdelivr.net/npm/lxgw-wenkai-webfont@1.7.0/",
     "https://unpkg.com/lxgw-wenkai-webfont@1.7.0/"
   ],
   "files": [

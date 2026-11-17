@@ -17,10 +17,9 @@ const SKILL_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const TPL_FONTS = join(SKILL_DIR, 'template', 'vendor', 'fonts');
 const LICENSE = 'OFL-LXGW-WenKai.txt';
 const LITE = ['wenkai-lite.css', 'wenkai-lite-regular.woff2', 'wenkai-lite-bold.woff2'];
-// 清单的位置：装好的 skill 里放在 skill 目录下的 fonts/；在仓库里开发时用仓库根目录的 fonts/
+// 清单放在 skill 目录下的 fonts/：npx skills add 只装 skill 目录，放在仓库根目录会漏掉
 const MANIFEST_PATHS = [
   join(SKILL_DIR, 'fonts', 'wenkai.json'),
-  join(SKILL_DIR, '..', '..', 'fonts', 'wenkai.json'),
 ];
 const TIMEOUT = 20000;   // 单个文件的下载超时（毫秒）；切块最大 70KB 左右
 const CONCURRENCY = 6;   // 同时下载几个文件

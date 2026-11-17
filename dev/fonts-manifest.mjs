@@ -1,4 +1,4 @@
-// 开发用：从 npm 包 lxgw-wenkai-webfont 生成字体切块清单 fonts/wenkai.json
+// 开发用：从 npm 包 lxgw-wenkai-webfont 生成字体切块清单 skills/li-talk-skills/fonts/wenkai.json
 // 用法：node dev/fonts-manifest.mjs <解压后的 package 目录>
 //   先在任意临时目录里 npm pack lxgw-wenkai-webfont@1.7.0 并解压，把里面的 package 目录传进来。
 // 只取常规（400）和粗体（700）两个字重；清单里记下每块的包内路径、字重、unicode-range、sha256、大小，
@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const OUT = join(ROOT, 'fonts', 'wenkai.json');
+const OUT = join(ROOT, 'skills', 'li-talk-skills', 'fonts', 'wenkai.json');
 // 包里两个字重各自的 CSS，以及 CSS 里应该写的 font-weight
 const SHEETS = [
   { css: 'lxgwwenkai-regular.css', weight: 400 },
@@ -75,9 +75,10 @@ const manifest = {
   package: pkg.name,
   version: V,
   family: 'WK',
+  // npmmirror 排第一：用户主要在国内，实测比另外两个快约 10 倍；连不上会自动换下一个
   mirrors: [
-    `https://cdn.jsdelivr.net/npm/${pkg.name}@${V}/`,
     `https://registry.npmmirror.com/${pkg.name}/${V}/files/`,
+    `https://cdn.jsdelivr.net/npm/${pkg.name}@${V}/`,
     `https://unpkg.com/${pkg.name}@${V}/`,
   ],
   files,
@@ -92,7 +93,7 @@ JSON.parse(readFileSync(OUT, 'utf8')); // 写完自查一遍是合法 JSON
 
 const mb = n => (n / 1024 / 1024).toFixed(2) + ' MB';
 const sum = list => list.reduce((a, f) => a + f.size, 0);
-console.log(`已生成 fonts/wenkai.json：${pkg.name}@${V}`);
+console.log(`已生成 skills/li-talk-skills/fonts/wenkai.json：${pkg.name}@${V}`);
 for (const s of SHEETS) {
   const list = files.filter(f => f.weight === s.weight);
   console.log(`  字重 ${s.weight}：${list.length} 块，${mb(sum(list))}`);
