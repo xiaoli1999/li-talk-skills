@@ -113,8 +113,10 @@
    受光的组件：卡片、小格、终端、截图位（命令、标签、徽标另写在下面）
    悬停时朝光源（左上）抬起一点、投影变长；按下时压下去、投影变短
    ===================================================================== */
-[data-scene="flat"] :is(.card,.cell,.term,.shot){--fl-o:12px 14px;position:relative;
+[data-scene="flat"] :is(.card,.cell,.term,.shot){--fl-o:12px 14px;
   transition:translate .35s var(--fl-pop),box-shadow .35s var(--fl-pop)}
+/* 只给没写 .abs 的加 relative：带 .abs 的要保持引擎的绝对定位（同样的优先级写在后面会盖掉引擎的 .slide .abs） */
+[data-scene="flat"] :is(.card,.cell,.term,.shot):not(.abs){position:relative}
 /* 讲过的拍：保留引擎的淡出过渡（上面那条 transition 会盖掉它，这里补回来） */
 [data-scene="flat"] :is(.card,.cell,.term,.shot,.copy,.steps>li).past{transition:opacity .45s ease,translate .35s var(--fl-pop),box-shadow .35s var(--fl-pop),background-color .2s}
 
@@ -286,3 +288,131 @@
   radial-gradient(circle 300px at 1840px 20px,#FFF4D9 99.7%,rgba(255,244,217,0) 100%),
   radial-gradient(circle 190px at 40px 1062px,#FFEEE7 99.6%,rgba(255,238,231,0) 100%),
   var(--scene-bg)}
+
+/* =====================================================================
+   扁平插画自己的版式组件（.fl-*；行为在 flat.js 同名的一节，样板页 samples/flat.js 把每个都用了一遍）：明亮的信息图
+   - 全按同一条受光规矩画：右下一条深一级的暗部、左上一道浅一级的亮边、投影落向右下（同色相半透明，不模糊）
+   - 颜色按组取变量（--fl-f 色面、--fl-b 本色、--fl-on 本色上的字……）；不写颜色类时是白色色面、墨蓝本色，
+     t-yellow 明黄、t-pink / t-peach 珊瑚、t-blue / t-mint 墨蓝浅调，和卡片一样换组
+   - 可读性：组件里的字都是实色、压在实色上；白字只压在深一档的颜色上（珊瑚换成 #E5503C，对比度 3.8:1）；
+     插画零件、翻面图标、数字大卡讲过不变淡（是一张图的一部分），当前那张大卡靠「抬得最高、厚度最大」强调
+   ===================================================================== */
+/* 数字大卡的厚度（0 压平 → 1 抬起）：注册成数字，讲过的大卡落回去时能平滑过渡 */
+@property --fl-lift{syntax:"<number>";inherits:false;initial-value:1}
+
+/* 要给里面的东西做定位参照的组件：只给没写 .abs 的加 relative（带 .abs 的保持引擎的绝对定位） */
+[data-scene="flat"] :is(.fl-tag,.fl-flip,.fl-num,.fl-bubble,.fl-track):not(.abs){position:relative}
+
+/* 不写颜色类时的一组颜色（:where 不加优先级，颜色类照样盖得过） */
+[data-scene="flat"] :where(.fl-badge,.fl-blob,.fl-wall,.fl-tag,.fl-num,.fl-pill){--fl-f:#FFFFFF;--fl-fd:var(--fl-paper-d);--fl-fl:#FFFFFF;--fl-b:var(--fl-ink);--fl-bd:var(--fl-ink-d);--fl-bl:var(--fl-ink-l);--fl-on:#FFFFFF;--fl-sc:31,42,68}
+
+/* ---------- 插画零件 .fl-art：SVG 由 flat.js 建页时填进去；宽度写在 style 里，高度按画布比例 ---------- */
+[data-scene="flat"] .fl-art{display:block;pointer-events:none}
+[data-scene="flat"] .fl-art>svg{display:block;width:100%;height:auto;overflow:visible}
+/* 单色图标：画在 48×48 里，颜色跟着 color 走 */
+[data-scene="flat"] [data-fl-icon]>svg{display:block;width:100%;height:100%;overflow:visible}
+/* 插画零件、翻面图标讲过不变淡（引擎的 .past 只对它们关掉；数字大卡另有自己的「落回去」） */
+[data-scene="flat"] :is(.fl-art,.fl-face).past{opacity:1}
+
+/* ---------- 圆片徽标 .fl-badge[data-fl-icon]：受光的圆片里一个单色图标，--s 是直径 ---------- */
+[data-scene="flat"] .fl-badge{--s:112px;display:block;width:var(--s);height:var(--s);padding:calc(var(--s) * .23);box-sizing:border-box;border-radius:50%;color:var(--fl-on);background:var(--fl-b);
+  box-shadow:inset calc(var(--s) * -.055) calc(var(--s) * -.065) 0 var(--fl-bd),inset calc(var(--s) * .035) calc(var(--s) * .035) 0 var(--fl-bl),calc(var(--s) * .07) calc(var(--s) * .08) 0 rgba(var(--fl-sc),.14)}
+
+/* ---------- 圆色块 .fl-blob：浅色圆面，左上一个更亮的受光圆，右下一道深一级的弧 ---------- */
+[data-scene="flat"] .fl-blob{display:block;aspect-ratio:1;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle at 34% 30%,var(--fl-fl) 0 30%,rgba(255,255,255,0) 30.4%),var(--fl-f);box-shadow:inset -22px -26px 0 var(--fl-fd)}
+
+/* ---------- 场景墙面 .fl-wall + 台面 .fl-shelf ---------- */
+[data-scene="flat"] .fl-wall{border-radius:44px;pointer-events:none;
+  background:radial-gradient(circle 150px at calc(100% - 220px) 112px,var(--fl-fl) 99%,rgba(255,255,255,0) 100%),var(--fl-f);box-shadow:inset -9px -11px 0 var(--fl-fd)}
+/* 台面：一块明黄木板，上面一条浅一级的台面、正面本色、右下一道暗部，投影落向右下 */
+[data-scene="flat"] .fl-shelf{display:block;height:58px;border-radius:14px;pointer-events:none;background:linear-gradient(var(--fl-sun-l) 0 18px,var(--fl-sun) 18px);
+  box-shadow:inset -8px -8px 0 var(--fl-sun-d),10px 12px 0 rgba(138,90,0,.12)}
+
+/* ---------- 标签牌 .fl-tag：挂在钉子上的浅色牌子（::before 绳子、::after 钉子；--fl-str 是绳子长） ----------
+   第一行一枚序号圆片 .fl-no（跟牌子同组颜色）加名字 h3，第二行说明 p 占满整行；都是实色字压在实色牌面上 */
+[data-scene="flat"] .fl-tag{--fl-str:64px;display:grid;grid-template-columns:auto 1fr;align-items:center;column-gap:22px;row-gap:2px;
+  padding:26px 34px 30px 26px;border-radius:28px;color:var(--ink);background:var(--fl-f);
+  box-shadow:inset -6px -7px 0 var(--fl-fd),inset 3px 3px 0 var(--fl-fl),10px 12px 0 rgba(var(--fl-sc),.1)}
+[data-scene="flat"] .fl-tag::before{content:"";position:absolute;left:50%;top:calc(-1 * var(--fl-str));width:6px;height:calc(var(--fl-str) + 12px);margin-left:-3px;border-radius:3px;
+  background:var(--fl-ink-l);transform-origin:50% 0;transform:scaleY(var(--fl-sl,1))}
+[data-scene="flat"] .fl-tag::after{content:"";position:absolute;left:50%;top:calc(-1 * var(--fl-str) - 13px);width:26px;height:26px;margin-left:-13px;border-radius:50%;background:var(--fl-ink);
+  box-shadow:inset -3px -4px 0 var(--fl-ink-d),inset 2px 2px 0 var(--fl-ink-l),3px 4px 0 rgba(31,42,68,.16);scale:var(--fl-pn,1)}
+[data-scene="flat"] .fl-tag>.fl-no{display:grid;place-items:center;width:60px;height:60px;border-radius:50%;font:800 34px/1 var(--f-sans);color:var(--fl-on);background:var(--fl-b);
+  box-shadow:inset -4px -5px 0 var(--fl-bd),inset 3px 3px 0 var(--fl-bl),3px 4px 0 rgba(var(--fl-sc),.16)}
+[data-scene="flat"] .fl-tag>h3{grid-column:2;margin:0;font:800 46px/1.25 var(--f-sans);color:var(--ink)}
+[data-scene="flat"] .fl-tag>p{grid-column:1 / -1;margin:10px 0 0;font:500 36px/1.35 var(--f-sans);color:var(--ink-2)}
+/* 珊瑚组的序号圆片用深一档的珊瑚（白字） */
+[data-scene="flat"] :is(.t-pink,.t-peach)>.fl-no{background:#E5503C;box-shadow:inset -4px -5px 0 #BC3826,inset 3px 3px 0 #FF7B64,3px 4px 0 rgba(176,48,30,.16)}
+
+/* ---------- 竖排清单 ol.fl-check > li：序号是受光的圆片（珊瑚、明黄、墨蓝轮换），相邻两行的序号之间一根连线 ----------
+   --fl-bs（序号圆片的大小和转角）、--fl-cn（连线长出来多少）由 flat.js 出场时从 0 推到 1 */
+[data-scene="flat"] .fl-check{margin:0;padding:0;list-style:none;counter-reset:fl-ck}
+[data-scene="flat"] .fl-check>li{position:relative;counter-increment:fl-ck;display:grid;grid-template-columns:100px 1fr;column-gap:34px;align-items:center;margin:0 0 52px;
+  --fl-b:#E5503C;--fl-bd:#BC3826;--fl-bl:#FF7B64;--fl-on:#FFFFFF;--fl-sc:176,48,30}
+[data-scene="flat"] .fl-check>li:nth-child(3n+2){--fl-b:var(--fl-sun);--fl-bd:var(--fl-sun-d);--fl-bl:var(--fl-sun-l);--fl-on:var(--fl-ink);--fl-sc:138,90,0}
+[data-scene="flat"] .fl-check>li:nth-child(3n){--fl-b:var(--fl-ink);--fl-bd:var(--fl-ink-d);--fl-bl:var(--fl-ink-l);--fl-on:#FFFFFF;--fl-sc:31,42,68}
+[data-scene="flat"] .fl-check>li:last-child{margin-bottom:0}
+[data-scene="flat"] .fl-check>li::before{content:counter(fl-ck);grid-row:span 2;display:grid;place-items:center;width:100px;height:100px;border-radius:50%;font:800 50px/1 var(--f-sans);color:var(--fl-on);background:var(--fl-b);
+  box-shadow:inset -6px -7px 0 var(--fl-bd),inset 4px 4px 0 var(--fl-bl),5px 6px 0 rgba(var(--fl-sc),.16);scale:var(--fl-bs,1);rotate:calc((1 - var(--fl-bs,1)) * -120deg)}
+[data-scene="flat"] .fl-check>li>b{grid-column:2;font:800 56px/1.15 var(--f-sans);color:var(--ink)}
+[data-scene="flat"] .fl-check>li>span{grid-column:2;font:500 38px/1.35 var(--f-sans);color:var(--ink-2)}
+[data-scene="flat"] .fl-check>li+li::after{content:"";position:absolute;left:46px;bottom:calc(100% - 6px);width:8px;height:64px;border-radius:4px;background:var(--fl-line-d);transform-origin:50% 0;transform:scaleY(var(--fl-cn,1))}
+
+/* ---------- 坑和办法的胶囊横条 .fl-row：翻面图标 .fl-flip、坑 .fl-bad、箭头轨道 .fl-track、办法 .fl-pill 从左往右一条线 ---------- */
+[data-scene="flat"] .fl-row{display:flex;align-items:center;gap:30px;padding:22px 26px 22px 22px;border-radius:999px;background:#FFFFFF;
+  box-shadow:inset -7px -8px 0 var(--fl-paper-d),12px 14px 0 rgba(31,42,68,.08)}
+/* 翻面图标：两个一样大的圆片叠在一起。正面（不带拍）珊瑚底白图标、角上一枚叉；背面（带拍）明黄底墨蓝图标、角上一枚勾。
+   背面不透明，翻完盖住正面；--fl-ck 是角上那枚勾弹出来多少（flat.js 推） */
+[data-scene="flat"] .fl-flip{--s:124px;flex:none;width:var(--s);height:var(--s)}
+[data-scene="flat"] .fl-face{position:absolute;inset:0;display:block;padding:calc(var(--s) * .24);box-sizing:border-box;border-radius:50%;color:#FFFFFF;background:var(--fl-coral);
+  box-shadow:inset -7px -8px 0 var(--fl-coral-d),inset 4px 4px 0 var(--fl-coral-l)}
+[data-scene="flat"] .fl-face[data-beat]{color:var(--fl-ink);background:var(--fl-sun);box-shadow:inset -7px -8px 0 var(--fl-sun-d),inset 4px 4px 0 var(--fl-sun-l)}
+[data-scene="flat"] .fl-face::after{content:"";position:absolute;right:-8px;bottom:-6px;width:46px;height:46px;border-radius:50%;box-shadow:0 0 0 5px #FFFFFF;
+  background:var(--fl-ink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M15 15l18 18M33 15L15 33' fill='none' stroke='%23fff' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E") center/28px no-repeat}
+[data-scene="flat"] .fl-face[data-beat]::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M12 25l8 8 16-17' fill='none' stroke='%23fff' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");scale:var(--fl-ck,1)}
+/* 坑：深一档的珊瑚字（白底上 4.4:1），前面一枚浅珊瑚圆片里的叉 */
+[data-scene="flat"] .fl-bad{flex:none;display:flex;align-items:center;gap:14px;margin:0;font:700 46px/1.2 var(--f-sans);color:#D9442F;white-space:nowrap}
+[data-scene="flat"] .fl-bad::before{content:"";flex:none;width:44px;height:44px;border-radius:50%;
+  background:var(--fl-coral-t) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath d='M16 16l16 16M32 16L16 32' fill='none' stroke='%23D9442F' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E") center/30px no-repeat}
+/* 箭头轨道：一排明黄短条，右头一个箭头（填满坑和办法之间的空当） */
+[data-scene="flat"] .fl-track{flex:1;display:block;min-width:80px;height:12px;margin-right:18px;border-radius:6px;
+  background:repeating-linear-gradient(90deg,var(--fl-sun) 0 24px,rgba(255,255,255,0) 24px 40px)}
+[data-scene="flat"] .fl-track::after{content:"";position:absolute;right:-18px;top:50%;width:30px;height:34px;margin-top:-17px;background:var(--fl-sun-d);clip-path:polygon(0 0,100% 50%,0 100%)}
+
+/* ---------- 胶囊 .fl-pill：受光的圆角胶囊（讲者、致谢、办法；颜色类换组） ---------- */
+[data-scene="flat"] .fl-pill{display:inline-block;margin:0;padding:14px 34px 18px;border-radius:999px;color:var(--ink);background:var(--fl-f);
+  font:700 40px/1.2 var(--f-sans);white-space:nowrap;box-shadow:inset -4px -5px 0 var(--fl-fd),inset 2px 2px 0 var(--fl-fl),6px 7px 0 rgba(var(--fl-sc),.12)}
+/* 胶囊里打头的小圆片、小图标（<i>）：和字居中对齐 */
+[data-scene="flat"] .fl-pill>i{display:inline-block;vertical-align:.08em;margin-right:16px}
+
+/* ---------- 数字大卡 .fl-num：一块大色块卡，右下一截实心的厚度（--fl-lift 越大越厚、投影越长）；颜色类换组 ----------
+   珊瑚卡用深一档的珊瑚（白字 3.8:1）；讲过的卡厚度落到 .4、往下沉一点，不变淡 */
+[data-scene="flat"] .fl-num{--fl-lift:1;padding:40px 44px 44px;border-radius:40px;color:var(--fl-on);background:var(--fl-b);
+  box-shadow:inset -10px -12px 0 var(--fl-bd),inset 5px 5px 0 var(--fl-bl),
+    calc(var(--fl-lift) * 6px) calc(var(--fl-lift) * 7px) 0 var(--fl-bd),calc(var(--fl-lift) * 12px) calc(var(--fl-lift) * 14px) 0 var(--fl-bd),
+    calc(var(--fl-lift) * 18px) calc(var(--fl-lift) * 21px) 0 var(--fl-bd),calc(var(--fl-lift) * 38px) calc(var(--fl-lift) * 44px) 0 rgba(var(--fl-sc),.14);
+  translate:0 calc((1 - var(--fl-lift)) * 14px);transition:--fl-lift .45s var(--fl-pop)}
+[data-scene="flat"] .fl-num.past{opacity:1;--fl-lift:.4;transition:--fl-lift .45s var(--fl-pop)}
+[data-scene="flat"] .fl-num:is(.t-pink,.t-peach){--fl-b:#E5503C;--fl-bd:#BC3826;--fl-bl:#FF7B64}
+/* 角上的图标：一枚白色受光圆片里的单色图标 */
+[data-scene="flat"] .fl-num>[data-fl-icon]{position:absolute;right:36px;top:36px;width:92px;height:92px;padding:20px;box-sizing:border-box;border-radius:50%;color:var(--fl-b);background:#FFFFFF;
+  box-shadow:inset -5px -6px 0 var(--fl-paper-d),4px 5px 0 rgba(var(--fl-sc),.18)}
+[data-scene="flat"] .fl-num.t-yellow>[data-fl-icon]{color:var(--fl-ink)}
+/* 大数字和单位；单位跟着大数字的基线 */
+[data-scene="flat"] .fl-big{display:flex;align-items:baseline;margin:0 0 20px;font:800 210px/.92 var(--f-sans);letter-spacing:-.03em;white-space:nowrap}
+[data-scene="flat"] .fl-big>.fl-n{display:inline-block;text-align:right}
+[data-scene="flat"] .fl-big>small{margin-left:14px;font:800 76px/1 var(--f-sans);letter-spacing:0}
+/* 标签上面一道短横（本色上的字色，半透明），下面一行说明 */
+[data-scene="flat"] .fl-num>h3{margin:0 0 6px;font:800 48px/1.2 var(--f-sans);color:inherit}
+[data-scene="flat"] .fl-num>h3::before{content:"";display:block;width:64px;height:8px;margin-bottom:22px;border-radius:4px;background:currentColor;opacity:.4}
+[data-scene="flat"] .fl-num>p:not(.fl-big){margin:0;font:600 38px/1.35 var(--f-sans);color:inherit}
+
+/* ---------- 大气泡 .fl-bubble > p：白色圆角大气泡，右下一截尾巴（--fl-tx 是尾巴离右边多远） ---------- */
+[data-scene="flat"] .fl-bubble{--fl-tx:160px;padding:64px 90px 76px;border-radius:72px;background:#FFFFFF;
+  box-shadow:inset -10px -12px 0 var(--fl-paper-d),16px 18px 0 rgba(31,42,68,.08)}
+[data-scene="flat"] .fl-bubble::after{content:"";position:absolute;right:var(--fl-tx);bottom:-60px;width:116px;height:74px;background:#FFFFFF;clip-path:polygon(0 0,58% 0,100% 100%)}
+[data-scene="flat"] .fl-bubble>p{margin:0;font:800 108px/1.25 var(--f-sans);letter-spacing:.02em;color:var(--ink);white-space:nowrap}
+
+/* ---------- 封面大字 .fl-hero ---------- */
+[data-scene="flat"] .fl-hero{margin:0;font:800 144px/1.14 var(--f-sans);letter-spacing:.01em;color:var(--ink);white-space:nowrap}
