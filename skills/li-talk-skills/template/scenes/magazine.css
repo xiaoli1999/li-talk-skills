@@ -51,7 +51,7 @@
 /* 只有细宋体时按字号描边加粗（--mag-thin 由 magazine.js 判断后写在 <html> 上；黑体、等宽字在后面改回 0） */
 [data-scene="magazine"].slide,[data-scene="magazine"].slide *{-webkit-text-stroke:calc(var(--mag-thin,0) * .018em) currentColor}
 [data-scene="magazine"] :is(.s-title,.quote,.t-xl,.cover-title,.mag-pull,.mag-mast>b){-webkit-text-stroke-width:calc(var(--mag-thin,0) * .022em)}
-[data-scene="magazine"] :is(.copy,.copy *,.term,.term *,.tag,.lab,.s-topic .tc,.copied-tip,.copied-tip *,.shot figcaption,.shot-zoom,.shot-miss,.shot-miss *,.cell>i,.mascot-say,.li-sign,.mag-kick,.mag-mast>span,.mag-mast>span *,.mag-col b,.mag-folio,.mag-folio *){-webkit-text-stroke-width:0}
+[data-scene="magazine"] :is(.copy,.copy *,.term,.term *,.tag,.lab,.s-topic .tc,.copied-tip,.copied-tip *,.shot figcaption,.shot-zoom,.shot-miss,.shot-miss *,.cell>i,.mascot-say,.li-sign,.mag-kick,.mag-kick *,.mag-mast>span,.mag-mast>span *,.mag-col b,.mag-folio,.mag-folio *){-webkit-text-stroke-width:0}
 
 /* =====================================================================
    页眉：主题行，下面一粗一细两道栏线（整页的装饰，画在每页的 ::before 上；开场时从左往右拉开）
@@ -290,13 +290,16 @@
    ===================================================================== */
 
 /* ---------- 剪报 .mag-clip：一张纸白的纸条，用一截胶带贴在页面上（大小、位置、歪多少都由页面定，一页里大小错落才像拼贴）
-   <div class="mag-clip abs" data-beat="1" data-no="03" style="left:…;top:…;width:…;--r:-1deg">
-     <span class="mag-kick" data-small>栏目名</span><h3>标题</h3><p>一句话</p>
+   <div class="mag-clip abs" data-beat="1" data-no="01" style="left:…;top:…;width:…;--r:-1deg">
+     <span class="mag-kick" data-small>栏目名<small>P.03</small></span><h3>标题</h3><p>一句话</p>
    </div>
-   - .mag-kick 栏目小标（橘红短线 + 黑体小字，26px，要写 data-small）；h3 宋体 42px；p 宋体 36px
-   - data-no：套印大页码（宋体 150px，墨绿、背后一版橘红没套准），压在纸条左上角往上探出去约一个字高，
-     上方要留出约 110px 的空；有页码时胶带改贴右上角。加 side：页码挪到纸条左边、竖直居中（图解步骤用），左边要留出约 170px
-   - 纸色：默认纸白；ink-g 墨绿纸（字反成米白），news 旧报纸的米黄；t-* 的卡片颜色也认
+   - .mag-kick 栏目小标（橘红短线 + 黑体小字，26px，要写 data-small）；里面的 <small> 推到最右头，写页码（目录用）；
+     h3 宋体 42px；p 宋体 36px。栏目小标是讲稿外的字，和标题重复时就别加
+   - data-no：套印大序号（宋体 150px，墨绿、背后一版橘红没套准）。序号就是阅读顺序：01、02、03，别拿页码当序号（页码写进栏目小标的 <small>）。
+     默认压在纸条左上角往上探出去约一个字高，上方要留出约 110px 的空；有序号时胶带改贴右上角。
+     加 side：序号挪到纸条左边、竖直居中（图解步骤、目录用），左边要留出约 170px，纸条的 padding-left 加到 50px 以上
+   - 纸色：默认纸白；ink-g 墨绿纸（字反成米白，栏目小标也是米白），news 旧报纸的米黄；t-* 的卡片颜色也认
+   - 歪（--r）不超过 ±1.5deg：再歪字就不好读了
    - 不写死 height（字多了会溢出）；要几张一样高写 min-height ---------- */
 [data-scene="magazine"] .mag-clip{--mag-tp:1;--mag-lf:0;--mag-gx:5px;--mag-gy:4px;padding:30px 40px 32px;color:var(--card-ink);rotate:var(--r);
   background:var(--mag-grain),var(--tint,var(--mag-white));
@@ -315,10 +318,16 @@
   -webkit-text-stroke:calc(var(--mag-thin,0) * 2px) currentColor}
 [data-scene="magazine"] .mag-clip.side[data-no]::after{left:auto;right:calc(100% - 30px);top:50%;translate:0 -54%}
 [data-scene="magazine"] .mag-clip.ink-g[data-no]::after{color:var(--mag-orange);text-shadow:var(--mag-gx) var(--mag-gy) 0 var(--mag-ink)}
-/* 栏目小标：橘红短线 + 黑体小字（26px，页面里要写 data-small） */
+/* 墨绿纸剪报的 side 序号：也用墨绿序号（和别的几张一样，一眼看出是同一串 01、02、03），
+   整个挪到纸外的米白纸上（压进墨绿纸的那一截会看不见） */
+[data-scene="magazine"] .mag-clip.ink-g.side[data-no]::after{right:calc(100% + 10px);color:var(--mag-green);text-shadow:var(--mag-gx) var(--mag-gy) 0 var(--mag-orange)}
+/* 栏目小标：橘红短线 + 黑体小字（26px，页面里要写 data-small）；<small> 是推到右头的页码 */
 [data-scene="magazine"] .mag-kick{display:flex;align-items:center;gap:12px;margin:0 0 10px;white-space:nowrap;font:700 26px/1.2 var(--f-sans);letter-spacing:.16em;color:var(--mag-orange-d)}
 [data-scene="magazine"] .mag-kick::before{content:"";flex:none;width:30px;height:6px;background:currentColor}
-[data-scene="magazine"] .ink-g .mag-kick{color:var(--mag-orange)}
+[data-scene="magazine"] .mag-kick small{margin-left:auto;padding-left:24px;font:inherit;letter-spacing:.06em}
+/* 墨绿纸上：橘红字对比度只有 2.6:1，字换成米白，短线保留橘红 */
+[data-scene="magazine"] .ink-g .mag-kick{color:var(--mag-cream)}
+[data-scene="magazine"] .ink-g .mag-kick::before{background:var(--mag-orange)}
 
 /* ---------- 套印大字 .mag-no：一个大号宋体数字（或一两个字），墨绿，背后一版橘红偏出去一点没套准
    <b class="mag-no abs" data-beat="0" style="left:…;top:…;font-size:400px">80<small>℃</small></b>
@@ -345,13 +354,20 @@
 [data-scene="magazine"] .mag-lead.o::before{background:var(--mag-orange)}
 [data-scene="magazine"] .mag-lead.o:not(.dot)::after{border-color:var(--mag-orange)}
 
-/* ---------- 竖排栏目注释 .mag-col：竖排的宋体小段（34px），右边一粗一细两道竖栏线，开头一枚墨绿竖签
-   <p class="mag-col abs" data-beat="0" style="left:…;top:…;height:列长"><b data-small>编者按</b>绿茶娇嫩，沸水会把它烫熟</p>
-   - height 是一列多长，字多了自动往左另起一列；竖签 b 是 26px 黑体（要写 data-small）
-   - 出场「排字」：一列列从上往下排出来 ---------- */
+/* ---------- 栏目注释 .mag-col：宋体小段（34px）加一枚墨绿小签，旁边一粗一细两道栏线。两种排法：
+   竖排（默认）：栏线在右边，字从上往下、从右往左。只放短标签和短句：一块不超过 12 个字，一页竖排的字加起来不超过 24 个
+   <p class="mag-col abs" data-beat="0" style="left:…;top:…;height:列长"><b data-small>栏目</b>水温八十度</p>
+   横排小栏（加 h）：栏线在上沿，小签和字排成一行，宽度写在 width 上，字多了往下换行。说明、句子（编者按、注释）一律用它
+   <p class="mag-col h abs" data-beat="1" style="left:…;top:…;width:…"><b data-small>编者按</b>绿茶娇嫩，沸水会把它烫熟</p>
+   - 竖排时 height 是一列多长，字多了自动往左另起一列；小签 b 是 26px 黑体（要写 data-small）
+   - 出场「排字」：竖排的一列列从上往下排出来，横排的从下往上升 ---------- */
 [data-scene="magazine"] .mag-col{margin:0;padding:0 24px 0 0;writing-mode:vertical-rl;font:600 var(--fs-min)/1.7 var(--f-hand);letter-spacing:.16em;color:var(--ink-2);border-right:4px solid var(--mag-ink)}
 [data-scene="magazine"] .mag-col::after{content:"";position:absolute;top:0;bottom:0;right:-11px;width:1.5px;background:var(--mag-ink)}
 [data-scene="magazine"] .mag-col b{display:inline-block;margin:0 0 .7em;padding:.55em .26em;background:var(--mag-green);color:var(--mag-cream);font:700 26px/1 var(--f-sans);letter-spacing:.24em}
+/* 横排小栏的字用墨黑（不是竖排那档灰）：它装的是一句完整的话，讲过退到 .8 以后，缩到半屏看也要读得清 */
+[data-scene="magazine"] .mag-col.h{writing-mode:horizontal-tb;padding:26px 0 0;border-right:0;border-top:4px solid var(--mag-ink);line-height:1.6;letter-spacing:.06em;color:var(--ink)}
+[data-scene="magazine"] .mag-col.h::after{top:5px;bottom:auto;left:0;right:0;width:auto;height:1.5px}
+[data-scene="magazine"] .mag-col.h b{margin:0 .7em 0 0;padding:.3em .5em .32em;vertical-align:.14em;letter-spacing:.16em}
 
 /* ---------- 刊头 .mag-mast：刊名（宋体 120px）+ 一粗一细两道栏线 + 一行刊号小字（黑体 26px，两端对齐）
    <div class="mag-mast abs" data-beat="0" style="left:…;top:…;width:…"><b>刊名</b><span data-small><i>第 01 期</i><i>冬季号</i></span></div>
@@ -399,7 +415,8 @@
   background:linear-gradient(90deg,rgba(80,56,24,0),rgba(80,56,24,.06) 36%,rgba(80,56,24,.15) 49.2%,rgba(255,252,244,.4) 50.4%,rgba(80,56,24,.05) 64%,rgba(80,56,24,0))}
 
 /* ---------- 页脚 .mag-folio：左下或右下角的一行页码小字（黑体 26px，要写 data-small），<b> 里的字橘红
-   <p class="mag-folio abs" data-small style="left:120px;top:1000px"><b>05</b>新人茶话会</p>（最后一页 y 990 以下留给署名，别放） ---------- */
+   <p class="mag-folio abs" data-small style="left:120px;top:1000px"><b>P.05</b>新人茶话会</p>（最后一页 y 990 以下留给署名，别放）
+   - 页码写成 P.05，和序号 01、02 分开；讲稿外的小字，一页最多一行，不是每页都要 ---------- */
 [data-scene="magazine"] .mag-folio{display:flex;align-items:center;gap:16px;margin:0;white-space:nowrap;font:700 26px/1 var(--f-sans);letter-spacing:.16em;color:var(--ink-2)}
 [data-scene="magazine"] .mag-folio b{color:var(--mag-orange);letter-spacing:.04em}
 

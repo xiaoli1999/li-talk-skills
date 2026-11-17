@@ -31,14 +31,17 @@
    - 没搬的：网点圆随鼠标的视差（这一版不做视差）；小铅的走位、反应、空闲动作（引擎的形象部分统一做）；
      样页的「第 01 期」刊号（会和长主题行抢位置；要刊号的页面用下面的刊头 .mag-mast 自己放）
    - 杂志自有的版式组件（类名带 mag- 前缀，样子和写法见 magazine.css 末尾「杂志自有版式组件」；别的风格不认识，只是普通容器）：
-     .mag-clip 剪报（纸条 + 胶带，可带套印大页码 data-no）、.mag-no 套印大字、.mag-lead 虚线引导、.mag-col 竖排栏目注释、
+     .mag-clip 剪报（纸条 + 胶带，可带套印大序号 data-no：01、02… 就是顺序）、.mag-no 套印大字、.mag-lead 虚线引导、
+     .mag-col 栏目注释（默认竖排，只放 12 个字以内的短标签；加 h 是横排小栏，句子用它）、
      .mag-mast 刊头、.mag-fig 套印插图、.mag-disc 网点圆、.mag-pull 引语、.mag-gutter 跨页中缝、.mag-folio 页脚、.mag-end 文末方块。
      它们各有这一风格的出场（enterBy 按类名配好，页面不用写 data-in）：
-     · 剪报「贴上」paste：和卡片一样落下、按胶带、字排上来；带 data-no 的，胶带按上后大页码的橘红一版从偏位处对过来
+     · 剪报「贴上」paste：和卡片一样落下、按胶带、字排上来；带 data-no 的，胶带按上后大序号的橘红一版从偏位处对过来
      · 套印大字、网点圆「套印」register：绿色那版先印上，橘红那版从偏出去的地方滑回来对准；网点圆转着滚进来
      · 插图「印上」print：像印刷滚筒从上往下滚过，墨线和底色一起印出来，随后橘红网点那一版对过来
      · 虚线引导「描线」trace：从起点的墨点沿着虚线一路描到尽头，箭头（或圆点）啪地落下
-     · 竖排栏目注释、刊头、引语「排字」typeset：竖排的字从上往下一列列排出来（横排的照旧从下往上升）
+     · 栏目注释、刊头、引语「排字」typeset：竖排的字从上往下一列列排出来（横排的照旧从下往上升）
+   - 可读性：讲过的拍只退到 .8（recede），组件里不再另加透明度、另调灰；字和身后的底至少 3:1（墨绿纸上的小字一律米白）；
+     剪报歪不超过 ±1.5deg；套印错位这种字效只给大号数字和几个字的短标题，正文一律实色
    - 同一拍里先后（plan）：有虚线引导的拍，线先描、纸条等线描到一大半再贴（「顺着线贴到线的尽头」）
    - 自己加的出场名：paste、typeset、register、print、trace，只在这个风格里认（别的风格会提醒并换成它的默认出场）
    - 禁区（zones，舞台坐标 1920×1080）：
@@ -182,7 +185,7 @@
     if (!cover) { tl.to(e, { keyframes: [{ y: 2, duration: .05 }, { y: 0, duration: .14, ease: 'power2.out' }] }, t + .44); end = .63; }
     if (e.matches(TAPED)) tl.fromTo(e, { '--mag-tp': 0 }, { '--mag-tp': 1, duration: .2, ease: 'power2.out', immediateRender: true }, t + .3);
     if (e.matches('.steps > li')) tl.fromTo(e, { '--mag-gx': '18px', '--mag-gy': '-12px' }, { '--mag-gx': '4px', '--mag-gy': '3px', duration: .5, ease: 'power3.out', immediateRender: true }, t + .3);
-    // 剪报的大页码（data-no）：胶带按上以后，橘红那一版从偏位处对过来
+    // 剪报的大序号（data-no）：胶带按上以后，橘红那一版从偏位处对过来
     if (e.matches('.mag-clip[data-no]')) { tl.fromTo(e, { '--mag-gx': '24px', '--mag-gy': '-16px' }, { '--mag-gx': '5px', '--mag-gy': '4px', duration: .5, ease: 'power3.out', immediateRender: true }, t + .32); end = Math.max(end, .82); }
     if (cover) { tl.fromTo(e, { '--mag-ds': .55, '--mag-dr': '-50deg', '--mag-do': 0 }, { '--mag-ds': 1, '--mag-dr': '0deg', '--mag-do': 1, duration: .55, ease: 'back.out(1.5)', immediateRender: true }, t + .28); end = Math.max(end, .83); }
     kidsOf(e).forEach((c, i) => {

@@ -13,9 +13,10 @@
 [data-id="t-magazine-cover"] .cv-no{left:1330px;top:372px;font-size:330px}
 
 /* ---------- 拼贴目录 ---------- */
-/* 竖排的「目录」两个字（套印大字竖着排） */
+/* 竖排的「目录」两个字（套印大字竖着排；竖排只给这种两三个字的标签） */
 [data-id="t-magazine-contents"] .ct-word{left:150px;top:262px;writing-mode:vertical-rl;font-size:220px;line-height:1;letter-spacing:.06em}
-[data-id="t-magazine-contents"] .ct-sum{left:150px;top:780px}
+/* 一篇一张剪报：左边探出的套印序号（01、02、03）150px，纸条左边留 60px 给序号压进来的那一截；三张约 215px 高，从上往下隔 240px */
+[data-id="t-magazine-contents"] .ct-item{padding-left:60px}
 
 /* ---------- 器物图鉴 ---------- */
 /* 三样东西站着的「桌沿」：和页眉同一种一粗一细两道栏线 */
@@ -32,8 +33,10 @@
 /* 左页的大数字：560px，℃ 跟在右上角 */
 [data-id="t-magazine-feature"] .ft-no{left:150px;top:196px;font-size:560px}
 [data-id="t-magazine-feature"] .ft-deck{left:172px;top:742px;margin:0;font:900 50px/1.3 var(--f-hand);letter-spacing:.06em;white-space:nowrap}
-/* 右页的金句：116px 宋体三行，占大半个右页 */
-[data-id="t-magazine-feature"] .ft-quote{left:1070px;top:224px;margin:0;font:900 116px/1.3 var(--f-hand);letter-spacing:.02em;white-space:nowrap;color:var(--ink)}
+/* 右页的金句：116px 宋体三行，占大半个右页（y 180–632） */
+[data-id="t-magazine-feature"] .ft-quote{left:1070px;top:180px;margin:0;font:900 116px/1.3 var(--f-hand);letter-spacing:.02em;white-space:nowrap;color:var(--ink)}
+/* 金句下面的编者按小栏（横排一行），再往下是第 2 拍的剪报（y 796 起，胶带不碰到这一栏的字） */
+[data-id="t-magazine-feature"] .ft-note{left:1070px;top:652px;width:730px}
 
 /* ---------- 封底 ---------- */
 [data-id="t-magazine-end"] .ed-quote{left:220px;top:230px;font-size:130px}
