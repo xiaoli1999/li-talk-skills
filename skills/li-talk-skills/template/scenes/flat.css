@@ -1,0 +1,285 @@
+/* =====================================================================
+   风格 · 扁平插画 flat 的样子（行为在 flat.js）
+   暖白底、墨蓝字，强调色只有珊瑚、明黄两种，再加墨蓝一共三组；每组都有「浅 / 本 / 深」三级。
+   全页统一左上受光，所有组件照同一条规矩画：
+     · 暗部：右、下沿露出一条深一级的色块（inset 阴影朝左上错开，不模糊）；
+     · 亮边：左上一道浅一级的亮边（大件是一段圆角的亮线，小件是 inset 高光）；
+     · 投影：一律落向右下，用自己那组颜色同色相的半透明深色（约 10%–14%），不用灰、不模糊。
+   所有选择器的第一段都带 [data-scene="flat"]。没有滤镜、没有模糊，最省性能。
+   - 组件的颜色按「组」取 CSS 变量（--fl-f 色面、--fl-fd 色面暗部、--fl-fl 色面亮边，--fl-b 本色、--fl-bd 暗部、--fl-bl 亮边，
+     --fl-on 本色上的字，--fl-sc 投影的颜色），卡片、小格、标签的 t-yellow 等颜色类只是换一组：
+     t-yellow → 明黄，t-pink / t-peach → 珊瑚，t-blue / t-mint → 墨蓝浅调，t-white 和不写 → 白
+   - --fl-o 是投影的偏移，悬停时变长（组件朝光源抬起），按下时变短
+   - --fl-bs 是步骤序号徽标的大小（flat.js 出场时从 0 弹到 1，不写时是 1）
+   - --recede（讲过的拍变到多淡）由 flat.js 的 recede 写入，这里不写
+   ===================================================================== */
+
+/* 变量：配色取自定稿样页（三组颜色各浅 / 本 / 深，外加纸色和文字线） */
+[data-scene="flat"]{
+  --f-hand:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --f-sans:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  /* 等宽字后面补上黑体：命令里的中文不至于落到宋体 */
+  --f-mono:"JetBrains Mono","Cascadia Mono",Consolas,"SF Mono",Menlo,"PingFang SC","Microsoft YaHei","Noto Sans SC",monospace;
+  --rough-r:16px;
+  --bg:#FFF9F2; --ink:#1F2A44; --ink-2:#4B5672; --ink-3:#A3ABBD; --line:#3A4766;
+  --mark:#FF6B57; --key-ink:#1F2A44; --hl:rgba(255,197,61,.6); --accent:#FF6B57;
+  --card-ink:#1F2A44; --card-ink-2:#4B5672; --paper:#FFFFFF;
+  /* 便签的几种颜色只剩三组的浅调：明黄、珊瑚、墨蓝 */
+  --t-yellow:#FFEFC6; --t-mint:#E4E9F2; --t-pink:#FFE3DA; --t-blue:#E4E9F2; --t-white:#FFFFFF; --t-peach:#FFE3DA;
+  --term-bg:#1F2A44; --term-ink:#F4F6FA;
+  /* 「需要人」珊瑚，「AI」墨蓝，「不用管」淡灰 */
+  --human:#FF6B57; --ai:#3A4766; --idle:#A3ABBD;
+  --sign-color:rgba(75,86,114,.62);
+  --scene-bg:#FFF9F2;
+  /* 三组颜色：本色、浅一级（亮边）、深一级（暗部）、色面、色面里的受光圆 */
+  --fl-coral:#FF6B57; --fl-coral-l:#FF977F; --fl-coral-d:#E2503E; --fl-coral-t:#FFE3DA; --fl-coral-tl:#FFEEE8;
+  --fl-sun:#FFC53D; --fl-sun-l:#FFD873; --fl-sun-d:#EBA31D; --fl-sun-t:#FFEFC6; --fl-sun-tl:#FFF7E1;
+  --fl-ink:#1F2A44; --fl-ink-l:#3A4766; --fl-ink-d:#141C30; --fl-ink-t:#E4E9F2; --fl-ink-tl:#EFF2F8;
+  --fl-paper-d:#E1E6EF; --fl-line:#D6DCE7; --fl-line-d:#B8C2D3;
+  --fl-pop:cubic-bezier(.34,1.56,.64,1);
+  /* 大件左上的那段亮线（遮罩形状；颜色取 --fl-fl） */
+  --fl-rim:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 84'%3E%3Cpath d='M3.5 66V26Q3.5 3.5 26 3.5H78' fill='none' stroke='%23000' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E");
+}
+
+/* ---------- 颜色分组：组件先给默认的一组，颜色类再换成别的组 ---------- */
+/* 默认：白色色面，墨蓝本色 */
+[data-scene="flat"] :is(.card,.cell){--fl-f:#FFFFFF;--fl-fd:var(--fl-paper-d);--fl-fl:#FFFFFF;--fl-b:var(--fl-ink);--fl-bd:var(--fl-ink-d);--fl-bl:var(--fl-ink-l);--fl-on:#FFFFFF;--fl-sc:31,42,68}
+/* 标签默认是一枚明黄贴纸 */
+[data-scene="flat"] .tag{--fl-f:var(--fl-sun-t);--fl-fd:#F7DB98;--fl-fl:var(--fl-sun-tl);--fl-b:var(--fl-sun);--fl-bd:var(--fl-sun-d);--fl-bl:var(--fl-sun-l);--fl-on:var(--fl-ink);--fl-sc:138,90,0}
+/* 步骤按顺序轮换：珊瑚、明黄、墨蓝（样页三步的徽标就是这三色） */
+[data-scene="flat"] .steps>li{--fl-f:var(--fl-coral-t);--fl-fl:var(--fl-coral-tl);--fl-b:var(--fl-coral);--fl-bd:var(--fl-coral-d);--fl-bl:var(--fl-coral-l);--fl-on:#FFFFFF;--fl-sc:176,48,30}
+[data-scene="flat"] .steps>li:nth-child(3n+2){--fl-f:var(--fl-sun-t);--fl-fl:var(--fl-sun-tl);--fl-b:var(--fl-sun);--fl-bd:var(--fl-sun-d);--fl-bl:var(--fl-sun-l);--fl-on:var(--fl-ink);--fl-sc:138,90,0}
+[data-scene="flat"] .steps>li:nth-child(3n){--fl-f:var(--fl-ink-t);--fl-fl:var(--fl-ink-tl);--fl-b:var(--fl-ink);--fl-bd:var(--fl-ink-d);--fl-bl:var(--fl-ink-l);--fl-on:#FFFFFF;--fl-sc:31,42,68}
+/* 颜色类 */
+[data-scene="flat"] .t-yellow{--fl-f:var(--fl-sun-t);--fl-fd:#F7DB98;--fl-fl:var(--fl-sun-tl);--fl-b:var(--fl-sun);--fl-bd:var(--fl-sun-d);--fl-bl:var(--fl-sun-l);--fl-on:var(--fl-ink);--fl-sc:138,90,0}
+[data-scene="flat"] :is(.t-pink,.t-peach){--fl-f:var(--fl-coral-t);--fl-fd:#FCC8B8;--fl-fl:var(--fl-coral-tl);--fl-b:var(--fl-coral);--fl-bd:var(--fl-coral-d);--fl-bl:var(--fl-coral-l);--fl-on:#FFFFFF;--fl-sc:176,48,30}
+[data-scene="flat"] :is(.t-blue,.t-mint){--fl-f:var(--fl-ink-t);--fl-fd:#CBD3E2;--fl-fl:var(--fl-ink-tl);--fl-b:var(--fl-ink);--fl-bd:var(--fl-ink-d);--fl-bl:var(--fl-ink-l);--fl-on:#FFFFFF;--fl-sc:31,42,68}
+[data-scene="flat"] .t-white{--fl-f:#FFFFFF;--fl-fd:var(--fl-paper-d);--fl-fl:#FFFFFF;--fl-b:var(--fl-ink);--fl-bd:var(--fl-ink-d);--fl-bl:var(--fl-ink-l);--fl-on:#FFFFFF;--fl-sc:31,42,68}
+
+/* 背景层里的装饰（flat.js 的 backdrop 放进去）：右上角两圈受光的明黄大圆，左下角一圈珊瑚大圆和一小片点阵，
+   左右页边各一件漂浮的小几何。都贴着窗口的角和边放（宽屏、窄屏都在边上，不跑到内容中间）；
+   颜色极淡，压在字下面也不影响阅读 */
+.bg[data-scene="flat"] :is(.fl-sun,.fl-sun2,.fl-coral){position:absolute;border-radius:50%;pointer-events:none}
+.bg[data-scene="flat"] .fl-sun{right:-220px;top:-280px;width:600px;height:600px;background:#FFF4D9}
+.bg[data-scene="flat"] .fl-sun2{right:-88px;top:-148px;width:336px;height:336px;background:var(--fl-sun-t);opacity:.7}
+.bg[data-scene="flat"] .fl-coral{left:-150px;bottom:-172px;width:380px;height:380px;background:#FFEEE7}
+.bg[data-scene="flat"] .fl-dots{position:absolute;left:154px;bottom:56px;width:150px;height:78px;overflow:visible;pointer-events:none;fill:#FFD3C5}
+.bg[data-scene="flat"] .fl-float{position:absolute;overflow:visible;pointer-events:none}
+.bg[data-scene="flat"] .fl-spark{right:56px;top:44%;width:40px;height:40px}
+.bg[data-scene="flat"] .fl-plus{left:50px;top:30%;width:28px;height:28px}
+
+/* 正文：黑体 */
+[data-scene="flat"].slide{letter-spacing:.01em}
+/* 现代风格不歪：页面里写的 --r 倾斜在这里不用 */
+[data-scene="flat"] :is(.card,.cell,.tag,.quote,.term,.copy,.shot){rotate:none}
+
+/* =====================================================================
+   主题行、标题、解释句
+   ===================================================================== */
+/* 主题行：最前面一颗珊瑚小圆片（右下暗、左上亮），章节用墨蓝粗体，分隔符最淡 */
+[data-scene="flat"] .s-topic{gap:12px}
+[data-scene="flat"] .s-topic::before{content:"";flex:none;width:16px;height:16px;border-radius:50%;background:var(--fl-coral);box-shadow:inset -3px -3px 0 var(--fl-coral-d),inset 2px 2px 0 var(--fl-coral-l)}
+[data-scene="flat"] .s-topic .tc{padding:0 2px;font-weight:800;color:var(--ink-2)}
+[data-scene="flat"] .s-topic .ts{font-weight:400;color:var(--ink-3)}
+[data-scene="flat"] .s-topic .tt{font-weight:700;color:var(--ink)}
+/* 大标题：特粗黑体 */
+[data-scene="flat"] .s-title{font-weight:800;letter-spacing:.02em;color:var(--ink)}
+/* 一句话解释：左边一根珊瑚圆角短条（右下一道暗部） */
+[data-scene="flat"] .explain{padding-left:30px;color:var(--ink-2)}
+[data-scene="flat"] .explain::before{width:10px;top:.18em;bottom:.12em;border-radius:5px;background:var(--fl-coral);box-shadow:inset -3px -3px 0 var(--fl-coral-d)}
+[data-scene="flat"] .explain b{font-weight:800;color:var(--ink)}
+[data-scene="flat"] .c-mark{color:var(--fl-coral-d)}
+/* 标题、金句逐字弹起时临时拆成的单字（flat.js 的 chars，播完拆回原样） */
+[data-scene="flat"] .fl-ch{display:inline-block}
+
+/* 大字金句：特粗黑体，字身投一道落向右下、不模糊的淡墨蓝影 */
+[data-scene="flat"] .quote{font-weight:800;letter-spacing:.02em;color:var(--ink);text-shadow:.045em .055em 0 rgba(31,42,68,.08)}
+
+/* =====================================================================
+   重点词：底下弹出一块明黄圆角色块（下沿一道深一级的暗边），右上角迸出三道珊瑚短线
+   引擎在那一拍把 --k 从 0 推到 1：色块横向展开，比例按 2.6k − 1.6k² 算，展到八成时略冲过头再回到 1（样页的回弹）；
+   短线在 --k 过了 0.6 以后从左下角弹出来，之后一直留着（样页也是）
+   ===================================================================== */
+[data-scene="flat"] .key{color:var(--key-ink);font-weight:800}
+[data-scene="flat"] .key::before{content:"";position:absolute;z-index:-1;left:0;right:0;bottom:.04em;height:.5em;border-radius:.16em;pointer-events:none;
+  background:var(--fl-sun);box-shadow:inset 0 -.09em 0 var(--fl-sun-d);
+  transform-origin:0 50%;transform:scaleX(calc(var(--k) * (2.6 - 1.6 * var(--k))))}
+[data-scene="flat"] .key::after{content:"";position:absolute;right:-.4em;top:-.36em;width:.54em;height:.54em;pointer-events:none;background:var(--fl-coral);
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23000' stroke-width='3.2' stroke-linecap='round'%3E%3Cpath d='M1.6 12.1L2.9 4.2M5.8 14.3L11.3 8.8M7.9 18.4L15.8 17.1'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat;
+          mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23000' stroke-width='3.2' stroke-linecap='round'%3E%3Cpath d='M1.6 12.1L2.9 4.2M5.8 14.3L11.3 8.8M7.9 18.4L15.8 17.1'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat;
+  transform-origin:0 100%;scale:clamp(0,calc((var(--k) - .6) * 2.5),1);opacity:clamp(0,calc((var(--k) - .6) * 5),1)}
+
+/* =====================================================================
+   受光的组件：卡片、小格、终端、截图位（命令、标签、徽标另写在下面）
+   悬停时朝光源（左上）抬起一点、投影变长；按下时压下去、投影变短
+   ===================================================================== */
+[data-scene="flat"] :is(.card,.cell,.term,.shot){--fl-o:12px 14px;position:relative;
+  transition:translate .35s var(--fl-pop),box-shadow .35s var(--fl-pop)}
+/* 讲过的拍：保留引擎的淡出过渡（上面那条 transition 会盖掉它，这里补回来） */
+[data-scene="flat"] :is(.card,.cell,.term,.shot,.copy,.steps>li).past{transition:opacity .45s ease,translate .35s var(--fl-pop),box-shadow .35s var(--fl-pop),background-color .2s}
+
+/* ---------- 卡片：一块圆角色面，右下一条深一级的厚度，左上一段亮线（::after），投影落向右下 ---------- */
+[data-scene="flat"] .card{padding:34px 40px 38px 38px;border-radius:30px;color:var(--card-ink);background:var(--fl-f);
+  box-shadow:inset -7px -8px 0 var(--fl-fd),var(--fl-o) 0 rgba(var(--fl-sc),.1)}
+[data-scene="flat"] .card::after{content:"";position:absolute;left:9px;top:9px;width:112px;height:78px;pointer-events:none;background:var(--fl-fl);
+  -webkit-mask:var(--fl-rim) 0 0/100% 100% no-repeat;mask:var(--fl-rim) 0 0/100% 100% no-repeat}
+[data-scene="flat"] .card h3{font-weight:800;color:var(--ink)}
+[data-scene="flat"] .card :is(p,li){color:var(--ink-2)}
+/* 清单的小方块：珊瑚圆角方块，右下一道暗边（样页本子上的勾选框） */
+[data-scene="flat"] .card li::before{left:.08em;top:.52em;width:.42em;height:.42em;border-radius:.12em;rotate:none;opacity:1;background:var(--fl-coral);box-shadow:inset -.07em -.07em 0 var(--fl-coral-d)}
+/* 胶带：一截明黄扁条（右下暗、左上亮）；图钉：一颗珊瑚圆钉（样页色卡扇上的铆钉） */
+[data-scene="flat"] .card.tape::before{top:-14px;width:110px;height:28px;margin-left:-55px;rotate:-3deg;border-radius:7px;background:var(--fl-sun-l);
+  box-shadow:inset -3px -4px 0 var(--fl-sun),inset 2px 2px 0 #FFE7A6,3px 4px 0 rgba(138,90,0,.14)}
+[data-scene="flat"] .card.pin::before{top:-12px;width:26px;height:26px;margin-left:-13px;background:var(--fl-coral);
+  box-shadow:inset -3px -4px 0 var(--fl-coral-d),inset 2px 2px 0 var(--fl-coral-l),3px 4px 0 rgba(176,48,30,.18)}
+/* 卡片上沿的小标签：一枚和卡片同组颜色的胶囊（白卡片用墨蓝） */
+[data-scene="flat"] .lab{top:-24px;padding:4px 22px 7px;border-radius:999px;background:var(--fl-b);color:var(--fl-on);font-weight:700;
+  box-shadow:inset -3px -4px 0 var(--fl-bd),inset 2px 2px 0 var(--fl-bl),3px 4px 0 rgba(var(--fl-sc),.16)}
+
+/* ---------- 带序号的步骤：序号是一枚受光的圆片徽标（珊瑚、明黄、墨蓝轮换）；横排时每一步垫一块浅色色面 ---------- */
+[data-scene="flat"] .steps>li{transition:translate .35s var(--fl-pop)}
+[data-scene="flat"] .steps>li::before{width:62px;height:62px;border:0;border-radius:50%;font:800 32px/1 var(--f-sans);color:var(--fl-on);background:var(--fl-b);
+  box-shadow:inset -4px -5px 0 var(--fl-bd),inset 3px 3px 0 var(--fl-bl),3px 4px 0 rgba(var(--fl-sc),.16);
+  scale:var(--fl-bs,1);rotate:calc((1 - var(--fl-bs,1)) * -70deg);transition:translate .35s var(--fl-pop),box-shadow .35s var(--fl-pop)}
+[data-scene="flat"] .steps>li>b{font-weight:800;color:var(--ink)}
+[data-scene="flat"] .steps>li>span{color:var(--ink-2)}
+/* 横排：浅色色面（样页每一步的大色面），右上角藏一个受光的浅色圆 */
+[data-scene="flat"] .steps.h>li{padding:32px 32px 38px 30px;border-radius:32px;
+  background:radial-gradient(circle 118px at calc(100% - 64px) 58px,var(--fl-fl) 99%,rgba(255,255,255,0) 100%),var(--fl-f)}
+
+/* ---------- 左右对比：中间一枚明黄圆片，里面是箭头或 vs ---------- */
+[data-scene="flat"] .vs::before{width:84px;height:84px;display:grid;place-items:center;border-radius:50%;font:800 42px/1 var(--f-sans);color:var(--ink);background:var(--fl-sun);
+  box-shadow:inset -4px -5px 0 var(--fl-sun-d),inset 3px 3px 0 var(--fl-sun-l),4px 5px 0 rgba(138,90,0,.14)}
+
+/* ---------- 一排小格：小一号的受光色面；AI 是墨蓝浅调，需要人是珊瑚浅调加一颗珊瑚圆钉，不用管的压平、划掉 ---------- */
+[data-scene="flat"] .cell{--fl-o:8px 10px;padding:24px 16px 26px;border:0;border-radius:22px;background:var(--fl-f);
+  box-shadow:inset -5px -6px 0 var(--fl-fd),inset 3px 3px 0 var(--fl-fl),var(--fl-o) 0 rgba(var(--fl-sc),.1)}
+[data-scene="flat"] .cell>i{color:var(--ink-2);font-weight:700}
+[data-scene="flat"] .cell>b{font-weight:800;color:var(--ink)}
+[data-scene="flat"] .cell>span{color:var(--ink-2)}
+[data-scene="flat"] .cell.ai{--fl-f:var(--fl-ink-t);--fl-fd:#CBD3E2;--fl-fl:var(--fl-ink-tl);--fl-sc:31,42,68}
+[data-scene="flat"] .cell.human{--fl-f:var(--fl-coral-t);--fl-fd:#FCC8B8;--fl-fl:var(--fl-coral-tl);--fl-sc:176,48,30}
+[data-scene="flat"] .cell.human::after{top:-11px;right:-11px;width:26px;height:26px;background:var(--fl-coral);
+  box-shadow:inset -3px -4px 0 var(--fl-coral-d),inset 2px 2px 0 var(--fl-coral-l),3px 4px 0 rgba(176,48,30,.18)}
+[data-scene="flat"] .cell.idle{background:rgba(228,233,242,.45);box-shadow:inset 0 0 0 3px var(--fl-ink-t);color:var(--idle)}
+[data-scene="flat"] .cell.idle>:is(i,b,span){color:var(--idle)}
+[data-scene="flat"] .cell.idle>b{text-decoration-thickness:3px}
+[data-scene="flat"] .dot{box-shadow:inset -.08em -.08em 0 rgba(20,28,48,.18)}
+
+/* ---------- 标签：一枚受光的胶囊贴纸（默认明黄，颜色类换组） ---------- */
+[data-scene="flat"] .tag{padding:6px 24px 9px;border:0;border-radius:999px;font-weight:700;color:var(--fl-on);background:var(--fl-b);
+  box-shadow:inset -3px -4px 0 var(--fl-bd),inset 2px 2px 0 var(--fl-bl),4px 5px 0 rgba(var(--fl-sc),.14)}
+
+/* ---------- 终端窗口：墨蓝窗体，右下一条深墨蓝的厚度、左上一道亮边；三颗点是珊瑚、明黄、浅墨蓝，提示符明黄 ---------- */
+[data-scene="flat"] .term{padding:0 0 28px;border-radius:22px;background:var(--term-bg);color:var(--term-ink);font-weight:500;
+  box-shadow:inset -7px -8px 0 var(--fl-ink-d),inset 3px 3px 0 var(--fl-ink-l),var(--fl-o) 0 rgba(31,42,68,.14)}
+[data-scene="flat"] .term-bar{height:56px;margin-bottom:16px;padding:0 28px;background:none;box-shadow:inset 0 -2px 0 rgba(255,255,255,.06);font:500 24px/1 var(--f-mono);color:var(--ink-3)}
+[data-scene="flat"] .term-bar i{width:14px;height:14px;background:var(--fl-coral)}
+[data-scene="flat"] .term-bar i:nth-child(2){background:var(--fl-sun)}
+[data-scene="flat"] .term-bar i:nth-child(3){background:var(--fl-ink-l);margin-right:14px}
+[data-scene="flat"] .term p{padding:0 34px}
+[data-scene="flat"] .term .in::before{color:var(--fl-sun)}
+[data-scene="flat"] .term .cc::before{color:var(--fl-coral-l)}
+[data-scene="flat"] .term .dim{color:var(--ink-3)}
+[data-scene="flat"] .term .ok{color:var(--fl-sun-l)}
+[data-scene="flat"] .term .warn{color:var(--fl-coral-l)}
+[data-scene="flat"] .term .hi{color:var(--fl-sun)}
+
+/* ---------- 一行可复制的命令：墨蓝胶囊（样页的命令胶囊）；悬停朝左上抬起、图标歪一下，按下压下去 ----------
+   复制成功时 flat.js 推动 --fl-sw（一道斜的亮条从左扫到右，::after） */
+[data-scene="flat"] .copy{gap:16px;padding:16px 22px 16px 26px;border-radius:18px;overflow:hidden;background:var(--fl-ink);color:#FFFFFF;font:500 var(--fs-min)/1.2 var(--f-mono);letter-spacing:0;
+  box-shadow:inset -5px -6px 0 var(--fl-ink-d),inset 3px 3px 0 var(--fl-ink-l),6px 7px 0 rgba(31,42,68,.12);
+  transition:background-color .2s,translate .3s var(--fl-pop),box-shadow .3s var(--fl-pop)}
+[data-scene="flat"] .copy .ps{color:var(--fl-sun);opacity:1}
+/* 复制图标：两张错开的圆角方块（后面一张半透明）；复制成功换成明黄圆片里的墨蓝对勾 */
+[data-scene="flat"] .copy .ic{width:28px;height:28px;opacity:1;-webkit-mask:none;mask:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Crect x='2' y='2' width='15' height='15' rx='4' fill='%23fff' fill-opacity='.38'/%3E%3Crect x='9' y='9' width='15' height='15' rx='4' fill='%23fff'/%3E%3C/svg%3E") center/contain no-repeat;
+  transition:rotate .3s var(--fl-pop),scale .3s var(--fl-pop)}
+[data-scene="flat"] .copy.is-copied .ic{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 26 26'%3E%3Ccircle cx='13' cy='13' r='12' fill='%23FFC53D'/%3E%3Cpath d='M7.5 13.5l3.6 3.6L18.5 9.5' fill='none' stroke='%231F2A44' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+[data-scene="flat"] .copy::after{content:"";position:absolute;left:0;top:-10px;bottom:-10px;width:70px;pointer-events:none;background:rgba(255,255,255,.16);
+  opacity:var(--fl-swo,0);transform:translateX(var(--fl-sw,-120px)) skewX(-20deg)}
+[data-scene="flat"] .copy:focus-visible{outline:3px solid var(--fl-coral);outline-offset:4px}
+[data-scene="flat"] .copy:active{translate:2px 3px;box-shadow:inset -3px -3px 0 var(--fl-ink-d),inset 2px 2px 0 var(--fl-ink-l),2px 2px 0 rgba(31,42,68,.12);transition-duration:.08s}
+
+/* 「已复制」：一枚明黄贴纸胶囊，左边一颗墨蓝圆片里打白勾（出场「歪着拍上来再摆正」、后面迸出几何纸屑，见 flat.js 的 copied） */
+[data-scene="flat"] .copied-tip{height:54px;padding:0 24px 0 10px;gap:12px;border-radius:999px;background:var(--fl-sun);color:var(--ink);font:700 30px/1 var(--f-sans);
+  box-shadow:inset -4px -5px 0 var(--fl-sun-d),inset 2px 2px 0 var(--fl-sun-l),5px 6px 0 rgba(138,90,0,.12)}
+[data-scene="flat"] .copied-tip svg{width:36px;height:36px;padding:9px 8px 8px;border-radius:50%;background:var(--ink);overflow:visible}
+[data-scene="flat"] .copied-tip path{stroke:#FFFFFF;stroke-width:6}
+/* 纸屑（flat.js 放进内容下面的涟漪层：从提示后面迸出，不压字） */
+[data-scene="flat"] .fl-cf{position:absolute;left:-7px;top:-7px;width:14px;height:14px;pointer-events:none}
+[data-scene="flat"] .fl-cf.c-coral{border-radius:50%;background:var(--fl-coral)}
+[data-scene="flat"] .fl-cf.c-sun{border-radius:50%;background:var(--fl-sun-d)}
+[data-scene="flat"] .fl-cf.c-sq{border-radius:3px;background:var(--fl-sun)}
+[data-scene="flat"] .fl-cf.c-ink{background:var(--fl-ink);clip-path:polygon(50% 0,100% 100%,0 100%)}
+[data-scene="flat"] .fl-cf.c-tri{background:var(--fl-coral-l);clip-path:polygon(50% 0,100% 100%,0 100%)}
+[data-scene="flat"] .fl-cf.c-bar{left:-11px;top:-4px;width:22px;height:8px;border-radius:4px;background:var(--fl-coral)}
+
+/* ---------- 截图位：一扇白色网页窗口（样页第 3 步的窗口），顶上三颗点；右下一条纸的厚度，投影落向右下 ---------- */
+[data-scene="flat"] .shot{padding:52px 16px 18px;border-radius:24px;background:var(--paper);
+  box-shadow:inset -7px -8px 0 var(--fl-paper-d),var(--fl-o) 0 rgba(31,42,68,.1)}
+[data-scene="flat"] .shot::before{top:20px;left:26px;width:14px;height:14px;margin:0;rotate:none;border-radius:50%;z-index:1;
+  background:var(--fl-coral);box-shadow:22px 0 0 var(--fl-sun),44px 0 0 var(--fl-line-d)}
+[data-scene="flat"] .shot-img{border-radius:12px;background:var(--fl-ink-t)}
+[data-scene="flat"] .shot figcaption{padding:14px 6px 2px;font:500 30px/1.3 var(--f-sans);color:var(--ink-2)}
+[data-scene="flat"] .shot-miss{font:500 30px/1.4 var(--f-sans);color:var(--ink-2);background:repeating-linear-gradient(-45deg,var(--fl-ink-tl) 0 14px,var(--fl-ink-t) 14px 28px)}
+[data-scene="flat"] .shot-miss small{color:var(--ink-3)}
+[data-scene="flat"] .shot-zoom{right:30px;top:66px;padding:8px 16px 9px;background:rgba(31,42,68,.86);font:600 20px/1 var(--f-sans)}
+
+/* ---------- 线稿与圈注：几乎是直的粗线（flat.js 的 rough 把粗糙度压得很低）；线稿是浅墨蓝，圈注是珊瑚 ---------- */
+[data-scene="flat"] svg.sketch{color:var(--line)}
+[data-scene="flat"] svg.marks{color:var(--mark)}
+
+/* ---------- 悬停：受光的组件朝左上抬起、投影变长；步骤的徽标抬起；按下时压下去 ---------- */
+@media (hover:hover){
+  [data-scene="flat"] :is(.card,.cell:not(.idle),.term,.shot):hover{--fl-o:15px 18px;translate:-2px -3px}
+  [data-scene="flat"] .cell:not(.idle):hover{--fl-o:11px 13px}
+  [data-scene="flat"] .steps.h>li:hover{translate:-2px -3px}
+  [data-scene="flat"] .steps>li:hover::before{translate:-2px -3px;box-shadow:inset -4px -5px 0 var(--fl-bd),inset 3px 3px 0 var(--fl-bl),6px 7px 0 rgba(var(--fl-sc),.16)}
+  [data-scene="flat"] .copy:hover{background:#26324F;translate:-2px -3px;box-shadow:inset -5px -6px 0 var(--fl-ink-d),inset 3px 3px 0 var(--fl-ink-l),9px 10px 0 rgba(31,42,68,.12)}
+  [data-scene="flat"] .copy:hover .ic{rotate:-10deg;scale:1.1}
+}
+[data-scene="flat"] :is(.card,.cell:not(.idle),.term,.shot):active{--fl-o:6px 7px;translate:2px 3px;transition-duration:.08s}
+[data-scene="flat"] .cell:not(.idle):active{--fl-o:4px 5px}
+
+/* ---------- 形象：落向右下、不模糊的淡墨蓝影（和页面上的投影同一个方向）；说的话是白色受光气泡 ---------- */
+[data-scene="flat"] .mascot{--mascot-shadow:drop-shadow(4px 5px 0 rgba(31,42,68,.1));--mascot-outline:#FFFFFF}
+[data-scene="flat"] .mascot-say{padding:9px 22px 12px;border-radius:18px;background:#FFFFFF;color:var(--ink);font:700 30px/1.2 var(--f-sans);
+  box-shadow:inset -3px -4px 0 var(--fl-paper-d),5px 6px 0 rgba(31,42,68,.1)}
+[data-scene="flat"] .mascot-say::after{bottom:-8px;width:18px;height:18px;border-radius:0 0 4px 0;background:#FFFFFF}
+
+/* 点击处：一圈很淡的珊瑚圆环加三颗小圆点（flat.js 的 ripple 放进内容下面的涟漪层） */
+[data-scene="flat"] .fl-ripple{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none}
+[data-scene="flat"] .fl-ripple b{position:absolute;left:-34px;top:-34px;width:68px;height:68px;border-radius:50%;border:4px solid var(--fl-coral);opacity:0}
+[data-scene="flat"] .fl-ripple i{position:absolute;left:-5px;top:-5px;width:10px;height:10px;border-radius:50%;opacity:0}
+[data-scene="flat"] .fl-ripple .c1{background:var(--fl-coral)}
+[data-scene="flat"] .fl-ripple .c2{background:var(--fl-sun)}
+[data-scene="flat"] .fl-ripple .c3{background:var(--fl-coral-l)}
+
+/* =====================================================================
+   常驻信息：章节、页码、节拍指示（右上一枚白色受光胶囊，里面一排进度条：讲过的浅珊瑚、当前的珊瑚拉长；
+   换拍时当前那段竖着弹一下，拍号从下面顶上来，都只播一次）、计时
+   ===================================================================== */
+#stage[data-scene="flat"] .chap span{font:700 28px/1.2 var(--f-sans);color:var(--ink-2)}
+#stage[data-scene="flat"] .meta{top:20px;gap:22px;font:600 26px/1 var(--f-sans);color:var(--ink-2)}
+#stage[data-scene="flat"] .pageno{color:var(--ink-3)}
+#stage[data-scene="flat"] .pageno b{color:var(--ink-2);font-weight:800}
+#stage[data-scene="flat"] .meter{height:56px;padding:0 24px 0 22px;gap:18px;border-radius:999px;background:#FFFFFF;
+  box-shadow:inset -3px -4px 0 #EDF0F5,6px 7px 0 rgba(31,42,68,.06)}
+#stage[data-scene="flat"] .meter .dots{gap:8px}
+#stage[data-scene="flat"] .dots i{display:block;width:28px;height:12px;border-radius:6px;background:var(--fl-ink-t);transition:width .45s var(--fl-pop),background-color .3s}
+#stage[data-scene="flat"] .dots i.on{background:var(--fl-coral-l)}
+#stage[data-scene="flat"] .dots i.now{width:54px;background:var(--fl-coral);animation:fl-bar .45s var(--fl-pop)}
+#stage[data-scene="flat"] .meter .ml{display:none}
+#stage[data-scene="flat"] .meter .ms{display:inline-flex;align-items:baseline;gap:1px;color:var(--ink-2)}
+#stage[data-scene="flat"] .meter .ms b{display:inline-block;font:800 28px/1 var(--f-sans);color:var(--ink);animation:fl-num .4s cubic-bezier(.34,1.8,.64,1)}
+@keyframes fl-bar{from{transform:scaleY(1.7)}to{transform:none}}
+@keyframes fl-num{from{opacity:0;transform:translateY(80%)}to{opacity:1;transform:none}}
+#stage[data-scene="flat"] .timer{font:600 26px/1 var(--f-mono);color:var(--ink-3)}
+
+/* 阅读模式（没有背景层）：每页右上角、左下角补上那几圈受光的大圆 */
+[data-scene="flat"].slide:is(.reading *){background:
+  radial-gradient(circle 168px at 1840px 20px,#FFF2CF 99.5%,rgba(255,242,207,0) 100%),
+  radial-gradient(circle 300px at 1840px 20px,#FFF4D9 99.7%,rgba(255,244,217,0) 100%),
+  radial-gradient(circle 190px at 40px 1062px,#FFEEE7 99.6%,rgba(255,238,231,0) 100%),
+  var(--scene-bg)}
