@@ -192,7 +192,7 @@ test('讲多久：从「给组织方」里读，取讲的那个数，读不出�
   assert.deepEqual(targetChars({ lo: 5, hi: 5 }), { lo: 1100, hi: 1250 });
 });
 
-test('讲稿：按「给组织方」里的时长算目标字数，不到下限的 90% 先补够再问用户', () => {
+test('讲稿：按「给组织方」里的时长算目标字数；不到下限的 90% 时问用户怎么办，不让 AI 自己凑字', () => {
   const dir = tmp();
   writeFileSync(join(dir, '讲稿.md'), script(2, { extra: '- 时间与时长：5 分钟，会议室投影\n- 合计：约 2 页' }));
   confirmStep(dir, 'outline');
@@ -200,15 +200,24 @@ test('讲稿：按「给组织方」里的时长算目标字数，不到下限�
   assert.match(t, /③ 讲稿/);
   // 每页讲词 16 字，2 页 32 字；5 分钟目标 1100–1250 字
   assert.match(t, /讲 5 分钟（讲稿开头「给组织方」里写的）：目标约 1100–1250 字，现在 32 字，还差约 1068 字/);
-  assert.match(t, /低于 990 字（目标下限的 90%）要补，超过 1250 字要删/);
+  assert.match(t, /超过 1250 字要删；低于 990 字（目标下限的 90%）先问用户怎么补/);
+  assert.match(t, /不要为了凑字数加空话：补的每一句都要有具体内容（例子、步骤、数字），具体内容来自用户或素材；没有就问用户，不能编/);
   assert.match(t, /提纲里的页都写了（合计约 2 页/);
-  // 「补到目标范围」写进下一步，排在给用户看、confirm 之前
-  const fill = t.indexOf('先补到目标范围（1100–1250 字）');
-  assert.ok(fill > 0, t);
-  assert.ok(fill < t.indexOf(cmd('confirm', q(dir), 'script')), '先补够，再问用户、再 confirm');
-  assert.match(t, /用户明确说就要这么短，才可以不补/);
-  assert.match(t, /（讲稿写完、讲词字数够了以后问）/);
-  checkShape(t);
+  assert.match(t, /提纲里的页都写了还不够，问用户怎么办（问题 1），照用户选的做，不要自己往讲词里凑字/);
+  // 不再要求「先补够」
+  assert.doesNotMatch(t, /先补到目标范围|才可以不补/);
+  // 【问用户】里多一个问题，排在「讲稿可以吗」前面，推荐项第一，最多 4 个选项（checkShape 查）
+  const ask = t.slice(t.indexOf('【问用户】'));
+  assert.match(ask, /问题 1：讲稿现在约 32 字，只够讲约 0\.5 分钟（目标 5 分钟）。怎么办？\n {4}1\. 把现有的页讲细：我列出哪几页可以展开、需要你补哪些具体内容（例子、步骤、数字）（推荐）\n {4}2\. 加几页新内容：我列出提纲里还能加的方向，请你给要点\n {4}3\. 就讲这么短：把时长改成约 0\.5 分钟\n/);
+  assert.match(ask, /（问题 1 处理完、讲稿改好以后问）\n {2}问题 2：讲稿写好了，你看一遍，可以吗？/);
+  assert.match(t, /写完给用户看（问题 2：先问完问题 1、照用户选的改好，再问这个）/);
+  assert.equal(checkShape(t), 2);
+
+  // 提纲还有页没写：先照提纲写完，写完还不够再问
+  const half = tmp();
+  writeFileSync(join(half, '讲稿.md'), script(2, { extra: '- 时间与时长：5 分钟\n- 合计：约 5 页' }));
+  confirmStep(half, 'outline');
+  assert.match(guideText(half), /提纲里还有约 3 页没写，先照提纲写完；写完还不够，问用户怎么办（问题 1）/);
 
   // 「40 分钟（讲 35 分钟）」按讲的 35 分钟算
   const qa = tmp();
@@ -223,23 +232,46 @@ test('讲稿：按「给组织方」里的时长算目标字数，不到下限�
   const lt = guideText(long);
   assert.match(lt, /目标约 1100–1250 字，现在 1300 字，超出约 50 字/);
   assert.match(lt, /先删到 1250 字以内/);
-  assert.doesNotMatch(lt, /先补到目标范围/);
+  assert.doesNotMatch(lt, /怎么办？/);
+  assert.equal(checkShape(lt), 1);
 
-  // 到了下限的 90% 就不硬要求补
+  // 到了下限的 90% 就不问
   const near = tmp();
   writeFileSync(join(near, '讲稿.md'), '# 近\n\n## 给组织方\n- 时间与时长：5 分钟\n\n## 第 1 页 封面\n\n**讲词**\n【第 0 拍】' + '好'.repeat(1000) + '\n');
   confirmStep(near, 'outline');
   const nt = guideText(near);
   assert.match(nt, /现在 1000 字，还差约 100 字（差得不多，可以不补）/);
-  assert.doesNotMatch(nt, /先补到目标范围/);
+  assert.doesNotMatch(nt, /怎么办？/);
+  assert.equal(checkShape(nt), 1);
 
-  // 读不出时长：不写目标，提示怎么写
+  // 15 分钟、1543 字（第二次替身实测的第一稿）：只够讲约 6.5 分钟，问用户，而不是自己凑到 3300 字
+  const meet = tmp();
+  writeFileSync(join(meet, '讲稿.md'), '# 周会\n\n## 给组织方\n- 时间与时长：15 分钟左右；大会议室投屏讲\n- 合计：约 1 页\n\n## 第 1 页 封面\n\n**讲词**\n【第 0 拍】' + '好'.repeat(1543) + '\n');
+  confirmStep(meet, 'outline');
+  const mt = guideText(meet);
+  assert.match(mt, /目标约 3300–3750 字，现在 1543 字/);
+  assert.match(mt, /问题 1：讲稿现在约 1543 字，只够讲约 6\.5 分钟（目标 15 分钟）。怎么办？/);
+  assert.match(mt, /就讲这么短：把时长改成约 6\.5 分钟/);
+
+  // 读不出时长：不写目标，提示怎么写；不凑字的规矩照样写
   const none = tmp();
   writeFileSync(join(none, '讲稿.md'), script(2));
   confirmStep(none, 'outline');
   const xt = guideText(none);
   assert.doesNotMatch(xt, /目标约/);
   assert.match(xt, /没读到讲多久/);
+  assert.match(xt, /不要为了凑字数加空话/);
+  assert.doesNotMatch(xt, /怎么办？/);
+});
+
+test('讲稿：拍数说法统一——第 0 拍不算，模板里普通页写到第 2 拍', () => {
+  const dir = tmp();
+  writeFileSync(join(dir, '讲稿.md'), script(2));
+  confirmStep(dir, 'outline');
+  const t = guideText(dir);
+  assert.match(t, /拍数 = 翻到这页后要点几下，第 0 拍不算：第 0 拍 \+ 第 1、2 拍 = 2 拍/);
+  assert.match(t, /- 第 2 拍：出现什么｜重点词：……（普通页写到第 2～4 拍，封面、结尾写到第 1～2 拍）/);
+  assert.match(t, /- 图注：……（有截图、截图下面要一行说明时才写；不要写成「截图说明：」）/);
 });
 
 test('风格：讲稿写了在投影上讲，深色底（黑板、科技暗黑）降分，推荐理由写明优先浅色底', () => {
@@ -264,6 +296,35 @@ test('风格：讲稿写了在投影上讲，深色底（黑板、科技暗黑�
   const o = guideText(online);
   assert.match(o, /\n\s+1\. 黑板（board）[^\n]*（推荐/);
   assert.doesNotMatch(o, /优先浅色底/);
+});
+
+test('风格：推荐理由只列讲稿里实际匹配到的词和次数；一个都没匹配到时照实说', () => {
+  // 第一个选项里「词」N 处，每个都要在讲稿里正好出现 N 次
+  const reasonWords = (t, text) => {
+    const first = /问题 1：[^\n]*\n\s+1\. ([^\n]*)/.exec(t)[1];
+    const pairs = [...first.matchAll(/「([^」]+)」(\d+) 处/g)];
+    for (const [, w, c] of pairs) assert.equal(text.split(w).length - 1, Number(c), `「${w}」在讲稿里的次数：${first}`);
+    return { first, pairs };
+  };
+  const mixed = tmp();
+  const text = script(2, { extra: '- 时间与时长：15 分钟；大会议室投屏讲\n主持人这个角色不复杂。讲安装步骤：安装、配置、步骤。' });
+  writeFileSync(join(mixed, '讲稿.md'), text);
+  confirmStep(mixed, 'outline');
+  confirmStep(mixed, 'script');
+  const m = reasonWords(guideText(mixed), text);
+  assert.match(m.first, /^像素手账（journal）[^\n]*讲稿里出现了「角色」1 处；讲稿里的「安装」2 处、「步骤」2 处、「配置」1 处更像黑板，但它是深色底；在投影上讲，优先浅色底/);
+  assert.ok(m.pairs.length >= 2);
+
+  // 一个关键词都没有：不列词，写「没有明显的关键词」
+  const plain = tmp();
+  const ptext = script(2);
+  writeFileSync(join(plain, '讲稿.md'), ptext);
+  confirmStep(plain, 'outline');
+  confirmStep(plain, 'script');
+  const p = reasonWords(guideText(plain), ptext);
+  assert.equal(p.pairs.length, 0);
+  assert.match(p.first, /（推荐：讲稿里没有明显的关键词，按适合讲什么挑的）/);
+  assert.doesNotMatch(p.first, /「/);
 });
 
 test('风格：讲稿写了在投影上讲，技术词很多也先推浅色底；深色底出现在选项里时标出来', () => {

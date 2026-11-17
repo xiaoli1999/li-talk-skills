@@ -442,21 +442,34 @@ const SCRIPT_TPL = [
   '**屏幕**（投出来的字，原样使用）',
   '- 主题行：章节短名 › 本页主题',
   '- 标题：……',
-  '**节拍**',
-  '- 第 0 拍：翻到这页就在的内容｜重点词：……',
+  '- 图注：……（有截图、截图下面要一行说明时才写；不要写成「截图说明：」）',
+  '**节拍**（拍数 = 翻到这页后要点几下，第 0 拍不算）',
+  '- 第 0 拍：翻到这页就在的内容，不用点｜重点词：……',
   '- 第 1 拍：出现什么｜重点词：……',
+  '- 第 2 拍：出现什么｜重点词：……（普通页写到第 2～4 拍，封面、结尾写到第 1～2 拍）',
   '**画面**（怎么画、怎么动、形象做什么；要用截图的写明用哪张）',
   '**讲词**（照着讲，不投出来；按拍分段，重点词加粗）',
   '【第 0 拍】……',
   '【第 1 拍】……',
+  '【第 2 拍】……',
 ];
+
+// 讲词够讲几分钟（按每分钟约 235 字取中间值）：10 分钟以内按半分钟取整，最少半分钟
+function canTalk(chars) {
+  const x = Math.max(chars / 235, 0.5);
+  return x >= 10 ? String(Math.round(x)) : String(Math.round(x * 2) / 2);
+}
+
+// 不凑字数的规矩（③ 每次都写）
+const NO_FILLER = '不要为了凑字数加空话：补的每一句都要有具体内容（例子、步骤、数字），具体内容来自用户或素材；没有就问用户，不能编。' +
+  '换个说法重复上一句、「这一步很重要」这类没有新东西的话，不算补。';
 
 // ③ 讲稿
 function stageScript(s) {
   const sc = s.script || { pages: [], sayChars: 0, talk: null };
   const n = sc.pages.length;
   const z = sc.sayChars;
-  // 目标字数：「给组织方」里写的讲多久 × 每分钟 220–250 字；低于下限的 90% 要补，超过上限要删
+  // 目标字数：「给组织方」里写的讲多久 × 每分钟 220–250 字；低于下限的 90% 问用户怎么补（不让 AI 自己凑字），超过上限要删
   const goal = targetChars(sc.talk);
   const floor = goal ? Math.ceil(goal.lo * 0.9) : 0;
   const talk = sc.talk ? (sc.talk.lo === sc.talk.hi ? `${sc.talk.lo} 分钟` : `${sc.talk.lo}～${sc.talk.hi} 分钟`) : '';
@@ -484,21 +497,27 @@ function stageScript(s) {
     : n ? `接着往下写：照提纲一页一页写进讲稿.md，接在第 ${n} 页后面${sc.planned ? `（提纲合计约 ${sc.planned} 页）` : ''}。`
       : '照提纲一页一页写进 讲稿.md，接在提纲后面。';
   steps.push([writeLead + '每页的标题行必须写成「## 第 N 页 页标题」（guide 靠它数页数），下面四段：', ...SCRIPT_TPL]);
-  steps.push('最容易错的几条：每页 2～4 拍（封面、结尾 1～2 拍），讲词按拍分段、和节拍一一对上；每拍一个重点词，讲词里加粗；' +
-    '新概念第一次出现的那页，第 0 拍先用一句大白话解释；不写没有依据的数字、百分比、案例和用户反馈；讲词用第一人称、短句，每拍三四句以内。');
+  steps.push('最容易错的几条：每页 2～4 拍（拍数 = 翻到这页后要点几下，第 0 拍不算：第 0 拍 + 第 1、2 拍 = 2 拍；封面、结尾 1～2 拍），' +
+    '讲词从【第 0 拍】写到最后一拍，和节拍一一对上；每拍一个重点词，讲词里加粗；' +
+    '新概念第一次出现的那页，第 0 拍先用一句大白话解释；不写没有依据的数字、百分比、案例和用户反馈；讲词用第一人称、短句，每拍三四句以内；' +
+    '截图的说明写成「图注：……」，不写「截图说明：」。');
   if (goal) {
     steps.push(`用总字数控制时长：这份讲 ${talk}，讲词目标约 ${goal.lo}–${goal.hi} 字（每分钟 220～250 字）。` +
-      `低于 ${floor} 字（目标下限的 90%）要补，超过 ${goal.hi} 字要删。`);
+      `超过 ${goal.hi} 字要删；低于 ${floor} 字（目标下限的 90%）先问用户怎么补。${NO_FILLER}`);
   } else {
-    steps.push('用总字数控制时长：按每分钟 220～250 字估，比如 20 分钟约 4400～5000 字；低于目标下限的 90% 要补，超过上限要删。' +
+    steps.push('用总字数控制时长：按每分钟 220～250 字估，比如 20 分钟约 4400～5000 字；超过上限要删，低于目标下限的 90% 先问用户怎么补。' + NO_FILLER +
       '讲稿开头「给组织方」里没读到讲多久：写成「- 时间与时长：20 分钟，会议室投影」这样，guide 就能算出目标字数。');
   }
+  const can = canTalk(z);
   if (short) {
-    const how = allWritten ? '页都写了：挑讲得简略的拍补具体（怎么做、为什么、容易错在哪），每拍仍在三四句以内；每拍都补满了还不够，就跟用户商量加一页。'
-      : sc.planned ? `提纲里还有约 ${sc.planned - n} 页没写，先照提纲写完；写完还不够，再把每拍讲具体（怎么做、为什么、容易错在哪）。`
-        : '提纲里还有没写的页，先照提纲写完；页都写了，就把每拍讲具体（怎么做、为什么、容易错在哪）。';
-    steps.push(`讲词现在 ${z} 字，不到目标下限的 90%（${floor} 字）：问用户「讲稿可以吗」之前，先补到目标范围（${goal.lo}–${goal.hi} 字）。` +
-      how + '不要编数字、案例和用户反馈。用户明确说就要这么短，才可以不补。');
+    const first = allWritten ? '提纲里的页都写了还不够，'
+      : sc.planned ? `提纲里还有约 ${sc.planned - n} 页没写，先照提纲写完；写完还不够，`
+        : '提纲里还有没写的页，先照提纲写完；页都写了还不够，';
+    steps.push([`讲词现在 ${z} 字，不到目标下限的 90%（${floor} 字），只够讲约 ${can} 分钟。${first}` +
+      '问用户怎么办（问题 1），照用户选的做，不要自己往讲词里凑字：',
+    '选「讲细」：对照提纲和素材，列出哪几页可以展开、每页要用户补什么（具体的例子、步骤、数字），用户给了再写进讲词。',
+    '选「加页」：列出提纲里还能加的方向，请用户给要点，照要点加页；「给组织方」的大纲和合计页数跟着改。',
+    `选「就讲这么短」：把「给组织方」里的时长改成约 ${can} 分钟，再运行 guide。`]);
   }
   if (long) {
     steps.push(`讲词现在 ${z} 字，超过目标上限（${goal.hi} 字）约 ${z - goal.hi} 字：问用户之前，先删到 ${goal.hi} 字以内（删重复的话、合并页）。` +
@@ -510,13 +529,25 @@ function stageScript(s) {
       : ['「画面」一段要用截图时写文件名。素材里有图但还没有截图说明表，先运行：', cli('materials', quote(join(s.dir, '素材')))]);
   }
   steps.push('页数多（超过 15 页）时，可以先写完第一部分给用户看一眼语气对不对，再接着写。');
-  steps.push([`写完${goal ? `、讲词在 ${floor}–${goal.hi} 字之间了，再` : ''}给用户看（问题 1），必须等用户明确说可以；要改就改完再问。用户确认后运行：`,
+  steps.push([`写完给用户看（问题 ${short ? '2：先问完问题 1、照用户选的改好，再问这个' : '1'}），必须等用户明确说可以；要改就改完再问。用户确认后运行：`,
     cli('confirm', quote(s.dir), 'script')]);
   steps.push(guideStep(s.dir));
 
-  const asks = [{ when: goal ? '讲稿写完、讲词字数够了以后问' : '讲稿写完以后问', q: '讲稿写好了，你看一遍，可以吗？', opts: [
-    '可以，就按这个做课件（推荐）', '要改：说哪页改什么', '太长或太短：说要加还是要减'] }];
-  return render(3, { where, steps, asks, say: '第 3 页的讲词太书面了，改口语一点；第 5、6 页合成一页' });
+  const asks = [];
+  if (short) {
+    asks.push({
+      when: `讲稿照提纲写完后，讲词还不到 ${floor} 字就先问这个；不要自己凑字`,
+      q: `讲稿现在约 ${z} 字，只够讲约 ${can} 分钟（目标 ${talk}）。怎么办？`,
+      opts: [
+        '把现有的页讲细：我列出哪几页可以展开、需要你补哪些具体内容（例子、步骤、数字）（推荐）',
+        '加几页新内容：我列出提纲里还能加的方向，请你给要点',
+        `就讲这么短：把时长改成约 ${can} 分钟`,
+      ],
+    });
+  }
+  asks.push({ when: short ? '问题 1 处理完、讲稿改好以后问' : '讲稿写完以后问', q: '讲稿写好了，你看一遍，可以吗？', opts: [
+    '可以，就按这个做课件（推荐）', '要改：说哪页改什么', '太长或太短：说要加还是要减'] });
+  return render(3, { where, steps, asks, say: short ? '第 4 页可以讲细一点，我补两个我们组的真实例子给你' : '第 3 页的讲词太书面了，改口语一点；第 5、6 页合成一页' });
 }
 
 // 按讲稿里的词粗估推荐哪种风格（只是起点，AI 读过讲稿可以换）。
@@ -546,7 +577,8 @@ function rankScenes(ready, text, { projector = false } = {}) {
     const penalized = projector && !!s.dark;
     const score = hits - (penalized ? DARK_PENALTY : 0);
     const order = DEFAULT_ORDER.includes(s.key) ? DEFAULT_ORDER.indexOf(s.key) : DEFAULT_ORDER.length + i;
-    const words = Object.entries(found).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([w]) => `「${w}」`);
+    // 只列实际在讲稿里匹配到的词，带上次数，方便对照讲稿核实
+    const words = Object.entries(found).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([w, c]) => `「${w}」${c} 处`);
     return { s, hits, score, penalized, order, words };
   });
   return rank.sort((a, b) => b.score - a.score || a.order - b.order);
@@ -597,9 +629,9 @@ function stageStyle(s) {
     // 深色底因为投影被排到后面、而它本来命中更多时，说一句它为什么没排第一
     const demoted = projector ? ranked.find(r => r.penalized && r.hits > top.hits) : null;
     const why = [];
-    if (top.hits) why.push(`讲稿里有${top.words.join('')}这些词`);
-    else if (!demoted) why.push('讲稿里看不出明显偏向，先推通用的');
-    if (demoted) why.push(`${demoted.words.join('')}更像${demoted.s.label}，但它是深色底`);
+    if (top.hits) why.push(`讲稿里出现了${top.words.join('、')}`);
+    else if (!demoted) why.push('讲稿里没有明显的关键词，按适合讲什么挑的');
+    if (demoted) why.push(`讲稿里的${demoted.words.join('、')}更像${demoted.s.label}，但它是深色底`);
     if (projector && anyDark) why.push('在投影上讲，优先浅色底');
     first = `${top.s.label}（${top.s.key}）${fit(top.s)}（推荐：${why.join('；')}）`;
   } else {

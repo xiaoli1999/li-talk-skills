@@ -376,17 +376,23 @@ export async function checkStatic(dir) {
       error(`${at}：带拍的元素上写了 transform`, '位置用 left / top，倾斜用 --r', n);
     }
 
-    // 拍数
+    // 拍数 = 翻到这页后要点几下（第 0 拍不算），也就是页面上最大的拍号
     let total = 0;
     for (const t of tags) for (const a of BEAT_ATTRS) if (a in t.attrs) total = Math.max(total, toInt(t.attrs[a]));
     const notes = Array.isArray(d.notes) ? d.notes.filter(x => x && typeof x === 'object') : null;
     if (notes && notes.length) {
       const said = Math.max(...notes.map(x => toInt(x.beat)));
-      if (said !== total) warn(`${at}：讲词写到第 ${said} 拍，页面有 ${total} 拍`, '让讲词和节拍一一对应', n);
+      if (said !== total) warn(`${at}：讲词写到第 ${said} 拍，页面写到第 ${total} 拍`, '让讲词和节拍一一对应：从第 0 拍写到页面的最后一拍，一拍一条', n);
     }
     // 提醒只写实际套用的那条规则：封面、结尾 1 到 2 拍，其余 2 到 4 拍
-    if (edge && (total < 1 || total > 2)) warn(`${at}：这是${role}页，有 ${total} 拍，建议 1 到 2 拍`, '拆页或合并节拍', n);
-    else if (!edge && (total < 2 || total > 4)) warn(`${at}：有 ${total} 拍，建议 2 到 4 拍`, '拆页或合并节拍', n);
+    const [min, max] = edge ? [1, 2] : [2, 4];
+    if (total < min || total > max) {
+      const fix = total > max
+        ? (edge ? '把几块合进同一拍，或挪到别的页' : '拆成两页（讲稿也跟着拆，并告诉用户），或把几块合进同一拍')
+        : edge ? `让${role === '封面' ? '副标题或讲者一行' : '最后一句或致谢'}第 1 拍出现`
+          : '把已有的内容分到不同的拍出现（比如截图第 1 拍、圈注或形象第 2 拍），或和前后页合并；别为了凑拍数往屏幕上加讲稿里没有的字';
+      warn(`${at}：${edge ? `这是${role}页，` : ''}翻到这页后要点 ${total} 下（有 ${total} 拍），建议 ${min} 到 ${max} 拍`, fix, n);
+    }
 
     // 讲词字数
     if (notes) for (const x of notes) sayChars += countWords(text(x.say));
