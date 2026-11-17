@@ -37,7 +37,8 @@
   Deck.scene('board', {
     label: '黑板',
     family: 'hand',
-    dark: true,
+    dark: true,               // 深色底：引擎给形象加浅色描边
+    mascot: 'duoduo',         // 暂时借用朵朵，下一份计划换成自己的形象
     enter: 'write',
     titleIn: 'write',
     recede: .74,

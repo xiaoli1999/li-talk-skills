@@ -18,6 +18,7 @@
   Deck.scene('journal', {
     label: '像素手账',
     family: 'hand',
+    mascot: 'duoduo',         // 暂时借用朵朵，下一份计划换成自己的形象
     enter: 'write',
     titleIn: 'write',
     recede: .55,

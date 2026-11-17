@@ -8,7 +8,7 @@
    - 依赖总线：core 的常量和工具、I.sc（风格注册表）、I.PAGES、I.state（cur、reading、booted、curScene）、
      I.dom（lb、world、stage）、I.toast；
      build.js 的 I.boxIn；beats.js 的 I.clearEl、I.setInstant、I.callOnBeat、I.finishRunning；
-     mascot.js 的 I.kidCheer；pages.js 的 I.next、I.prev、I.go、I.finishPageTl、I.mountScene；
+     mascot.js 的 I.mascotCheer、I.mascotClick；pages.js 的 I.next、I.prev、I.go、I.finishPageTl、I.mountScene；
      presenter.js 的 I.openPresenter、I.toggleTimer、I.resetTimer
    - 挂到总线：copyText、onCopy、textRects、copiedTip、openShot、closeShot、onKey、bindInput、parseHash、
      fit、setMode、scrollToPage、pageInView
@@ -55,7 +55,7 @@
     const out = [], walker = document.createTreeWalker(slide, NodeFilter.SHOW_TEXT), rg = document.createRange();
     for (let n = walker.nextNode(); n; n = walker.nextNode()) {
       const pe = n.parentElement;
-      if (!n.nodeValue.trim() || !pe || skip.contains(pe) || pe.closest('.copied-tip,.kid')) continue;
+      if (!n.nodeValue.trim() || !pe || skip.contains(pe) || pe.closest('.copied-tip,.mascot')) continue;
       if (getComputedStyle(pe).visibility === 'hidden') continue;
       rg.selectNodeContents(n);
       for (const r of rg.getClientRects()) if (r.width && r.height) out.push(r);
@@ -77,12 +77,12 @@
     $$('.copied-tip', slide).forEach(t => t.remove());
     const pg = PAGES.find(x => x.el === slide);
     const sc = I.sc(pg ? pg.scene : slide.dataset.scene);
-    const cheer = ok && pg && pg.kid && !S.reading;
+    const cheer = ok && pg && pg.mascot && !S.reading;
     const say = sc.mascotSay && sc.mascotSay.copied ? String(sc.mascotSay.copied) : '';
     if (cheer && say) {
       node.classList.add('is-copied');
       clearTimeout(node._cpT); node._cpT = setTimeout(() => node.classList.remove('is-copied'), 1800);
-      I.kidCheer(pg.kid, say);
+      I.mascotCheer(pg.mascot, say);
       return;
     }
     const b = I.boxIn(node, slide);
@@ -115,8 +115,8 @@
       if (!custom) defaultCopied(tl, tip);
       tl.to(tip, { autoAlpha: 0, duration: .35 }, '+=1.4');
     } else setTimeout(() => { tip.remove(); node.classList.remove('is-copied'); }, 1800);
-    // 小克替你高兴一下
-    if (cheer) I.kidCheer(pg.kid, '');
+    // 形象替你高兴一下
+    if (cheer) I.mascotCheer(pg.mascot, '');
   }
 
   /* =================================================================
@@ -167,16 +167,11 @@
       if (cp) { e.preventDefault(); onCopy(cp); return; }
       const sh = t.closest && t.closest('.shot');
       if (sh) { openShot(sh); return; }
-      const kd = t.closest && t.closest('.kid-body');   // 点小克：蹦一下，不进拍
-      if (kd) {
-        const pg = PAGES.find(x => x.kid && x.kid.body === kd);
-        if (pg) I.kidCheer(pg.kid, '');
-        else if (motion()) G.fromTo(kd, { y: 0 }, { y: -26, duration: .16, yoyo: true, repeat: 1, ease: 'power2.out' });
-        return;
-      }
+      const mb = t.closest && t.closest('.mascot-body');   // 点形象：轮换「蹦一下 / 转一圈 / 压扁回弹」，不进拍
+      if (mb) { I.mascotClick(mb); return; }
       if (S.reading) return;
       if (swiped) { swiped = false; return; }
-      if (t.closest && t.closest('a,input,textarea,select,summary,.no-advance,#toast')) return;
+      if (t.closest && t.closest('a,input,textarea,select,summary,.no-advance,.mascot,#toast')) return;
       if (t.closest && t.closest('button') && !t.closest('#stage')) return;
       I.next();
     });

@@ -5,7 +5,7 @@
    - 节拍推进：setInstant（直接摆到某一拍）、stepForward / stepBack（播一拍的进退动画，退拍时调风格的 onBack）、
      plan（同一拍里各块的先后，风格可以用 plan 改）、play（限制单拍时长）
    - 依赖总线：core 的常量和工具、风格注册表（I.sc、I.roughOf、I.hook）、I.state（running）；
-     build.js 的 I.boxIn；mascot.js 的 I.placeKid、I.hopKid、I.kidXY、I.spotFor
+     build.js 的 I.boxIn；mascot.js 的 I.placeMascot、I.moveMascot、I.mascotXY、I.spotFor
    - 挂到总线：tiltOf、clearEl、setDrawn、drawDur、addFx、emphasize、showMark、drawMark、
      finishRunning、setClasses、applyRecede、setInstant、plan、unionBox、
      callOnBeat、stepForward、stepBack、queueKeysAndMarks、play
@@ -216,9 +216,9 @@
   function setInstant(p, n) {
     p.units.forEach(u => { clearEl(u.el); if (!u.child) u.el.classList.toggle('on', u.beat <= n); if (u.el instanceof SVGElement) setDrawn(u.el, u.beat <= n); });
     p.keys.forEach(k => { if (G) G.killTweensOf(k.el); k.el.style.removeProperty('transform'); k.el.style.setProperty('--k', k.beat <= n ? 1 : 0); });
-    p.arranges.forEach(a => setArranged(a, a.beat <= n));   // 先摆好位置，圈注和小克才量得准
+    p.arranges.forEach(a => setArranged(a, a.beat <= n));   // 先摆好位置，圈注和形象才量得准
     p.marks.forEach(m => showMark(m, p, m.beat <= n));
-    I.placeKid(p, n);
+    I.placeMascot(p, n);
     setClasses(p, n);
     applyRecede(p, n);
     p.beat = n;
@@ -251,7 +251,7 @@
       if (r && tl && typeof r.duration === 'function') tl.add(r, 0);
     } catch (e) { console.error(`[Deck] 页面 ${p.id} 的 onBeat 出错：`, e); }
   }
-  /* 往前一拍：这一拍的元素按顺序出场，重点词随后强调，小克走过去 */
+  /* 往前一拍：这一拍的元素按顺序出场，重点词随后强调，形象走过去（按拍号换走法） */
   function stepForward(p, n) {
     if (!motion()) { setInstant(p, n); callOnBeat(p, n, 1); return; }
     const tl = G.timeline();
@@ -264,7 +264,7 @@
     });
     p.arranges.filter(a => a.beat === n).forEach(a => { const d = flipArrange(tl, a, true, .05); ends.set(a.el, .05 + d); });
     queueKeysAndMarks(tl, p, n, ends);
-    if (p.kid) I.hopKid(tl, p, I.kidXY(p.kid), I.spotFor(p, n), .05);
+    if (p.mascot) I.moveMascot(tl, p, I.mascotXY(p.mascot), I.spotFor(p, n), .05, n);
     setClasses(p, n);
     applyRecede(p, n);
     p.beat = n;
@@ -276,7 +276,7 @@
     p.keys.filter(k => k.beat === n).forEach(k => emphasize(tl, k, Math.max(0, endOf(k.el) - .12)));
     p.marks.filter(m => m.beat === n).forEach((m, i) => drawMark(tl, m, p, endOf(m.el) + i * .08));
   }
-  /* 往回一拍：这一拍的元素收回，小克回到上一拍的位置。
+  /* 往回一拍：这一拍的元素收回，形象小跑回上一拍的位置。
      风格的 onBack(ctx) 可以在收回时加动作，ctx = { tl, page, units（要收回的块）, box（这些块合起来的框，可能为 null）}；
      它可以返回一个对象改收回的节奏：{ at 开始收回的时刻, gap 每块错开, y 收回时下移多少, dur 每块用时, childAt 逐个出场的子元素何时清掉 } */
   const BACK = { at: 0, gap: 0, y: 10, dur: .2, childAt: .21 };
@@ -298,7 +298,7 @@
     p.keys.filter(k => k.beat === gone).forEach(k => tl.to(k.el, { '--k': 0, duration: .15 }, 0));
     p.marks.filter(m => m.beat === gone && m.g).forEach(m => tl.to(m.g, { opacity: 0, duration: .15, onComplete: () => showMark(m, p, false) }, 0));
     p.arranges.filter(a => a.beat === gone).forEach(a => flipArrange(tl, a, false, 0));
-    if (p.kid) I.hopKid(tl, p, I.kidXY(p.kid), I.spotFor(p, n), 0);
+    if (p.mascot) I.moveMascot(tl, p, I.mascotXY(p.mascot), I.spotFor(p, n), 0);
     setClasses(p, n);
     applyRecede(p, n);
     p.beat = n;

@@ -192,7 +192,7 @@ code,.code{font-family:var(--f-mono);font-size:.92em}
 .term-bar i:nth-child(2){background:#FFD43B}.term-bar i:nth-child(3){background:#69DB7C;margin-right:12px}
 .term p{margin:0;padding:0 30px;white-space:pre-wrap}
 .term .in::before{content:"$ ";color:#7FD99A}
-.term .cc::before{content:"> ";color:#F5A33B}
+.term .cc::before{content:"> ";color:#F2A93B}
 .term .dim{color:#8E8A83}.term .ok{color:#7FD99A}.term .warn{color:#FFA25E}.term .hi{color:#FFE17A}
 
 /* ---------- 一行可复制的命令：<button class="copy" data-copy="命令">命令</button> ----------
@@ -238,24 +238,29 @@ svg.sketch .c-mark{color:var(--mark)}
 .slide .abs{position:absolute}
 
 /* =====================================================================
-   小克：<div class="kid" data-pose="idle|point|happy|lie" style="--kid:112px;left:…;top:…"></div>
-   全稿一个样：杏橙色像素小方块、头顶小芽、腮红。深色底上加一圈浅色描边
+   形象：<div class="mascot guide" data-pose="idle|point|happy|rest" style="left:…;top:…"></div>
+   （旧写法 <div class="kid guide">、style="--kid:…" 照样认）
+   长相来自 mascots/<键名>.js 注册的 svg(pose, opts)，这里只管外层。引擎生成的结构：
+     .mascot > .mascot-body（蹦跳、压扁，原点在脚底） > .mascot-spin（转圈） > .mascot-art（画像） + .mascot-say（说的话）
+   大小：默认是形象的 size（引擎写进 --mascot-w 宽、--mascot-k 高宽比）；
+     页面写 --mascot-size（或旧的 --kid、data-size）时按这个宽度等比缩放
+   风格可以给形象的变量：--mascot-shadow（画像的投影，写成一串 drop-shadow()，不要写 none）、
+     --mascot-outline（深色底描边的颜色）；说的话 .mascot-say 的框和颜色也由风格定
+   深色底（风格 dark: true，且形象没写 outline: false）：引擎给 .mascot 加 .outline，画像外面四个方向各一道浅色描边
    ===================================================================== */
-.kid{position:absolute;z-index:30;width:var(--kid,112px);height:calc(var(--kid,112px)*15/16);pointer-events:none}
-.kid-body{position:absolute;inset:0;transform-origin:50% 100%;pointer-events:auto;cursor:pointer}
-.kid svg{display:block;width:100%;height:100%;overflow:visible;shape-rendering:crispEdges;transform-origin:50% 100%;transition:scale .12s}
-.kid[data-face="left"] svg{scale:-1 1}
-.kid .ke-c{display:none}
-.kid.blink .ke-o{display:none}.kid.blink .ke-c{display:inline}
-.kid.walk .kl-a{animation:kidStep .16s steps(1) infinite}
-.kid.walk .kl-b{animation:kidStep .16s steps(1) infinite reverse}
-@keyframes kidStep{0%{transform:translateY(-1px)}50%{transform:none}}
-/* 小克说的话（重点词） */
-.kid-say{position:absolute;bottom:calc(100% + 14px);left:58%;padding:8px 20px 10px;white-space:nowrap;font:700 var(--fs-min)/1.2 var(--f-hand);opacity:0;transform:scale(.4);transform-origin:12% 120%;transition:opacity .15s,transform .15s;pointer-events:none}
-.kid-say.on{opacity:1;transform:none;transition:opacity .2s,transform .4s cubic-bezier(.34,1.8,.64,1)}
-.kid-say::after{content:"";position:absolute;left:18px;bottom:-12px;width:18px;height:18px;rotate:45deg}
-.kid[data-face="left"] .kid-say{left:auto;right:58%;transform-origin:88% 120%}
-.kid[data-face="left"] .kid-say::after{left:auto;right:18px}
+.mascot{--ms:var(--mascot-size,var(--kid,var(--mascot-w,120px)));position:absolute;z-index:30;width:var(--ms);height:calc(var(--ms) * var(--mascot-k,1));pointer-events:none}
+.mascot-body{position:absolute;inset:0;transform-origin:50% var(--mascot-foot,100%);pointer-events:auto;cursor:pointer}
+.mascot-spin{position:absolute;inset:0;transform-origin:50% 58%}
+.mascot-art{position:absolute;inset:0;filter:var(--mascot-shadow,none)}
+.mascot-art svg{display:block;width:100%;height:100%;overflow:visible}
+.mascot[data-face="left"]:not(.self-flip) .mascot-art{transform:scaleX(-1)}
+.mascot.outline .mascot-art{filter:drop-shadow(2px 0 0 var(--mascot-outline,#F4F6FA)) drop-shadow(-2px 0 0 var(--mascot-outline,#F4F6FA)) drop-shadow(0 2px 0 var(--mascot-outline,#F4F6FA)) drop-shadow(0 -2px 0 var(--mascot-outline,#F4F6FA)) var(--mascot-shadow,)}
+/* 形象说的话（重点词）：在头顶一侧弹出，跟着朝向换边 */
+.mascot-say{position:absolute;bottom:calc(100% + 14px);left:58%;padding:8px 20px 10px;white-space:nowrap;font:700 var(--fs-min)/1.2 var(--f-hand);opacity:0;transform:scale(.4);transform-origin:12% 120%;transition:opacity .15s,transform .15s;pointer-events:none}
+.mascot-say.on{opacity:1;transform:none;transition:opacity .2s,transform .4s cubic-bezier(.34,1.8,.64,1)}
+.mascot-say::after{content:"";position:absolute;left:18px;bottom:-12px;width:18px;height:18px;rotate:45deg}
+.mascot[data-face="left"] .mascot-say{left:auto;right:58%;transform-origin:88% 120%}
+.mascot[data-face="left"] .mascot-say::after{left:auto;right:18px}
 
 /* =====================================================================
    常驻信息：章节标记（左上）、节拍指示 + 页码（右上）、计时（左下）
@@ -290,8 +295,8 @@ svg.sketch .c-mark{color:var(--mark)}
 [data-scene="plain"] .tag{border-width:2px;border-radius:8px}
 [data-scene="plain"] .copy{background:var(--paper);border:2px solid var(--line);border-radius:10px}
 [data-scene="plain"] .copied-tip{color:var(--ai)}
-[data-scene="plain"] .kid-say{color:var(--ink);background:var(--paper);border:2px solid var(--line);border-radius:14px}
-[data-scene="plain"] .kid-say::after{background:var(--paper);border-right:2px solid var(--line);border-bottom:2px solid var(--line)}
+[data-scene="plain"] .mascot-say{color:var(--ink);background:var(--paper);border:2px solid var(--line);border-radius:14px}
+[data-scene="plain"] .mascot-say::after{background:var(--paper);border-right:2px solid var(--line);border-bottom:2px solid var(--line)}
 #stage[data-scene="plain"] .dots i{width:14px;height:14px;border:2px solid var(--ink-3);border-radius:50%;transition:background-color .3s,border-color .3s}
 #stage[data-scene="plain"] .dots i.on{background:var(--ink-2);border-color:var(--ink-2)}
 #stage[data-scene="plain"] .dots i.now{background:var(--mark);border-color:var(--mark)}

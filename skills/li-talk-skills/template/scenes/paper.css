@@ -50,10 +50,10 @@
 [data-scene="paper"] .copy::after{content:"";position:absolute;right:0;bottom:0;width:30px;height:30px;background:linear-gradient(315deg,#FBFBF7 0 47%,rgba(40,30,10,.12) 47% 52%,#EECB55 52%,#FBE7A2 100%)}
 [data-scene="paper"] .copied-tip{color:#2B8A3E;font-weight:500}
 
-/* 形象：淡淡的落地影子；说的话是墨线圆角框 */
-[data-scene="paper"] .kid svg{filter:drop-shadow(0 4px 3px rgba(30,43,72,.12))}
-[data-scene="paper"] .kid-say{background:#fff;color:var(--ink);border:2.6px solid var(--ink);border-radius:18px}
-[data-scene="paper"] .kid-say::after{background:#fff;border-right:2.6px solid var(--ink);border-bottom:2.6px solid var(--ink)}
+/* 形象（不管用哪个）：淡淡的落地影子；说的话是墨线圆角框 */
+[data-scene="paper"] .mascot{--mascot-shadow:drop-shadow(0 4px 3px rgba(30,43,72,.12))}
+[data-scene="paper"] .mascot-say{background:#fff;color:var(--ink);border:2.6px solid var(--ink);border-radius:18px}
+[data-scene="paper"] .mascot-say::after{background:#fff;border-right:2.6px solid var(--ink);border-bottom:2.6px solid var(--ink)}
 
 /* 节拍格：页码在前、铅笔小方格、「第几拍 / 共几拍」 */
 #stage[data-scene="paper"] .pageno{order:-1}

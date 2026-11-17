@@ -3,6 +3,7 @@
    - 最先执行的引擎文件：建好 window.Deck 和内部总线 Deck._（各文件里记作 I）
    - 负责：共享常量、工具函数、可变状态 I.state、外壳元素表 I.dom、
      页面注册 Deck.add、风格注册 Deck.scene（注册表 I.SCENES，内置朴素风格 plain）、
+     形象注册 Deck.mascot（注册表 I.MASCOTS）与选形象 pickMascot（选中的键名在 I.state.mascot）、
      提示条 toast、等字体、主题行缩字、风格混用检查、启动 boot、对外接口
    - 引入顺序固定：vendor/gsap.min.js → vendor/rough.min.js → engine/core.js → build.js
      → beats.js → mascot.js → pages.js → ui.js → presenter.js → selftest.js
@@ -58,6 +59,9 @@
     pres: null,               // 演讲者窗口
     timer: { acc: 0, start: 0 },   // 计时（刷新后保留）：acc 已累计的毫秒，start 本轮开始的时刻
     toastT: 0,                // 提示条自动消失的定时器
+    mascot: null,             // 这份课件用的形象（键名）；没有可用的形象时为 null（pickMascot 选出）
+    mascotWarns: [],          // 选形象时攒下的提醒：页面真的用到形象时才说（mascot.js 的 warnMascotOnce）
+    lastAct: 0,               // 最近一次有人操作（按键、点击、触屏、滚轮、移动鼠标、翻拍）的时刻：形象的空闲动作和打盹看它
   };
   /* 外壳里的元素：build.js 的 buildShell 填上；bg 是各风格的背景层（键名 → 元素） */
   const dom = { bg: {} };
@@ -134,6 +138,74 @@
   }
 
   /* =================================================================
+     形象注册表：Deck.mascot(key, opts)（接口约定 C）
+     - 每个形象是 mascots/ 下的 <键名>.js，里面调用 Deck.mascot 注册；引擎不认识任何具体的形象
+     - 一份课件只用一个形象（按章换风格时形象不跟着换），选中的键名存在 I.state.mascot
+     ================================================================= */
+  const MASCOTS = {};
+  const MASCOT_FIELDS = {
+    label: 'string', svg: 'function', size: 'array', foot: 'number', frames: 'array',
+    flipSvg: 'boolean', outline: 'boolean', defs: 'string',
+  };
+  function mascot(key, opts) {
+    if (S.booted) { warn(`Deck.mascot 要在页面加载完之前调用：把形象文件用 <script src> 写进 index.html。这次注册的「${key}」被忽略`); return; }
+    if (typeof key !== 'string' || !/^[a-z][a-z0-9-]*$/.test(key)) { warn('Deck.mascot 的第一个参数是形象的键名：小写字母开头，只含小写字母、数字和 -。这次收到：', key); return; }
+    if (!opts || typeof opts !== 'object') { warn(`形象 ${key}：Deck.mascot 的第二个参数要是一个对象，这次注册被忽略`); return; }
+    const o = { key };
+    Object.keys(opts).forEach(k => {
+      const want = MASCOT_FIELDS[k];
+      if (!want) { warn(`形象 ${key}：不认识的字段「${k}」，已忽略。认识的字段：${Object.keys(MASCOT_FIELDS).join('、')}`); return; }
+      const got = typeOf(opts[k]);
+      if (got !== want) { warn(`形象 ${key}：字段 ${k} 应该是 ${want}，这里是 ${got}，已忽略，改走默认做法`); return; }
+      o[k] = opts[k];
+    });
+    if (!o.svg) { warn(`形象 ${key}：没写 svg(pose, opts)（画形象的函数），这次注册被忽略`); return; }
+    if (!o.label) { warn(`形象 ${key}：没写 label（给人看的名字），先叫它 ${key}`); o.label = key; }
+    const sz = o.size;
+    if (!(sz && sz.length === 2 && sz.every(v => typeof v === 'number' && v > 0))) {
+      if (sz) warn(`形象 ${key}：size 要写成 [宽, 高]（px，正数），这里是 ${JSON.stringify(sz)}，先按 [120, 120]`);
+      else warn(`形象 ${key}：没写 size（舞台上显示的 [宽, 高]），先按 [120, 120]`);
+      o.size = [120, 120];
+    }
+    if (o.foot == null) o.foot = 1;
+    else if (!(o.foot > 0 && o.foot <= 1)) { warn(`形象 ${key}：foot 要在 0 到 1 之间（脚底在高度里的位置），这里是 ${o.foot}，先按 1`); o.foot = 1; }
+    o.frames = (o.frames || []).filter(f => typeof f === 'string');
+    if (MASCOTS[key]) warn(`形象 ${key} 重复注册了，以后注册的为准`);
+    MASCOTS[key] = o;
+  }
+  /* 已注册的形象，给提醒用 */
+  function mascotList() {
+    const ks = Object.keys(MASCOTS);
+    return ks.length ? '已注册的形象：' + ks.map(k => `${MASCOTS[k].label} ${k}`).join('、') : '还没有注册任何形象（index.html 里要引入 mascots/<键名>.js）';
+  }
+  /* 选这份课件用哪个形象（约定 C）：地址 ?mascot= > <meta name="li-talk-mascot"> > 第一页风格的 mascot > 第一个注册的形象。
+     地址里写错的马上提醒；meta 和风格里写了却没注册的，攒进 S.mascotWarns，页面真的用到形象时才提醒 */
+  function pickMascot() {
+    const q = QS.get('mascot');
+    if (q) {
+      if (MASCOTS[q]) return (S.mascot = q);
+      warn(`地址里的 ?mascot=${q} 没有注册，忽略。${mascotList()}`);
+    }
+    const meta = document.querySelector('meta[name="li-talk-mascot"]');
+    const mv = meta ? String(meta.getAttribute('content') || '').trim() : '';
+    if (mv) {
+      if (MASCOTS[mv]) return (S.mascot = mv);
+      S.mascotWarns.push(`<meta name="li-talk-mascot"> 写的形象「${mv}」没有注册。${mascotList()}。用这个形象的话，index.html 里要引入 mascots/${mv}.js`);
+    }
+    const first = DEFS[0];
+    const fk = S.forceScene || (first && first.scene);
+    const fs = fk && SCENES[fk];
+    if (fs && fs.mascot) {
+      if (MASCOTS[fs.mascot]) return (S.mascot = fs.mascot);
+      S.mascotWarns.push(`第一页的风格「${fs.label}」默认用形象「${fs.mascot}」，可它没有注册。${mascotList()}。用这个形象的话，index.html 里要引入 mascots/${fs.mascot}.js`);
+    }
+    const ks = Object.keys(MASCOTS);
+    S.mascot = ks.length ? ks[0] : null;
+    if (S.mascot && S.mascotWarns.length) S.mascotWarns.push(`先用已注册的「${MASCOTS[S.mascot].label}」`);
+    return S.mascot;
+  }
+
+  /* =================================================================
      页面注册
      ================================================================= */
   function add(def) {
@@ -184,6 +256,8 @@
     if (S.booted) return;
     const force = QS.get('scene');
     if (force) { if (SCENES[force]) S.forceScene = force; else warn(`地址里的 ?scene=${force} 没有注册，忽略。${sceneList()}`); }
+    pickMascot();
+    S.lastAct = Date.now();
     I.buildShell();
     DEFS.forEach((d, i) => PAGES.push(I.buildPage(d, i)));
     S.booted = true;
@@ -214,7 +288,8 @@
     $, $$, clamp, esc, warn, toInt, el,
     DEFS, PAGES, state: S, dom, motion,
     SCENES, FAMILY, ROUGH, sc, roughOf, hook, sceneList, checkFamilies,
-    add, scene, toast, fontsReady, fitTopics, boot,
+    MASCOTS, mascotList, pickMascot,
+    add, scene, mascot, toast, fontsReady, fitTopics, boot,
   });
 
   /* =================================================================
@@ -225,7 +300,9 @@
     version: '0.1.0',
     add,
     scene,
-    kid: opts => I.kid(opts),
+    mascot,                                    // 注册形象（mascots/<键名>.js 里调用）
+    mascotEl: opts => I.mascotEl(opts),        // 生成一个形象的标记（写进页面的 html）
+    kid: opts => I.mascotEl(opts),             // 旧名，和 mascotEl 相同
     next: () => I.next(),
     prev: () => I.prev(),
     go: (n, b = 0) => I.go(typeof n === 'string' ? PAGES.findIndex(p => p.id === n) : n - 1, b, { anim: false }),
@@ -234,7 +311,8 @@
     get pages() { return PAGES.map(p => ({ no: p.i + 1, id: p.id, scene: p.scene, title: p.def.title, total: p.total })); },
     copy: text => I.copyText(text),
     toast,
-    _key: (e) => I.onKey(e), _attach: w => I.attach(w), _presenter: () => S.pres, _kidSvg: pose => I.kidSvg(pose),
+    _key: (e) => I.onKey(e), _attach: w => I.attach(w), _presenter: () => S.pres,
+    _mascotSvg: (pose, opts) => I.mascotSvg(pose, opts), _kidSvg: pose => I.mascotSvg(pose),   // 画当前形象（_kidSvg 是旧名）
     _: I,
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => I.boot());

@@ -9,7 +9,7 @@
      I.dom（bg、stage、chap、meter、dotsBox、mnum、pageno）；
      beats.js 的 I.clearEl、I.setInstant、I.callOnBeat、I.stepForward、I.stepBack、I.finishRunning、
      I.addFx、I.plan、I.queueKeysAndMarks、I.play；
-     mascot.js 的 I.kidXY、I.hopKid、I.spotFor；ui.js 的 I.scrollToPage；presenter.js 的 I.syncPresenter
+     mascot.js 的 I.mascotXY、I.moveMascot、I.spotFor、I.mascotActivity；ui.js 的 I.scrollToPage；presenter.js 的 I.syncPresenter
    - 挂到总线：switchScene、mountScene、finishPageTl、go、enterPage、turnPage、playEnter、next、prev、afterChange
    ===================================================================== */
 (function () {
@@ -73,7 +73,8 @@
     finishPageTl();
     const old = PAGES[S.cur.p], p = PAGES[pi];
     const oldOn = old && old !== p && old.el.classList.contains('active');
-    const fromKid = oldOn && old.kid && p.kid ? (() => { const o = I.kidXY(old.kid); return { x: old.kid.el.offsetLeft + o.x - p.kid.el.offsetLeft, y: old.kid.el.offsetTop + o.y - p.kid.el.offsetTop }; })() : null;
+    // 形象从上一页的位置过来：换算成新页形象的相对位移
+    const fromM = oldOn && old.mascot && p.mascot ? (() => { const o = I.mascotXY(old.mascot); return { x: old.mascot.el.offsetLeft + o.x - p.mascot.el.offsetLeft, y: old.mascot.el.offsetTop + o.y - p.mascot.el.offsetTop }; })() : null;
     I.setInstant(p, b);
     p.el.classList.add('active');
     const sceneChanged = switchScene(p.scene, dir, anim && oldOn);
@@ -94,11 +95,11 @@
     } else inAt = turnPage(tl, old, p, dir, retire);
     S.pageTl = tl;
     tl.eventCallback('onComplete', () => { if (S.pageTl === tl) S.pageTl = null; });
-    if (old.kid && fromKid) G.set(old.kid.el, { opacity: 0 });
-    if (dir > 0 && b === 0) playEnter(p, inAt + .05, fromKid);
+    if (old.mascot && fromM) G.set(old.mascot.el, { opacity: 0 });
+    if (dir > 0 && b === 0) playEnter(p, inAt + .05, fromM);
     else {
       I.callOnBeat(p, b, 0);
-      if (fromKid && p.kid) { const t2 = G.timeline({ delay: inAt }); I.hopKid(t2, p, fromKid, I.spotFor(p, b), 0); S.running = t2; }
+      if (fromM && p.mascot) { const t2 = G.timeline({ delay: inAt }); I.moveMascot(t2, p, fromM, I.spotFor(p, b), 0); S.running = t2; }
     }
   }
   /* 同风格翻页：风格写了 pageTurn 就用它，没写用默认的整页平移。返回新页内容开始出场的时刻。
@@ -123,8 +124,8 @@
     tl.fromTo(p.el, { x: 80 * dir, autoAlpha: 0 }, { x: 0, autoAlpha: 1, duration: .5, ease: 'power3.out', immediateRender: true, onComplete: () => I.clearEl(p.el) }, .05);
     return .1;
   }
-  /* 进入一页（第 0 拍）：标题和第 0 拍的元素依次出场，小克从上一页的位置走过来 */
-  function playEnter(p, delay, fromKid) {
+  /* 进入一页（第 0 拍）：标题和第 0 拍的元素依次出场，形象从上一页的位置走过来（没有上一页时从上面落下来） */
+  function playEnter(p, delay, fromM) {
     const tl = G.timeline({ delay });
     const title = $(':scope > .s-title', p.el);
     let t = 0;
@@ -133,11 +134,11 @@
     const list = p.units.filter(u => u.beat === 0), at = I.plan(p, list, t);
     list.forEach(u => { const s0 = at.get(u), d = I.addFx(tl, u.el, u.fx, s0, p.scene); ends.set(u.el, s0 + d); });
     I.queueKeysAndMarks(tl, p, 0, ends);
-    const kb = p.kid ? p.kid.el.closest('[data-beat]') : null;
-    if (p.kid && !(kb && toInt(kb.dataset.beat) > 0)) {
+    const m = p.mascot, kb = m ? m.el.closest('[data-beat]') : null;
+    if (m && !(kb && toInt(kb.dataset.beat) > 0)) {
       const sp = I.spotFor(p, 0);
-      if (fromKid) { G.set(p.kid.el, { x: fromKid.x, y: fromKid.y }); I.hopKid(tl, p, fromKid, sp, 0); }
-      else tl.fromTo(p.kid.el, { opacity: 0, y: sp.y - 46 }, { opacity: 1, y: sp.y, duration: .55, ease: 'bounce.out', immediateRender: true, onComplete: () => p.kid.el.style.removeProperty('opacity') }, .25);
+      if (fromM) { G.set(m.el, { x: fromM.x, y: fromM.y }); I.moveMascot(tl, p, fromM, sp, 0); }
+      else tl.fromTo(m.el, { opacity: 0, y: sp.y - 46 }, { opacity: 1, y: sp.y, duration: .55, ease: 'bounce.out', immediateRender: true, onComplete: () => m.el.style.removeProperty('opacity') }, .25);
     }
     I.callOnBeat(p, 0, 1, tl);
     I.play(tl);
@@ -172,6 +173,7 @@
     dom.pageno.innerHTML = `<b>${p.i + 1}</b> / ${PAGES.length} 页`;
     const h = '#' + (p.i + 1) + (p.beat ? '/' + p.beat : '');
     if (location.hash !== h) { try { history.replaceState(null, '', h); } catch (e) { /* 个别环境不允许改地址 */ } }
+    I.mascotActivity();   // 翻拍也算有人操作：形象 5 秒内不做空闲动作，打着盹的醒过来
     I.syncPresenter();
   }
 

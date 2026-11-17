@@ -1,14 +1,15 @@
 /* =====================================================================
    演示稿引擎 · 构建（build.js）
    - 搭外壳 buildShell：#app、#world、每个注册风格一层背景（建好后调风格的 backdrop）、#stage、#slides、
-     外框（章节、页码、节拍格、计时）、提示条、看大图层、各风格 defs 里的 SVG 滤镜、
-     各风格 recede 对应的 --recede；建好的元素填进 I.dom
+     外框（章节、页码、节拍格、计时）、提示条、看大图层、各风格和各形象 defs 里的 SVG 滤镜、
+     各风格 recede 对应的 --recede、当前形象的大小（--mascot-w、--mascot-k、--mascot-foot）；建好的元素填进 I.dom
    - 建页面 buildPage：选风格 pickScene（地址 ?scene= 优先；没注册的退回朴素样子 plain），
      把 Deck.add 注册的定义建成 section.slide，再依次 upgrade（补全组件标记、手绘线）
-     → collect（节拍单元、重点词、圈注、小克落脚点、拍数）→ normalizeNotes（讲词）→ 风格的 decorate
+     → collect（节拍单元、重点词、圈注、形象的落脚点、拍数）→ normalizeNotes（讲词）→ 风格的 decorate
    - 演讲者视图要用的 autoShow、keysOf；位置换算 boxIn
    - 依赖总线：core 的常量和工具、风格注册表（I.SCENES、I.sc、I.roughOf、I.hook、I.sceneList）、I.dom、I.state；
-     mascot.js 的 I.kidSvg、I.kid、I.bindKid（调用时才取，所以引入顺序在它前面也没关系）
+     形象注册表 I.MASCOTS；mascot.js 的 I.mascotDef、I.mascotEl、I.initMascotEl、I.bindMascot、I.warnMascotOnce
+     （调用时才取，所以引入顺序在它前面也没关系）
    - 挂到总线：buildShell、buildPage、boxIn、autoShow、keysOf
    ===================================================================== */
 (function () {
@@ -39,11 +40,15 @@
     dom.toastEl = el('div'); dom.toastEl.id = 'toast'; document.body.appendChild(dom.toastEl);
     dom.lb = el('div', '', `<div class="lb-scroll"><img alt=""></div><button class="lb-close" type="button" aria-label="关闭">×</button><div class="lb-cap"></div>`);
     dom.lb.id = 'lightbox'; dom.lb.hidden = true; document.body.appendChild(dom.lb);
-    // 各风格需要的 SVG 滤镜（风格的 defs）放进同一个隐藏的 svg
-    document.body.insertAdjacentHTML('beforeend', `<svg class="deck-defs" aria-hidden="true"><defs>${scenes.map(s => s.defs || '').join('\n')}</defs></svg>`);
+    // 各风格、各形象需要的 SVG 滤镜（它们的 defs）放进同一个隐藏的 svg；id 由各自加前缀，免得撞上
+    const defs = scenes.map(s => s.defs || '').concat(Object.values(I.MASCOTS).map(m => m.defs || '')).filter(Boolean);
+    document.body.insertAdjacentHTML('beforeend', `<svg class="deck-defs" aria-hidden="true"><defs>${defs.join('\n')}</defs></svg>`);
     // 各风格「讲过的拍变到多淡」（风格的 recede）写成 --recede；用 :where 不加优先级，页面 CSS 还能改
-    const rc = scenes.filter(s => typeof s.recede === 'number').map(s => `:where([data-scene="${s.key}"]){--recede:${s.recede}}`).join('\n');
-    if (rc) { const st = el('style', 'deck-scene-vars', rc); document.head.appendChild(st); }
+    const rc = scenes.filter(s => typeof s.recede === 'number').map(s => `:where([data-scene="${s.key}"]){--recede:${s.recede}}`);
+    // 当前形象的大小：size 的宽写成 --mascot-w、高宽比写成 --mascot-k，foot 写成 --mascot-foot（落地压扁的原点）
+    const md = I.mascotDef();
+    if (md) rc.push(`:root{--mascot-w:${md.size[0]}px;--mascot-k:${+(md.size[1] / md.size[0]).toFixed(4)};--mascot-foot:${+(md.foot * 100).toFixed(1)}%}`);
+    if (rc.length) { const st = el('style', 'deck-scene-vars', rc.join('\n')); document.head.appendChild(st); }
   }
 
   /* =================================================================
@@ -71,7 +76,7 @@
     frame.appendChild(s);
     item.append(head, frame);
     dom.slidesBox.appendChild(item);
-    const p = { def: d, i, id: d.id, scene: key, fallback, el: s, item, total: 0, beat: 0, units: [], keys: [], marks: [], targets: [], kid: null, notes: [] };
+    const p = { def: d, i, id: d.id, scene: key, fallback, el: s, item, total: 0, beat: 0, units: [], keys: [], marks: [], targets: [], mascot: null, notes: [] };
     try { upgrade(p); } catch (e) { console.error(`[Deck] 页面 ${d.id} 组件初始化出错：`, e); }
     collect(p);
     normalizeNotes(p);
@@ -84,12 +89,11 @@
   /* 把组件的简写标记补全 */
   function upgrade(p) {
     const s = p.el;
-    $$('.kid', s).forEach(k => {
-      if (k.dataset.size) k.style.setProperty('--kid', parseFloat(k.dataset.size) + 'px');
-      k.dataset.face = k.dataset.face || 'right';
-      k.innerHTML = `<div class="kid-body">${I.kidSvg(k.dataset.pose)}</div><span class="kid-say"></span>`;
-      k._pose = k.dataset.pose || 'idle';
-      k.title = '小克';
+    // 形象：<div class="mascot">（旧写法 <div class="kid">）补全成当前形象；没有可用的形象时先藏起来
+    $$('.mascot, .kid', s).forEach(m => {
+      I.warnMascotOnce();
+      if (I.mascotDef()) I.initMascotEl(m, p);
+      else { m.classList.add('mascot'); m.hidden = true; }
     });
     $$('.key', s).forEach(k => { k.dataset.k = k.textContent; });   // 有的风格要用 content:attr(data-k) 把重点词再描一遍
     $$('.copy', s).forEach(c => {
@@ -170,7 +174,7 @@
     });
   }
 
-  /* 收集节拍单元、重点词、圈注、小克的落脚点 */
+  /* 收集节拍单元、重点词、圈注、形象的落脚点 */
   function collect(p) {
     const s = p.el;
     const beatOf = node => { const b = node.closest('[data-beat]'); return b && s.contains(b) ? (toInt(b.dataset.beat) || 0) : 0; };
@@ -183,8 +187,8 @@
       let n = toInt(e.dataset.beat);
       if (isNaN(n) || n < 0) { warn(`页面 ${p.id}：data-beat="${e.dataset.beat}" 不是 0 以上的整数，按 0 处理`, e); n = 0; }
       const svgEl = e instanceof SVGElement && !(e instanceof SVGSVGElement);
-      const guide = e.classList.contains('kid') && e.classList.contains('guide');
-      const fx = guide ? 'none' : e.dataset.in || (svgEl ? 'draw' : e.classList.contains('kid') ? 'pop' : enterOf(e));
+      const isM = e.classList.contains('mascot'), guide = isM && e.classList.contains('guide');
+      const fx = guide ? 'none' : e.dataset.in || (svgEl ? 'draw' : isM ? 'pop' : enterOf(e));
       const start = ord(n) * .12 + (parseFloat(e.dataset.delay) || 0);
       if (e.hasAttribute('data-stagger')) {
         const step = parseFloat(e.dataset.stagger) || .1;
@@ -196,23 +200,25 @@
     });
     p.keys = $$('.key', s).map(k => ({ el: k, beat: beatOf(k) }));
     p.marks = $$('[data-mark]', s).map(m => ({ el: m, beat: m.dataset.markBeat != null ? (toInt(m.dataset.markBeat) || 0) : beatOf(m), kinds: m.dataset.mark.split(/\s+/).filter(Boolean) }));
-    p.targets = $$('[data-kid]', s).map(t => ({ el: t, beat: toInt(t.dataset.kid) || 0 }));
+    // 形象每拍的目标：data-mascot="拍号"（旧写法 data-kid）
+    p.targets = $$('[data-mascot],[data-kid]', s).map(t => ({ el: t, beat: toInt(t.dataset.mascot != null ? t.dataset.mascot : t.dataset.kid) || 0 }));
     p.arranges = $$('.scatter[data-arrange]', s).map(e => ({ el: e, beat: toInt(e.dataset.arrange) || 1 }));
     p.keys.forEach(k => k.el.style.setProperty('--k', 0));
-    // 会自动退后的块：顶层的 HTML 节拍块（不含线稿、小克、第 0 拍），data-recede="off" 的不算
+    // 会自动退后的块：顶层的 HTML 节拍块（不含线稿、形象、第 0 拍），data-recede="off" 的不算
     const recedeOff = s.dataset.recede === 'off';
-    p.receders = recedeOff ? [] : p.units.filter(u => !u.child && u.beat > 0 && !(u.el instanceof SVGElement) && !u.el.classList.contains('kid')
+    p.receders = recedeOff ? [] : p.units.filter(u => !u.child && u.beat > 0 && !(u.el instanceof SVGElement) && !u.el.classList.contains('mascot')
       && !u.el.closest('[data-recede="off"]') && !p.units.some(o => o !== u && !o.child && o.beat > 0 && o.el !== u.el && o.el.contains(u.el)));
-    // 小克：页面里的 .kid.guide；用了 data-kid 却没放小克时自动放一只在右下角
-    let g = $('.kid.guide', s);
-    if (!g && p.targets.length) {
-      s.insertAdjacentHTML('beforeend', I.kid({ x: 1700, y: 900 }));
-      g = s.lastElementChild;
-      g.dataset.face = 'left'; g.innerHTML = `<div class="kid-body">${I.kidSvg('idle')}</div><span class="kid-say"></span>`; g._pose = 'idle';
-    }
-    if (g) {
-      p.kid = { el: g, body: $('.kid-body', g), svg: $('svg', g), say: $('.kid-say', g), home: { pose: g.dataset.pose || 'idle', face: g.dataset.face || 'right', say: g.dataset.say || '' } };
-      I.bindKid(p);
+    // 向导形象：页面里的 .mascot.guide（旧写法 .kid.guide，upgrade 时已补上 .mascot）；
+    // 用了 data-mascot 却没放形象时，自动放一个在右下角
+    let g = $('.mascot.guide', s);
+    if (g || p.targets.length) I.warnMascotOnce();
+    if (I.mascotDef()) {
+      if (!g && p.targets.length) {
+        s.insertAdjacentHTML('beforeend', I.mascotEl({ x: 1700, y: 900, face: 'left' }));
+        g = s.lastElementChild;
+        I.initMascotEl(g, p);
+      }
+      if (g) p.mascot = I.bindMascot(p, g);
     }
     const beats = [0].concat(p.units.map(u => u.beat), p.keys.map(k => k.beat), p.marks.map(m => m.beat), p.targets.map(t => t.beat), p.arranges.map(a => a.beat));
     p.total = Math.max(...beats);
@@ -232,7 +238,7 @@
   }
   /* 这一拍出现什么：notes 里写了 show 就用，没写就取这一拍内容的开头几个字 */
   function autoShow(p, n) {
-    const t = p.units.filter(u => u.beat === n && !u.child && !(u.el instanceof SVGElement) && !u.el.classList.contains('kid'))
+    const t = p.units.filter(u => u.beat === n && !u.child && !(u.el instanceof SVGElement) && !u.el.classList.contains('mascot'))
       .map(u => u.el.textContent.replace(/\s+/g, ' ').trim()).filter(Boolean).join(' · ');
     return t.length > 34 ? t.slice(0, 34) + '…' : t;
   }

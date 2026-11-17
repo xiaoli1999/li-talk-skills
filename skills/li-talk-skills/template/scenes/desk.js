@@ -17,6 +17,7 @@
   Deck.scene('desk', {
     label: '工位桌面',
     family: 'hand',
+    mascot: 'duoduo',         // 暂时借用朵朵，下一份计划换成自己的形象
     enter: 'drop',
     enterBy: { copy: 'print' },   // 命令条：标签机打字
     titleIn: 'fade',

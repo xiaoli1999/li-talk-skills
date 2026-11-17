@@ -49,10 +49,10 @@
 /* 线稿和圈注：铅笔 */
 [data-scene="desk"] svg.sketch,[data-scene="desk"] svg.marks{filter:url(#pencil)}
 
-/* 形象：一圈白边加落在桌上的影子；说的话是一张小纸片 */
-[data-scene="desk"] .kid svg{filter:drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff) drop-shadow(0 4px 3px rgba(80,60,35,.22))}
-[data-scene="desk"] .kid-say{color:#2A2521;background:#FFFDF9;border-radius:3px;box-shadow:0 1px 2px rgba(80,60,35,.15),0 10px 14px -8px rgba(80,60,35,.4)}
-[data-scene="desk"] .kid-say::after{background:#FFFDF9}
+/* 形象（不管用哪个）：像一张贴纸——一圈白边加落在桌上的影子；说的话是一张小纸片 */
+[data-scene="desk"] .mascot{--mascot-shadow:drop-shadow(1.5px 0 0 #fff) drop-shadow(-1.5px 0 0 #fff) drop-shadow(0 1.5px 0 #fff) drop-shadow(0 -1.5px 0 #fff) drop-shadow(0 4px 3px rgba(80,60,35,.22))}
+[data-scene="desk"] .mascot-say{color:#2A2521;background:#FFFDF9;border-radius:3px;box-shadow:0 1px 2px rgba(80,60,35,.15),0 10px 14px -8px rgba(80,60,35,.4)}
+[data-scene="desk"] .mascot-say::after{background:#FFFDF9}
 
 /* 节拍格：珊瑚红图钉，讲到哪一拍就按下一颗 */
 #stage[data-scene="desk"] .dots{gap:14px}

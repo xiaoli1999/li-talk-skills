@@ -61,10 +61,11 @@
 [data-scene="board"] .shot{box-shadow:0 16px 26px -10px rgba(0,0,0,.6)}
 [data-scene="board"] .shot::before{background:rgba(239,226,190,.55)}
 
-/* 形象：深色底上加一圈浅色描边；说的话是黄粉笔框 */
-[data-scene="board"] .kid svg{filter:drop-shadow(2px 0 0 #F6F4EE) drop-shadow(-2px 0 0 #F6F4EE) drop-shadow(0 2px 0 #F6F4EE) drop-shadow(0 -2px 0 #F6F4EE) drop-shadow(0 6px 6px rgba(0,0,0,.35))}
-[data-scene="board"] .kid-say{color:#FFDC6A;border:3px solid #FFDC6A;border-radius:18px;background:#213B31}
-[data-scene="board"] .kid-say::after{background:#213B31;border-right:3px solid #FFDC6A;border-bottom:3px solid #FFDC6A}
+/* 形象（不管用哪个）：浅色描边由引擎按 board.js 的 dark: true 加，这里只给描边的颜色（白粉笔色）和一道投影；
+   说的话是黄粉笔框 */
+[data-scene="board"] .mascot{--mascot-outline:#F6F4EE;--mascot-shadow:drop-shadow(0 6px 6px rgba(0,0,0,.35))}
+[data-scene="board"] .mascot-say{color:#FFDC6A;border:3px solid #FFDC6A;border-radius:18px;background:#213B31}
+[data-scene="board"] .mascot-say::after{background:#213B31;border-right:3px solid #FFDC6A;border-bottom:3px solid #FFDC6A}
 
 /* 节拍格：板角的「正」字（五拍一个字），亮的是讲到第几拍 */
 #stage[data-scene="board"] .chap span{font-size:30px;color:#C3CDC6;filter:url(#chalk-text)}
