@@ -36,6 +36,41 @@
    - 没搬的：样页左边竖排的「装配步骤」栏（节拍指示统一在右上角，全稿位置一致）；背景斑驳纹理（做减法）；
      随鼠标的视差（这一版不做）；形象的走位和小动作（引擎的形象部分统一做）
    - 自己加的出场名：build、fit、scribe，只在这个风格里认（别的风格会提醒并换成它的默认出场）
+   - 蓝图自有的版式组件（.bp-*，只在蓝图里有样子；样板页 samples/blueprint.js 把每个都用了一遍，整段抄过去改字就行）。
+     「每一拍发生了什么」按画图纸的习惯来：线一笔描出来、尺寸线从中间往两头伸、编号圈像圆规一样画一圈、明细表一格格填上，
+     不是卡片弹出来。出场都由类名自动选上（默认出场 build 里分派），页面只写结构和 data-beat，不写 data-in、不写 onBeat：
+     · svg.bp-fig 线稿图（零件图、剖视图、小图标）：写成 1:1 的 viewBox（宽高和 style 里一样，线宽才不缩放）。
+       图形默认白色粗线；class="t" 细线、"c" 浅青细线、"cl" 点划中心线、"hid" 虚线（看不见的轮廓）、
+       "h" 剖面线填充（45° 浅青斜线，画在剖开的截面上）、"s" 实心面（深蓝底挡住网格和后面的线）、"dot" 白色实心点。
+       出场：图形按书写顺序一笔笔描出来（像绘图仪），虚线和点划线淡入，剖面线最后铺上。图不进「讲过的退后」，一直清楚
+     · .bp-tblock > .bp-c 标题栏（图纸右下角那张表）：.bp-tblock 用 --tb-cols、--tb-rows 写网格（和 grid-template 一样），
+       每格 <div class="bp-c"><i>格名</i><b>内容</b></div>，跨格用 style="grid-column:1/-1"。格名是左上角的浅青小字（自动当小字），
+       内容横排一行。出场：外框描一圈 → 格线从左上角伸出来 → 格名、内容写出来。某一格的内容晚一拍填，就给那个 <b> 写 data-beat
+     · .bp-ball[data-to="x,y"] 零件编号圈 + 引出线：<b class="bp-ball abs" data-beat="1" data-to="516,360" style="left:890px;top:462px">1</b>，
+       left、top 必须用 px 写（圈 64×64），data-to 是引出线落在零件上的那一点（舞台坐标）。建页时自动画好引出线和落点的小圆点。
+       出场：落点的小圆点先出 → 引出线从零件往编号圈拉过去 → 圈像圆规一样画一圈 → 编号弹出来。当前这一拍的编号圈转橙
+     · .bp-table 明细表（零件表）：--cols 写列宽（同 grid-template-columns），--rows 写有几行，--rh 行高（默认 120px）、--hh 表头高（默认 64px）。
+       表头 <div class="bp-th"><i>序号</i><i>名称</i>…</div>（浅青小字，自动当小字），每行 <div class="bp-tr" data-beat="n">，
+       第一格 <i class="bp-no">1</i> 是序号圈，名称用 <b>，其余用 <span>。空表（表框、表头、格线）第 0 拍就在，
+       每拍填一行：一道浅青扫线顺着这一行划过去，序号圈弹出来，各格从左往右一格格写上。当前这一行的序号圈转橙
+     · .bp-box 流程框（工序框）、.bp-box.end 起止框（圆头）：<div class="bp-box abs" data-beat="1"><i class="bp-no">01</i><b>工序名</b><span>一句说明</span></div>，
+       左上角的 .bp-no 是工序号小牌（自动当小字），当前这一拍转橙。出场：框线一笔描一圈 → 工序号弹出 → 名字、说明写出来
+     · .bp-arrow 流程箭头（横向）：写 left、top、width（高 24）。出场：线从左往右伸出去，箭头跟着走到头
+     · .bp-dim 尺寸标注：<i class="bp-dim abs" data-beat="2" style="left:…;top:…;width:…;height:110px"><b>3 g</b></i>，
+       左右两条尺寸界线从 top 往下伸 height 那么长，底下一道两头带箭头的尺寸线，数值写在尺寸线上方（等宽字、深蓝底）。
+       宽度就是被标的那一段（一个框的宽、一段箭头的长）。出场：尺寸界线往下伸 → 尺寸线从中间往两头伸 → 数值写出来
+     · .bp-fix 修订条（一行「问题 → 改法」）：里面依次放 .bp-rev 修订三角（<b class="bp-rev">1</b>，当前这一拍转橙）、
+       可选的 svg.bp-fig 小图标、.bp-cloud 修订云线（圈住问题，里面直接写字，建页时自动包一层）、.bp-arrow、.bp-ok 改后的铭牌（双线框）。
+       整条一个 data-beat。出场：三角弹出 → 图标描出 → 云线像圆规一样绕一圈圈住问题、字写出 → 箭头伸出 → 铭牌描框、改法写出
+     · .bp-ring 圆规圈：一个正方形的块，里面放一两行大字（居中）。出场：圆规的一条腿绕着转一圈、圆从 12 点钟方向画出来，
+       四周的点划中心线淡入，里面的字再写出来
+   - 自有组件的可读性约定（翻到最后一拍整页要一眼读清）：
+     · 真话直接写在表格、铭牌、框里：编号圈、修订三角、云线、尺寸线是包装，「水太烫 → 晾到八十度」这种句子横排写全
+     · 讲过的只由引擎退到 .8，组件不另加透明度；当前这一拍用「编号圈 / 工序号 / 修订三角转橙」交代，只有当前这一拍的编号是橙的
+       （装配图上的编号圈和明细表同一行的序号圈是同一个编号，一起转）
+     · 线稿和尺寸线不压字：尺寸数值自带深蓝底，云线、框线都画在字外面；明细表、标题栏、流程框都是实心深蓝底
+     · 编号就是顺序（1、2、3 / 01、02、03），图上的编号圈和表里的序号一一对上；一页的重点词（橙色双下划线）不超过 2 处
+     · 格名、表头、工序号这类注释小字自动标 data-small（24px 起）；表里、框里的正文不小于 34px
    - 禁区（zones，舞台坐标 1920×1080）：
      · 左上角主题行（engine.css 的 .s-topic：x 120 起，宽到 1260，y 18–78）
      · 右上角页码和装配步骤（.meta 在这里改到 top 28，圈高 38：y 28–66；按每页最多 4 拍量，留出余量后是 x 1340–1856、y 20–80）
@@ -53,11 +88,12 @@
   const f1 = n => Math.round(n * 10) / 10;
   const esc = t => String(t == null ? '' : t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   /* 出场时不跟着动的子元素：自己另有 data-beat 的（等它自己那一拍），以及形象、圈注层、提示框、临时的安装位、图签栏 */
-  const SKIP = '.mascot, .kid, svg.marks, .copied-tip, .ripple-layer, .bp-slot, .bp-titleblock, script, style';
+  const SKIP = '.mascot, .kid, svg.marks, .copied-tip, .ripple-layer, .bp-slot, .bp-titleblock, .bp-trace, .bp-lead, script, style';
   /* 画成「零件」的组件：出场滑进来对位、悬停出十字准线 */
   const PART = '.card, .cell, .term, .shot, .copy';
   const HOVER = '.card, .cell, .term, .shot';
-  const PROPS = ['opacity', 'visibility', 'transform', 'translate', 'rotate', 'scale', 'clip-path', '--bp-b', '--bp-u', '--bp-ln'];
+  const PROPS = ['opacity', 'visibility', 'transform', 'translate', 'rotate', 'scale', 'clip-path', '--bp-b', '--bp-u', '--bp-ln',
+    '--bp-cl', '--bp-ex', '--bp-dl', '--bp-ar', '--bp-sw', '--bp-so', '--bp-arm'];
   const isPart = e => !!(e && e.matches && e.matches(PART));
   const isStep = e => !!(e && e.matches && e.matches('.steps > li'));
   const vertical = li => !!(li.parentElement && !li.parentElement.classList.contains('h'));
@@ -179,6 +215,8 @@
   }
   /* 默认出场：按元素分给上面几种 */
   function build(tl, e, t) {
+    const own = compIn(tl, e, t, true);   // 蓝图自有的版式组件（.bp-*）按类名走自己的出场
+    if (own >= 0) return own;
     if (e instanceof SVGElement) return fadeIn(tl, e, t);
     if (e.classList.contains('s-title')) return titleIn(tl, e, t);
     if (e.classList.contains('explain')) return explainIn(tl, e, t);
@@ -199,6 +237,7 @@
   function runFx(tl, e, t) {
     const n = e.dataset && e.dataset.in;
     if (n === 'none') return 0;
+    if (!n) { const own = compIn(tl, e, t, true); if (own >= 0) return own; }
     if (e instanceof SVGElement) return drawLines(tl, e, t);
     return (n && FX[n] ? FX[n] : build)(tl, e, t);
   }
@@ -216,6 +255,250 @@
       c += d * .6;
     });
     return Math.min(c - t + .2, .8);
+  }
+
+  /* =================================================================
+     蓝图自有的版式组件（.bp-*）：出场。用法见文件开头「蓝图自有的版式组件」
+     vis 为真时元素本身是节拍单元（连 visibility 一起管，结束时清掉行内样式）；为假时是别的块里的子元素（结束时还原原来的行内样式）
+     ================================================================= */
+  const COMP = '.bp-fig, .bp-tblock, .bp-ball, .bp-box, .bp-ok, .bp-dim, .bp-arrow, .bp-cloud, .bp-rev, .bp-ring, .bp-tr, .bp-fix';
+  const isA = (e, sel) => !!(e && e.matches && e.matches(sel));
+  /* 到点亮出来（一帧），返回结束时的收尾函数 */
+  function showAt(tl, e, t, vis) {
+    const back = vis ? () => clean(e) : keep(e);
+    tl.fromTo(e, vis ? { autoAlpha: 0 } : { opacity: 0 }, Object.assign(vis ? { autoAlpha: 1 } : { opacity: 1 }, { duration: .01, ease: 'none', immediateRender: true }), t);
+    return back;
+  }
+  /* 弹出来（编号、工序号、修订三角） */
+  function popIn(tl, e, t, d = .3) {
+    const back = keep(e);
+    tl.fromTo(e, { scale: 0, transformOrigin: '50% 50%' }, { scale: 1, duration: d, ease: 'back.out(2.4)', immediateRender: true, onComplete: back, onInterrupt: back }, t);
+    return d;
+  }
+  const strokeLen = s => { try { return Math.ceil(s.getTotalLength()) + 2; } catch (err) { return 0; } };
+  const dashed = s => { const d = getComputedStyle(s).strokeDasharray; return !!d && d !== 'none'; };
+  /* 线稿图 svg.bp-fig：图形按书写顺序一笔笔描出来，虚线、点划线淡入，剖面线和实心面跟着轮廓铺上 */
+  function figIn(tl, e, t, vis) {
+    const back = showAt(tl, e, t, vis);
+    const all = [...e.querySelectorAll('path, line, rect, circle, ellipse, polyline, polygon')].filter(s => !s.closest('defs'));
+    const fills = all.filter(s => isA(s, '.h, .dot')), lines = all.filter(s => !fills.includes(s));
+    const lens = lines.map(strokeLen), sum = lens.reduce((a, b) => a + b, 0) || 1;
+    const D = clamp(sum / 3400, .3, .75);
+    let c = t;
+    lines.forEach((s, i) => {
+      const L = lens[i];
+      if (!L) return;
+      const d = D * L / sum;
+      const off = () => { s.style.strokeDasharray = ''; s.style.strokeDashoffset = ''; s.style.opacity = ''; s.style.fillOpacity = ''; };
+      if (dashed(s)) tl.fromTo(s, { opacity: 0 }, { opacity: 1, duration: Math.max(.16, d), ease: 'power1.out', immediateRender: true, onComplete: off, onInterrupt: off }, c);
+      else {
+        tl.fromTo(s, { strokeDasharray: L + ' ' + L, strokeDashoffset: L }, { strokeDashoffset: 0, duration: d, ease: 'none', immediateRender: true, onComplete: off, onInterrupt: off }, c);
+        // 实心面（.s）描线的同时把底慢慢铺上
+        if (isA(s, '.s')) tl.fromTo(s, { fillOpacity: 0 }, { fillOpacity: 1, duration: Math.max(.12, d), ease: 'power1.out', immediateRender: true }, c);
+      }
+      c += d * .85;
+    });
+    let end = c;
+    if (fills.length) {
+      const off = () => fills.forEach(f => { f.style.opacity = ''; });
+      tl.fromTo(fills, { opacity: 0 }, { opacity: 1, duration: .24, ease: 'power1.out', immediateRender: true, onComplete: off, onInterrupt: off }, Math.max(t, c - .12));
+      end = Math.max(end, c + .12);
+    }
+    end = Math.max(end, t + .1);
+    tl.call(back, null, end);
+    return end - t;
+  }
+  /* 描框：在元素自己的边框上一笔描一圈。描的时候真边框藏起来（.bp-tracing），描完换回真边框。
+     描框用的 svg.bp-trace 第一次出场时放进元素里，以后每次出场按当时的大小重画；颜色跟着 --bp-bc */
+  function traceBox(tl, e, t, d) {
+    const w = e.offsetWidth, h = e.offsetHeight;
+    if (!w || !h) return 0;
+    const cs = getComputedStyle(e), bw = parseFloat(cs.borderTopWidth) || 3, r = Math.min(parseFloat(cs.borderTopLeftRadius) || 0, h / 2);
+    let s = e.querySelector(':scope > svg.bp-trace');
+    if (!s) {
+      s = document.createElementNS(NS, 'svg');
+      s.setAttribute('class', 'bp-trace');
+      s.setAttribute('aria-hidden', 'true');
+      s.appendChild(document.createElementNS(NS, 'rect'));
+      e.appendChild(s);
+    }
+    s.style.cssText = `left:${-bw}px;top:${-bw}px;width:${w}px;height:${h}px`;
+    const rc = s.firstChild;
+    rc.setAttribute('x', f1(bw / 2)); rc.setAttribute('y', f1(bw / 2));
+    rc.setAttribute('width', f1(w - bw)); rc.setAttribute('height', f1(h - bw));
+    rc.setAttribute('rx', f1(Math.max(0, r - bw / 2))); rc.setAttribute('stroke-width', f1(bw));
+    const L = strokeLen(rc) || 2 * (w + h);
+    const end = () => e.classList.remove('bp-tracing');
+    tl.call(() => e.classList.add('bp-tracing'), null, t);
+    tl.fromTo(rc, { strokeDasharray: L + ' ' + L, strokeDashoffset: L }, { strokeDashoffset: 0, duration: d, ease: 'power1.inOut', immediateRender: true, onComplete: end, onInterrupt: end }, t);
+    return d;
+  }
+  /* 流程框、起止框、改后的铭牌：框线描一圈 → 工序号弹出 → 名字、说明写出来 */
+  function frameIn(tl, e, t, vis) {
+    const back = showAt(tl, e, t, vis);
+    e.classList.remove('bp-tracing');
+    let end = t + traceBox(tl, e, t, .34);
+    const no = e.querySelector(':scope > .bp-no');
+    if (no) end = Math.max(end, t + .2 + popIn(tl, no, t + .2));
+    kidsOf(e).filter(c => c !== no).forEach((c, i) => { const s = t + .24 + i * .1; end = Math.max(end, s + scribeIn(tl, c, s, { dur: .3 })); });
+    tl.call(back, null, end);
+    return end - t;
+  }
+  /* 标题栏：外框描一圈 → 格线从每格左上角伸出来 → 格名、内容写出来（自己另有 data-beat 的内容等它那一拍） */
+  function tblockIn(tl, e, t, vis) {
+    const back = showAt(tl, e, t, vis);
+    e.classList.remove('bp-tracing');
+    let end = t + traceBox(tl, e, t, .42);
+    const cells = [...e.children].filter(c => isA(c, '.bp-c'));
+    cells.forEach((c, i) => {
+      const s = t + .2 + i * .06, off = keep(c);
+      tl.fromTo(c, { '--bp-gl': 0 }, { '--bp-gl': 1, duration: .26, ease: 'power2.out', immediateRender: true, onComplete: off, onInterrupt: off }, s);
+      kidsOf(c).forEach((k, j) => { const s2 = s + .14 + j * .1; end = Math.max(end, s2 + scribeIn(tl, k, s2, { dur: .3 })); });
+    });
+    tl.call(back, null, end);
+    return end - t;
+  }
+  /* 零件编号圈：落点小圆点 → 引出线从零件拉到圈上 → 圈像圆规一样画一圈 → 编号弹出来 */
+  function ballIn(tl, e, t, vis) {
+    const back = showAt(tl, e, t, vis);
+    let at = t;
+    const lead = e.querySelector(':scope > .bp-lead');
+    if (lead) {
+      const ln = lead.querySelector('path'), dot = lead.querySelector('circle');
+      if (dot) tl.fromTo(dot, { attr: { r: 0 } }, { attr: { r: 5 }, duration: .16, ease: 'back.out(3)', immediateRender: true }, t);
+      if (ln) {
+        const L = strokeLen(ln), off = () => { ln.style.strokeDasharray = ''; ln.style.strokeDashoffset = ''; };
+        if (L) tl.fromTo(ln, { strokeDasharray: L + ' ' + L, strokeDashoffset: L }, { strokeDashoffset: 0, duration: clamp(L / 1400, .14, .34), ease: 'power1.out', immediateRender: true, onComplete: off, onInterrupt: off }, t + .08);
+        at = t + .08 + clamp(L / 1400, .14, .34) * .8;
+      }
+    }
+    tl.fromTo(e, { '--bp-cl': '0deg' }, { '--bp-cl': '360deg', duration: .36, ease: 'power2.out', immediateRender: true }, at);
+    const n = e.querySelector(':scope > .bp-ball-n');
+    let end = at + .36;
+    if (n) end = Math.max(end, at + .18 + popIn(tl, n, at + .18, .26));
+    tl.call(back, null, end);
+    return end - t;
+  }
+  /* 尺寸标注：尺寸界线往下伸 → 尺寸线从中间往两头伸 → 数值写出来 */
+  function dimIn(tl, e, t, vis) {
+    const back = showAt(tl, e, t, vis);
+    tl.fromTo(e, { '--bp-ex': 0 }, { '--bp-ex': 1, duration: .22, ease: 'power2.out', immediateRender: true }, t);
+    tl.fromTo(e, { '--bp-dl': 0 }, { '--bp-dl': 1, duration: .28, ease: 'power2.out', immediateRender: true }, t + .16);
+    let end = t + .44;
+    const lab = e.querySelector(':scope > b');
+    if (lab) end = Math.max(end, t + .36 + scribeIn(tl, lab, t + .36, { dur: .24 }));
+    tl.call(back, null, end);
+    return end - t;
+  }
+  /* 流程箭头：线从左往右伸出去，箭头跟着走到头 */
+  function arrowIn(tl, e, t, vis) {
+    const back = showAt(tl, e, t, vis);
+    const d = clamp((e.offsetWidth || 120) / 600, .16, .32);
+    tl.fromTo(e, { '--bp-ar': 0 }, { '--bp-ar': 1, duration: d, ease: 'power1.inOut', immediateRender: true }, t);
+    tl.call(back, null, t + d);
+    return d;
+  }
+  /* 修订云线：云线从 12 点钟方向绕一圈圈住问题，里面的字随后写出来 */
+  function cloudIn(tl, e, t, vis) {
+    const back = showAt(tl, e, t, vis);
+    tl.fromTo(e, { '--bp-cl': '0deg' }, { '--bp-cl': '360deg', duration: .46, ease: 'power1.inOut', immediateRender: true }, t);
+    let end = t + .46;
+    kidsOf(e).forEach((c, i) => { const s = t + .12 + i * .1; end = Math.max(end, s + scribeIn(tl, c, s, { dur: .3 })); });
+    tl.call(back, null, end);
+    return end - t;
+  }
+  /* 修订三角：弹出来 */
+  function revIn(tl, e, t, vis) {
+    const back = showAt(tl, e, t, vis);
+    const d = popIn(tl, e, t, .32);
+    tl.call(back, null, t + d + .01);
+    return d;
+  }
+  /* 圆规圈：圆规的一条腿绕着转一圈、圆从 12 点钟方向画出来，里面的字再写出来 */
+  function ringIn(tl, e, t, vis) {
+    const back = showAt(tl, e, t, vis);
+    tl.fromTo(e, { '--bp-cl': '0deg', '--bp-arm': 1 }, { '--bp-cl': '360deg', duration: .7, ease: 'power1.inOut', immediateRender: true }, t);
+    tl.to(e, { '--bp-arm': 0, duration: .2, ease: 'power1.out' }, t + .7);
+    let end = t + .9;
+    kidsOf(e).forEach((c, i) => { const s = t + .42 + i * .12; end = Math.max(end, s + scribeIn(tl, c, s, { dur: .42 })); });
+    tl.call(back, null, end);
+    return end - t;
+  }
+  /* 明细表的一行：一道浅青扫线顺着这一行划过去，序号圈弹出来，各格从左往右一格格写上 */
+  function rowIn(tl, e, t, vis) {
+    const back = showAt(tl, e, t, vis);
+    tl.fromTo(e, { '--bp-sw': 0, '--bp-so': 1 }, { '--bp-sw': 1, duration: .42, ease: 'power1.inOut', immediateRender: true }, t);
+    tl.to(e, { '--bp-so': 0, duration: .24, ease: 'power1.out' }, t + .42);
+    let end = t + .66;
+    const no = e.querySelector(':scope > .bp-no');
+    if (no) end = Math.max(end, t + popIn(tl, no, t, .28));
+    kidsOf(e).filter(c => c !== no).forEach((c, i) => { const s = t + .1 + i * .1; end = Math.max(end, s + scribeIn(tl, c, s, { dur: .26 })); });
+    tl.call(back, null, end);
+    return end - t;
+  }
+  /* 一个容器里放了几样蓝图组件（修订条 .bp-fix）：按书写顺序一样接一样出来，前一样做到一半下一样就开始 */
+  function chainIn(tl, e, t, vis) {
+    const back = showAt(tl, e, t, vis);
+    let c = t, end = t;
+    kidsOf(e).forEach(k => {
+      const d = compIn(tl, k, c, false);
+      const dd = d >= 0 ? d : scribeIn(tl, k, c, { dur: .3 });
+      end = Math.max(end, c + dd);
+      c += Math.max(.1, dd * .55);
+    });
+    tl.call(back, null, end);
+    return end - t;
+  }
+  /* 按类名分派；不是蓝图组件时返回 -1 */
+  function compIn(tl, e, t, vis) {
+    if (!isA(e, COMP)) return -1;
+    if (isA(e, '.bp-fig')) return figIn(tl, e, t, vis);
+    if (isA(e, '.bp-tblock')) return tblockIn(tl, e, t, vis);
+    if (isA(e, '.bp-box, .bp-ok')) return frameIn(tl, e, t, vis);
+    if (isA(e, '.bp-ball')) return ballIn(tl, e, t, vis);
+    if (isA(e, '.bp-dim')) return dimIn(tl, e, t, vis);
+    if (isA(e, '.bp-arrow')) return arrowIn(tl, e, t, vis);
+    if (isA(e, '.bp-cloud')) return cloudIn(tl, e, t, vis);
+    if (isA(e, '.bp-rev')) return revIn(tl, e, t, vis);
+    if (isA(e, '.bp-ring')) return ringIn(tl, e, t, vis);
+    if (isA(e, '.bp-tr')) return rowIn(tl, e, t, vis);
+    return chainIn(tl, e, t, vis);
+  }
+
+  /* 建页时补全组件（decorate）：编号圈的引出线、云线里的字包一层、注释小字标上 data-small */
+  function buildLead(b) {
+    if (b.querySelector(':scope > .bp-lead')) return;
+    if (!b.querySelector(':scope > .bp-ball-n')) {
+      const n = document.createElement('span');
+      n.className = 'bp-ball-n';
+      while (b.firstChild) n.appendChild(b.firstChild);
+      b.appendChild(n);
+    }
+    if (b.dataset.to == null) return;
+    const to = String(b.dataset.to).split(',').map(Number), L = parseFloat(b.style.left), T = parseFloat(b.style.top);
+    if (to.length !== 2 || !to.every(Number.isFinite) || !Number.isFinite(L) || !Number.isFinite(T)) {
+      console.warn(`[Deck] 编号圈的引出线画不出来：data-to 要写成 "x,y"（舞台坐标），圈的 left、top 要用 px 写在 style 里`, b);
+      return;
+    }
+    const R = 32, tx = f1(to[0] - L), ty = f1(to[1] - T), dx = tx - R, dy = ty - R, len = Math.hypot(dx, dy) || 1;
+    const sx = f1(R + dx / len * R), sy = f1(R + dy / len * R);
+    const s = document.createElementNS(NS, 'svg');
+    s.setAttribute('class', 'bp-lead');
+    s.setAttribute('aria-hidden', 'true');
+    s.innerHTML = `<path d="M${tx} ${ty}L${sx} ${sy}"/><circle cx="${tx}" cy="${ty}" r="5"/>`;
+    b.appendChild(s);
+  }
+  function wrapCloud(c) {
+    if (c.querySelector(':scope > .bp-cloud-t')) return;
+    const b = document.createElement('b');
+    b.className = 'bp-cloud-t';
+    while (c.firstChild) b.appendChild(c.firstChild);
+    c.appendChild(b);
+  }
+  function decorateComps(slide) {
+    slide.querySelectorAll('.bp-ball').forEach(buildLead);
+    slide.querySelectorAll('.bp-cloud').forEach(wrapCloud);
+    slide.querySelectorAll('.bp-c > i, .bp-th > *, .bp-box > .bp-no').forEach(x => x.setAttribute('data-small', ''));
   }
 
   /* =================================================================
@@ -274,16 +557,33 @@
     /* 背景层：双线图框和分区刻度，按舞台坐标放（网格和底色在 blueprint.css 的 --scene-bg） */
     backdrop(layer) { layer.insertAdjacentHTML('beforeend', FRAME); },
 
-    // 每页建好后：页面放了图签栏就填上内容
-    decorate(slide, p) { slide.querySelectorAll('.bp-titleblock').forEach(tb => fillTitleBlock(tb, p)); },
+    // 每页建好后：页面放了图签栏就填上内容；自有组件补上引出线、包好云线里的字、注释小字标 data-small
+    decorate(slide, p) {
+      slide.querySelectorAll('.bp-titleblock').forEach(tb => fillTitleBlock(tb, p));
+      decorateComps(slide);
+    },
 
-    // 同一拍里先把线稿描完，再出零件和字
+    // 剖面线（.bp-fig 的 class="h"）：45° 浅青斜线
+    defs: '<pattern id="bp-hatch" width="11" height="11" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">'
+      + '<path d="M0 5.5H11" stroke="#A6F4FF" stroke-opacity=".75" stroke-width="2"/></pattern>',
+
+    // 同一拍里先把线稿描完，再出零件和字；
+    // 蓝图组件按画图的先后：先伸流程箭头，再描框、拉编号圈，最后伸尺寸线、填明细表的一行
     plan(units, { base, drawDur }) {
       const at = new Map();
       let t = 0;
       units.forEach(u => { if (u.el instanceof SVGElement && !u.child && u.fx === 'draw') { at.set(u, base + t); t += drawDur(u.el) * .7; } });
       const shift = Math.min(t, .45);
-      return units.map(u => at.has(u) ? at.get(u) : base + shift + u.start);
+      const rank = u => u.child || u.el.dataset.in ? -1 : isA(u.el, '.bp-arrow') ? 0 : isA(u.el, '.bp-dim, .bp-tr') ? 2 : isA(u.el, COMP) ? 1 : -1;
+      const ranks = units.map(rank), has = r => ranks.includes(r);
+      const off = [0, has(0) ? .24 : 0, (has(0) ? .24 : 0) + (has(1) ? .4 : 0)];
+      const seen = [0, 0, 0];
+      return units.map((u, i) => {
+        if (at.has(u)) return at.get(u);
+        const r = ranks[i];
+        if (r < 0) return base + shift + u.start;
+        return base + shift + off[r] + (seen[r]++) * .12 + (parseFloat(u.el.dataset.delay) || 0);
+      });
     },
 
     /* 退一拍：零件往来的方向滑回去（引擎同时把这一拍的块淡出） */

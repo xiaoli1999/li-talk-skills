@@ -314,3 +314,146 @@
 /* ---------- 翻页时的图纸（blueprint.js 的 pageTurn 临时加上）、阅读模式的每页：自带晒图纸底和双线图框 ---------- */
 [data-scene="blueprint"].slide.bp-sheet{background:var(--scene-bg);box-shadow:var(--bp-sd,-22px) 0 34px -10px rgba(2,10,26,.7)}
 [data-scene="blueprint"].slide:is(.bp-sheet,.reading *)::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:var(--bp-frame) 0 0/100% 100% no-repeat}
+
+/* =====================================================================
+   蓝图自有的版式组件（.bp-*；用法、出场见 blueprint.js 开头「蓝图自有的版式组件」，样板页 samples/blueprint.js）
+   线只有白和浅青两种：轮廓、框线白色，尺寸线、中心线、剖面线浅青；橙色只给「当前这一拍」的编号（编号圈、
+   序号圈、工序号、修订三角）和重点词。字都落在实心深蓝底上（表格、框、铭牌、尺寸数值自带底），线稿不压字。
+   blueprint.js 出场时写在元素上的变量（都没注册，伪元素跟着继承）：--bp-cl 圆规画到的角度、--bp-ex 尺寸界线伸到哪、
+   --bp-dl 尺寸线伸到哪、--bp-ar 箭头伸到哪、--bp-gl 标题栏格线伸到哪、--bp-sw / --bp-so 明细表扫线的位置和浓淡、--bp-arm 圆规腿的浓淡
+   ===================================================================== */
+/* 只给没写 .abs 的加 relative（带 .abs 的保持绝对定位） */
+[data-scene="blueprint"] :is(.bp-box,.bp-ok,.bp-arrow,.bp-dim,.bp-cloud,.bp-rev,.bp-ring,.bp-ball,.bp-tblock,.bp-table):not(.abs){position:relative}
+[data-scene="blueprint"] :is(.bp-dim,.bp-rev,.bp-ball,.bp-no,.bp-th>i,.bp-c>i){font-style:normal}
+
+/* ---------- 线稿图 svg.bp-fig：1:1 的 viewBox，白色粗线；t 细线、c 浅青细线、cl 点划中心线、hid 虚线、h 剖面线、s 实心面、dot 实心点 ---------- */
+[data-scene="blueprint"] .bp-fig{overflow:visible;fill:none;stroke:#fff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+[data-scene="blueprint"] .bp-fig .t{stroke-width:2}
+[data-scene="blueprint"] .bp-fig .c{stroke:var(--bp-cyan);stroke-width:2}
+[data-scene="blueprint"] .bp-fig .cl{stroke:var(--bp-cyan);stroke-width:2;stroke-dasharray:30 7 5 7;stroke-linecap:butt}
+[data-scene="blueprint"] .bp-fig .hid{stroke:var(--bp-cyan);stroke-width:2;stroke-dasharray:10 7;stroke-linecap:butt}
+[data-scene="blueprint"] .bp-fig .h{fill:url(#bp-hatch);stroke:none}
+[data-scene="blueprint"] .bp-fig .s{fill:var(--bp-deep)}
+[data-scene="blueprint"] .bp-fig .dot{fill:#fff;stroke:none}
+
+/* ---------- 描框（出场时 blueprint.js 放进框里的 svg.bp-trace）：描的时候真边框藏起来，描完换回真边框 ---------- */
+[data-scene="blueprint"] .bp-trace{position:absolute;display:none;overflow:visible;pointer-events:none;fill:none}
+[data-scene="blueprint"] .bp-trace rect{stroke:var(--bp-bc,#fff)}
+[data-scene="blueprint"] .bp-tracing{border-color:transparent!important;box-shadow:none!important}
+[data-scene="blueprint"] .bp-tracing>.bp-trace{display:block}
+
+/* ---------- 当前这一拍的编号转橙：编号圈、明细表的序号圈、工序号小牌、修订三角（页面的 data-now 对上块的 data-beat，写到第 6 拍） ---------- */
+[data-scene="blueprint"][data-now="1"] :is(.bp-ball[data-beat="1"],[data-beat="1"] .bp-no,[data-beat="1"] .bp-rev),
+[data-scene="blueprint"][data-now="2"] :is(.bp-ball[data-beat="2"],[data-beat="2"] .bp-no,[data-beat="2"] .bp-rev),
+[data-scene="blueprint"][data-now="3"] :is(.bp-ball[data-beat="3"],[data-beat="3"] .bp-no,[data-beat="3"] .bp-rev),
+[data-scene="blueprint"][data-now="4"] :is(.bp-ball[data-beat="4"],[data-beat="4"] .bp-no,[data-beat="4"] .bp-rev),
+[data-scene="blueprint"][data-now="5"] :is(.bp-ball[data-beat="5"],[data-beat="5"] .bp-no,[data-beat="5"] .bp-rev),
+[data-scene="blueprint"][data-now="6"] :is(.bp-ball[data-beat="6"],[data-beat="6"] .bp-no,[data-beat="6"] .bp-rev){color:var(--accent);--bp-nc:var(--accent)}
+
+/* ---------- 标题栏 .bp-tblock > .bp-c：外框粗白线，格线细白线（每格从自己的左上角往右、往下各画一道，压在格缝里）；
+   格名是左上角的浅青小字，内容白字横排 ---------- */
+[data-scene="blueprint"] .bp-tblock{--bp-bc:#fff;display:grid;grid-template-columns:var(--tb-cols,1fr 1fr);grid-template-rows:var(--tb-rows,auto);gap:2px;box-sizing:border-box;
+  border:4px solid var(--bp-bc);border-radius:1px;background:var(--bp-fill)}
+[data-scene="blueprint"] .bp-c{position:relative;display:flex;flex-direction:column;justify-content:center;min-width:0;padding:40px 24px 14px}
+[data-scene="blueprint"] .bp-c::before,[data-scene="blueprint"] .bp-c::after{content:"";position:absolute;left:-2px;top:-2px;background:rgba(255,255,255,.62);pointer-events:none}
+[data-scene="blueprint"] .bp-c::before{width:calc((100% + 2px) * var(--bp-gl,1));height:2px}
+[data-scene="blueprint"] .bp-c::after{width:2px;height:calc((100% + 2px) * var(--bp-gl,1))}
+[data-scene="blueprint"] .bp-c>i{position:absolute;left:16px;top:10px;font:700 26px/1 var(--f-hand);color:var(--bp-cyan);letter-spacing:.08em}
+[data-scene="blueprint"] .bp-c>b{font:700 40px/1.2 var(--f-hand);color:var(--ink);white-space:nowrap;letter-spacing:.02em}
+
+/* ---------- 零件编号圈 .bp-ball + 引出线 .bp-lead：圈 64×64，圈线是 ::before（--bp-cl 控制圆规画到哪）；引出线白细线，落点一个白点 ---------- */
+[data-scene="blueprint"] .bp-ball{z-index:2;display:grid;place-items:center;box-sizing:border-box;width:64px;height:64px;border-radius:50%;background:var(--bp-deep);
+  color:#fff;font:700 36px/1 var(--f-mono);text-shadow:none;-webkit-text-stroke:0;transition:color .3s ease}
+[data-scene="blueprint"] .bp-ball::before{content:"";position:absolute;inset:0;border:3px solid currentColor;border-radius:50%;pointer-events:none;
+  -webkit-mask-image:conic-gradient(#000 var(--bp-cl,360deg),transparent 0);mask-image:conic-gradient(#000 var(--bp-cl,360deg),transparent 0)}
+[data-scene="blueprint"] .bp-ball-n{display:block}
+[data-scene="blueprint"] .bp-lead{position:absolute;left:0;top:0;z-index:-1;width:1px;height:1px;overflow:visible;fill:none;stroke:#fff;stroke-width:2.5;stroke-linecap:round;pointer-events:none}
+[data-scene="blueprint"] .bp-lead circle{fill:#fff;stroke:none}
+@media (hover:hover){
+  [data-scene="blueprint"] .bp-ball:hover{color:var(--bp-cyan)}
+}
+
+/* ---------- 明细表 .bp-table：粗白外框、表头下双线，行线和列线细白线（空表第 0 拍就在：行线画在表的底上，列线由表头每格往下伸）；
+   每行实心深蓝底上的字：序号圈、名称（白、粗）、其余（浅青白） ---------- */
+[data-scene="blueprint"] .bp-table{--hh:64px;--rh:120px;--rows:3;box-sizing:content-box;border:4px solid #fff;border-radius:1px;
+  background:repeating-linear-gradient(180deg,transparent 0 calc(var(--rh) - 2px),rgba(255,255,255,.55) calc(var(--rh) - 2px) var(--rh)) 0 var(--hh)/100% 100% no-repeat,var(--bp-fill)}
+[data-scene="blueprint"] :is(.bp-th,.bp-tr){display:grid;grid-template-columns:var(--cols,1fr);align-items:center}
+[data-scene="blueprint"] .bp-th{height:var(--hh);box-sizing:border-box;border-bottom:6px double rgba(255,255,255,.9)}
+[data-scene="blueprint"] .bp-th>*{position:relative;display:flex;align-items:center;justify-content:center;height:100%;font:700 26px/1 var(--f-hand);color:var(--bp-cyan);letter-spacing:.1em}
+[data-scene="blueprint"] .bp-th>:not(:last-child)::after{content:"";position:absolute;right:-1px;top:0;width:2px;height:calc(var(--hh) + var(--rows) * var(--rh));background:rgba(255,255,255,.55);pointer-events:none}
+[data-scene="blueprint"] .bp-tr{position:relative;height:var(--rh);transition:background-color .25s ease}
+[data-scene="blueprint"] .bp-tr>*{min-width:0;padding:0 18px;font:400 36px/1.3 var(--f-hand);color:var(--ink-2);white-space:nowrap}
+[data-scene="blueprint"] .bp-tr>b{font-size:42px;font-weight:700;color:var(--ink);letter-spacing:.04em}
+[data-scene="blueprint"] .bp-tr>.bp-no{justify-self:center;display:grid;place-items:center;box-sizing:border-box;width:56px;height:56px;padding:0;border:3px solid var(--bp-nc,#fff);border-radius:50%;
+  font:700 34px/1 var(--f-mono);color:var(--bp-nc,#fff);text-shadow:none;-webkit-text-stroke:0;transition:color .3s ease,border-color .3s ease}
+/* 填这一行时顺着行底划过去的一道浅青扫线（--bp-sw 划到哪，--bp-so 浓淡；平时看不见） */
+[data-scene="blueprint"] .bp-tr::after{content:"";position:absolute;left:0;right:0;bottom:-3px;height:4px;background:var(--bp-cyan);pointer-events:none;
+  transform-origin:0 50%;transform:scaleX(var(--bp-sw,1));opacity:var(--bp-so,0)}
+@media (hover:hover){
+  [data-scene="blueprint"] .bp-tr:hover{background-color:rgba(166,244,255,.1)}
+}
+
+/* ---------- 流程框 .bp-box（.end 是圆头的起止框）、改后的铭牌 .bp-ok：实心深蓝底、白框（--bp-bc，描框时也用它）；
+   工序号小牌 .bp-no 压在左上角 ---------- */
+[data-scene="blueprint"] :is(.bp-box,.bp-ok){--bp-bc:#fff;box-sizing:border-box;border:3px solid var(--bp-bc);border-radius:2px;transition:border-color .25s ease}
+[data-scene="blueprint"] .bp-box{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:30px 20px 22px;background:var(--bp-fill);text-align:center}
+[data-scene="blueprint"] .bp-box.end{border-radius:999px;padding:18px 36px}
+[data-scene="blueprint"] .bp-box>b{font:700 56px/1.15 var(--f-hand);color:var(--ink);letter-spacing:.06em;white-space:nowrap}
+[data-scene="blueprint"] .bp-box>span{font:400 34px/1.3 var(--f-hand);color:var(--ink-2);white-space:nowrap}
+[data-scene="blueprint"] .bp-box>.bp-no{position:absolute;left:-3px;top:-3px;padding:4px 12px 6px;border:3px solid var(--bp-nc,#fff);background:var(--bp-deep);
+  font:700 28px/1 var(--f-mono);color:var(--bp-nc,#fff);text-shadow:none;-webkit-text-stroke:0;transition:color .3s ease,border-color .3s ease}
+/* 改后的铭牌：白色外框 + 浅青内框（和命令铭牌一个样子），字白色粗体 */
+[data-scene="blueprint"] .bp-ok{display:flex;align-items:center;justify-content:center;padding:22px 36px 26px;background:var(--bp-deep);
+  box-shadow:inset 0 0 0 6px var(--bp-deep),inset 0 0 0 8px rgba(166,244,255,.6);font:700 56px/1.15 var(--f-hand);color:var(--ink);white-space:nowrap;letter-spacing:.04em}
+@media (hover:hover){
+  [data-scene="blueprint"] :is(.bp-box,.bp-ok):hover{--bp-bc:var(--bp-cyan)}
+}
+
+/* ---------- 流程箭头 .bp-arrow：高 24，白线 + 实心箭头（--bp-ar 伸到哪，箭头跟着走） ---------- */
+[data-scene="blueprint"] .bp-arrow{display:block;flex:none;height:24px;pointer-events:none}
+[data-scene="blueprint"] .bp-arrow::before{content:"";position:absolute;left:0;top:10.5px;width:calc(var(--bp-ar,1) * 100% - 18px);height:3px;background:#fff}
+[data-scene="blueprint"] .bp-arrow::after{content:"";position:absolute;top:0;left:calc(var(--bp-ar,1) * 100% - 24px);width:24px;height:24px;background:#fff;
+  clip-path:polygon(0 0,100% 50%,0 100%);opacity:min(1,calc(var(--bp-ar,1) * 5))}
+
+/* ---------- 尺寸标注 .bp-dim：两条浅青尺寸界线从上往下伸（离被标的东西留 8px），底下一道两头带箭头的尺寸线（尺寸界线再出头一点），
+   数值在尺寸线上方居中，等宽粗字、深蓝底（不让网格线穿过数值） ---------- */
+[data-scene="blueprint"] .bp-dim{display:block;pointer-events:none}
+[data-scene="blueprint"] .bp-dim::before{content:"";position:absolute;left:0;right:0;top:8px;height:calc((100% - 8px) * var(--bp-ex,1));box-sizing:border-box;
+  border-left:2px solid var(--bp-cyan);border-right:2px solid var(--bp-cyan)}
+[data-scene="blueprint"] .bp-dim::after{content:"";position:absolute;left:2px;right:2px;bottom:14px;height:14px;transform:scaleX(var(--bp-dl,1));
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 14'%3E%3Cpath d='M0 7L18 0v14z' fill='%23A6F4FF'/%3E%3C/svg%3E") 0 0/18px 14px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 14'%3E%3Cpath d='M18 7L0 0v14z' fill='%23A6F4FF'/%3E%3C/svg%3E") 100% 0/18px 14px no-repeat,
+    linear-gradient(var(--bp-cyan),var(--bp-cyan)) 0 6px/100% 2px no-repeat}
+[data-scene="blueprint"] .bp-dim>b{position:absolute;left:0;right:0;bottom:32px;width:max-content;margin:0 auto;padding:2px 12px 4px;background:var(--bp-deep);
+  font:700 44px/1.1 var(--f-mono);color:#fff;white-space:nowrap;text-shadow:none;-webkit-text-stroke:0}
+
+/* ---------- 修订条 .bp-fix：一行横排「修订三角 → 小图标 → 云线圈住的问题 → 箭头 → 改后的铭牌」 ---------- */
+[data-scene="blueprint"] .bp-fix{display:flex;align-items:center;gap:36px}
+[data-scene="blueprint"] .bp-fix>.bp-fig{flex:none}
+/* 修订三角：白线三角（遮罩画出来，颜色跟着 color 走，当前这一拍转橙），数字压在下半截 */
+[data-scene="blueprint"] .bp-rev{flex:none;display:grid;place-items:end center;box-sizing:border-box;width:96px;height:84px;padding-bottom:8px;color:#fff;
+  font:700 36px/1 var(--f-mono);text-shadow:none;-webkit-text-stroke:0;transition:color .3s ease}
+[data-scene="blueprint"] .bp-rev::before{content:"";position:absolute;inset:0;background:currentColor;pointer-events:none;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 84'%3E%3Cpath d='M48 5L91 80H5Z' fill='none' stroke='black' stroke-width='4.5' stroke-linejoin='round'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat;
+          mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 84'%3E%3Cpath d='M48 5L91 80H5Z' fill='none' stroke='black' stroke-width='4.5' stroke-linejoin='round'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat}
+/* 修订云线：一圈连续的小弧（border-image 按边长自动排匀），--bp-cl 控制从 12 点钟方向绕到哪；里面的字浅青白 */
+[data-scene="blueprint"] .bp-cloud{flex:none;display:flex;align-items:center;justify-content:center;box-sizing:border-box;padding:30px 46px;
+  background:linear-gradient(var(--bp-fill),var(--bp-fill)) 16px 16px/calc(100% - 32px) calc(100% - 32px) no-repeat}
+[data-scene="blueprint"] .bp-cloud::before{content:"";position:absolute;inset:0;box-sizing:border-box;border:26px solid transparent;pointer-events:none;
+  border-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 60' fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round'%3E%3Cpath d='M20 15A10 10 0 0 1 40 15M45 20A10 10 0 0 1 45 40M40 45A10 10 0 0 1 20 45M15 40A10 10 0 0 1 15 20M15 20A7.5 7.5 0 1 1 20 15M40 15A7.5 7.5 0 1 1 45 20M45 40A7.5 7.5 0 1 1 40 45M20 45A7.5 7.5 0 1 1 15 40'/%3E%3C/svg%3E") 20 round;
+  -webkit-mask-image:conic-gradient(#000 var(--bp-cl,360deg),transparent 0);mask-image:conic-gradient(#000 var(--bp-cl,360deg),transparent 0)}
+[data-scene="blueprint"] .bp-cloud>b{font:700 56px/1.15 var(--f-hand);color:var(--ink-2);white-space:nowrap;letter-spacing:.04em}
+
+/* ---------- 圆规圈 .bp-ring：圆是 ::before（离块边 --bp-ri，--bp-cl 画到哪），圆规的一条腿是 ::after（只在画圆时看得见，--bp-arm），
+   四周四截点划中心线画在块的底上（从圆外伸进圆里一点，不碰中间的字） ---------- */
+[data-scene="blueprint"] .bp-ring{--bp-ri:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box;padding:var(--bp-ri);text-align:center;
+  background:
+    repeating-linear-gradient(180deg,var(--bp-cyan) 0 24px,transparent 24px 30px,var(--bp-cyan) 30px 34px,transparent 34px 40px) 50% 0/2px calc(var(--bp-ri) + 52px) no-repeat,
+    repeating-linear-gradient(0deg,var(--bp-cyan) 0 24px,transparent 24px 30px,var(--bp-cyan) 30px 34px,transparent 34px 40px) 50% 100%/2px calc(var(--bp-ri) + 52px) no-repeat,
+    repeating-linear-gradient(90deg,var(--bp-cyan) 0 24px,transparent 24px 30px,var(--bp-cyan) 30px 34px,transparent 34px 40px) 0 50%/calc(var(--bp-ri) + 52px) 2px no-repeat,
+    repeating-linear-gradient(270deg,var(--bp-cyan) 0 24px,transparent 24px 30px,var(--bp-cyan) 30px 34px,transparent 34px 40px) 100% 50%/calc(var(--bp-ri) + 52px) 2px no-repeat}
+[data-scene="blueprint"] .bp-ring::before{content:"";position:absolute;inset:var(--bp-ri);border:3.5px solid #fff;border-radius:50%;pointer-events:none;
+  -webkit-mask-image:conic-gradient(#000 var(--bp-cl,360deg),transparent 0);mask-image:conic-gradient(#000 var(--bp-cl,360deg),transparent 0)}
+[data-scene="blueprint"] .bp-ring::after{content:"";position:absolute;left:50%;top:50%;width:calc(50% - var(--bp-ri));height:0;border-top:3px dashed var(--bp-cyan);pointer-events:none;
+  transform-origin:0 0;transform:rotate(calc(var(--bp-cl,360deg) - 90deg));opacity:var(--bp-arm,0)}

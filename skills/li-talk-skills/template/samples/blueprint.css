@@ -1,0 +1,34 @@
+/* 蓝图 blueprint 自己的样板页的页面样式（和 samples/blueprint.js 配套）
+   - 每条选择器都以 [data-id="t-blueprint-…"] 开头，只管那一页；抄样板时连同这里的规则一起抄，[data-id="…"] 换成新页面的 id
+   - 只写大小和位置；版式组件（.bp-*）的样子在 scenes/blueprint.css 里，颜色用风格的变量（--ink、--bp-cyan 这些） */
+
+/* ---------- 图纸标题栏（封面） ---------- */
+/* 标题栏三行：图名一行（240 高）、说明一行（112 高）、比例 / 设计人 / 日期一行（130 高）；比例一格窄 */
+[data-id="t-blueprint-cover"] .cv-tb{--tb-cols:220px 1fr 1fr;--tb-rows:240px 112px 130px}
+[data-id="t-blueprint-cover"] .cv-name,[data-id="t-blueprint-cover"] .cv-sub{grid-column:1/-1}
+/* 图名就是大标题：112px，在这一格里居中 */
+[data-id="t-blueprint-cover"] .cv-name{align-items:center;padding-top:36px}
+[data-id="t-blueprint-cover"] .cv-name b{font-size:112px;line-height:1.2;letter-spacing:.06em}
+[data-id="t-blueprint-cover"] .cv-sub b{font-size:44px}
+
+/* ---------- 装配清单 ---------- */
+/* 明细表：名称一列居中，数量一列居中，说明一列靠左 */
+[data-id="t-blueprint-parts"] .pt-table .bp-tr>:is(b,span:nth-of-type(1)){justify-self:center}
+
+/* ---------- 工艺流程图 ---------- */
+/* 工序框 330×200（y 370–570），起止框 210×130；框下的尺寸标注从 y 580 往下伸 110 */
+[data-id="t-blueprint-flow"] .fl-box{width:330px;height:200px}
+[data-id="t-blueprint-flow"] .fl-end{width:210px;height:130px}
+[data-id="t-blueprint-flow"] .fl-dim{top:580px;height:110px}
+
+/* ---------- 修订记录 ---------- */
+/* 三列对齐：云线 300 宽、箭头 150 长、铭牌 480 宽 */
+[data-id="t-blueprint-revise"] .rv-cloud{width:300px}
+[data-id="t-blueprint-revise"] .rv-arrow{width:150px}
+[data-id="t-blueprint-revise"] .rv-ok{width:480px}
+
+/* ---------- 圆规作图（结尾） ---------- */
+[data-id="t-blueprint-end"] .ed-quote{margin:0;font:700 100px/1.3 var(--f-hand);color:var(--ink);letter-spacing:.04em;white-space:nowrap}
+/* 致谢：一行 56px，底下一道白色基线 */
+[data-id="t-blueprint-end"] .ed-thanks{left:1160px;top:690px;margin:0;padding-bottom:14px;border-bottom:2.5px solid rgba(255,255,255,.72);
+  font:700 56px/1.2 var(--f-hand);color:var(--ink);white-space:nowrap;letter-spacing:.04em}
