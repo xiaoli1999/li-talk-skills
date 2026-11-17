@@ -34,7 +34,29 @@
      12. 同风格翻页 pageTurn：新页像墨一样从一边洇开（前进从左、后退从右），旧页淡去
    - 没搬的：远山随鼠标视差（这一版不做）；墨丸的走位、反应、空闲动作归形象和引擎；
      样页点到步骤上时墨点按一下（ripple 只拿到坐标，这一版不做）
-   - 自己加的出场名：yun、zhan，只在这个风格里认（别的风格会提醒并换成它的默认出场）
+   - 自己加的出场名：yun、zhan，只在这个风格里认（别的风格会提醒并换成它的默认出场）；
+     下面的自有组件另有 shu、juan、kai、yin、ran，都由组件类名自动选上（enterBy），页面不用写 data-in
+   - 自有版式组件（水墨国风专用，类名都带 ink- 前缀；样子在 ink.css，样板页见 samples/ink.js）：
+     「每一拍发生了什么」按水墨的习惯来——一列字从上往下写出来、一笔墨洇开、一枚印盖下，而不是卡片弹出来
+     · .ink-v 竖排（writing-mode: vertical-rl）：多行时一列列从右往左排；带拍出现时一个字一个字写出来（出场 shu：
+       按文档顺序，也就是从上到下、从右往左，每个字由淡转浓、从上往下洇出，大字写得慢、小字写得快）；
+       竖排里重点词的朱砂圈点画在字的右边（古书竖排的圈点位置）。竖排里别用逗号句号，用空格（　）或分列
+     · .ink-note 双行小注（和 .ink-v 一起用）：古书的夹注，小一号的中墨字，用 <br> 分成两行并排在一列里
+     · .ink-box 框字：一个字套在细墨方框里，放在列首当小标记（「器」「茶」「水」）
+     · .ink-seal 朱印：默认白文（朱底、字留出纸色），.zhu 朱文（朱字朱框），.round 椭圆印；.sm 小印（34px）、.lg 大印（64px）。
+       字竖排，多列用 <br>；倾斜写 --r。带拍出现时盖下来（出场 yin：提起、压下、印泥往外洇一圈、溅出几粒朱砂）；
+       放在别的带拍块里面（比如落款末尾）时，等那一块的字写完再盖
+     · .ink-tiqian 题签：线装书封面上那条竖长的签条（浅纸、外粗内细的双线框），里面的字竖排。
+       出场 juan：签条从上往下展开，里面的字再一个个写出来、里面的印再盖下
+     · .ink-scroll 手卷 + .ink-col 一列：手卷是上下两道（外粗内细）边线框起来的一段纸，里面的 .ink-col 从右往左排，
+       每列左边一道乌丝栏（细墨竖线）；.ink-col.ink-head 是引首（放标题，几行竖排并排，和正文之间是双线）。
+       手卷第 0 拍出现时从右往左展开（出场 kai），引首的字跟着写出来；之后每拍一列：乌丝栏从上往下画、这一列的字写出来（出场 shu）。
+       列宽、字号在页面 CSS 里定；手卷写死 width，列靠右排，左边空着的一截是拖尾，可以放闲章
+     · .ink-frame 版框：外粗内细的双线框（印谱的格子、册页的框），不带底色
+     · .ink-wash 一幅墨染的画（.ink-peaks 是一座带雾的主峰，图在 ink.css 的 --ink-peaks）：
+       出场 ran，墨从画的底边往上洇开。只是画，不放字；写死宽高，四周都淡出，放到舞台边上也不会齐刷刷断开
+     · .steps.ink-cn 序号换成汉字（一、二、三）；.steps.ink-needle 竖排步骤的最后一步，墨点下面接一笔收尖的悬针，
+       最后一步出来时往下写
    - 禁区（zones，舞台坐标 1920×1080）：
      · 左上角主题行（engine.css 的 .s-topic：x 120 起，宽到 1260，y 18–78）
      · 右上角页码和墨点节拍格（engine.css 的 .meta：右边距 64、y 40–80；按每页最多 4 拍量，留出余量后是 x 1340–1856、y 30–90）
@@ -110,7 +132,8 @@
     return end;
   }
 
-  /* 步骤的一项：上一步的墨点往下写一笔竖画 → 落笔一顿，墨点洇开、溅出几粒细墨 → 步骤名、说明依次洇出 */
+  /* 步骤的一项：上一步的墨点往下写一笔竖画 → 落笔一顿，墨点洇开、溅出几粒细墨 → 步骤名、说明依次洇出；
+     .steps.ink-needle 的最后一步，墨点洇开后再往下写一笔悬针 */
   function step(tl, e, t, ctx) {
     let at = t;
     const prev = e.previousElementSibling;
@@ -125,9 +148,114 @@
     tl.call(() => spray(e), null, at + .03);
     let end = at + .32;
     kidsOf(e).forEach((c, i) => { const s = at + .08 + i * .14; yunKid(tl, c, s, .42); end = Math.max(end, s + .42); });
+    if (needle(e)) {
+      const offN = () => clear(e, ['--ink-ndl']);
+      tl.fromTo(e, { '--ink-ndl': 0 }, { '--ink-ndl': 1, duration: .5, ease: 'power2.in', immediateRender: true, onComplete: offN, onInterrupt: offN }, at + .2);
+      end = Math.max(end, at + .7);
+    }
     tl.call(() => { offDot(); ctx.done(); }, null, end);
     return end - t;
   }
+  /* 这一项是不是带悬针的最后一步（.steps.ink-needle 竖排时） */
+  const needle = li => vertical(li) && li.parentElement.classList.contains('ink-needle') && !li.nextElementSibling;
+
+  /* =================================================================
+     自有版式组件的出场：一列字写出来（shu）、题签展开（juan）、手卷展开（kai）、盖印（yin）、墨染的画洇开（ran）
+     ================================================================= */
+  /* 归 e 管的子元素：不在 e 里面另一个带拍块里的（那些等自己那一拍）；e 自己不带拍（逐个出场的子元素）时外层的拍也算 */
+  function mine(e, sel) {
+    return [...e.querySelectorAll(sel)].filter(c => { const b = c.closest('[data-beat]'); return !b || b === e || !e.contains(b); });
+  }
+  /* 一个个字写出来：按文档顺序（竖排就是从上到下、从右往左）。每个字由淡转浓、从上往下洇出（--ink-xie 推遮罩，ink.css），
+     起笔时略虚；大字写得慢、小字写得快，一列字总共不超过约 .65 秒。印里的字不在这里写（跟着印一起盖下）。返回用时 */
+  function write(tl, e, t) {
+    const cs = mine(e, '.ink-ch, .ink-kc').filter(c => !c.closest('.ink-seal'));
+    if (!cs.length) return 0;
+    const w = cs.map(c => clamp((parseFloat(getComputedStyle(c).fontSize) || 40) / 72, .45, 1.4));
+    const sum = w.reduce((a, b) => a + b, 0) - w[w.length - 1];
+    const base = sum > 0 ? Math.min(.085, .62 / sum) : 0;
+    let at = t, end = 0;
+    cs.forEach((c, i) => {
+      const back = keep(c), dur = .24 + .1 * w[i];
+      tl.fromTo(c, { opacity: 0, '--ink-xie': 0, filter: 'blur(2.5px)' },
+        { opacity: 1, '--ink-xie': 1, filter: 'blur(0px)', duration: dur, ease: 'power2.out', immediateRender: true, onComplete: back, onInterrupt: back }, at);
+      end = Math.max(end, at - t + dur);
+      at += w[i] * base;
+    });
+    return end;
+  }
+  /* 盖印：提起（放大、歪一点、看不见）→ 压下（略小一点）→ 回弹；印泥往外洇一圈（--ink-glow），溅出几粒朱砂 */
+  function stamp(tl, e, t, tilt, done) {
+    tl.fromTo(e, { autoAlpha: 0, scale: 1.65, rotation: tilt - 11 }, { autoAlpha: 1, scale: .93, rotation: tilt, duration: .22, ease: 'power3.in', immediateRender: true }, t)
+      .to(e, { scale: 1, duration: .24, ease: 'back.out(2.5)' }, t + .22)
+      .fromTo(e, { '--ink-glow': 1 }, { '--ink-glow': 0, duration: .56, ease: 'power2.out', immediateRender: false }, t + .2)
+      .call(() => sealSparks(e), null, t + .22)
+      .call(() => { done(); clear(e, ['--ink-glow']); }, null, t + .78);
+    return .78;
+  }
+  const ownDone = e => () => clear(e, ['opacity', 'visibility', 'transform', 'translate', 'rotate', 'scale']);
+  /* e 里面不另外带拍的印：等字写完依次盖下 */
+  function stampAll(tl, e, t) {
+    let end = 0;
+    mine(e, '.ink-seal').forEach((s, i) => { if (s === e) return; const at = i * .14; end = Math.max(end, at + stamp(tl, s, t + at, tiltOf(s), ownDone(s))); });
+    return end;
+  }
+  const tiltOf = e => { const v = getComputedStyle(e).rotate; return v && v !== 'none' ? parseFloat(v) || 0 : 0; };
+  /* 写完的收尾：清掉块自己的行内样式（ctx.done 会掐掉这个块上的补间，所以放在最后） */
+  function finish(tl, e, t, end, ctx, vars) {
+    tl.call(() => { ctx.done(); if (vars) clear(e, vars); }, null, t + end);
+    return end;
+  }
+
+  /* 竖排的一列（.ink-v）、手卷的一列（.ink-col）：手卷的一列先从上往下画出左边的乌丝栏；再一个字一个字写出来；里面的印最后盖下 */
+  function shu(tl, e, t, ctx) {
+    if (e instanceof SVGElement) return fade(tl, e, t, ctx);
+    if (isStep(e)) return step(tl, e, t, ctx);
+    tl.fromTo(e, { autoAlpha: 0 }, { autoAlpha: 1, duration: .08, ease: 'none', immediateRender: true }, t);
+    let at = 0;
+    if (e.classList.contains('ink-col')) {
+      tl.fromTo(e, { '--ink-rule': 0 }, { '--ink-rule': 1, duration: .34, ease: 'power1.inOut', immediateRender: true }, t);
+      at = .16;
+    }
+    let end = Math.max(at + .2, at + write(tl, e, t + at));
+    end += stampAll(tl, e, t + end);
+    return finish(tl, e, t, end, ctx, ['--ink-rule']);
+  }
+  /* 题签：签条从上往下展开（clip-path，四周多留一截，投影不被裁掉），展开一半时里面的字开始写 */
+  function juan(tl, e, t, ctx) {
+    if (e instanceof SVGElement) return fade(tl, e, t, ctx);
+    const dur = clamp(.34 + (e.offsetHeight || 600) / 3200, .42, .62), tilt = ctx.tilt();
+    const from = { autoAlpha: 0, clipPath: 'inset(-12% -20% 100% -20%)' };
+    const to = { autoAlpha: 1, clipPath: 'inset(-12% -20% -12% -20%)', duration: dur, ease: 'power3.inOut', immediateRender: true };
+    if (tilt) { from.rotation = tilt; to.rotation = tilt; }
+    tl.fromTo(e, from, to, t);
+    let end = Math.max(dur, dur * .45 + write(tl, e, t + dur * .45));
+    end += stampAll(tl, e, t + end);
+    return finish(tl, e, t, end, ctx);
+  }
+  /* 手卷：从右往左展开（引首在右边，先露出来），引首的字跟着写出来 */
+  function kai(tl, e, t, ctx) {
+    if (e instanceof SVGElement) return fade(tl, e, t, ctx);
+    const dur = clamp(.4 + (e.offsetWidth || 1200) / 4000, .5, .8);
+    tl.fromTo(e, { autoAlpha: 0, clipPath: 'inset(-8% -1% -8% 100%)' }, { autoAlpha: 1, clipPath: 'inset(-8% -1% -8% -1%)', duration: dur, ease: 'power2.inOut', immediateRender: true }, t);
+    let end = Math.max(dur, .18 + write(tl, e, t + .18));
+    end += stampAll(tl, e, t + end);
+    return finish(tl, e, t, end, ctx);
+  }
+  /* 印：自己带拍时整枚盖下 */
+  function yin(tl, e, t, ctx) {
+    if (e instanceof SVGElement) return fade(tl, e, t, ctx);
+    return stamp(tl, e, t, ctx.tilt(), ctx.done);
+  }
+  /* 墨染的画：墨从底边中间往上、往两边洇开（--ink-ran 推遮罩，ink.css），同时由淡转浓 */
+  function ran(tl, e, t, ctx) {
+    if (e instanceof SVGElement) return fade(tl, e, t, ctx);
+    const off = () => clear(e, ['--ink-ran']);
+    tl.fromTo(e, { autoAlpha: 0, '--ink-ran': 0 }, { autoAlpha: 1, '--ink-ran': 1, duration: .95, ease: 'power2.out', immediateRender: true, onComplete: () => { ctx.done(); off(); }, onInterrupt: off }, t);
+    return .95;
+  }
+  /* 竖排、题签、手卷：退一拍时字从下往上收回去（--ink-shou） */
+  const VERT = '.ink-v, .ink-col, .ink-tiqian, .ink-scroll';
 
   /* 溅出的细墨：从墨点飞出去，转眼被纸吸干（都往左、上、下，不往右边的字上溅；单双步上下翻一下，溅得不一样） */
   const SPLASH = [[-64, -26, 8.4], [-44, 38, 6], [-18, -60, 7.2], [-74, 10, 4.8], [8, 58, 6.4]];
@@ -161,10 +289,16 @@
   }
 
   /* 盖印时溅出的几粒朱砂（从印下面往四周飞） */
-  function sparks(tip) {
-    const layer = layerOf(tip);
+  function sparks(tip) { sparksAt(layerOf(tip), tip.offsetLeft + tip.offsetWidth / 2, tip.offsetTop + tip.offsetHeight / 2); }
+  /* 页面里的印（.ink-seal）盖下时：按它在舞台上的位置溅（它可能在别的定位容器里） */
+  function sealSparks(e) {
+    const slide = e.closest('.slide');
+    if (!slide || !slide.classList.contains('active')) return;
+    const p = stageXY(slide, e.getBoundingClientRect());
+    sparksAt(layerOf(e), p.x + p.w / 2, p.y + p.h / 2);
+  }
+  function sparksAt(layer, x, y) {
     if (still() || !layer) return;
-    const x = tip.offsetLeft + tip.offsetWidth / 2, y = tip.offsetTop + tip.offsetHeight / 2;
     for (let i = 0; i < 6; i++) {
       const d = document.createElement('i');
       d.className = 'ink-spk';
@@ -176,8 +310,12 @@
   }
 
   /* 开场时第 0 拍的块用哪种出场（和引擎选默认出场的规则一致：data-in 优先，再按类名，最后是 yun） */
-  const FX = { yun, zhan };
-  const BY = { card: 'zhan', cell: 'zhan', cells: 'zhan', copy: 'zhan', term: 'zhan', shot: 'zhan', tag: 'zhan' };
+  const FX = { yun, zhan, shu, juan, kai, yin, ran };
+  /* 自有组件排在前面（引擎按这里的顺序取第一个对上的类名） */
+  const BY = {
+    'ink-scroll': 'kai', 'ink-tiqian': 'juan', 'ink-seal': 'yin', 'ink-wash': 'ran', 'ink-col': 'shu', 'ink-v': 'shu',
+    card: 'zhan', cell: 'zhan', cells: 'zhan', copy: 'zhan', term: 'zhan', shot: 'zhan', tag: 'zhan',
+  };
   function pick(e) {
     const n = e.dataset && e.dataset.in;
     if (n === 'none') return null;
@@ -216,6 +354,29 @@
       node.replaceWith(frag);
     });
     k.style.setProperty('--n', Math.max(n, 1));
+  }
+
+  /* 竖排的块（和印、题签、手卷）里的字也拆成单字（.ink-ch，连在一起的字母数字算一个），好一个个写出来；
+     重点词已经拆成 .ink-kc 的不再拆。顺带让自检能逐字量到竖排的字（它按行量，竖排时只量得到一列中间的一截） */
+  const CHARS = '.ink-v, .ink-tiqian, .ink-col, .ink-scroll, .ink-seal';
+  function splitChars(root) {
+    if (root.dataset.inkChars) return;
+    root.dataset.inkChars = '1';
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), nodes = [];
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) nodes.push(n);
+    nodes.forEach(node => {
+      const pe = node.parentElement;
+      if (!node.nodeValue.trim() || !pe || pe.closest('.ink-ch, .ink-kc, .mascot, script, style, svg')) return;
+      const frag = document.createDocumentFragment();
+      (node.nodeValue.match(/[A-Za-z0-9_.'’-]+|\s+|[\s\S]/gu) || []).forEach(s => {
+        if (/^\s+$/.test(s)) { frag.appendChild(document.createTextNode(s)); return; }
+        const sp = document.createElement('span');
+        sp.className = 'ink-ch';
+        sp.textContent = s;
+        frag.appendChild(sp);
+      });
+      node.replaceWith(frag);
+    });
   }
 
   /* =================================================================
@@ -267,8 +428,11 @@
       layer.insertAdjacentHTML('beforeend', '<i class="ink-mtn ink-far" aria-hidden="true"></i><i class="ink-mtn ink-near" aria-hidden="true"></i>');
     },
 
-    // 每页建好后：重点词拆成单字，好逐字圈点
-    decorate(slide) { slide.querySelectorAll('.key').forEach(splitKey); },
+    // 每页建好后：重点词拆成单字，好逐字圈点；竖排的块拆成单字，好一个个写出来
+    decorate(slide) {
+      slide.querySelectorAll('.key').forEach(splitKey);
+      slide.querySelectorAll(CHARS).forEach(splitChars);
+    },
 
     /* 退一拍：墨晕往左收回；步骤的墨点缩回、上一步的竖画往回收（引擎同时把这一拍的块淡出、下沉一点）。
        收回的动画比引擎的淡出晚一点结束再清掉行内变量，免得清早了整块闪一下 */
@@ -280,8 +444,25 @@
           const prev = e.previousElementSibling;
           const seg = vertical(e) && prev && prev.tagName === 'LI';
           if (seg) tl.fromTo(prev, { '--ink-seg': 1 }, { '--ink-seg': 0, duration: .26, ease: 'power1.out', immediateRender: false }, .04);
+          if (needle(e)) tl.fromTo(e, { '--ink-ndl': 1 }, { '--ink-ndl': 0, duration: .2, ease: 'power1.in', immediateRender: false }, 0);
           tl.fromTo(e, { '--ink-dp': 1 }, { '--ink-dp': 0, duration: .24, ease: 'power2.in', immediateRender: false }, 0);
-          tl.call(() => { clear(e, ['--ink-dp']); if (seg) clear(prev, ['--ink-seg']); }, null, .4);
+          tl.call(() => { clear(e, ['--ink-dp', '--ink-ndl']); if (seg) clear(prev, ['--ink-seg']); }, null, .4);
+          return;
+        }
+        // 印：从纸上提起来（放大一点再淡去）
+        if (e.matches('.ink-seal')) { tl.fromTo(e, { scale: 1 }, { scale: 1.14, duration: .26, ease: 'power1.in', immediateRender: false }, 0); return; }
+        // 墨染的画：墨往底边收回去
+        if (e.matches('.ink-wash')) {
+          const offW = () => clear(e, ['--ink-ran']);
+          tl.fromTo(e, { '--ink-ran': 1 }, { '--ink-ran': 0, duration: .3, ease: 'power2.in', immediateRender: false, onInterrupt: offW }, 0);
+          tl.call(offW, null, .42);
+          return;
+        }
+        // 竖排的列、题签、手卷：字从下往上收回去（和写的方向相反）
+        if (e.matches(VERT)) {
+          const offV = () => clear(e, ['--ink-shou']);
+          tl.fromTo(e, { '--ink-shou': 1 }, { '--ink-shou': 0, duration: .3, ease: 'power2.in', immediateRender: false, onInterrupt: offV }, 0);
+          tl.call(offV, null, .42);
           return;
         }
         const off = () => clear(e, ['--ir']);

@@ -1,0 +1,32 @@
+/* 水墨国风样板页的页面样式（和 samples/ink.js 配套）
+   - 每条选择器都以 [data-id="t-ink-…"] 开头，只管那一页；抄样板时连同这里的规则一起抄，[data-id="…"] 换成新页面的 id
+   - 只写大小、位置和墨色的浓淡（用风格的变量 --ink、--ink-2），竖排、题签、手卷、印的样子都在 scenes/ink.css
+   - 竖排一列的高度：一个字约占「字号 ×（1 + 字距）」，字距默认 .14em，所以大约字号 × 1.14 */
+
+/* ---------- 封面：副题两列中墨；落款小一号，两列，末尾的小印和字之间空一点 ---------- */
+[data-id="t-ink-cover"] .t-ic-sub{font-size:46px;line-height:1.75;color:var(--ink-2)}
+[data-id="t-ink-cover"] .t-ic-sign{font-size:38px;line-height:1.75;color:var(--ink-2)}
+[data-id="t-ink-cover"] .t-ic-sign .ink-seal{margin-top:.5em}
+
+/* ---------- 手卷：引首两行错落（后一行往下让一截，像落款那样）；正文大字浓墨；每列左右留白大一点 ---------- */
+[data-id="t-ink-list"] .ink-col{--ink-pad:46px}
+[data-id="t-ink-list"] .t-il-pre{font-size:50px;color:var(--ink-2)}
+[data-id="t-ink-list"] .t-il-h{margin-top:84px;font-size:84px;font-weight:700;color:var(--ink)}
+[data-id="t-ink-list"] .t-il-name{font-size:76px;font-weight:700;color:var(--ink)}
+
+/* ---------- 竖墨三步：左边大标题两行（112px）；步骤名大一号、说明 40px；命令在最后一步说明下面 ---------- */
+[data-id="t-ink-steps"] .t-is-title{margin:0;font:700 112px/1.28 var(--f-hand);letter-spacing:.04em;white-space:nowrap;color:var(--ink)}
+[data-id="t-ink-steps"] .steps>li>b{font-size:60px;letter-spacing:.06em}
+[data-id="t-ink-steps"] .steps>li>span{font-size:40px}
+[data-id="t-ink-steps"] .steps .copy{justify-self:start;margin-top:24px}
+
+/* ---------- 印谱：标题两列浓墨；三个版框从右往左排，印在上、释文在下 ---------- */
+[data-id="t-ink-seals"] .t-ip-title{font-size:72px;font-weight:700;color:var(--ink)}
+[data-id="t-ink-seals"] .t-ip-pu{display:flex;flex-direction:row-reverse;gap:44px}
+[data-id="t-ink-seals"] .t-ip-cell{flex:none;width:300px;height:500px;display:flex;flex-direction:column;align-items:center;gap:38px;padding-top:58px}
+[data-id="t-ink-seals"] .t-ip-cap{font-size:46px;letter-spacing:.3em;color:var(--ink-2)}
+
+/* ---------- 题画诗：金句两列大字浓墨，字距拉开；落款一列中墨小字，末尾的名章和字之间空一点 ---------- */
+[data-id="t-ink-end"] .t-ie-poem{font-size:104px;font-weight:700;line-height:1.42;letter-spacing:.16em;color:var(--ink)}
+[data-id="t-ink-end"] .t-ie-sign{font-size:40px;color:var(--ink-2)}
+[data-id="t-ink-end"] .t-ie-sign .ink-seal{margin-top:.5em}

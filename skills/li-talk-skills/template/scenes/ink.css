@@ -8,6 +8,10 @@
      --ink-seg 竖笔写到哪、--ink-mx / --ink-my 鼠标在组件里的位置、--ink-press 题签被印压下去、--ink-glow 印泥洇开、
      --ink-tr / --ink-ox 翻页时新页洇开的半径和起点；重点词跟着引擎推的 --k 走
    - --recede（讲过的拍变到多淡）由 ink.js 的 recede 写入：.58
+   - 自有版式组件（.ink-v 竖排、.ink-note 双行小注、.ink-box 框字、.ink-seal 朱印、.ink-tiqian 题签、.ink-scroll / .ink-col 手卷、
+     .ink-frame 版框、.ink-wash / .ink-peaks 墨染的画、.steps.ink-cn / .ink-needle）的样子在文件末尾，用法见 ink.js 开头；
+     它们动画时 ink.js 写的变量：--ink-xie 一个字写到哪、--ink-shou 退拍时收到哪、--ink-rule 乌丝栏画到哪、
+     --ink-ran 画洇开到哪、--ink-ndl 悬针写到哪、--ink-glow 印泥洇开
    ===================================================================== */
 
 /* 悬停的淡墨晕：注册成数字才能平滑过渡（不继承：每个组件自己算） */
@@ -33,6 +37,9 @@
   --ink-wash:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 240 240'%3E%3Cdefs%3E %3CradialGradient id='r'%3E%3Cstop offset='0' stop-color='%231E1C19' stop-opacity='0.084'/%3E%3Cstop offset='.6' stop-color='%231E1C19' stop-opacity='0.05'/%3E%3Cstop offset='1' stop-color='%231E1C19' stop-opacity='0'/%3E%3C/radialGradient%3E %3Cfilter id='w' x='-25%25' y='-25%25' width='150%25' height='150%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.03' numOctaves='2' seed='6'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='30' xChannelSelector='R' yChannelSelector='G'/%3E%3CfeGaussianBlur stdDeviation='2.2'/%3E%3C/filter%3E%3C/defs%3E %3Cg filter='url(%23w)'%3E%3Ccircle cx='120' cy='120' r='80' fill='url(%23r)'/%3E%3Ccircle cx='120' cy='120' r='73' fill='none' stroke='%231E1C19' stroke-opacity='0.036' stroke-width='7'/%3E%3C/g%3E%3C/svg%3E");
   --ink-brush:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 200' width='24' height='200' preserveAspectRatio='none'%3E%3Cdefs%3E %3Cfilter id='f' x='-80%25' y='-4%25' width='260%25' height='108%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.55 .016' numOctaves='2' seed='11' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='3' xChannelSelector='R' yChannelSelector='G' result='d'/%3E%3CfeColorMatrix in='n' type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -9 0 0 0 6.6' result='m'/%3E%3CfeComposite in='d' in2='m' operator='in'/%3E%3C/filter%3E%3C/defs%3E %3Cpath filter='url(%23f)' fill='%231E1C19' fill-opacity='.92' d='M2 4C0 46 5 104 3 146C2 168 3 182 2 196L22 196C20 182 21 164 20 144C18 102 23 44 21 4Z'/%3E%3C/svg%3E");
   --ink-node:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-72 -72 144 144' width='144' height='144'%3E%3Cdefs%3E%3Cfilter id='b' x='-40%25' y='-40%25' width='180%25' height='180%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.055' numOctaves='3' seed='7' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='8' xChannelSelector='R' yChannelSelector='G' result='d'/%3E%3CfeGaussianBlur in='d' stdDeviation='.9'/%3E%3C/filter%3E%3Cfilter id='w' x='-50%25' y='-50%25' width='200%25' height='200%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.024' numOctaves='2' seed='3' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='26' xChannelSelector='R' yChannelSelector='G' result='d'/%3E%3CfeGaussianBlur in='d' stdDeviation='3.5'/%3E%3C/filter%3E%3C/defs%3E %3Cpath filter='url(%23w)' transform='scale(.8)' fill='%231E1C19' fill-opacity='.1' d='M-60 -6C-62 -38-30-62 4-60C40-58 64-32 63 2C62 36 34 62-2 61C-36 60-58 30-60-6Z'/%3E %3Cpath filter='url(%23b)' transform='rotate(30)' fill='%231E1C19' fill-opacity='.15' d='M-34-4C-35-24-18-36 2-35C22-34 37-20 36 0C35 20 19 35-1 35C-21 35-33 18-34-4Z'/%3E %3Cpath filter='url(%23b)' transform='rotate(-24) scale(1.3)' fill='%231E1C19' d='M-19-9C-20-19-8-25 4-24C16-23 24-14 23-1C22 12 13 22 0 22C-12 22-21 13-21 2C-21-2-20-6-19-9Z'/%3E%3C/svg%3E");
+  /* 自有组件用的图：--ink-needle 收尖的悬针（.steps.ink-needle）、--ink-peaks 一座带雾的主峰和一叶小舟（.ink-peaks） */
+  --ink-needle:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 200' width='24' height='200' preserveAspectRatio='none'%3E%3Cdefs%3E %3Cfilter id='f' x='-80%25' y='-4%25' width='260%25' height='108%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.55 .016' numOctaves='2' seed='11' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='3' xChannelSelector='R' yChannelSelector='G' result='d'/%3E%3CfeColorMatrix in='n' type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  -9 0 0 0 6.6' result='m'/%3E%3CfeComposite in='d' in2='m' operator='in'/%3E%3C/filter%3E%3C/defs%3E %3Cpath filter='url(%23f)' fill='%231E1C19' fill-opacity='.92' d='M2 2C1 46 5 92 3 124C3 148 8 172 12 198C16 172 21 148 21 124C19 92 23 46 22 2Z'/%3E%3C/svg%3E");
+  --ink-peaks:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1040 800' width='1040' height='800'%3E%3Cdefs%3E %3ClinearGradient id='ga' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%231E1C19' stop-opacity='.09'/%3E%3Cstop offset='1' stop-color='%231E1C19' stop-opacity='0'/%3E%3C/linearGradient%3E %3ClinearGradient id='gb' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%231E1C19' stop-opacity='.2'/%3E%3Cstop offset='.5' stop-color='%231E1C19' stop-opacity='.07'/%3E%3Cstop offset='1' stop-color='%231E1C19' stop-opacity='0'/%3E%3C/linearGradient%3E %3ClinearGradient id='gc' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%231E1C19' stop-opacity='.46'/%3E%3Cstop offset='.25' stop-color='%231E1C19' stop-opacity='.24'/%3E%3Cstop offset='.6' stop-color='%231E1C19' stop-opacity='.07'/%3E%3Cstop offset='1' stop-color='%231E1C19' stop-opacity='0'/%3E%3C/linearGradient%3E %3ClinearGradient id='gd' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%231E1C19' stop-opacity='.16'/%3E%3Cstop offset='1' stop-color='%231E1C19' stop-opacity='0'/%3E%3C/linearGradient%3E %3ClinearGradient id='fy' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='.5' stop-color='%23fff'/%3E%3Cstop offset='.93' stop-color='%23fff' stop-opacity='0'/%3E%3C/linearGradient%3E %3ClinearGradient id='fx' x1='0' y1='0' x2='1' y2='0'%3E%3Cstop offset='0' stop-color='%23fff' stop-opacity='0'/%3E%3Cstop offset='.12' stop-color='%23fff'/%3E%3Cstop offset='.88' stop-color='%23fff'/%3E%3Cstop offset='1' stop-color='%23fff' stop-opacity='0'/%3E%3C/linearGradient%3E %3Cmask id='m' maskUnits='userSpaceOnUse' x='0' y='0' width='1040' height='800'%3E%3Crect width='1040' height='800' fill='url(%23fy)'/%3E%3C/mask%3E %3Cmask id='mx' maskUnits='userSpaceOnUse' x='0' y='0' width='1040' height='800'%3E%3Crect width='1040' height='800' fill='url(%23fx)'/%3E%3C/mask%3E %3Cfilter id='s' x='-5%25' y='-10%25' width='110%25' height='120%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .03' numOctaves='2' seed='4'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='24' xChannelSelector='R' yChannelSelector='G'/%3E%3CfeGaussianBlur stdDeviation='3.2'/%3E%3C/filter%3E %3Cfilter id='r' x='-5%25' y='-10%25' width='110%25' height='120%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.018 .05' numOctaves='3' seed='9'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='14' xChannelSelector='R' yChannelSelector='G'/%3E%3CfeGaussianBlur stdDeviation='1.1'/%3E%3C/filter%3E %3Cfilter id='e' x='-5%25' y='-10%25' width='110%25' height='120%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.03 .09' numOctaves='3' seed='21'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='12' xChannelSelector='R' yChannelSelector='G'/%3E%3CfeGaussianBlur stdDeviation='2.6'/%3E%3C/filter%3E %3C/defs%3E %3Cg mask='url(%23mx)'%3E%3Cg mask='url(%23m)'%3E %3Cpath filter='url(%23s)' fill='url(%23ga)' d='M640 800C700 640 760 520 820 430C850 386 880 340 912 324C936 312 952 330 974 366C996 402 1018 430 1040 446L1040 800Z'/%3E %3Cpath filter='url(%23s)' fill='url(%23gb)' d='M90 800C130 690 190 590 240 520C270 478 290 420 316 370C330 342 346 322 362 330C382 340 396 380 420 410C450 448 500 466 560 486C610 502 650 540 690 600C720 650 740 720 760 800Z'/%3E %3Cpath filter='url(%23e)' fill='none' stroke='%231E1C19' stroke-opacity='.16' stroke-width='5' d='M240 520C270 478 290 420 316 370C330 342 346 322 362 330C382 340 396 380 420 410C450 448 500 466 560 486'/%3E %3Cpath filter='url(%23r)' fill='url(%23gc)' d='M360 800C400 700 440 620 482 560C506 526 520 486 548 458C572 434 572 396 590 350C604 312 620 262 640 212C654 176 664 140 680 124C692 112 704 120 712 146C722 180 728 214 750 240C772 266 800 270 818 304C836 338 846 362 878 392C912 424 952 446 990 490C1012 516 1028 548 1040 572L1040 800Z'/%3E %3Cpath filter='url(%23e)' fill='none' stroke='%231E1C19' stroke-opacity='.3' stroke-width='7' stroke-linecap='round' d='M482 560C506 526 520 486 548 458C572 434 572 396 590 350C604 312 620 262 640 212C654 176 664 140 680 124C692 112 704 120 712 146C722 180 728 214 750 240C772 266 800 270 818 304C836 338 846 362 878 392C912 424 952 446 990 490'/%3E %3Cpath filter='url(%23e)' fill='none' stroke='%231E1C19' stroke-opacity='.13' stroke-width='5' stroke-linecap='round' d='M664 170C650 230 640 290 618 352M712 196C706 250 716 300 700 364M590 372C576 410 560 442 540 474M800 300C788 340 794 372 780 418'/%3E %3Cpath filter='url(%23s)' fill='url(%23gd)' d='M0 800L0 650C70 616 150 604 230 612C300 618 340 646 410 664C470 680 520 700 570 740L590 800Z'/%3E %3Cg fill='%231E1C19' transform='translate(30 -104)'%3E%3Cpath fill-opacity='.6' d='M196 714C220 722 262 723 288 714L281 722C258 728 226 728 204 722Z'/%3E%3Cpath fill-opacity='.55' d='M238 714L240 692C241 686 247 686 248 692L250 714Z'/%3E%3Ccircle fill-opacity='.55' cx='244' cy='686' r='4.6'/%3E%3C/g%3E %3C/g%3E%3C/g%3E%3C/svg%3E");
   /* 宣纸：底色 + 纸纹平铺 + 四周一圈极淡的旧纸色（阅读模式每页也用它） */
   --scene-bg:var(--ink-paper) 0 0/320px 320px repeat,radial-gradient(ellipse 120% 95% at 50% 42%,rgba(110,90,60,0) 55%,rgba(110,90,60,.08) 100%),#F3EDE1;
 }
@@ -247,3 +254,87 @@
 
 /* ---------- 阅读模式（没有背景层）：每页底下垫上远山和宣纸 ---------- */
 [data-scene="ink"].slide:is(.reading *){background:var(--ink-far) -2400px 640px/3640px 440px no-repeat,var(--ink-near) -2400px 640px/3640px 440px no-repeat,var(--scene-bg)}
+
+/* =====================================================================
+   自有版式组件（水墨国风专用，用法见 ink.js 开头；样板页 samples/ink.js）
+   每一拍「发生了什么」：一列字从上往下写出来、一笔墨洇开、一枚印盖下
+   ===================================================================== */
+
+/* 组件默认相对定位（里面的伪元素靠它）；加了 .abs 的照引擎的规矩绝对定位（这里写 position 会盖掉 engine.css 的 .slide .abs） */
+[data-scene="ink"] :is(.ink-seal,.ink-tiqian,.ink-scroll,.ink-frame):not(.abs){position:relative}
+
+/* ---------- 竖排 .ink-v：多行时一列列从右往左排；ink.js 把字拆成 .ink-ch（一个字一个盒子，好一个个写出来）。
+   竖排里别用逗号句号：分列或用全角空格 ---------- */
+[data-scene="ink"] .ink-v{margin:0;writing-mode:vertical-rl;text-orientation:mixed;white-space:nowrap;line-height:1.5;letter-spacing:.14em}
+[data-scene="ink"] :is(.ink-v,.ink-tiqian,.ink-col,.ink-scroll,.ink-seal) .ink-ch{display:inline-block}
+/* 竖排里重点词的朱砂圈点画在字的右边（古书竖排圈点的位置），不压下一个字 */
+[data-scene="ink"] :is(.ink-v,.ink-tiqian) .key .ink-kc::after{top:50%;margin:-.11em 0 0 .56em}
+/* 一个字写出来：从上往下洇出（--ink-xie 0 → 1，ink.js 写）；退一拍：从下往上收回（--ink-shou 1 → 0） */
+[data-scene="ink"] [style*="--ink-xie"]{
+  -webkit-mask-image:linear-gradient(#000 calc(var(--ink-xie) * 160% - 60%),transparent calc(var(--ink-xie) * 160%));
+          mask-image:linear-gradient(#000 calc(var(--ink-xie) * 160% - 60%),transparent calc(var(--ink-xie) * 160%))}
+[data-scene="ink"] [style*="--ink-shou"]{
+  -webkit-mask-image:linear-gradient(#000 calc(var(--ink-shou) * 100%),transparent calc(var(--ink-shou) * 100% + 90px));
+          mask-image:linear-gradient(#000 calc(var(--ink-shou) * 100%),transparent calc(var(--ink-shou) * 100% + 90px))}
+
+/* ---------- 双行小注 .ink-note（和 .ink-v 一起用）：小一号的中墨字，<br> 分成两行并排；行距留出圈点的位置 ---------- */
+[data-scene="ink"] .ink-note{font-size:var(--fs-body);line-height:1.62;letter-spacing:.1em;color:var(--ink-2)}
+
+/* ---------- 框字 .ink-box：一个字套在细墨方框里（列首的小标记） ---------- */
+[data-scene="ink"] .ink-box{display:inline-grid;place-items:center;box-sizing:border-box;width:1.6em;height:1.6em;margin:0;
+  border:1.6px solid rgba(30,28,25,.5);border-radius:2px;font:400 var(--fs-min)/1 var(--f-hand);color:var(--ink-2)}
+
+/* ---------- 朱印 .ink-seal：默认白文（朱底，字留出纸色）；.zhu 朱文（朱字朱框，透出纸）；.round 椭圆；.sm 小印、.lg 大印。
+   字竖排、正片叠底，#ink-seal 让边缘微微不齐、印面有细小的斑驳；::before 是盖下时往外洇的一圈印泥（--ink-glow） ---------- */
+[data-scene="ink"] .ink-seal{display:inline-block;box-sizing:border-box;margin:0;padding:.2em .28em .14em;border-radius:6px;
+  background:var(--ink-zhu);color:#F6EFE2;font:700 40px/1.12 var(--f-hand);letter-spacing:.06em;text-align:center;white-space:nowrap;
+  writing-mode:vertical-rl;text-orientation:upright;vertical-align:middle;mix-blend-mode:multiply;rotate:var(--r);filter:url(#ink-seal)}
+[data-scene="ink"] .ink-seal::before{content:"";position:absolute;inset:-3px;z-index:-1;border-radius:inherit;background:var(--ink-zhu);
+  filter:blur(5px);opacity:calc(var(--ink-glow,0) * .5);pointer-events:none}
+[data-scene="ink"] .ink-seal.zhu{background:transparent;color:var(--ink-zhu);box-shadow:inset 0 0 0 .09em var(--ink-zhu)}
+[data-scene="ink"] .ink-seal.sm{font-size:var(--fs-min)}
+[data-scene="ink"] .ink-seal.lg{font-size:64px;border-radius:9px}
+[data-scene="ink"] .ink-seal.round{border-radius:50%;padding:.52em .36em .46em}
+
+/* ---------- 题签 .ink-tiqian：线装书封面上竖长的签条——带纸纹的浅纸、外粗内细的双线框，字竖排浓墨 ---------- */
+[data-scene="ink"] .ink-tiqian{display:inline-block;box-sizing:border-box;margin:0;padding:.5em .34em .42em;
+  background:var(--ink-paper) 0 0/320px 320px repeat,var(--ink-paper2);border:2px solid var(--ink-2);border-radius:2px;
+  box-shadow:inset 0 0 0 7px var(--ink-paper2),inset 0 0 0 8.5px rgba(79,74,67,.5),0 22px 30px -24px rgba(30,28,25,.5);
+  writing-mode:vertical-rl;text-orientation:mixed;white-space:nowrap;font:700 88px/1.3 var(--f-hand);letter-spacing:.14em;color:var(--ink);rotate:var(--r)}
+
+/* ---------- 手卷 .ink-scroll：上下两道外粗内细的边线，里面的 .ink-col 从右往左排（左边空出的一截是拖尾） ---------- */
+[data-scene="ink"] .ink-scroll{display:flex;flex-direction:row-reverse;align-items:stretch;box-sizing:border-box;padding:40px 0;
+  border-top:3px solid rgba(30,28,25,.62);border-bottom:3px solid rgba(30,28,25,.62)}
+[data-scene="ink"] .ink-scroll::before{content:"";position:absolute;left:0;right:0;top:6px;bottom:6px;pointer-events:none;
+  border-top:1.2px solid rgba(30,28,25,.36);border-bottom:1.2px solid rgba(30,28,25,.36)}
+/* 一列：里面的东西从上往下排（框字、正文、双行小注……各自竖排），左右留白 --ink-pad */
+[data-scene="ink"] .ink-col{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;gap:26px;padding:0 var(--ink-pad,34px)}
+/* 乌丝栏：每列左边一道细墨竖线，从上边的内线画到下边的内线；这一列出来时从上往下画（--ink-rule） */
+[data-scene="ink"] .ink-col::after{content:"";position:absolute;left:0;top:-33px;bottom:-33px;width:1.6px;background:rgba(30,28,25,.42);pointer-events:none;
+  transform-origin:50% 0;transform:scaleY(var(--ink-rule,1))}
+/* 引首：几行竖排并排（从右往左、顶端对齐，页面 CSS 可以给后一行加 margin-top 错落开），和正文之间是双线 */
+[data-scene="ink"] .ink-col.ink-head{flex-direction:row-reverse;align-items:flex-start;gap:20px}
+[data-scene="ink"] .ink-col.ink-head::after{left:-3px;width:7px;box-sizing:border-box;background:none;
+  border-left:1.6px solid rgba(30,28,25,.5);border-right:1.6px solid rgba(30,28,25,.5)}
+/* 讲过的列：只让字变淡，乌丝栏不淡（和步骤一样，整列淡下去纸上的格子会断开） */
+[data-scene="ink"] .ink-col.past{opacity:1}
+[data-scene="ink"] .ink-col.past>*{opacity:var(--recede);transition:opacity .45s ease}
+@media (hover:hover){[data-scene="ink"] .ink-col.past:hover>*{opacity:.95}}
+[data-scene="ink"].slide:is(.reading *) .ink-col.past>*{opacity:1}
+
+/* ---------- 版框 .ink-frame：外粗内细的双线框，不带底色（印谱的格子、册页的框） ---------- */
+[data-scene="ink"] .ink-frame{box-sizing:border-box;border:2.4px solid rgba(30,28,25,.58);border-radius:2px;
+  outline:1.2px solid rgba(30,28,25,.34);outline-offset:-10px}
+
+/* ---------- 墨染的画 .ink-wash（.ink-peaks 主峰小舟）：写死宽高；出场时墨从底边中间往上洇开（--ink-ran） ---------- */
+[data-scene="ink"] .ink-wash{display:block;margin:0;pointer-events:none;background:no-repeat center/100% 100%}
+[data-scene="ink"] .ink-peaks{background-image:var(--ink-peaks)}
+[data-scene="ink"] [style*="--ink-ran"]{
+  -webkit-mask-image:radial-gradient(ellipse at 50% 100%,#000 calc(var(--ink-ran) * 125% - 25%),transparent calc(var(--ink-ran) * 125%));
+          mask-image:radial-gradient(ellipse at 50% 100%,#000 calc(var(--ink-ran) * 125% - 25%),transparent calc(var(--ink-ran) * 125%))}
+
+/* ---------- 步骤：.ink-cn 序号换成汉字；.ink-needle 竖排时最后一步的墨点下面接一笔收尖的悬针（--ink-ndl 推着往下写） ---------- */
+[data-scene="ink"] .steps.ink-cn>li::before{content:counter(st,cjk-decimal)}
+[data-scene="ink"] .steps.ink-needle:not(.h)>li:last-child::after{content:"";height:calc(100% - 22px);background-image:var(--ink-needle);
+  -webkit-mask-image:linear-gradient(#000 calc(var(--ink-ndl,1) * 100%),transparent calc(var(--ink-ndl,1) * 100% + 10%));
+          mask-image:linear-gradient(#000 calc(var(--ink-ndl,1) * 100%),transparent calc(var(--ink-ndl,1) * 100% + 10%))}
