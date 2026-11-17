@@ -1,0 +1,320 @@
+/* =====================================================================
+   风格 · 液态玻璃 glass 的样子（行为在 glass.js）
+   柔和静止的彩色光斑底（薄荷水色、长春花蓝、杏色、一抹淡紫，加两颗光亮的小球）；
+   透明而厚的玻璃：边缘折光、顶边一线亮、下沿内侧的暗部显出厚度，大圆角，小件是胶囊；
+   强调色只有一个海蓝，只给重点词和可点的东西。所有选择器的第一段都带 [data-scene="glass"]
+   - 玻璃面画在 glass.js 插进组件最前面的 <gl-glass> 层上（卡片、小格、步骤每一项、终端、截图位、主题行、节拍胶囊）：
+     出场时只让这一层从液滴流开、果冻回弹，字另外滑进来，所以字不会被压扁
+   - 折射：Chromium 里 glass.js 按每块玻璃的尺寸生成 SVG 位移滤镜，另起一个样式表写 backdrop-filter:url(#…)；
+     这里写的是降级的样子（轻模糊 + 加宽的边缘光），其他浏览器、地址带 ?flat、掉帧关掉折射以后都是它；
+     完全不支持 backdrop-filter 时退回半透明白
+   - 讲过的拍：带玻璃的块整块变淡会让玻璃失去折射（祖先的 opacity 会截断 backdrop-filter），
+     所以这些块不整体变淡，改成玻璃里的字变淡、玻璃本身淡一点
+   - 几个状态量：--gl-h 鼠标悬停（0–1）、--mx / --my 鼠标在组件里的位置（glass.js 写入）、
+     --gl-in 组件上伪元素装饰（步骤序号、「需要人」小圆点、对比符号）出场到哪（glass.js 推动，不写时是 1）、
+     --gl-rx / --gl-ry 出场时玻璃的圆角（glass.js 推动，不写时用组件的 --gl-r）
+   - --recede（讲过的拍变到多淡）由 glass.js 的 recede 写入，这里不写
+   ===================================================================== */
+
+/* 悬停注册成数字才能平滑过渡；伪元素要读到，所以可继承（每个组件自己再写一遍初值） */
+@property --gl-h{syntax:"<number>";inherits:true;initial-value:0}
+
+/* 变量：浅灰蓝底、深墨字、一个海蓝；便签的几种颜色换成光斑的几种颜色（只做玻璃的淡淡底色） */
+[data-scene="glass"]{
+  --f-hand:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --f-sans:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  /* 等宽字后面补上黑体：命令里的中文不至于落到宋体 */
+  --f-mono:"JetBrains Mono","Cascadia Mono",Consolas,"SF Mono",Menlo,"PingFang SC","Microsoft YaHei","Noto Sans SC",monospace;
+  --rough-r:28px;
+  --bg:#EEF3F9; --ink:#0F1524; --ink-2:#45506A; --ink-3:#6E7894; --line:#5A6A92;
+  --mark:#2B5CFF; --key-ink:#0F1524; --hl:rgba(43,92,255,.16); --accent:#2B5CFF;
+  --card-ink:#0F1524; --card-ink-2:#45506A; --paper:#F7FAFF;
+  --t-yellow:#FFC29C; --t-mint:#76E0D4; --t-pink:#ECB0EC; --t-blue:#96ACFF; --t-white:#FFFFFF; --t-peach:#FFC29C;
+  --term-bg:transparent; --term-ink:#0F1524;
+  --human:#EE8A4E; --ai:#2B5CFF; --idle:#8F98AD;
+  --sign-color:rgba(69,80,106,.62);
+  --gl-jelly:cubic-bezier(.34,1.56,.64,1);
+  /* 厚玻璃的阴影组：顶边一线亮、细白边、上沿内侧的厚度光、下沿内侧的暗部、柔和投影 */
+  --gl-shadow:
+    inset 0 1.5px 0 rgba(255,255,255,.95),
+    inset 0 -1.5px 0 rgba(255,255,255,.5),
+    inset 0 0 0 1.5px rgba(255,255,255,.32),
+    inset 0 0 16px 3px rgba(255,255,255,.26),
+    inset 0 14px 20px -14px rgba(255,255,255,.95),
+    inset 0 -18px 26px -16px rgba(28,52,130,.34),
+    0 30px 50px -28px rgba(24,44,110,.46),
+    0 4px 12px -4px rgba(24,44,110,.12);
+  /* 降级时加宽的边缘光（没有折射，靠它把玻璃的边立起来） */
+  --gl-flat:inset 0 0 0 5px rgba(255,255,255,.14),inset 0 0 18px 2px rgba(255,255,255,.3);
+  /* 小胶囊（重点词、标签、序号、「已复制」）：近白的玻璃珠，一圈淡淡的海蓝 */
+  --gl-cap:linear-gradient(180deg,rgba(255,255,255,.92),rgba(226,236,255,.55));
+  --gl-cap-shadow:inset 0 1.5px 0 #fff,inset 0 -5px 10px -2px rgba(43,92,255,.16),inset 0 0 0 1px rgba(255,255,255,.6),0 0 0 1.5px rgba(43,92,255,.2),0 10px 18px -10px rgba(43,92,255,.6);
+  /* 阅读模式里每页的底：和背景层同样的光斑（按 1920×1080 的页面坐标），两颗小球简化成同心的渐变 */
+  --scene-bg:
+    radial-gradient(circle 108px at 200px 1008px,#fff 0,#FFF0E6 22%,#FFCDB3 62%,#FFA285 99%,rgba(255,162,133,0) 100%),
+    radial-gradient(circle 84px at 1330px 398px,#fff 0,#EEF2FF 22%,#C3D1FF 62%,#94ABFF 99%,rgba(148,171,255,0) 100%),
+    radial-gradient(circle 560px at 1640px 860px,rgba(118,224,212,.72) 0,rgba(118,224,212,.72) 42%,rgba(118,224,212,0) 100%),
+    radial-gradient(circle 500px at 260px 1060px,rgba(255,194,156,.74) 0,rgba(255,194,156,.74) 42%,rgba(255,194,156,0) 100%),
+    radial-gradient(circle 340px at 960px 700px,rgba(236,176,236,.46) 0,rgba(236,176,236,.46) 42%,rgba(236,176,236,0) 100%),
+    radial-gradient(circle 470px at 1760px 110px,rgba(150,172,255,.66) 0,rgba(150,172,255,.66) 42%,rgba(150,172,255,0) 100%),
+    radial-gradient(circle 300px at -60px 420px,rgba(150,206,255,.5) 0,rgba(150,206,255,.5) 42%,rgba(150,206,255,0) 100%),
+    radial-gradient(circle 760px at 420px 200px,rgba(255,255,255,.85) 0,rgba(255,255,255,.85) 42%,rgba(255,255,255,0) 100%),
+    #EEF3F9;
+}
+
+/* =====================================================================
+   背景层（glass.js 的 backdrop 放进来）：一块和舞台对齐的 1920×1080 画布，光斑按舞台坐标放，伸出舞台照样显示；
+   背景层本身只铺底色（--scene-bg 里的光斑是给阅读模式按页面坐标画的，背景层比舞台大，不能用它）
+   ===================================================================== */
+.bg[data-scene="glass"]{background:var(--bg)}
+.bg[data-scene="glass"] .gl-sky{position:absolute;left:calc(50% - 960px);top:calc(50% - 540px);width:1920px;height:1080px;pointer-events:none}
+/* --gx --gy 圆心、--gs 半径、--gc 颜色（不能叫 --r：引擎把 --r 注册成了倾斜角） */
+.bg[data-scene="glass"] .gl-sky i{position:absolute;border-radius:50%;left:calc(var(--gx) - var(--gs));top:calc(var(--gy) - var(--gs));width:calc(var(--gs) * 2);height:calc(var(--gs) * 2)}
+/* 柔边光斑：中间四成是实色，往外化开 */
+.bg[data-scene="glass"] .gl-blob{background:radial-gradient(circle closest-side,var(--gc) 0%,var(--gc) 42%,transparent 100%)}
+.bg[data-scene="glass"] .gl-b0{--gx:420px;--gy:200px;--gs:760px;--gc:rgba(255,255,255,.85)}     /* 标题一带提亮，读字安静 */
+.bg[data-scene="glass"] .gl-b1{--gx:1640px;--gy:860px;--gs:560px;--gc:rgba(118,224,212,.72)}    /* 薄荷水色 */
+.bg[data-scene="glass"] .gl-b2{--gx:1760px;--gy:110px;--gs:470px;--gc:rgba(150,172,255,.66)}    /* 长春花蓝 */
+.bg[data-scene="glass"] .gl-b3{--gx:260px;--gy:1060px;--gs:500px;--gc:rgba(255,194,156,.74)}    /* 杏色 */
+.bg[data-scene="glass"] .gl-b4{--gx:960px;--gy:700px;--gs:340px;--gc:rgba(236,176,236,.46)}     /* 一抹淡紫，透过玻璃中段 */
+.bg[data-scene="glass"] .gl-b5{--gx:-60px;--gy:420px;--gs:300px;--gc:rgba(150,206,255,.5)}      /* 左侧天蓝 */
+/* 两颗光亮的小球：边缘清楚，半藏在玻璃后面，折射靠它们看出来 */
+.bg[data-scene="glass"] .gl-o1{--gx:1330px;--gy:398px;--gs:84px;background:radial-gradient(circle at 34% 30%,#fff 0,#EEF2FF 16%,#C3D1FF 55%,#94ABFF 100%)}
+.bg[data-scene="glass"] .gl-o2{--gx:200px;--gy:1008px;--gs:108px;background:radial-gradient(circle at 34% 30%,#fff 0,#FFF0E6 16%,#FFCDB3 55%,#FFA285 100%)}
+
+/* 正文：黑体，字距拉开一点 */
+[data-scene="glass"].slide{letter-spacing:.01em}
+
+/* =====================================================================
+   玻璃层 <gl-glass>：几乎无色的厚玻璃（降级样子：轻模糊 + 加宽的边缘光；折射由 glass.js 另起的样式表盖上去）
+   面上的几层：跟着鼠标的一团柔光（悬停时亮）、上亮下淡的一层白、便签颜色的淡淡底色
+   ===================================================================== */
+[data-scene="glass"] gl-glass{position:absolute;inset:0;z-index:-1;display:block;margin:0;pointer-events:none;
+  border-radius:var(--gl-rx,var(--gl-r,40px))/var(--gl-ry,var(--gl-r,40px));
+  -webkit-backdrop-filter:blur(10px) saturate(170%);backdrop-filter:blur(10px) saturate(170%);
+  background:
+    radial-gradient(380px circle at var(--mx,50%) var(--my,50%),rgba(255,255,255,calc(.55 * var(--gl-h))),rgba(255,255,255,0) 62%),
+    linear-gradient(180deg,rgba(255,255,255,.28) 0%,rgba(255,255,255,.08) 48%,rgba(255,255,255,.05) 100%),
+    linear-gradient(var(--gl-tint,rgba(255,255,255,0)),var(--gl-tint,rgba(255,255,255,0)));
+  box-shadow:var(--gl-shadow),var(--gl-flat)}
+/* 斜向的边缘高光：左上最亮、右下次亮，中段几乎没有——像光从左上打在厚玻璃的圆边上 */
+[data-scene="glass"] gl-glass::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:2px;pointer-events:none;
+  background:linear-gradient(135deg,#fff 0%,rgba(255,255,255,.35) 16%,rgba(255,255,255,0) 36%,rgba(255,255,255,0) 64%,rgba(255,255,255,.4) 86%,rgba(255,255,255,.95) 100%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+/* 悬停：边缘那一圈在鼠标附近亮起来 */
+[data-scene="glass"] gl-glass::after{content:"";position:absolute;inset:0;border-radius:inherit;padding:2px;pointer-events:none;opacity:var(--gl-h);
+  background:radial-gradient(240px circle at var(--mx,50%) var(--my,50%),#fff,rgba(255,255,255,0) 72%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  [data-scene="glass"] gl-glass{background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.56))}
+}
+/* 便签颜色：只给玻璃一层很淡的底色（光斑的那几种颜色） */
+[data-scene="glass"] .t-yellow,[data-scene="glass"] .t-peach{--gl-tint:rgba(255,194,156,.2)}
+[data-scene="glass"] .t-mint{--gl-tint:rgba(118,224,212,.18)}
+[data-scene="glass"] .t-blue{--gl-tint:rgba(150,172,255,.2)}
+[data-scene="glass"] .t-pink{--gl-tint:rgba(236,176,236,.2)}
+[data-scene="glass"] .t-white{--gl-tint:rgba(255,255,255,.3)}
+
+/* 有玻璃的组件：自己不画底色、边框、投影（都在玻璃层上），自成一层让玻璃垫在字下面；现代风格不歪 */
+[data-scene="glass"] :is(.card,.cell,.term,.shot,.steps>li){--gl-h:0;isolation:isolate;border:0;background:none;box-shadow:none;rotate:none;
+  transition:translate .4s var(--gl-jelly),--gl-h .4s}
+/* 步骤的每一项本来不定位；用 :where 不加优先级，不盖过 .abs */
+[data-scene="glass"] :where(.steps>li){position:relative}
+[data-scene="glass"] :is(.tag,.quote,.copy){rotate:none}
+
+/* 悬停：玻璃轻轻浮起（果冻般的缓动），面上的柔光和边缘光跟着鼠标走（位置由 glass.js 写） */
+@media (hover:hover){
+  [data-scene="glass"] :is(.card,.cell,.term,.shot,.steps>li):hover{--gl-h:1;translate:0 -5px}
+}
+
+/* 讲过的拍：带玻璃的块不整体变淡（会让玻璃失去折射），改成玻璃里的字、序号变淡，玻璃本身淡一点；鼠标移上去亮回来 */
+[data-scene="glass"] .past:has(gl-glass){opacity:1}
+[data-scene="glass"] .past gl-glass{opacity:.8;transition:opacity .45s ease}
+[data-scene="glass"] :is(.past:is(.card,.cell,.term,.shot,.steps>li),.past :is(.card,.cell,.term,.shot,.steps>li))>:not(gl-glass),
+[data-scene="glass"] :is(.past:is(.steps>li),.past .steps>li)::before,
+[data-scene="glass"] .past:has(gl-glass)>:not(gl-glass,:has(gl-glass)){opacity:var(--recede);transition:opacity .45s ease}
+@media (hover:hover){
+  [data-scene="glass"] :is(.card,.cell,.term,.shot,.steps>li):hover>:not(gl-glass),
+  [data-scene="glass"] .steps>li:hover::before{opacity:1}
+}
+/* 阅读模式里所有拍都摆出来，讲过的拍不变淡（和引擎的 body.reading .slide .past 一致） */
+[data-scene="glass"]:is(.reading *) :is(.past:is(.card,.cell,.term,.shot,.steps>li),.past :is(.card,.cell,.term,.shot,.steps>li))>:not(gl-glass),
+[data-scene="glass"]:is(.reading *) :is(.past:is(.steps>li),.past .steps>li)::before,
+[data-scene="glass"]:is(.reading *) .past:has(gl-glass)>:not(gl-glass,:has(gl-glass)),
+[data-scene="glass"]:is(.reading *) .past gl-glass{opacity:1}
+
+/* =====================================================================
+   主题行：一枚玻璃胶囊（玻璃层由 glass.js 插进来），章节、主题都在里面
+   ===================================================================== */
+[data-scene="glass"] .s-topic{--gl-r:999px;--gl-h:0;top:20px;height:56px;padding:0 28px;gap:12px;isolation:isolate;letter-spacing:.02em}
+[data-scene="glass"] .s-topic .tc{padding:0;font:500 26px/1.2 var(--f-hand);color:var(--ink-2)}
+[data-scene="glass"] .s-topic .ts{font:500 26px/1 var(--f-hand);color:var(--accent)}
+[data-scene="glass"] .s-topic .tt{font:600 28px/1.2 var(--f-hand);color:var(--ink)}
+
+/* 大标题、解释句、金句 */
+[data-scene="glass"] .s-title{font-weight:800;letter-spacing:.02em;color:var(--ink)}
+[data-scene="glass"] .explain{padding-left:26px;color:var(--ink-2)}
+[data-scene="glass"] .explain::before{width:8px;top:.16em;bottom:.1em;border-radius:4px;background:linear-gradient(180deg,#8FA8FF,#2B5CFF);box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 4px 10px -3px rgba(43,92,255,.55)}
+[data-scene="glass"] .explain b{color:var(--ink)}
+[data-scene="glass"] .muted{color:var(--ink-2)}
+[data-scene="glass"] .faint{color:var(--ink-3)}
+[data-scene="glass"] .c-mark{color:var(--accent)}
+[data-scene="glass"] .quote{font-weight:800;letter-spacing:.02em;color:var(--ink)}
+
+/* =====================================================================
+   重点词：被一枚小玻璃胶囊包住，字像在透镜下放大一点、变蓝；胶囊果冻般地弹开，一道反光扫过
+   引擎在那一拍把 --k 从 0 推到 1：胶囊的大小、字的颜色、反光的位置都按 --k 算
+   ===================================================================== */
+[data-scene="glass"] .key{margin:0 .16em;padding:0 .12em;color:var(--accent);scale:calc(1 + .05 * var(--k))}
+[data-scene="glass"] .s-title .key{font-weight:800}
+/* 胶囊：先从一个扁点长开（不支持三角函数的浏览器就是直接长开，没有回弹） */
+[data-scene="glass"] .key::before{content:"";position:absolute;z-index:-1;left:-.1em;right:-.1em;top:.04em;bottom:-.02em;border-radius:999px;pointer-events:none;
+  background:var(--gl-cap);box-shadow:var(--gl-cap-shadow);
+  opacity:min(1,calc(var(--k) * 4));scale:calc(.1 + .9 * var(--k)) calc(.55 + .45 * var(--k))}
+/* 反光：--k 走过后一半时从左扫到右，扫完就出了胶囊 */
+[data-scene="glass"] .key::after{content:"";position:absolute;z-index:-1;left:-.1em;right:-.1em;top:.04em;bottom:-.02em;border-radius:999px;pointer-events:none;
+  background:linear-gradient(100deg,rgba(255,255,255,0) 30%,rgba(255,255,255,.95) 50%,rgba(255,255,255,0) 70%) no-repeat;
+  background-size:300% 100%;background-position:calc((1 - clamp(0, (var(--k) - .5) * 2, 1)) * 100%) 0;
+  opacity:min(1,calc(var(--k) * 4))}
+@supports (scale:cos(0)){
+  /* 果冻回弹：1 −（1−k）³·cos(3πk)，先冲过头再晃回来 */
+  [data-scene="glass"] .key::before{
+    scale:calc(.1 + .9 * (1 - (1 - var(--k)) * (1 - var(--k)) * (1 - var(--k)) * cos(var(--k) * 540deg)))
+          calc(.55 + .45 * (1 - (1 - var(--k)) * (1 - var(--k)) * (1 - var(--k)) * cos(var(--k) * 540deg)))}
+}
+@supports (color:color-mix(in srgb,red 50%,blue)){
+  /* 字的颜色从周围的颜色过渡到海蓝 */
+  [data-scene="glass"] .key{color:color-mix(in srgb,var(--accent) calc(var(--k) * 100%),var(--key-ink))}
+}
+
+/* =====================================================================
+   卡片：大圆角的厚玻璃；上沿的标签是一枚小胶囊；清单的圆点是一颗颗小玻璃珠
+   ===================================================================== */
+[data-scene="glass"] .card{--gl-r:44px;padding:34px 42px 36px;color:var(--card-ink)}
+[data-scene="glass"] .card::before{content:none}
+[data-scene="glass"] .card h3{font-weight:700;color:var(--ink)}
+[data-scene="glass"] .card :is(p,li){color:var(--ink-2)}
+[data-scene="glass"] .card li::before{left:.1em;top:.56em;width:12px;height:12px;border-radius:50%;rotate:none;opacity:1;
+  background:radial-gradient(circle at 35% 30%,#fff 0,#C3D1FF 45%,#2B5CFF 100%);box-shadow:0 2px 5px -1px rgba(43,92,255,.45)}
+[data-scene="glass"] .lab{top:-26px;padding:5px 22px 7px;border-radius:999px;background:var(--gl-cap);box-shadow:var(--gl-cap-shadow);color:var(--ink-2);font-weight:600;letter-spacing:.04em}
+
+/* ---------- 带序号的步骤：每一项一块玻璃；竖排是胶囊（样页那三块），横排是大圆角；序号是一颗玻璃珠 ---------- */
+[data-scene="glass"] .steps>li{--gl-r:999px;padding:24px 72px 26px 44px}
+[data-scene="glass"] .steps.h>li{--gl-r:48px;padding:30px 34px 32px 30px}
+[data-scene="glass"] .steps>li::before{width:60px;height:60px;border:0;border-radius:50%;font:700 30px/1 var(--f-hand);color:var(--accent);
+  background:var(--gl-cap);box-shadow:var(--gl-cap-shadow);
+  opacity:min(1,calc(var(--gl-in,1) * 2));scale:var(--gl-in,1)}
+[data-scene="glass"] .steps>li>b{font-weight:700;color:var(--ink)}
+[data-scene="glass"] .steps>li>span{color:var(--ink-2)}
+
+/* ---------- 左右对比：中间的符号放在一颗玻璃珠里 ---------- */
+[data-scene="glass"] .vs::before{width:96px;height:96px;display:grid;place-items:center;border-radius:50%;font:700 46px/1 var(--f-hand);color:var(--accent);
+  background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.2));box-shadow:var(--gl-shadow);
+  -webkit-backdrop-filter:blur(6px) saturate(160%);backdrop-filter:blur(6px) saturate(160%);
+  opacity:min(1,calc(var(--gl-in,1) * 2));scale:var(--gl-in,1)}
+
+/* ---------- 一排小格：小块厚玻璃；AI 做的带一点长春花蓝，需要人的带一点杏色和一颗杏色玻璃珠，不用了的变淡 ---------- */
+[data-scene="glass"] .cell{--gl-r:32px;padding:26px 16px 24px}
+[data-scene="glass"] .cell>i{color:var(--ink-3);font-weight:500}
+[data-scene="glass"] .cell>b{font-weight:700;color:var(--ink)}
+[data-scene="glass"] .cell>span{color:var(--ink-2)}
+[data-scene="glass"] .cell.ai{--gl-tint:rgba(150,172,255,.24)}
+[data-scene="glass"] .cell.ai>b{color:#1E46D8}
+[data-scene="glass"] .cell.human{--gl-tint:rgba(255,194,156,.28)}
+[data-scene="glass"] .cell.human::after{top:14px;right:16px;width:16px;height:16px;background:radial-gradient(circle at 35% 30%,#fff 0,#FFD3B8 40%,#EE8A4E 100%);
+  box-shadow:0 3px 6px -2px rgba(200,100,40,.5);opacity:min(1,calc(var(--gl-in,1) * 2));scale:var(--gl-in,1)}
+[data-scene="glass"] .cell.idle,[data-scene="glass"] .cell.idle>:is(b,span){color:var(--idle)}
+[data-scene="glass"] .cell.idle>b{text-decoration-thickness:2px}
+[data-scene="glass"] .cell.idle gl-glass{opacity:.6}
+
+/* ---------- 标签：近白的小玻璃胶囊，海蓝字 ---------- */
+[data-scene="glass"] .tag{padding:6px 22px 8px;border:0;border-radius:999px;background:var(--gl-cap);box-shadow:var(--gl-cap-shadow);color:var(--accent);font-weight:600;letter-spacing:.04em}
+
+/* ---------- 终端：一块透明的厚玻璃，标题栏三颗彩色玻璃珠，等宽深墨字，提示符用海蓝 ---------- */
+[data-scene="glass"] .term{--gl-r:36px;padding:0 0 28px;overflow:visible;color:var(--ink);font-weight:500}
+[data-scene="glass"] .term-bar{height:52px;margin-bottom:18px;padding:0 28px;background:none;box-shadow:inset 0 -1px 0 rgba(255,255,255,.62),0 1px 0 rgba(28,52,130,.07);
+  font:500 24px/1 var(--f-mono);color:var(--ink-3)}
+[data-scene="glass"] .term-bar i{width:14px;height:14px;background:radial-gradient(circle at 35% 30%,#fff 0,#FFD3B8 40%,#F2955E 100%);box-shadow:0 2px 4px -1px rgba(24,44,110,.3)}
+[data-scene="glass"] .term-bar i:nth-child(2){background:radial-gradient(circle at 35% 30%,#fff 0,#F4CDF4 40%,#D98BDB 100%)}
+[data-scene="glass"] .term-bar i:nth-child(3){background:radial-gradient(circle at 35% 30%,#fff 0,#BDF1EA 40%,#3FC2B2 100%)}
+[data-scene="glass"] .term p{padding:0 34px}
+[data-scene="glass"] .term .in::before,[data-scene="glass"] .term .cc::before{color:var(--accent)}
+[data-scene="glass"] .term .dim{color:var(--ink-3)}
+[data-scene="glass"] .term .ok{color:#0D7F72}
+[data-scene="glass"] .term .warn{color:#B9581C}
+[data-scene="glass"] .term .hi{color:var(--accent)}
+
+/* ---------- 一行可复制的命令：乳白的玻璃按钮，一团柔光跟着鼠标；悬停浮起、一圈海蓝 ---------- */
+[data-scene="glass"] .copy{height:72px;padding:0 24px 0 30px;border-radius:999px;color:var(--ink);font:600 var(--fs-min)/1 var(--f-mono);
+  background:radial-gradient(160px circle at var(--mx,50%) var(--my,0%),rgba(255,255,255,.7),rgba(255,255,255,0) 70%),linear-gradient(180deg,rgba(255,255,255,.88),rgba(255,255,255,.5));
+  box-shadow:inset 0 1.5px 0 #fff,inset 0 -4px 10px -2px rgba(28,52,130,.1),0 0 0 1px rgba(17,20,27,.07),0 12px 22px -14px rgba(24,44,110,.45);
+  transition:translate .35s var(--gl-jelly),box-shadow .3s,background-color .3s}
+[data-scene="glass"] .copy .ps{color:var(--ink-3);opacity:1}
+[data-scene="glass"] .copy .ic{width:30px;height:30px;background:var(--accent);opacity:1}
+@media (hover:hover){
+  [data-scene="glass"] .copy:hover{translate:0 -3px;box-shadow:inset 0 1.5px 0 #fff,inset 0 -4px 10px -2px rgba(28,52,130,.1),0 0 0 1.5px rgba(43,92,255,.34),0 18px 26px -14px rgba(24,44,110,.5)}
+}
+[data-scene="glass"] .copy:focus-visible{outline:3px solid rgba(43,92,255,.5);outline-offset:4px}
+/* 复制成功：复制图标换成对勾 */
+[data-scene="glass"] .copy.is-copied .ic{
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.6 4.5L19 7.5'/%3E%3C/svg%3E");
+          mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.6 4.5L19 7.5'/%3E%3C/svg%3E")}
+
+/* 「已复制」：一颗小液滴从命令那一端被拉出来，长成一枚小胶囊（出场见 glass.js 的 copied） */
+[data-scene="glass"] .copied-tip{height:56px;padding:0 20px 0 14px;gap:6px;border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,.95),rgba(226,236,255,.66));
+  box-shadow:inset 0 1.5px 0 #fff,inset 0 -5px 10px -2px rgba(43,92,255,.14),0 0 0 1.5px rgba(43,92,255,.24),0 12px 22px -12px rgba(43,92,255,.55);
+  color:var(--accent);font:700 28px/1 var(--f-hand)}
+[data-scene="glass"] .copied-tip svg{width:30px;height:26px}
+[data-scene="glass"] .copied-tip path{stroke-width:4.6}
+
+/* ---------- 截图位：厚玻璃相框、大圆角的图，不贴胶带 ---------- */
+[data-scene="glass"] .shot{--gl-r:36px;padding:14px}
+[data-scene="glass"] .shot::before{content:none}
+[data-scene="glass"] .shot-img{border-radius:24px;background:#E4EAF4}
+[data-scene="glass"] .shot figcaption{padding:14px 8px 6px;font:500 var(--fs-min)/1.3 var(--f-hand);color:var(--ink-2)}
+[data-scene="glass"] .shot-miss{font:500 30px/1.4 var(--f-hand);color:var(--ink-3);background:repeating-linear-gradient(-45deg,#EAF0F8 0 14px,#E1E8F3 14px 28px)}
+[data-scene="glass"] .shot-miss small{color:#8F98AD}
+[data-scene="glass"] .shot-zoom{right:28px;top:28px;padding:8px 16px 9px;background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(255,255,255,.62));box-shadow:inset 0 1px 0 #fff,0 6px 14px -8px rgba(24,44,110,.5);color:var(--ink-2);font-family:var(--f-hand)}
+
+/* ---------- 线稿与圈注：线几乎是直的（glass.js 的 rough 把粗糙度压低），圈注是海蓝，压一层白光像玻璃棒 ---------- */
+.slide.active[data-scene="glass"] svg.marks g{filter:drop-shadow(0 0 3px rgba(255,255,255,.95))}
+
+/* ---------- 形象：一点偏蓝的柔和投影；说的话是和「已复制」同一种小胶囊 ---------- */
+[data-scene="glass"] .mascot{--mascot-outline:#FFFFFF;--mascot-shadow:drop-shadow(0 8px 10px rgba(30,66,170,.2))}
+[data-scene="glass"] .mascot-say{padding:9px 22px 11px;border-radius:999px;color:var(--ink);font-family:var(--f-hand);font-weight:600;
+  background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(232,240,255,.82));box-shadow:inset 0 1.5px 0 #fff,0 0 0 1.5px rgba(43,92,255,.22),0 12px 22px -12px rgba(43,92,255,.5)}
+[data-scene="glass"] .mascot-say::after{background:rgba(236,242,255,.96);border-right:1.5px solid rgba(43,92,255,.22);border-bottom:1.5px solid rgba(43,92,255,.22)}
+
+/* 点击处漾开一圈很淡的水纹（glass.js 的 ripple 放进内容下面的涟漪层） */
+[data-scene="glass"] .gl-ripple{position:absolute;left:0;top:0;width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:50%;pointer-events:none;
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.9),inset 0 0 14px rgba(255,255,255,.55),0 0 0 1px rgba(43,92,255,.08)}
+
+/* =====================================================================
+   常驻信息：章节、页码、节拍指示（右上一枚玻璃胶囊，左边「第 n 拍 / 共 m 拍」，右边一排小圆点，
+   当前那颗点上停着一颗放大镜似的小液滴，换拍时滑过去），计时
+   ===================================================================== */
+#stage[data-scene="glass"] .chap span{font:500 26px/1.2 var(--f-hand);color:var(--ink-3);letter-spacing:.04em}
+#stage[data-scene="glass"] .meta{top:20px;gap:22px;font:500 24px/1 var(--f-hand);color:var(--ink-3)}
+#stage[data-scene="glass"] .pageno{color:var(--ink-3)}
+#stage[data-scene="glass"] .pageno b{color:var(--ink-2);font-weight:700}
+#stage[data-scene="glass"] .meter{--gl-r:999px;--gl-h:0;position:relative;isolation:isolate;flex-direction:row-reverse;height:56px;padding:0 28px 0 26px;gap:24px;color:var(--ink-2)}
+#stage[data-scene="glass"] .meter .dots{gap:22px}
+#stage[data-scene="glass"] .dots i{width:14px;height:14px;border-radius:50%;box-shadow:inset 0 0 0 2px rgba(17,20,27,.28);transition:background-color .3s,box-shadow .3s,scale .3s}
+#stage[data-scene="glass"] .dots i.on{background:var(--accent);box-shadow:none}
+/* 没有折射时（降级）：当前那颗点放大一点代替放大镜 */
+#stage[data-scene="glass"] .dots i.now{scale:1.35}
+#stage[data-scene="glass"] .meter .ml{white-space:nowrap}
+#stage[data-scene="glass"] .meter .ml b{display:inline-block;color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums;animation:gl-roll .42s var(--gl-jelly)}
+/* 换拍时引擎会重写拍号，新拍号从下面弹上来（只播一次） */
+@keyframes gl-roll{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+/* 放大镜小液滴（glass.js 放进节拍胶囊、按当前那颗点摆好位置） */
+#stage[data-scene="glass"] .gl-drop{position:absolute;left:0;top:0;z-index:1;width:52px;height:40px;border-radius:999px;pointer-events:none;opacity:0;
+  background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.06));
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.95),inset 0 -1px 0 rgba(255,255,255,.5),inset 0 -8px 12px -8px rgba(24,44,110,.25),0 8px 16px -8px rgba(24,44,110,.45)}
+#stage[data-scene="glass"] .gl-drop::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1.2px;pointer-events:none;
+  background:linear-gradient(135deg,#fff 0%,rgba(255,255,255,.35) 16%,rgba(255,255,255,0) 36%,rgba(255,255,255,0) 64%,rgba(255,255,255,.4) 86%,rgba(255,255,255,.95) 100%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+#stage[data-scene="glass"] .timer{font:500 24px/1 var(--f-mono);color:var(--ink-3)}
