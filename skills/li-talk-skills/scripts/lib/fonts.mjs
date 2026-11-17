@@ -60,8 +60,10 @@ export function buildCss(manifest, prefix = '') {
   const head = `/* 霞鹜文楷完整字体（${manifest.package}@${manifest.version}，常规和粗体）。` +
     '按 unicode-range 切块，浏览器只下载页面上用到的字所在的块。' +
     `SIL OFL 1.1 许可，见 ${LICENSE}。本文件由 fonts 命令生成，不要手改。 */\n`;
+  // 粗体声明成 500–900：页面里写 500、600 的字也用粗体，和旧引擎的效果一致；常规只管 400 以下
+  const weightOf = w => (w >= 700 ? '500 900' : String(w));
   return head + manifest.files.map(f =>
-    `@font-face { font-family: "${family}"; font-style: normal; font-weight: ${f.weight}; font-display: swap; ` +
+    `@font-face { font-family: "${family}"; font-style: normal; font-weight: ${weightOf(f.weight)}; font-display: swap; ` +
     `src: url("${prefix}${fileName(f.path)}") format("woff2"); unicode-range: ${f.range}; }`,
   ).join('\n') + '\n';
 }

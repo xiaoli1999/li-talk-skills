@@ -146,7 +146,7 @@ test('installFonts：缓存完整时复制全部切块并写 wenkai.css', () => 
   assert.ok(existsSync(join(fonts, 'OFL-LXGW-WenKai.txt')));
   const css = readFileSync(join(fonts, 'wenkai.css'), 'utf8');
   assert.match(css, /url\("wenkai\/a-400\.woff2"\)/);
-  assert.match(css, /font-weight: 700/);
+  assert.match(css, /font-weight: 500 900/);   // 粗体覆盖 500–900，和旧引擎一致
 });
 
 test('fonts --into：下载完整后装进课件，并把 index.html 改用 wenkai.css', async () => {
