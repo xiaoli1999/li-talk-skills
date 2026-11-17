@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="li-talk-engine" content="{{VERSION}}">
+<meta name="li-talk-mascot" content="{{MASCOT}}">
+<title>{{TITLE}}</title>
+<script>/* 自检用：记下页面里的报错和加载失败 */window.__deckErrors=[];addEventListener('error',function(e){var t=e.target;__deckErrors.push(t&&t!==window&&(t.src||t.href)?'加载失败：'+(t.src||t.href):String(e.message))},true);(function(c){var o=c.error;c.error=function(){__deckErrors.push([].slice.call(arguments).join(' '));return o.apply(c,arguments)}})(console);</script>
+<link rel="stylesheet" href="vendor/fonts/{{FONT_CSS}}">
+<link rel="stylesheet" href="engine/engine.css">
+{{SCENE_CSS}}
+<!-- 章节样式（开始） -->
+<link rel="stylesheet" href="slides/ch1.css">
+<!-- 章节样式（结束） -->
+</head>
+<body class="loading">
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/rough.min.js"></script>
+<script src="engine/core.js"></script>
+<script src="engine/build.js"></script>
+<script src="engine/beats.js"></script>
+<script src="engine/mascot.js"></script>
+<script src="engine/pages.js"></script>
+<script src="engine/ui.js"></script>
+<script src="engine/presenter.js"></script>
+<script src="engine/selftest.js"></script>
+{{SCENE_JS}}
+{{MASCOT_JS}}
+<!-- 章节（开始）：页面顺序 = 引入顺序；新增一章就在这里和上面的章节样式里各加一行 -->
+<script src="slides/ch1.js"></script>
+<!-- 章节（结束） -->
+</body>
+</html>
