@@ -1,0 +1,12 @@
+/* 测试课件：故意写错的样式 */
+.card { color: red }
+[data-id="p4"] .ok,
+.loose { color: blue }
+@media (max-width: 800px) {
+  .in-media { color: green }
+}
+@keyframes spin { from { transform: rotate(0) } to { transform: rotate(360deg) } }
+[data-id="p4"] .bg { background: url(https://example.com/bg.png) }
+.x:not([data-id="p1"]) { color: red }
+:is([data-id="p1"], .other) .y { color: red }
+.z [data-id="p1"] { color: red }

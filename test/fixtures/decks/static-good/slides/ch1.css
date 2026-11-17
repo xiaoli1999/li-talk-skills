@@ -1,0 +1,18 @@
+/* 测试课件：每条选择器都以 [data-id="…"] 开头；@media 里的照样限定，@keyframes 不查 */
+[data-id="p1"] .p1-sub { font-size: 48px }
+[data-id="p2"] .card,
+[data-id="p2"] .code:is(.a, .b) { color: var(--ink) }
+[data-id="p2"] .shot::after {
+  content: "{ 不是块 }";
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3C/svg%3E") center/contain no-repeat;
+}
+/* 也算限定了页面：第一个复合选择器里有 [data-id=…]，或者 :is() 里每一项都限定了 */
+.wide[data-id="p2"] .card { padding: 8px }
+:is([data-id="p1"], [data-id="p3"]) .abs { color: inherit }
+@media (max-width: 800px) {
+  [data-id="p3"] .p3-bye { font-size: 40px }
+}
+@keyframes p3-wave {
+  from { opacity: 0 }
+  to { opacity: 1 }
+}
