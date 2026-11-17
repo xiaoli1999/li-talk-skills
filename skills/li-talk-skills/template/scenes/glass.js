@@ -402,7 +402,7 @@
     enter: 'float',
     enterBy: BY,
     titleIn: 'float',
-    recede: .56,
+    recede: .8,
     rough: { strokeWidth: 3, roughness: .4, bowing: .3, markWidth: 3.5, markRoughness: .4, markBowing: .3 },   // 线稿和圈注都几乎是直的
     fx: FX,
 

@@ -405,7 +405,7 @@
     enter: 'yun',
     enterBy: BY,
     titleIn: 'yun',
-    recede: .58,
+    recede: .8,
     // 墨线：比铅笔粗一点、没那么潦草；圈注是朱笔（颜色在 ink.css 的 --mark）；
     // 填充线加粗（CSS 按线宽 4.5 认出填充线，改成淡墨）
     rough: { strokeWidth: 2.8, roughness: .9, bowing: .8, hachureGap: 7, hachureAngle: -60, fillWeight: 4.5, markWidth: 3.4, markRoughness: 1.2, markBowing: 1 },

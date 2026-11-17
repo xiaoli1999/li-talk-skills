@@ -12,7 +12,7 @@
      --cm-p 复制时命令被按下去多少、--cm-k 网点阴影浮出来的进度、--cm-d1…d4 四条墨线描到哪（这四个由 comic.js 推）
    - 卡片颜色：t-yellow / t-peach / t-pink 是朱红网点，t-blue / t-mint 是钴蓝网点，t-white 和不写是墨色网点；格子本身都是白的
    - 卡片的胶带 tape、图钉 pin 在这里不画（漫画格子不贴东西）
-   - --recede（讲过的拍变到多淡）由 comic.js 的 recede 写入（.5），这里不写
+   - --recede（讲过的拍变到多淡）由 comic.js 的 recede 写入（.8），这里不写
    ===================================================================== */
 
 /* 悬停抬起：注册成长度才能平滑过渡；要继承，画格子的伪元素才读得到（每个格子自己写 0px，里外两层格子不串） */
@@ -27,7 +27,7 @@
   /* 只有两个专色：黄、桃、粉都归到朱红，蓝、薄荷归到钴蓝（页面拿来当底色时是很淡的一层） */
   --t-yellow:#FBE4DA; --t-peach:#FBE4DA; --t-pink:#FBE4DA; --t-blue:#DDE9F5; --t-mint:#DDE9F5; --t-white:#FFFDF8;
   --term-bg:#FFFDF8; --term-ink:#16130F;
-  --human:#E2452A; --ai:#1D6CB4; --idle:#7A93AB;
+  --human:#E2452A; --ai:#1D6CB4; --idle:#5B7590;
   --sign-color:rgba(74,68,59,.72);
   --cm-warm:#E2452A; --cm-warm-ink:#C9381D; --cm-cool:#1D6CB4; --cm-pencil:#8CBBE2; --cm-white:#FFFDF8;
   /* 图（data URI）：四条毛笔墨线、三种网点、「已复制！」的爆炸气泡 */

@@ -7,7 +7,7 @@
    - ink.js 动画时写在元素上的变量：--ir 墨晕遮罩的半径（只在写着时加遮罩）、--ink-dp 步骤墨点洇开的进度、
      --ink-seg 竖笔写到哪、--ink-mx / --ink-my 鼠标在组件里的位置、--ink-press 题签被印压下去、--ink-glow 印泥洇开、
      --ink-tr / --ink-ox 翻页时新页洇开的半径和起点；重点词跟着引擎推的 --k 走
-   - --recede（讲过的拍变到多淡）由 ink.js 的 recede 写入：.58
+   - --recede（讲过的拍变到多淡）由 ink.js 的 recede 写入：.8
    - 自有版式组件（.ink-v 竖排、.ink-note 双行小注、.ink-box 框字、.ink-seal 朱印、.ink-tiqian 题签、.ink-scroll / .ink-col 手卷、
      .ink-frame 版框、.ink-wash / .ink-peaks 墨染的画、.steps.ink-cn / .ink-needle）的样子在文件末尾，用法见 ink.js 开头；
      它们动画时 ink.js 写的变量：--ink-xie 一个字写到哪、--ink-shou 退拍时收到哪、--ink-rule 乌丝栏画到哪、
@@ -26,7 +26,7 @@
   --t-yellow:#EFE6D2; --t-mint:#E8E5DB; --t-pink:#F3E9E2; --t-blue:#E4E2DC; --t-white:#FBF8F2; --t-peach:#F1E7D6;
   --term-bg:#F8F4EA; --term-ink:#1E1C19;
   /* 需要人：朱砂（只在小格角上一枚小印、图例圆点上出现）；自动：浓墨；不用管：淡墨 */
-  --human:#B8352B; --ai:#1E1C19; --idle:#9B9488;
+  --human:#B8352B; --ai:#1E1C19; --idle:#776F62;
   --sign-color:rgba(66,61,55,.72);
   --ink-zhu:#B8352B; --ink-paper2:#EAE2D0; --ink-ease:cubic-bezier(.2,.7,.2,1);
   /* 图（data URI，按样页的 SVG 生成）：宣纸纹、远山两层、点击的墨点、悬停的淡墨晕、飞白竖笔、步骤墨点 */

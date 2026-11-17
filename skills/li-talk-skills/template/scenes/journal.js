@@ -21,7 +21,7 @@
     mascot: 'diandian',       // 默认形象：点点（像素墨水瓶）
     enter: 'write',
     titleIn: 'write',
-    recede: .55,
+    recede: .8,
     ease: { write: 'power2.out' },
     rough: { strokeWidth: 2.4, roughness: 1.1, bowing: .8, hachureGap: 13, hachureAngle: -38, fillWeight: 3, markWidth: 3 },   // 细墨线，填充线疏一点
     fx: {

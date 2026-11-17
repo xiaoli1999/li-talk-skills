@@ -28,7 +28,7 @@
   --t-yellow:#FFEFC6; --t-mint:#E4E9F2; --t-pink:#FFE3DA; --t-blue:#E4E9F2; --t-white:#FFFFFF; --t-peach:#FFE3DA;
   --term-bg:#1F2A44; --term-ink:#F4F6FA;
   /* 「需要人」珊瑚，「AI」墨蓝，「不用管」淡灰 */
-  --human:#FF6B57; --ai:#3A4766; --idle:#A3ABBD;
+  --human:#FF6B57; --ai:#3A4766; --idle:#6F7890;
   --sign-color:rgba(75,86,114,.62);
   --scene-bg:#FFF9F2;
   /* 三组颜色：本色、浅一级（亮边）、深一级（暗部）、色面、色面里的受光圆 */
@@ -135,6 +135,9 @@
 /* 卡片上沿的小标签：一枚和卡片同组颜色的胶囊（白卡片用墨蓝） */
 [data-scene="flat"] .lab{top:-24px;padding:4px 22px 7px;border-radius:999px;background:var(--fl-b);color:var(--fl-on);font-weight:700;
   box-shadow:inset -3px -4px 0 var(--fl-bd),inset 2px 2px 0 var(--fl-bl),3px 4px 0 rgba(var(--fl-sc),.16)}
+/* 珊瑚色的小标签、标签胶囊底用深一档的珊瑚：白字在原来的珊瑚上对比度不到 3:1 */
+[data-scene="flat"] :is(.t-pink,.t-peach) .lab,[data-scene="flat"] .tag:is(.t-pink,.t-peach){background:#D9442F}
+[data-scene="flat"] .past :is(.t-pink,.t-peach) .lab,[data-scene="flat"] .past .tag:is(.t-pink,.t-peach),[data-scene="flat"] .past:is(.t-pink,.t-peach) .lab{background:#B5321F}
 
 /* ---------- 带序号的步骤：序号是一枚受光的圆片徽标（珊瑚、明黄、墨蓝轮换）；横排时每一步垫一块浅色色面 ---------- */
 [data-scene="flat"] .steps>li{transition:translate .35s var(--fl-pop)}
@@ -180,7 +183,7 @@
 [data-scene="flat"] .term p{padding:0 34px}
 [data-scene="flat"] .term .in::before{color:var(--fl-sun)}
 [data-scene="flat"] .term .cc::before{color:var(--fl-coral-l)}
-[data-scene="flat"] .term .dim{color:var(--ink-3)}
+[data-scene="flat"] .term .dim{color:#C3C9D6}
 [data-scene="flat"] .term .ok{color:var(--fl-sun-l)}
 [data-scene="flat"] .term .warn{color:var(--fl-coral-l)}
 [data-scene="flat"] .term .hi{color:var(--fl-sun)}

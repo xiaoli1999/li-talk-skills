@@ -266,7 +266,7 @@
     mascot: 'quanquan',
     enter: 'build',
     titleIn: 'build',
-    recede: .7,
+    recede: .8,
     // 线稿是白线、几乎是直的（制图），投影上要粗；斜线涂色的线宽 2.2（blueprint.css 按它认出填充线、改成浅青）；圈注是橙色粗线
     rough: { strokeWidth: 3.2, roughness: .75, bowing: .6, hachureGap: 9, hachureAngle: -45, fillWeight: 2.2, markWidth: 4.4, markRoughness: 1.1, markBowing: .9 },
     fx: FX,

@@ -41,7 +41,7 @@
     mascot: 'shasha',         // 默认形象：沙沙（一截白粉笔头，自带亮色，不用引擎描边）
     enter: 'write',
     titleIn: 'write',
-    recede: .74,
+    recede: .8,
     ease: { write: 'none' },   // 粉笔匀速写
     rough: { strokeWidth: 4, roughness: 1, bowing: .9, markWidth: 4.6 },   // 粗粉笔
     defs: `<filter id="chalk-text" x="-4%" y="-12%" width="108%" height="124%" color-interpolation-filters="sRGB">

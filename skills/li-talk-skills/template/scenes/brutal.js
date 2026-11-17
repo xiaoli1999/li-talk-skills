@@ -287,7 +287,7 @@
     enter: 'snap',
     enterBy: BY,
     titleIn: 'smash',
-    recede: .56,
+    recede: .8,
     // 线稿是几乎笔直的粗墨线；带填充色的图元，填充线加粗、间距小于线宽，叠成一整块色；圈注是粗粉线（CSS 再给它加一道硬投影）
     rough: { strokeWidth: 4.5, roughness: .3, bowing: .25, hachureGap: 5, hachureAngle: -41, fillWeight: 6, markWidth: 5, markRoughness: .55, markBowing: .5 },
     fx: FX,

@@ -301,7 +301,7 @@
     enter: 'typeset',
     enterBy: BY,
     titleIn: 'typeset',
-    recede: .58,
+    recede: .8,
     // 线稿是编辑随手画的墨线，圈注是一支橘红笔圈的，比线稿潦草一点
     rough: { strokeWidth: 2.6, roughness: .9, bowing: .8, markWidth: 4, markRoughness: 1.2, markBowing: 1 },
     fx: FX,

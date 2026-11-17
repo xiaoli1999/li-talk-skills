@@ -9,7 +9,7 @@
      几个量注册成长度、不继承：才能平滑过渡，也不会从外层组件漏进里面的组件
    - 卡片颜色 t-yellow / t-pink / t-blue 是卡片顶上那条色带（t-mint 归到蓝、t-peach 归到粉、t-white 是白色带）；
      重点词贴纸、步骤序号也取所在卡片的颜色 --tint
-   - --recede（讲过的拍变到多淡）由 brutal.js 的 recede 写入（.56），这里不写
+   - --recede（讲过的拍变到多淡）由 brutal.js 的 recede 写入（.8），这里不写
    ===================================================================== */
 
 @property --bz-s{syntax:"<length>";inherits:false;initial-value:0px}
@@ -160,7 +160,7 @@
 [data-scene="brutal"] .term p{padding:0 32px}
 [data-scene="brutal"] .term .in::before{color:var(--t-yellow)}
 [data-scene="brutal"] .term .cc::before{color:var(--t-pink)}
-[data-scene="brutal"] .term .dim{color:#A99F91}
+[data-scene="brutal"] .term .dim{color:#CFC6B8}
 [data-scene="brutal"] .term .ok{color:#9DBBFF}
 [data-scene="brutal"] .term .warn{color:var(--t-pink)}
 [data-scene="brutal"] .term .hi{color:var(--t-yellow)}

@@ -33,7 +33,7 @@
   --t-yellow:#F7EFDC; --t-mint:#DFE7DA; --t-pink:#F6E1D6; --t-blue:#E5EBE1; --t-white:#FBF8F0; --t-peach:#F4D9CA;
   --term-bg:#FBF8F0; --term-ink:#1C1A17;
   /* 「需要人」橘红、「AI」墨绿、「不用管」灰 */
-  --human:#E0532B; --ai:#1F4B3B; --idle:#9A9286;
+  --human:#E0532B; --ai:#1F4B3B; --idle:#756D61;
   --sign-color:rgba(28,26,23,.58);
   /* 极淡纸纹（背景和纸条共用，静态 SVG 噪点） */
   --mag-grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .2  0 0 0 0 .15  0 0 0 0 .08  0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.3'/%3E%3C/svg%3E");
@@ -85,6 +85,8 @@
 @supports (color:color-mix(in srgb,red 50%,blue)){
   [data-scene="magazine"] .key{color:color-mix(in srgb,var(--key-ink) clamp(0%,calc((var(--k) - .5) * 300%),100%),var(--mag-k0))}
 }
+/* 讲过退后（整块变淡）时，高亮换成深两档的橙：淡下来后看着还是原来的橙，白字仍看得清（对比度 3:1 以上） */
+[data-scene="magazine"] .past .key::before{background:#A33718}
 
 /* =====================================================================
    纸条：卡片、步骤的每一项、截图位、小格（纸白 + 纸纹 + 贴纸的影子；--mag-lf 是悬空的程度）

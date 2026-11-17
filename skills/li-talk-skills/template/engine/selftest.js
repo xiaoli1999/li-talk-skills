@@ -12,6 +12,9 @@
      mascot-cover 形象挡字（只量看得见的身子：SVG 里画出来的图形的外框并起来，不含画布四周的空白；说话时加上气泡）、
      zone 进了风格禁区、font-small 字太小、scrollbar 出滚动条、not-cleared 退回第 0 拍没收干净、
      console-error 控制台报错、deck-warn 引擎的 [Deck] 提醒、media-missing 图片视频加载失败、page-error onBeat 或建页出错；
+     可读性（都是提醒）：low-contrast 字和底的对比度不到 3:1（讲过退后变淡的也算；底色由风格底色和一层层祖先底色叠出来，
+     字身后是渐变或图片、渐变字这类判断不了的不查）、vertical-long 竖排一块超过 12 个字、
+     gone 某一拍出现的字到最后一拍看不见了（只显示最新一句的对话框之类；标了 data-transient 的过场字不算）；
      阅读模式（竖屏）只查 reading-overflow（这页比屏幕宽）、media-missing、console-error（和 page-error）
    - 同一页里同一个问题只在它第一次出现的那一拍报一次；字太小的同类元素（同样的标签、类名、字号）合成一条
    - 形象挡字、文字互相压只算看得见的部分：交叠宽高都不到 5px 的擦边不算形象挡字；
@@ -41,6 +44,9 @@
   const FONT_MIN = 34, FONT_SMALL = 24;          // 正文最小字号；标了 data-small 的最小字号
   const SEEN = .05;               // 累计不透明度低于它就算看不见
   const CORE = .9;                // 字身高 = 字号 × 0.9
+  const CONTRAST_MIN = 3;         // 字和底的对比度至少 3:1（课件的字都在 24px 以上，按大字的标准；讲过变淡的也算）
+  const VERTICAL_MAX = 12;        // 竖排一块最多 12 个字（不算标点）：再长就该横排
+  const VERTICAL_PAGE = 24;       // 一页里竖排的字加起来最多 24 个
 
   const FIX = {
     'out-of-stage': '把这块往里挪，或删减文字',
@@ -56,6 +62,9 @@
     'deck-warn': '按提醒里的说明改；确实不用改的，说明为什么',
     'media-missing': '检查文件名和路径，文件要放在课件目录里',
     'reading-overflow': '手机竖屏下这页太宽，检查写死的宽度',
+    'low-contrast': '字的颜色加深（或底色换浅/深），讲过的块不要淡到看不清：风格的 recede 不低于 .75，页面里别再给讲过的块另加透明度',
+    'vertical-long': '句子、说明改成横排；竖排只留给短标签、题签、印文和短诗句（一块不超过 12 个字）',
+    'gone': '讲过的要点留在页上（翻到最后一拍时整页信息完整）：别用只显示最新一句的对话框、会被换掉的气泡装要点；确实是过场的话，在这块上加 data-transient',
   };
   /* 这些地方的字不按字号查：主题行、署名、形象和气泡、引擎自己生成的界面小字
      （终端标题栏、截图位的「点开看大图」和「截图待补」占位、「已复制」提示） */
@@ -249,6 +258,106 @@
     return out;
   }
 
+  /* ---------- 可读性：颜色对比度 ----------
+     颜色一律折成 [r, g, b, a]（0–255，a 0–1）；读不懂的颜色（oklch 之类）返回 null，这段字就不查 */
+  function rgba(c) {
+    if (!c) return null;
+    let m = /^rgba?\(([^)]*)\)/.exec(c);
+    if (m) {
+      const v = m[1].split(/[\s,/]+/).filter(Boolean);
+      if (v.length < 3) return null;
+      const n = v.map((x, i) => parseFloat(x) * (/%$/.test(x) ? (i < 3 ? 2.55 : .01) : 1));
+      return n.slice(0, 3).some(isNaN) ? null : [n[0], n[1], n[2], v.length > 3 && !isNaN(n[3]) ? n[3] : 1];
+    }
+    m = /^color\(srgb\s+([^)]*)\)/.exec(c);
+    if (m) {
+      const v = m[1].split(/[\s/]+/).filter(Boolean).map(parseFloat);
+      return v.length < 3 || v.slice(0, 3).some(isNaN) ? null : [v[0] * 255, v[1] * 255, v[2] * 255, v.length > 3 && !isNaN(v[3]) ? v[3] : 1];
+    }
+    m = /^#([0-9a-f]{3,8})$/i.exec(c.trim());
+    if (m) {
+      let h = m[1];
+      if (h.length <= 4) h = h.split('').map(x => x + x).join('');
+      if (h.length !== 6 && h.length !== 8) return null;
+      const n = [0, 2, 4, 6].map(i => parseInt(h.slice(i, i + 2), 16));
+      return [n[0], n[1], n[2], h.length === 8 ? n[3] / 255 : 1];
+    }
+    return null;
+  }
+  const mix = (bg, fg, a) => [0, 1, 2].map(i => bg[i] * (1 - a) + fg[i] * a);
+  function lum(c) {
+    const f = v => { v /= 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); };
+    return .2126 * f(c[0]) + .7152 * f(c[1]) + .0722 * f(c[2]);
+  }
+  const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+  /* 风格的底色：--scene-bg 里最后一个颜色（前面是纹理、光斑，最后一层是底色），没有就用 --bg */
+  const baseCache = new Map();
+  function sceneBase(slide) {
+    const key = slide.dataset.scene || '';
+    if (baseCache.has(key)) return baseCache.get(key);
+    const cs = getComputedStyle(slide);
+    let c = null;
+    const all = String(cs.getPropertyValue('--scene-bg')).match(/#[0-9a-f]{3,8}\b|rgba?\([^)]*\)/gi);
+    if (all) c = rgba(all[all.length - 1]);
+    if (!c || c[3] < .85) c = rgba(String(cs.getPropertyValue('--bg')).trim());
+    const v = c && c[3] >= .85 ? c : null;
+    baseCache.set(key, v);
+    return v;
+  }
+  /* 这段字和它身后的底的对比度。身后的底：在字的中心点取叠在下面的元素（elementsFromPoint，含祖先和压在下面的兄弟块），
+     从风格底色开始一层层往上叠（各按自己累计的不透明度），字自己的底色、铺满它的 ::before/::after 色块（重点词的高亮块）也算。
+     判断不了的返回 null：渐变字（字是透明的、靠背景裁出来）、字身后有渐变或图片做底、颜色读不懂 */
+  const CONTENT_NONE = /^(none|normal)$/;
+  function layerColors(e, slide, out) {
+    const cs = getComputedStyle(e);
+    const c = rgba(cs.backgroundColor);
+    if (e !== slide && cs.backgroundImage && cs.backgroundImage !== 'none' && !(c && c[3] >= .85)) return false;
+    const op = opacity(e, slide);
+    if (c && c[3] > .02) out.push([c, Math.min(1, c[3] * op)]);
+    if (e === slide) return true;
+    const w = e.offsetWidth || 0, h = e.offsetHeight || 0;
+    for (const ps of ['::before', '::after']) {
+      const pc = getComputedStyle(e, ps);
+      if (CONTENT_NONE.test(pc.content) || pc.display === 'none') continue;
+      if (!(parseFloat(pc.width) >= w * .6 && parseFloat(pc.height) >= h * .5)) continue;   // 只算铺满大半个元素的色块（左边一道竖线之类不算）
+      const p = rgba(pc.backgroundColor);
+      if (pc.backgroundImage && pc.backgroundImage !== 'none' && !(p && p[3] >= .85)) return false;
+      if (p && p[3] > .02) out.push([p, Math.min(1, p[3] * op * (parseFloat(pc.opacity) || 0))]);
+    }
+    return true;
+  }
+  function contrastOf(t, slide, R) {
+    const base = sceneBase(slide);
+    if (!base) return null;
+    const cs = getComputedStyle(t.el);
+    const fill = rgba(cs.webkitTextFillColor || cs.color), col = rgba(cs.color);
+    if (!col || (fill && fill[3] < .05) || /text/.test(cs.backgroundClip || cs.webkitBackgroundClip || '')) return null;
+    // 叠在字下面的元素，从下往上
+    const r = t.rects.reduce((a, b) => (b.r - b.l > a.r - a.l ? b : a));
+    const hits = document.elementsFromPoint(R.x + (r.l + r.r) / 2 * R.k, R.y + (r.t + r.b) / 2 * R.k);
+    const at = hits.findIndex(e => e === t.el || t.el.contains(e));
+    let under;
+    if (at >= 0) under = hits.slice(at + 1).filter(e => (e === slide || slide.contains(e)) && !t.el.contains(e)).reverse();
+    else { under = []; for (let e = t.el.parentElement; e && e.nodeType === 1; e = e.parentElement) { under.unshift(e); if (e === slide) break; } }
+    under.push(t.el);
+    const layers = [];
+    for (const e of under) if (!layerColors(e, slide, layers)) return null;
+    let bg = base.slice(0, 3);
+    layers.forEach(([c, a]) => { bg = mix(bg, c, a); });
+    const a = col[3] * opacity(t.el, slide);
+    if (a < SEEN) return null;
+    const fg = mix(bg, col, a);
+    return { v: ratio(fg, bg), fg, bg };
+  }
+  /* 竖排的那一整块：往上找到最外层还是竖排的元素 */
+  const vertical = cs => /^(vertical|sideways)/.test(cs.writingMode || '');
+  function verticalRoot(el, slide) {
+    let root = null;
+    for (let e = el; e && e !== slide && e.nodeType === 1; e = e.parentElement) { if (vertical(getComputedStyle(e))) root = e; else if (root) break; }
+    return root;
+  }
+  const bare = s => String(s || '').replace(/[\s\p{P}\p{S}]/gu, '');
+
   /* ---------- 风格的禁区 ---------- */
   function zonesOf(p) {
     const zs = I.sc(p.scene).zones;
@@ -378,7 +487,30 @@
       return x.sum > ZONE_MIN ? { t, x } : null;
     })).forEach(({ t, x }) => add(`zone|${zi}|${uid(t.el)}`, issue('error', 'zone', p, n,
       `${label(t.el)}进了风格的禁区「${z.name}」（交叠约 ${size(x.box)}）`, { area: r1(x.sum), zone: z.name }))));
-    // 6. 字号：先攒着，一页量完再按「同样的元素、同样的字号」合成一条（一排 11 个编号不报 11 条）
+    // 6. 可读性：对比度（每拍都量，讲过退后变淡的也算）、竖排太长；同一段字只报一次
+    outer(ts.map(t => {
+      if (t.el.closest(FONT_FREE) || bare(t.el.textContent).length < 2) return null;
+      const c = contrastOf(t, slide, R);
+      return c && c.v < CONTRAST_MIN - .005 ? { t, c } : null;
+    })).forEach(({ t, c }) => {
+      const past = !!t.el.closest('.past');
+      add(`ctr|${uid(t.el)}`, issue('warn', 'low-contrast', p, n,
+        `${label(t.el)}${past ? '（讲过、已退后）' : ''}和底色的对比度只有 ${c.v.toFixed(1)}:1，要至少 ${CONTRAST_MIN}:1，后排看不清`, { ratio: Math.round(c.v * 10) / 10, past }));
+    });
+    ts.forEach(t => {
+      const root = verticalRoot(t.el, slide);
+      if (!root) return;
+      const len = bare(root.textContent).length;
+      if (fonts.vert && !fonts.vert.has(root)) fonts.vert.set(root, { len, beat: n });
+      if (len > VERTICAL_MAX) add(`vert|${uid(root)}`, issue('warn', 'vertical-long', p, n, `${label(root)}竖排了 ${len} 个字，超过 ${VERTICAL_MAX} 个字的句子竖着读很吃力`, { chars: len }));
+    });
+    // 7. 讲过的要点：记下这一拍看得见的字（一页量完再比，见 goneIssues）
+    if (fonts.said) ts.forEach(t => {
+      if (t.el.closest('.mascot-say, .kid-say, [data-transient]')) return;
+      const k = bare(t.el.textContent);
+      if (k.length >= 2) { const o = fonts.said.get(k); if (!o) fonts.said.set(k, { el: t.el, beat: n, last: n }); else o.last = n; }
+    });
+    // 8. 字号：先攒着，一页量完再按「同样的元素、同样的字号」合成一条（一排 11 个编号不报 11 条）
     ts.forEach(t => {
       if (t.el.closest(FONT_FREE) || fonts.seen.has(t.el)) return;
       // 截图的图注、小格里的编号属于注释类小字，和 data-small 一样允许到 24px（引擎默认 32px、28px）
@@ -390,6 +522,23 @@
       const g = fonts.groups.get(key);
       if (g) g.els.push(t.el); else fonts.groups.set(key, { small, fs, beat: n, els: [t.el] });
     });
+  }
+  /* 讲过的要点到最后一拍不见了：某一拍看得见的字，到最后一拍时页上找不到（也不在别的字里面），
+     比如只显示最新一句的对话框、被换掉的气泡；外层整段不见了的，里面的重点词不再单报 */
+  /* 一页里竖排的字加起来太多（每块都短、整页全是竖排，也一样难读）；块套块的只算最外层 */
+  function verticalTotal(p, fonts, issues) {
+    const roots = [...fonts.vert.keys()].filter(r => ![...fonts.vert.keys()].some(o => o !== r && o.contains(r)));
+    const sum = roots.reduce((s, r) => s + fonts.vert.get(r).len, 0);
+    if (sum > VERTICAL_PAGE && !roots.some(r => fonts.vert.get(r).len > VERTICAL_MAX)) {
+      issues.push(issue('warn', 'vertical-long', p, null, `这一页竖排的字加起来有 ${sum} 个（${roots.length} 块），超过 ${VERTICAL_PAGE} 个：整页竖着读很吃力`, { chars: sum, blocks: roots.length }));
+    }
+  }
+  function goneIssues(p, fonts, issues) {
+    const end = [...fonts.said.keys()].filter(k => fonts.said.get(k).last === p.total);
+    const lost = [...fonts.said.entries()].filter(([k, o]) => o.last < p.total && !end.some(e => e.includes(k)));
+    lost.filter(([, o]) => !lost.some(([, x]) => x !== o && x.el !== o.el && x.el.contains(o.el)))
+      .forEach(([, o]) => issues.push(issue('warn', 'gone', p, o.beat,
+        `第 ${o.beat} 拍出现的${label(o.el)}到最后一拍（第 ${p.total} 拍）看不见了：观众回头找不到这条要点`, { beat: o.beat, last: o.last })));
   }
   function fontIssues(p, fonts, issues) {
     fonts.groups.forEach(g => {
@@ -436,12 +585,14 @@
       const add = (key, it) => { if (!seen.has(key)) { seen.add(key); issues.push(it); } };
       enter(p);
       const first = { beats: new Set(laterBeats(p.el)), texts: new Set(texts(p.el, ref()).map(t => t.el)) };
-      const fonts = { seen: new Set(), groups: new Map() };
+      const fonts = { seen: new Set(), groups: new Map(), said: new Map(), vert: new Map() };
       measure(p, 0, add, fonts);
       for (let n = 1; n <= p.total; n++) { step(p, n, 1); measure(p, n, add, fonts); }
       for (let n = p.total - 1; n >= 0; n--) step(p, n, -1);
       cleared(p, first, add);
       fontIssues(p, fonts, issues);
+      goneIssues(p, fonts, issues);
+      verticalTotal(p, fonts, issues);
       scrollCheck();
       await sleep(0);   // 让一让主线程，脚本那边的轮询能插进来
     }

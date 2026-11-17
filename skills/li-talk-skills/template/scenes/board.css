@@ -4,7 +4,7 @@
    粉笔毛边用 board.js 的 defs 里的滤镜 #chalk-text
    ===================================================================== */
 
-/* 变量：深绿板面，只有白、黄两色粉笔（--recede 由 board.js 的 recede 写入：.74，投影上不发虚） */
+/* 变量：深绿板面，只有白、黄两色粉笔（--recede 由 board.js 的 recede 写入：.8，讲过的字仍要看得清） */
 [data-scene="board"]{
   --bg:#223D33; --ink:#F6F4EE; --ink-2:#C3CDC6; --ink-3:#8FA197; --line:#F6F4EE;
   --mark:#FFDC6A; --key-ink:#F6F4EE; --hl:#FFDC6A; --accent:#FFDC6A;

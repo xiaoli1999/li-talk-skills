@@ -22,7 +22,7 @@
     mascot: 'jianjian',       // 默认形象：尖尖（一截铅笔头）
     enter: 'rise',
     titleIn: 'write',
-    recede: .55,
+    recede: .8,
     rough: { strokeWidth: 2.6, roughness: 1.1, bowing: 1, markWidth: 3 },   // 墨线
     fx: {
       rise: { from: { autoAlpha: 0, y: 16 }, to: { autoAlpha: 1, y: 0 }, dur: .45, ease: 'power3.out' },   // 上浮得更轻

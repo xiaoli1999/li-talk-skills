@@ -185,7 +185,7 @@
     enter: 'mist',
     enterBy: BY,
     titleIn: 'mist',
-    recede: .58,
+    recede: .8,
     rough: { strokeWidth: 2.6, roughness: .35, bowing: .3, markWidth: 3, markRoughness: .4, markBowing: .3 },   // 线稿和圈注都几乎是直的
     fx: FX,
     // 背景层：四团柔光斑、两颗小球（位置和颜色在 frost.css）

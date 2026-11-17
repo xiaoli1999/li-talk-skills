@@ -303,7 +303,7 @@
     enter: 'ink',
     enterBy: { card: 'bloom', cell: 'bloom', copy: 'bloom', quote: 'bloom' },
     titleIn: 'letters',
-    recede: .58,
+    recede: .8,
     // 细铅笔线；填充线加粗、间距小于线宽，叠成一片水彩（CSS 按线宽 7.5 认出填充线、套水彩滤镜）
     rough: { strokeWidth: 2.2, roughness: 1, bowing: .9, hachureGap: 7, hachureAngle: -32, fillWeight: 7.5, markWidth: 3 },
     fx: { ink, bloom, letters },

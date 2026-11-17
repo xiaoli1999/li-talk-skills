@@ -782,7 +782,7 @@
     enter: 'pxtype',
     enterBy: BY,
     titleIn: 'pxtitle',
-    recede: .58,
+    recede: .8,
     // 线稿和圈注：粗糙度、弯曲度都是 0（直线、正圆），线宽一格；像素化交给 pixel.css 里套的 pixel-px 滤镜
     rough: { strokeWidth: 4, roughness: 0, bowing: 0, hachureGap: 8, hachureAngle: -45, fillWeight: 4, markWidth: 4, markRoughness: 0, markBowing: 0 },
     fx: FX,

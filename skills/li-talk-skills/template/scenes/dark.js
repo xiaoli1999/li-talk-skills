@@ -156,7 +156,7 @@
     enter: 'focus',
     enterBy: BY,
     titleIn: 'focus',
-    recede: .58,
+    recede: .8,
     rough: { strokeWidth: 2.6, roughness: .35, bowing: .3, markWidth: 3, markRoughness: .35, markBowing: .3 },   // 线稿和圈注都几乎是直的，投影上要够粗
     fx: FX,
     // 背景层：顶上一大团、右下一小团冷色光晕，标题后面一团柔光

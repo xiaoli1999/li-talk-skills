@@ -33,7 +33,7 @@
   --t-yellow:#FFF3BF; --t-mint:#D3F9D8; --t-pink:#FFE3E3; --t-blue:#D0EBFF; --t-white:#FFFFFF; --t-peach:#FFE8CC;
   --term-bg:#22252B; --term-ink:#ECE8E0;
   --human:#F76707; --ai:#2B8A3E; --idle:#9AA5B1;
-  --recede:.55;
+  --recede:.8;
   --scene-bg:#FAFAF8;
   --sign-color:rgba(0,0,0,.45);   /* 最后一页署名的颜色；深色底风格（dark: true）引擎默认改成半透明白，风格可在自己的 CSS 里再改 */
 }

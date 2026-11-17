@@ -223,7 +223,7 @@
     enter: 'spring',
     enterBy: BY,
     titleIn: 'chars',
-    recede: .58,
+    recede: .8,
     // 线稿几乎是直的粗线；圈注稍微带一点手感。带填充色的形状：填充线加粗、间距小于线宽，叠成一整块色面
     rough: { strokeWidth: 4, roughness: .3, bowing: .3, hachureGap: 6, hachureAngle: -41, fillWeight: 8, markWidth: 4.5, markRoughness: .5, markBowing: .5 },
     fx: FX,

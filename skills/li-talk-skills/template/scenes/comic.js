@@ -323,7 +323,7 @@
     enter: 'boing',
     enterBy: BY,
     titleIn: 'dash',
-    recede: .5,
+    recede: .8,
     // 线稿是毛笔墨线：比铅笔粗、没那么潦草；圈注是朱红笔（颜色在 comic.css 的 --mark）
     rough: { strokeWidth: 3.2, roughness: .75, bowing: .7, hachureGap: 7, fillWeight: 2.4, markWidth: 4.2, markRoughness: 1.1, markBowing: .9 },
     fx: FX,

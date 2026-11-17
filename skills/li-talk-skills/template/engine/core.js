@@ -126,6 +126,8 @@
     if (!o.label) { warn(`风格 ${key}：没写 label（给人看的名字），先叫它 ${key}`); o.label = key; }
     if (!FAMILY[o.family]) { warn(`风格 ${key}：family 只能是 hand（手绘）、modern（现代）、pixel（像素），这里是「${o.family}」，先按 modern 处理`); o.family = 'modern'; }
     if (o.recede != null && !(o.recede >= 0 && o.recede <= 1)) { warn(`风格 ${key}：recede 要在 0 到 1 之间，这里是 ${o.recede}，已忽略`); delete o.recede; }
+    // 讲过的字也要看得清：再淡，后排就看不见了
+    if (o.recede != null && o.recede < .75) { warn(`风格 ${key}：recede 不能低于 .75（讲过的字会淡到看不清），这里是 ${o.recede}，已按 .75`); o.recede = .75; }
     if (SCENES[key]) warn(`风格 ${key} 重复注册了，以后注册的为准`);
     SCENES[key] = o;
   }

@@ -9,7 +9,7 @@
    - 背景层里的天空、草坡由 watercolor.js 的 backdrop 生成；滤镜 #wc-wash 在 watercolor.js 的 defs 里
    ===================================================================== */
 
-/* 变量（--recede 由 watercolor.js 的 recede 写入：.58） */
+/* 变量（--recede 由 watercolor.js 的 recede 写入：.8） */
 [data-scene="watercolor"]{
   --bg:#FBF7EE; --ink:#3A322B; --ink-2:#4F463E; --ink-3:#8A7E71; --line:#5E564D;
   --mark:#4F8DBF; --key-ink:#3A322B; --hl:rgba(244,195,90,.58); --accent:#F4C35A;

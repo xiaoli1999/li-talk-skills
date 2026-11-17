@@ -21,7 +21,7 @@
     enter: 'drop',
     enterBy: { copy: 'print' },   // 命令条：标签机打字
     titleIn: 'fade',
-    recede: .6,
+    recede: .8,
     rough: { strokeWidth: 2.2, roughness: 1.3, bowing: 1.2, markWidth: 2.8 },   // 铅笔
     fx: {
       // 纸落得更像样页：起点低一点、回弹多一点
