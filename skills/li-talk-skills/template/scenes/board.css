@@ -41,7 +41,7 @@
 [data-scene="board"] .key{font-size:1.06em;padding-bottom:.14em;color:#F6F4EE;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20' preserveAspectRatio='none'%3E%3Cpath d='M3 7 C45 4 95 9 140 6 S185 5 197 7 M12 15 C60 13 120 16 188 14' fill='none' stroke='%23FFDC6A' stroke-width='3.2' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
   background-position:0 100%;background-size:calc(var(--k)*100%) .3em}
-[data-scene="board"] .key::after{content:attr(data-k);position:absolute;left:.1em;top:0;color:#FFDC6A;white-space:nowrap;pointer-events:none;
+[data-scene="board"] .key::after{content:attr(data-k);content:attr(data-k) / "";position:absolute;left:.1em;top:0;color:#FFDC6A;white-space:nowrap;pointer-events:none;
   -webkit-mask-image:linear-gradient(90deg,#000 calc(var(--k) * 110% - 10%),transparent calc(var(--k) * 110%));mask-image:linear-gradient(90deg,#000 calc(var(--k) * 110% - 10%),transparent calc(var(--k) * 110%))}
 
 /* 组件：粉笔框 */

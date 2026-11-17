@@ -18,6 +18,8 @@
 <link rel="stylesheet" href="scenes/desk.css">
 <link rel="stylesheet" href="scenes/watercolor.css">
 <link rel="stylesheet" href="scenes/ink.css">
+<link rel="stylesheet" href="scenes/blueprint.css">
+<link rel="stylesheet" href="scenes/comic.css">
 <link rel="stylesheet" href="scenes/dark.css">
 <link rel="stylesheet" href="scenes/frost.css">
 <link rel="stylesheet" href="scenes/glass.css">
@@ -40,13 +42,16 @@
 .gl-bar .gl-toggle{font-weight:700}
 .gl-bar .gl-list{display:flex;flex-wrap:wrap;align-items:center;gap:2px}
 .gl-bar .gl-fam{padding:0 2px 0 8px;color:rgba(233,235,238,.5);white-space:nowrap}
+.gl-bar .gl-fam::after{content:"："}
 .gl-bar .gl-hint{padding:0 8px 0 10px;color:rgba(233,235,238,.5);white-space:nowrap}
 .gl-bar.folded .gl-list,.gl-bar.folded .gl-hint{display:none}
-/* 13 个按钮：窗口不到 1600 宽时排紧一点、不显示「← → 翻页」，1280 宽时展开的小条也只占左边一排，不压右下角的署名 */
+/* 15 个按钮：窗口不到 1600 宽时排紧一点（字小一号、家名不带冒号、不显示「← → 翻页」），
+   1280 宽时展开的小条也只占左边一排，不压右下角的署名 */
 @media (max-width:1599px){
   .gl-bar{gap:2px;font-size:12px}
-  .gl-bar button{padding:6px 5px}
-  .gl-bar .gl-fam{padding:0 0 0 5px}
+  .gl-bar button{padding:6px 4px}
+  .gl-bar .gl-fam{padding:0 0 0 6px}
+  .gl-bar .gl-fam::after{content:none}
   .gl-bar .gl-hint{display:none}
 }
 </style>
@@ -68,6 +73,8 @@
 <script src="scenes/desk.js"></script>
 <script src="scenes/watercolor.js"></script>
 <script src="scenes/ink.js"></script>
+<script src="scenes/blueprint.js"></script>
+<script src="scenes/comic.js"></script>
 <script src="scenes/dark.js"></script>
 <script src="scenes/frost.js"></script>
 <script src="scenes/glass.js"></script>
@@ -88,6 +95,8 @@
 <script src="mascots/xiaoqian.js"></script>
 <script src="mascots/pengpeng.js"></script>
 <script src="mascots/xiaoqi.js"></script>
+<script src="mascots/quanquan.js"></script>
+<script src="mascots/daodao.js"></script>
 <!-- 章节（开始）：样板页（samples/samples.js），页面顺序 = 引入顺序 -->
 <script src="samples/samples.js"></script>
 <!-- 章节（结束） -->
@@ -137,7 +146,7 @@
     if (!ks.length) return;
     var f = document.createElement('span');
     f.className = 'gl-fam';
-    f.textContent = (FAMILY[fam] || fam) + '：';
+    f.textContent = FAMILY[fam] || fam;   // 冒号由 CSS 的 ::after 加，窄窗口不加
     list.appendChild(f);
     ks.forEach(function (k) {
       var b = document.createElement('button');
