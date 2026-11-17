@@ -24,6 +24,41 @@
      11. 点击涟漪 ripple：点击处洇开一滴很淡的水彩（天空蓝、暖阳黄轮流），放进引擎给的内容下面那一层。
      12. 退一拍 onBack：水彩底往回缩、字像墨被吸走一样化开淡去（样页的 leave）。
      13. 同风格翻页 pageTurn：一道湿润的水痕从一边扫到另一边，旧页随水痕褪去、新页随之显出。
+   - 自有版式组件（水彩田园专用，类名都带 wc- 前缀；样子在 watercolor.css 末尾「自有版式组件」，样板页见 samples/watercolor.js）：
+     「每一拍发生了什么」按绘本和写生的习惯来——铅笔先描线稿、颜色从一点洇开、刚画好的画晾上绳子、
+     路牌从草地里立起来、颜料落进调色盘、叶子飘下来，而不是卡片弹出来。出场都由类名自动选好（enterBy），
+     页面里只写结构和 data-beat，不写 data-in、不写 onBeat。别的风格不认识这些类，只当普通容器
+     · .wc-art 一幅水彩小画（写死宽高；加 abs 绝对定位，不加就跟着文字排）。里面叠两种 svg，视图框都写成和小画一样大（1:1）：
+       svg.wc-paint 颜色层：形状加颜色类 sky、sky-d、sun、grass、leaf、mint、peach、pink、tea、wood、shade、white，
+       每块颜色自带水彩的不规则湿边和颜料斑驳（滤镜 #wc-wet）；style="--o:.3" 改浓淡（默认 .45）；
+       加 st 是一笔颜料（不填色，线宽 --w，默认 6）。可以有几层，各写各的 data-beat，到拍那一层的颜色从一点洇开（出场 wash）；
+       svg.sketch 铅笔线稿：普通形状，引擎用 rough.js 画成铅笔线，带 data-beat 的到拍一笔笔描出来。
+       形状上别写 transform（rough.js 不认），要旋转、缩放就包一层 <g transform>；很短的小线加 data-roughness=".5" 免得太抖。
+       整幅小画写 data-beat 时（出场 paint）：线稿先描、颜色随后洇开。.wc-art.wc-book 是绘本插画：四边柔柔地淡出纸面
+     · .wc-wash 一道水彩笔触（装饰，不放字）：写死宽高，颜色 t-yellow、t-mint、t-blue…（默认天空蓝），从左往右洇开（出场 wash）
+     · .wc-title 手写大字（封面书名、明信片上的金句）：一个字一个字像墨一样显出（出场 letters）；一行 8 个字以内
+     · .wc-tale 绘本旁白：一行居中的大字（68px）。里面的 span 各写 data-beat 时，一拍出半句，一个字一个字显出；
+       也可以整行写 data-beat。旁白只放讲稿里的话，句子横排
+     · .wc-paper 一张水彩纸（毛边、软投影，纸色实底，字压在上面最清楚）：.wc-plate 藏书票（里面一道铅笔框、角上一枝小画）、
+       .wc-post 明信片；.wc-stamp 一枚齿孔邮票（装饰，不放字）。出场 lay：纸从上面轻轻落下，里面的画、字随后出来
+     · .wc-hang 晾在绳子上的一张画（写成 .wc-paper.wc-hang）：上半截一幅 .wc-art，下面 h3 名字、p 一句说明；
+       木夹子由风格自动加在上沿正中（decorate）。出场 hang：画从夹子那里荡上来、晃两下停住，颜色洇开，字再显出。
+       绳子用页面里的 svg.sketch 画；画纸的上沿压在绳子下面一点，夹子正好夹住绳子
+     · .wc-sign 箭头形的木路牌：<b><i class="wc-no">1</i>名字</b><span>一句短说明</span>，--post 是柱子从牌子底边到地面的长度
+       （默认 260px）。出场 plant：路牌像立体绘本一样从地上翻起来立住、木头颜色洇开、字显出、两片叶子飘下来。
+       牌子的箭头朝右，几块路牌从左往右排，编号就是顺序
+     · .wc-no 编号：一滴天空蓝颜料里写一个数字（34px），放在路牌名字前面，也能单独用
+     · svg.wc-brush 宽笔刷画的路、河（铺满舞台的 svg，舞台坐标）：path 的 stroke-width 就是笔刷宽，颜色类 earth、grass、sky；
+       每段写 data-beat，到拍那一段像一笔颜料刷过去（引擎的描线）；前后两段首尾相接，宽度可以一段比一段窄（往远处去）
+     · .wc-well 调色盘里的一格颜料：<b>80<small>℃</small></b><span>水温</span>，颜色 t-peach、t-mint、t-blue…；
+       写死宽高（圆的）。出场 fill：一滴颜料落进格子、往外洇开、溅出几点，大数字一个个写出来，再显出名字。
+       空格子（盘子、格子的铅笔圈）画在第 0 拍的 .wc-art 里，.wc-well 正好盖在上面
+   - 自有组件的可读性约定（也守 references/authoring.md 第 0 节第 9 条）：
+     · 画里不放字：字都写在画外面（画纸下半截、路牌、颜料格、绘本旁白、明信片），一律横排、实色深褐墨
+     · 字后面只有纸色或很淡的一层水彩（不超过 .55），颜色块、草坡、路不压在字上
+     · 讲过的块只退到 recede（.8），组件里不另调淡；当前这一拍靠刚洇开的颜色、刚立起的路牌、朵朵站在旁边来强调
+     · 讲过的不收走：路牌立起来就不倒，晾上的画不取下，颜料格填上就不擦，旁白一句句留在页上
+     · 文字块倾斜不超过 2°（--r 写在 ±1.5deg 以内，晾着的画、明信片、路牌都一样）；路牌、晾画、颜料格从左往右排成一条路
    - 没搬的：鼠标视差（以后再做）；朵朵的走位、反应、空闲动作和开场时「从云里钻出来」归形象和引擎，不在风格里。
      背景里那朵云在舞台坐标约 (1500, 230)，形象的开场可以从这里出来。
    - 形象的投影用 CSS 变量 --mascot-shadow，说的话 .mascot-say 是水彩纸气泡（都在 watercolor.css）
@@ -135,9 +170,11 @@
   const clear = (e, keys) => keys.forEach(k => e.style.removeProperty(k));
   const transparentOf = c => { const m = String(c).match(/[\d.]+/g); return m && m.length >= 3 ? `rgba(${m[0]},${m[1]},${m[2]},0)` : 'rgba(0,0,0,0)'; };
 
-  /* 墨色显出（默认出场）：从模糊到清楚、轻轻落位 */
-  function ink(tl, e, t, ctx) {
+  /* 墨色显出（默认出场）：从模糊到清楚、轻轻落位。plain 为真时不转给别的出场（letters 退回来时用，免得转圈） */
+  function ink(tl, e, t, ctx, plain) {
     if (e.matches && e.matches('.steps > li')) return bloom(tl, e, t, ctx);   // 步骤的一项：序号的水彩先洇开
+    // 绘本旁白里的半句：一个字一个字显出
+    if (!plain && e.parentElement && e.parentElement.classList.contains('wc-tale') && e.textContent.trim()) return letters(tl, e, t, ctx);
     if (e instanceof SVGElement) {
       tl.fromTo(e, { autoAlpha: 0 }, { autoAlpha: 1, duration: .4, ease: 'power1.out', immediateRender: true, onComplete: ctx.done }, t);
       return .4;
@@ -213,9 +250,9 @@
     e._wcSplit = 0;
   }
   function letters(tl, e, t, ctx) {
-    if (e instanceof SVGElement || !e.textContent.trim()) return ink(tl, e, t, ctx);
+    if (e instanceof SVGElement || !e.textContent.trim()) return ink(tl, e, t, ctx, true);
     const { items, id } = split(e);
-    if (!items.length) { unsplit(e, id); return ink(tl, e, t, ctx); }
+    if (!items.length) { unsplit(e, id); return ink(tl, e, t, ctx, true); }
     const n = items.length, gap = Math.min(.045, .5 / n), d = .42;
     const back = items.filter(x => !x.classList.contains('wc-ch')).map(keep);
     const done = () => { back.forEach(f => f()); unsplit(e, id); };
@@ -223,12 +260,148 @@
     return d + gap * (n - 1);
   }
 
-  /* 开场时第 0 拍的块用哪种出场 */
-  const FX = { ink, bloom, letters };
-  const BLOOMY = '.card, .cell, .copy, .quote, .steps > li';
+  /* =================================================================
+     自有版式组件的出场（wc- 前缀，用法见文件开头）：颜色洇开 wash、一幅画先描后上色 paint、晾上一张画 hang、
+     立起一块路牌 plant、颜料落进格子 fill、一张纸轻轻落下 lay；绘本旁白、手写大字用上面的 letters
+     ================================================================= */
+  /* 出场时不跟着动的子元素：自己另有 data-beat 的（等它自己那一拍），以及形象、圈注层、提示框、木夹子 */
+  const OWN_SKIP = '.mascot, .kid, svg.marks, .copied-tip, .ripple-layer, .wc-peg, script, style';
+  const ownKids = e => [...e.children].filter(c => !c.hasAttribute('data-beat') && !c.matches(OWN_SKIP));
+  /* 归 e 管的后代：不在 e 里面另一个带拍块里的（那些等自己那一拍） */
+  const mine = (e, sel) => [...e.querySelectorAll(sel)].filter(c => { const b = c.closest('[data-beat]'); return !b || b === e || !e.contains(b); });
+  /* 子元素用的 ctx（子元素不归引擎管，播完由各自的出场还原行内样式） */
+  const kidCtx = { name: 'letters', scene: 'watercolor', dur: .4, ease: 'power2.out', tilt: () => 0, done: () => {} };
+  /* 一个子元素墨色显出：从模糊到清楚、轻轻落位，播完还原它原来的行内样式 */
+  function inkKid(tl, c, t, dur) {
+    const back = keep(c);
+    const from = { opacity: 0, y: 8 }, to = { opacity: 1, y: 0, duration: dur, ease: 'power2.out', immediateRender: true, onComplete: back, onInterrupt: back };
+    if (blurOk(c)) { from.filter = 'blur(4px)'; to.filter = 'blur(0px)'; }
+    tl.fromTo(c, from, to, t);
+    return dur;
+  }
+  /* 收尾：清掉块自己的行内样式（ctx.done 会掐掉这个块上的补间，所以放在时间线最后） */
+  function finish(tl, e, t, end, ctx, vars) {
+    tl.call(() => { ctx.done(); if (vars) clear(e, vars); }, null, t + end);
+    return end;
+  }
+  /* 颜色层里的形状不该带描线留下的虚线（退一拍时引擎会给 svg 里的线设虚线藏起来，颜色层不需要） */
+  function resetStrokes(svg) { svg.querySelectorAll('path,ellipse,circle,rect,polygon').forEach(p => { p.style.strokeDasharray = ''; p.style.strokeDashoffset = ''; p.style.opacity = ''; }); }
+  /* 一层颜色从一点洇开：--bp 推颜色层上的径向遮罩（watercolor.css）；起点 --bx --by 页面写了就用页面的 */
+  function spread(tl, e, t, dur) {
+    const own = !!e.style.getPropertyValue('--bx');
+    if (!own) { const h = seedOf(e); e.style.setProperty('--bx', (26 + h % 30) + '%'); e.style.setProperty('--by', (34 + (h >> 3) % 24) + '%'); }
+    const off = () => clear(e, own ? ['--bp'] : ['--bp', '--bx', '--by']);
+    tl.fromTo(e, { '--bp': '-25%' }, { '--bp': '100%', duration: dur, ease: 'power2.out', immediateRender: true, onComplete: off, onInterrupt: off }, t);
+    return dur;
+  }
+  /* 一幅画先描后上色：铅笔线稿（rough.js 画出来的线）一笔笔描出，描到一半颜色层从一点洇开。返回用时 */
+  function paintArt(tl, art, t) {
+    const lines = mine(art, 'svg.sketch path'), lens = lines.map(p => { try { return Math.ceil(p.getTotalLength()) + 2; } catch (err) { return 0; } });
+    const total = lens.reduce((a, b) => a + b, 0) || 1, D = clamp(total / 3200, .3, .62);
+    let at = t;
+    lines.forEach((p, i) => {
+      const L = lens[i], d = Math.max(.02, D * L / total);
+      const back = () => { p.style.strokeDasharray = ''; p.style.strokeDashoffset = ''; p.style.opacity = ''; };
+      const dash = p.getAttribute('stroke-dasharray');
+      if (!L || (dash && dash !== 'none' && parseFloat(dash) > 0)) tl.fromTo(p, { opacity: 0 }, { opacity: 1, duration: .2, ease: 'none', immediateRender: true, onComplete: back, onInterrupt: back }, at);
+      else tl.fromTo(p, { strokeDasharray: L + ' ' + L, strokeDashoffset: L }, { strokeDashoffset: 0, duration: d, ease: 'power1.inOut', immediateRender: true, onComplete: back, onInterrupt: back }, at);
+      at += d;
+    });
+    const paints = mine(art, 'svg.wc-paint').filter(s => !s.hasAttribute('data-beat'));
+    const p0 = lines.length ? Math.min(.24, D * .5) : 0;
+    let end = lines.length ? D : 0;
+    paints.forEach((s, i) => { resetStrokes(s); end = Math.max(end, p0 + i * .1 + spread(tl, s, t + p0 + i * .1, .66)); });
+    return end;
+  }
+
+  /* 颜色洇开（颜色层 svg.wc-paint、一道笔触 .wc-wash） */
+  function wash(tl, e, t, ctx) {
+    if (e instanceof SVGElement && !(e instanceof SVGSVGElement)) return ink(tl, e, t, ctx, true);
+    if (e instanceof SVGSVGElement) resetStrokes(e);
+    tl.fromTo(e, { autoAlpha: 0 }, { autoAlpha: 1, duration: .16, ease: 'none', immediateRender: true }, t);
+    const d = spread(tl, e, t, .7);
+    return finish(tl, e, t, d, ctx);
+  }
+  /* 一幅画（整幅带拍的 .wc-art）：先描线稿，颜色随后洇开 */
+  function paint(tl, e, t, ctx) {
+    if (e instanceof SVGElement) return wash(tl, e, t, ctx);
+    tl.fromTo(e, { autoAlpha: 0 }, { autoAlpha: 1, duration: .12, ease: 'none', immediateRender: true }, t);
+    return finish(tl, e, t, Math.max(.3, paintArt(tl, e, t)), ctx);
+  }
+  /* 晾上一张画：从上沿正中的木夹子那里荡上来（转轴在夹子，CSS 的 transform-origin），晃两下停住；
+     夹子夹紧一下；画里的颜色洇开，名字、说明再显出 */
+  function hang(tl, e, t, ctx) {
+    if (e instanceof SVGElement) return ink(tl, e, t, ctx, true);
+    const tilt = ctx.tilt();
+    tl.fromTo(e, { autoAlpha: 0 }, { autoAlpha: 1, duration: .16, ease: 'none', immediateRender: true }, t);
+    tl.fromTo(e, { y: -36 }, { y: 0, duration: .42, ease: 'power3.out', immediateRender: true }, t);
+    tl.fromTo(e, { rotation: tilt - 9 }, { rotation: tilt, duration: .9, ease: 'elastic.out(1,.42)', immediateRender: true }, t);
+    const peg = e.querySelector(':scope > .wc-peg');
+    if (peg) { const back = keep(peg); tl.fromTo(peg, { scaleY: 1.16, y: -8 }, { scaleY: 1, y: 0, duration: .26, ease: 'back.out(3)', immediateRender: true, onComplete: back, onInterrupt: back }, t + .14); }
+    let end = .9, k = 0;
+    ownKids(e).forEach(c => {
+      if (c.matches('.wc-art')) { end = Math.max(end, .18 + paintArt(tl, c, t + .18)); return; }
+      const s = .42 + (k++) * .1;
+      end = Math.max(end, s + inkKid(tl, c, t + s, .38));
+    });
+    return finish(tl, e, t, end, ctx);
+  }
+  /* 立起一块路牌：像立体绘本翻开时那样，从地上翻起来立住（转轴在柱子落地处，CSS 的 transform-origin）；
+     木头颜色洇开（--bp），字显出，两片叶子从牌子上飘下来 */
+  function plant(tl, e, t, ctx) {
+    if (e instanceof SVGElement) return ink(tl, e, t, ctx, true);
+    const tilt = ctx.tilt();
+    tl.fromTo(e, { autoAlpha: 0 }, { autoAlpha: 1, duration: .12, ease: 'none', immediateRender: true }, t);
+    tl.fromTo(e, { rotation: tilt - 56 }, { rotation: tilt, duration: .64, ease: 'back.out(1.7)', immediateRender: true }, t);
+    tl.fromTo(e, { '--bp': '-25%' }, { '--bp': '100%', duration: .55, ease: 'power2.out', immediateRender: true }, t + .3);
+    let end = .85;
+    ownKids(e).forEach((c, i) => { const s = .38 + i * .1; end = Math.max(end, s + inkKid(tl, c, t + s, .36)); });
+    tl.call(() => leaves(e), null, t + .5);
+    return finish(tl, e, t, end, ctx, ['--bp']);
+  }
+  /* 颜料落进格子：一滴颜料从左上落下、往外洇开（--bp），溅出几点；大数字一个个写出来，名字随后显出 */
+  function fill(tl, e, t, ctx) {
+    if (e instanceof SVGElement) return ink(tl, e, t, ctx, true);
+    tl.fromTo(e, { autoAlpha: 0 }, { autoAlpha: 1, duration: .14, ease: 'none', immediateRender: true }, t);
+    e.style.setProperty('--bx', '40%'); e.style.setProperty('--by', '36%');
+    tl.fromTo(e, { '--bp': '-25%' }, { '--bp': '100%', duration: .62, ease: 'power2.out', immediateRender: true }, t);
+    tl.call(() => splash(e), null, t + .06);
+    let end = .62, k = 0;
+    ownKids(e).forEach(c => {
+      const s = .22 + (k++) * .18;
+      end = Math.max(end, s + (c.tagName === 'B' ? letters(tl, c, t + s, kidCtx) : inkKid(tl, c, t + s, .36)));
+    });
+    return finish(tl, e, t, end, ctx, ['--bp', '--bx', '--by']);
+  }
+  /* 一张纸轻轻落下（藏书票、明信片）：从上面飘下来、摆正；里面的画先描后上色，手写大字一个个显出，别的字墨色显出 */
+  function lay(tl, e, t, ctx) {
+    if (e instanceof SVGElement) return ink(tl, e, t, ctx, true);
+    const tilt = ctx.tilt();
+    tl.fromTo(e, { autoAlpha: 0, y: -30, rotation: tilt + 2.4, scale: 1.02 }, { autoAlpha: 1, y: 0, rotation: tilt, scale: 1, duration: .6, ease: 'power3.out', immediateRender: true }, t);
+    let end = .6, k = 0;
+    ownKids(e).forEach(c => {
+      let s, d;
+      if (c.matches('.wc-art')) { s = .2; d = paintArt(tl, c, t + s); }
+      else if (c.matches('.wc-title, .wc-tale')) { s = .3 + (k++) * .1; d = letters(tl, c, t + s, kidCtx); }
+      else { s = .3 + (k++) * .08; d = inkKid(tl, c, t + s, .38); }
+      end = Math.max(end, s + d);
+    });
+    return finish(tl, e, t, end, ctx);
+  }
+
+  /* 开场时第 0 拍的块用哪种出场（和引擎选默认出场的规则一致：data-in 优先，再按类名 BY，最后是 ink） */
+  const FX = { ink, bloom, letters, wash, paint, hang, plant, fill, lay };
+  /* 自有组件排在前面（引擎按这里的顺序取第一个对上的类名：.wc-paper.wc-hang 用 hang） */
+  const BY = {
+    'wc-hang': 'hang', 'wc-sign': 'plant', 'wc-well': 'fill', 'wc-paper': 'lay', 'wc-art': 'paint', 'wc-paint': 'wash', 'wc-wash': 'wash',
+    'wc-title': 'letters', 'wc-tale': 'letters',
+    card: 'bloom', cell: 'bloom', copy: 'bloom', quote: 'bloom',
+  };
   function pick(e) {
     if (FX[e.dataset.in]) return FX[e.dataset.in];
-    return e instanceof SVGElement ? ink : e.matches(BLOOMY) ? bloom : ink;
+    if (e instanceof SVGElement && !(e instanceof SVGSVGElement)) return ink;
+    const c = Object.keys(BY).find(k => e.classList && e.classList.contains(k));
+    return c ? FX[BY[c]] : ink;
   }
   // 自己调出场函数时（开场）给的 ctx，和引擎给的一样用
   function ownCtx(e, name) {
@@ -268,6 +441,33 @@
         .to(d, { scaleX: 1.9, scaleY: 1.3, opacity: 0, duration: .36, ease: 'sine.out' }, .5);
     });
   }
+  // 每页一层放飘落的叶子（在内容上面，只是一闪而过的装饰，不压住任何一直在的字）；第一次用时放进页面最后面
+  function topLayer(slide) {
+    let l = slide.querySelector(':scope > .wc-fx.wc-top');
+    if (!l) { l = document.createElement('div'); l.className = 'wc-fx wc-top'; l.setAttribute('aria-hidden', 'true'); slide.appendChild(l); }
+    return l;
+  }
+  // 路牌立起来时，两片叶子从牌子右上角飘下来：左右摇着往下落、转着圈，一秒多一点就淡去
+  function leaves(node) {
+    const slide = node.closest('.slide');
+    if (!slide || still() || !slide.classList.contains('active')) return;
+    const sr = slide.getBoundingClientRect(), k = sr.width / 1920 || 1, r = node.getBoundingClientRect();
+    const x0 = (r.right - sr.left) / k - 70, y0 = (r.top - sr.top) / k - 6, layer = topLayer(slide);
+    [0, 1].forEach(i => {
+      const d = document.createElement('i'), dx = -46 - i * 34, r0 = -30 + i * 60;
+      d.className = 'wc-leaf' + (i ? ' sun' : '');
+      d.style.cssText = `left:${f1(x0 - i * 90)}px;top:${f1(y0 + i * 18)}px`;
+      layer.appendChild(d);
+      G.timeline({ onComplete: () => d.remove() })
+        .fromTo(d, { opacity: 0 }, { opacity: .92, duration: .15, ease: 'none' }, 0)
+        .fromTo(d, { y: 0 }, { y: 150 + i * 46, duration: 1.15, ease: 'sine.in' }, 0)
+        .fromTo(d, { x: 0 }, { x: dx * .55, duration: .4, ease: 'sine.inOut' }, 0)
+        .to(d, { x: dx, duration: .4, ease: 'sine.inOut' }, .4)
+        .to(d, { x: dx * .5, duration: .35, ease: 'sine.inOut' }, .8)
+        .fromTo(d, { rotation: r0 }, { rotation: r0 + 170, duration: 1.15, ease: 'sine.inOut' }, 0)
+        .to(d, { opacity: 0, duration: .3, ease: 'power1.in' }, .85);
+    });
+  }
   // 点击处的一滴水彩图：天空蓝、暖阳黄两张，只生成一次
   const bloomImg = (col, seed) => 'url("data:image/svg+xml,' + encodeURIComponent(
     `<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 240 240'>` +
@@ -281,9 +481,10 @@
   let bloomI = 0;
 
   /* =================================================================
-     悬停：卡片、步骤、小格、命令朝鼠标那侧轻轻一斜（抬起和颜色加深在 CSS 的 :hover 里）
+     悬停：卡片、步骤、小格、命令朝鼠标那侧轻轻一斜（抬起和颜色加深在 CSS 的 :hover 里）；
+     晾着的画、路牌也一样（它们的转轴分别在木夹子、柱子落地处，所以是轻轻晃一下）
      ================================================================= */
-  const HOVER = '.card, .cell, .steps > li, .copy';
+  const HOVER = '.card, .cell, .steps > li, .copy, .wc-hang, .wc-sign';
   let hovered = null;
   function release() { if (hovered) { hovered.style.removeProperty('--wc-lr'); hovered = null; } }
   function onMove(e) {
@@ -301,14 +502,16 @@
     dark: false,
     mascot: 'duoduo',
     enter: 'ink',
-    enterBy: { card: 'bloom', cell: 'bloom', copy: 'bloom', quote: 'bloom' },
+    enterBy: BY,
     titleIn: 'letters',
     recede: .8,
     // 细铅笔线；填充线加粗、间距小于线宽，叠成一片水彩（CSS 按线宽 7.5 认出填充线、套水彩滤镜）
     rough: { strokeWidth: 2.2, roughness: 1, bowing: .9, hachureGap: 7, hachureAngle: -32, fillWeight: 7.5, markWidth: 3 },
-    fx: { ink, bloom, letters },
+    fx: FX,
     // wc-wash 小块水彩：边缘不规则、边缘颜料积深（复制时那滴蓝、云底的阴影用）；
-    // wc-fill 线稿里的填充色：再加颜料斑驳（样页大色块的配方）
+    // wc-fill 线稿里的填充色：再加颜料斑驳（样页大色块的配方）；
+    // wc-wet 小画颜色层（svg.wc-paint）里的每块颜色：同一个配方，抖得轻一点、滤镜范围放宽（细长的一笔也不被裁掉）；
+    // wc-brushf 宽笔刷（svg.wc-brush）：两边颜料积深、边缘不齐，范围按舞台坐标给（线宽不算进外框，按外框给会被裁掉）
     defs: `<filter id="wc-wash" x="-25%" y="-45%" width="150%" height="190%" color-interpolation-filters="sRGB">
         <feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="2" seed="21" result="n"/>
         <feDisplacementMap in="SourceGraphic" in2="n" scale="8" xChannelSelector="R" yChannelSelector="G" result="d"/>
@@ -325,14 +528,42 @@
         <feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="43" result="g"/>
         <feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.2 0 0 0 .1" result="ga"/>
         <feComposite in="d" in2="ga" operator="in" result="body"/>
-        <feMerge><feMergeNode in="body"/><feMergeNode in="edge"/></feMerge></filter>`,
+        <feMerge><feMergeNode in="body"/><feMergeNode in="edge"/></feMerge></filter>
+      <filter id="wc-wet" x="-30%" y="-45%" width="160%" height="190%" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency=".035" numOctaves="2" seed="11" result="n"/>
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="11" xChannelSelector="R" yChannelSelector="G" result="d"/>
+        <feMorphology in="d" operator="erode" radius="2" result="e"/>
+        <feGaussianBlur in="e" stdDeviation="3" result="eb"/>
+        <feComposite in="d" in2="eb" operator="out" result="edge"/>
+        <feTurbulence type="fractalNoise" baseFrequency=".04" numOctaves="2" seed="31" result="g"/>
+        <feColorMatrix in="g" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.2 0 0 0 .18" result="ga"/>
+        <feComposite in="d" in2="ga" operator="in" result="body"/>
+        <feMerge><feMergeNode in="body"/><feMergeNode in="edge"/></feMerge></filter>
+      <filter id="wc-brushf" filterUnits="userSpaceOnUse" x="-300" y="-300" width="2520" height="1680" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="17" result="n"/>
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="16" xChannelSelector="R" yChannelSelector="G" result="d"/>
+        <feMorphology in="d" operator="erode" radius="3" result="e"/>
+        <feGaussianBlur in="e" stdDeviation="4" result="eb"/>
+        <feComposite in="d" in2="eb" operator="out" result="edge"/>
+        <feMerge><feMergeNode in="d"/><feMergeNode in="edge"/></feMerge></filter>`,
     backdrop,
+
+    // 每页建好后：晾着的画（.wc-hang）上沿正中加一只木夹子（只是画，不进拍，跟着画一起出现）
+    decorate(slide) {
+      slide.querySelectorAll('.wc-hang').forEach(h => {
+        if (h.querySelector(':scope > .wc-peg')) return;
+        const p = document.createElement('i'); p.className = 'wc-peg'; p.setAttribute('aria-hidden', 'true');
+        h.prepend(p);
+      });
+    },
 
     /* 同一拍里：铅笔线稿先描（彼此错开一点），颜色和字随后（样页：箭头先描、颜色紧跟着洇开）。
        其余块按原来的先后，只是去掉线稿占的位次 */
     plan(units, { base }) {
       const isSketch = u => u.el instanceof SVGElement && !u.child && u.fx === 'draw';
-      const lead = units.some(isSketch) ? .14 : 0;
+      // 宽笔刷（svg.wc-brush 的路）刷得慢：路牌等路刷过去一大半再立起来
+      const brush = units.some(u => isSketch(u) && u.el.closest('svg.wc-brush'));
+      const lead = brush ? .3 : units.some(isSketch) ? .14 : 0;
       const shift = new Map();
       let k = 0, j = 0;
       return units.map(u => {
@@ -359,6 +590,8 @@
         const from = { '--bp': '100%' }, to = { '--bp': '-25%', duration: .3, ease: 'power2.in', immediateRender: false, onComplete: off, onInterrupt: off };
         if (blurOk(e)) { from.filter = 'blur(0px)'; to.filter = 'blur(5px)'; }
         tl.fromTo(e, from, to, 0);
+        // 路牌：像立体绘本合上那样往回倒下去（转轴在柱子落地处）
+        if (e.matches('.wc-sign')) { const r = parseFloat(getComputedStyle(e).rotate) || 0; tl.fromTo(e, { rotation: r }, { rotation: r - 40, duration: .26, ease: 'power2.in', immediateRender: false }, 0); }
       });
       return { at: .06, gap: .03, y: 8, dur: .24 };
     },

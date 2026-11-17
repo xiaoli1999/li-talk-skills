@@ -1,0 +1,12 @@
+/* 水彩田园自己的样板页的页面样式（和 samples/watercolor.js 配套）
+   - 每条选择器都以 [data-id="t-watercolor-…"] 开头，只管那一页；抄样板时连同这里的规则一起抄，[data-id="…"] 换成新页面的 id
+   - 只写大小和位置；颜色用风格的变量（--ink、--ink-2 这些在 scenes/watercolor.css 里），晾画、路牌、颜料格、明信片的样子
+     都在 scenes/watercolor.css 末尾的「自有版式组件」里。字一律实色，不另加透明度（讲过的由引擎退到 .8） */
+
+/* ---------- 封面：书名 136px 一行（7 个字约 990 宽）；副题 50px 次一级的墨色，压在一道很淡的天空蓝笔触上 ---------- */
+[data-id="t-watercolor-cover"] .t-wc-cv-title{font-size:136px}
+[data-id="t-watercolor-cover"] .t-wc-cv-sub{margin:0;font:400 50px/1.3 var(--f-hand);letter-spacing:.04em;color:var(--ink-2);white-space:nowrap}
+
+/* ---------- 明信片：金句两行 96px（一行 5 个字约 480 宽，右边留给邮票）；谢谢一行 48px，坐在下面那道横线上 ---------- */
+[data-id="t-watercolor-end"] .t-wc-ed-quote{font-size:96px;line-height:1.3}
+[data-id="t-watercolor-end"] .t-wc-ed-thanks{font-size:48px;letter-spacing:.04em;text-align:left}
