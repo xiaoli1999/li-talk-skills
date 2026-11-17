@@ -566,14 +566,18 @@ const DEFAULT_ORDER = ['paper', 'watercolor', 'board', 'dark', 'desk', 'journal'
 const PROJECTOR = /投影|幕布|会议室/;
 // 在投影上讲时深色底要扣的分：比任何一份讲稿的关键词命中都多，深色底排到所有浅色底后面
 const DARK_PENALTY = 1000;
+// 一个风格的关键词在讲稿里合计至少命中这么多次才算数：只出现一次多半是顺口提到，不该左右推荐
+const MIN_HITS = 2;
 
-// 返回 [{ s, hits（关键词命中次数）, score（扣分后）, penalized, order, words }]，按 score 从高到低
+// 返回 [{ s, hits（关键词命中次数，不到 MIN_HITS 算 0）, score（扣分后）, penalized, order, words }]，按 score 从高到低
 function rankScenes(ready, text, { projector = false } = {}) {
   const rank = ready.map((s, i) => {
-    const found = {};
+    let found = {};
     const re = HINTS[s.key];
     if (re) for (const m of text.match(re) || []) found[m] = (found[m] || 0) + 1;
-    const hits = Object.values(found).reduce((a, b) => a + b, 0);
+    let hits = Object.values(found).reduce((a, b) => a + b, 0);
+    // 合计不到门槛：当作没有匹配，不加分，也不进推荐理由
+    if (hits < MIN_HITS) { hits = 0; found = {}; }
     const penalized = projector && !!s.dark;
     const score = hits - (penalized ? DARK_PENALTY : 0);
     const order = DEFAULT_ORDER.includes(s.key) ? DEFAULT_ORDER.indexOf(s.key) : DEFAULT_ORDER.length + i;

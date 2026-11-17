@@ -312,7 +312,9 @@ test('风格：推荐理由只列讲稿里实际匹配到的词和次数；一�
   confirmStep(mixed, 'outline');
   confirmStep(mixed, 'script');
   const m = reasonWords(guideText(mixed), text);
-  assert.match(m.first, /^像素手账（journal）[^\n]*讲稿里出现了「角色」1 处；讲稿里的「安装」2 处、「步骤」2 处、「配置」1 处更像黑板，但它是深色底；在投影上讲，优先浅色底/);
+  // 「角色」只出现 1 次，不到门槛：像素手账不加分，理由里也不列它
+  assert.match(m.first, /^方格纸（paper）[^\n]*（推荐：讲稿里的「安装」2 处、「步骤」2 处、「配置」1 处更像黑板，但它是深色底；在投影上讲，优先浅色底）/);
+  assert.doesNotMatch(m.first, /角色」/);
   assert.ok(m.pairs.length >= 2);
 
   // 一个关键词都没有：不列词，写「没有明显的关键词」
@@ -325,6 +327,26 @@ test('风格：推荐理由只列讲稿里实际匹配到的词和次数；一�
   assert.equal(p.pairs.length, 0);
   assert.match(p.first, /（推荐：讲稿里没有明显的关键词，按适合讲什么挑的）/);
   assert.doesNotMatch(p.first, /「/);
+});
+
+test('风格：某个风格的关键词合计只命中 1 次，当作没有匹配，不会排第一、理由里也不列', () => {
+  const once = tmp();
+  writeFileSync(join(once, '讲稿.md'), script(2, { extra: '主持人这个角色不复杂。' }));
+  confirmStep(once, 'outline');
+  confirmStep(once, 'script');
+  const t = guideText(once);
+  const first = /问题 1：[^\n]*\n\s+1\. ([^\n]*)/.exec(t)[1];
+  assert.doesNotMatch(first, /（journal）/, '只出现一次的「角色」不让像素手账排第一');
+  assert.doesNotMatch(first, /角色」/);
+  assert.match(first, /^方格纸（paper）[^\n]*（推荐：讲稿里没有明显的关键词，按适合讲什么挑的）/);
+  checkShape(t);
+
+  // 出现两次就算数
+  const twice = tmp();
+  writeFileSync(join(twice, '讲稿.md'), script(2, { extra: '主持人这个角色不复杂。讲讲每个角色做什么。' }));
+  confirmStep(twice, 'outline');
+  confirmStep(twice, 'script');
+  assert.match(guideText(twice), /\n\s+1\. 像素手账（journal）[^\n]*（推荐：讲稿里出现了「角色」2 处）/);
 });
 
 test('风格：讲稿写了在投影上讲，技术词很多也先推浅色底；深色底出现在选项里时标出来', () => {
