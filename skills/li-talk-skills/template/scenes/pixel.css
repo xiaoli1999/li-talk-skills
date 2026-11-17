@@ -309,3 +309,120 @@
 
 /* 阅读模式：每页底下压一道深色像素线，页与页分得开 */
 [data-scene="pixel"].slide:is(.reading *){box-shadow:inset 0 -8px 0 var(--px-k)}
+
+/* =====================================================================
+   像素游戏自己的版式组件（.px-*）：每拍发生的是游戏里的事——光标移到下一项、对话框打字、关卡点亮、血条掉一截。
+   行为（出场）和完整用法在 pixel.js 开头的说明里；样板页 samples/pixel.js 每个都用了一遍。
+   位置都用 .abs + style 的 left / top 写；要定位的组件只在没写 .abs 时补一个相对定位
+   ===================================================================== */
+/* 版式组件里的块不随讲过的拍变淡：拿到的道具、过了的关、掉了的血要一直看得清（现在讲到哪由光标、形象、对话框交代） */
+[data-scene="pixel"] :is(.px-slot > *, .px-node > *, .px-road, .px-cut).past{opacity:1}
+
+/* ---------- 像素图标 .px-icon[data-px-icon]：一格 4px，style 写 --px-s:2 放大到一格 8px；白剪影 .px-ws 平时藏着，白闪时盖上去 ---------- */
+[data-scene="pixel"] .px-icon{display:inline-block;flex:none;vertical-align:top;width:calc(var(--px-iw,8) * var(--px-s,1) * 4px);height:calc(var(--px-ih,8) * var(--px-s,1) * 4px)}
+[data-scene="pixel"] .px-icon:not(.abs){position:relative}
+[data-scene="pixel"] .px-icon svg{display:block;width:100%;height:100%}
+[data-scene="pixel"] .px-icon .px-ws{position:absolute;left:0;top:0;visibility:hidden}
+[data-scene="pixel"] .px-icon.px-flash .px-ws{visibility:inherit}
+
+/* ---------- 标题画面的大字标 .px-logo：144px（每个字点 3 格）；字板外扩 3 格、锈红厚度 3 格、再一格深色 ---------- */
+[data-scene="pixel"] .px-logo{margin:0;font:400 144px/1 var(--f-hand);letter-spacing:0;white-space:nowrap;color:var(--px-y);text-shadow:none;
+  filter:drop-shadow(12px 0 0 #0B0B1E) drop-shadow(-12px 0 0 #0B0B1E) drop-shadow(0 12px 0 #0B0B1E) drop-shadow(0 -12px 0 #0B0B1E) drop-shadow(0 12px 0 #A9432A) drop-shadow(0 4px 0 #0B0B1E)}
+@supports ((-webkit-background-clip:text) or (background-clip:text)){
+  [data-scene="pixel"] .px-logo{color:transparent;background:var(--px-gold-l) 0 0/8px 1em repeat;-webkit-background-clip:text;background-clip:text}
+  /* 出场拆成单字掉下来时：每个字自己裁一份金色字面 */
+  [data-scene="pixel"] .px-logo.px-split{background:none}
+  [data-scene="pixel"] .px-logo .px-ch{display:inline-block;color:transparent;background:var(--px-gold-l) 0 0/8px 1em repeat;-webkit-background-clip:text;background-clip:text}
+}
+
+/* ---------- 「按任意键开始」.px-press：前面一个金色 ▶ ---------- */
+[data-scene="pixel"] .px-press{display:inline-flex;align-items:center;gap:20px;font:400 48px/48px var(--f-hand);color:var(--px-w)}
+[data-scene="pixel"] .px-press::before{content:"";flex:none;width:24px;height:36px;background:var(--px-cursor) center/100% 100% no-repeat}
+
+/* ---------- RPG 窗口：.px-win（普通窗口）、.px-msg（对话框）、.px-menu（命令菜单）、.px-slot（道具格）共用卡片的窗框 ---------- */
+[data-scene="pixel"] :is(.px-win,.px-msg,.px-menu,.px-slot){--ring:var(--px-w);filter:drop-shadow(8px 8px 0 #0B0B1E)}
+[data-scene="pixel"] :is(.px-win,.px-msg,.px-menu,.px-slot):not(.abs){position:relative}
+[data-scene="pixel"] :is(.px-win,.px-msg,.px-menu,.px-slot)::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:var(--px-n2);clip-path:var(--px-notch);
+  box-shadow:inset 0 0 0 4px var(--px-k),inset 0 0 0 8px var(--ring),inset 0 0 0 12px var(--px-n1),inset 0 16px 0 0 var(--px-n3)}
+[data-scene="pixel"] .px-win{padding:28px 36px;color:var(--px-w)}
+
+/* ---------- 对话框 .px-msg：每句话叠在同一格，只显示最新到拍的一句（后面有到拍的句子，前面的就藏起来） ---------- */
+[data-scene="pixel"] .px-msg{display:grid;align-content:start;margin:0;padding:36px 72px 36px 48px;font:400 48px/64px var(--f-hand);color:var(--px-w)}
+[data-scene="pixel"] .px-msg > :not(.px-who){grid-area:1/1;margin:0;text-align:left}
+[data-scene="pixel"] .px-msg > :not(.px-who):has(~ .on){visibility:hidden}
+/* 右下角的 ▼：打字时藏起来，打完闪两下后常亮（用透明度闪，不改可见性：不在当前页时不会露出来） */
+[data-scene="pixel"] .px-msg::after{content:"";position:absolute;right:32px;bottom:24px;width:36px;height:24px;background:var(--px-down) center/100% 100% no-repeat;animation:px-blink2 .64s steps(1)}
+[data-scene="pixel"] .px-msg.px-typing::after{opacity:0;animation:none}
+@keyframes px-blink2{0%,24%{opacity:1}25%,49%{opacity:0}50%,74%{opacity:1}75%,99%{opacity:0}100%{opacity:1}}
+/* 名牌：压在对话框上沿，谁在说话 */
+[data-scene="pixel"] .px-who{position:absolute;left:40px;top:-36px;padding:8px 20px;font:400 48px/48px var(--f-hand);color:var(--px-y);background:var(--px-k);
+  box-shadow:0 -4px 0 0 var(--px-w),0 4px 0 0 var(--px-w),-4px 0 0 0 var(--px-w),4px 0 0 0 var(--px-w)}
+/* 打字时临时拆开的字：还没打到的先藏着 */
+[data-scene="pixel"] .px-c:not(.px-v){visibility:hidden}
+
+/* ---------- 叠放 .px-swap：只显示最新到拍的一块 ---------- */
+[data-scene="pixel"] .px-swap{display:grid}
+[data-scene="pixel"] .px-swap > *{grid-area:1/1}
+[data-scene="pixel"] .px-swap > :has(~ .on){visibility:hidden}
+
+/* ---------- 道具栏 .px-inv > .px-slot：空格子里一个暗蓝问号；拿到了窗框变白，最新拿到的那格窗框变金、上方停着光标 ▼ ---------- */
+[data-scene="pixel"] .px-inv{display:flex;align-items:flex-start;gap:var(--gap,96px)}
+[data-scene="pixel"] .px-slot{--ring:var(--px-n4);flex:none;box-sizing:border-box;width:256px;height:296px;padding:24px 16px}
+[data-scene="pixel"] .px-slot::before{background:var(--px-q) 50% 50%/48px 64px no-repeat,var(--px-n2)}
+[data-scene="pixel"] .px-slot:has(> .on){--ring:var(--px-w)}
+[data-scene="pixel"] .px-slot:has(> .on)::before{background:var(--px-n2)}
+[data-scene="pixel"] .px-slot:has(> .on):not(:has(~ .px-slot > .on)){--ring:var(--px-y)}
+[data-scene="pixel"] .px-slot > *{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;margin:0}
+[data-scene="pixel"] .px-slot b{font:400 48px/48px var(--f-hand);color:var(--px-w)}
+[data-scene="pixel"] .px-slot::after{content:"";position:absolute;left:50%;top:-60px;width:36px;height:24px;margin-left:-18px;visibility:hidden;pointer-events:none;
+  background:var(--px-down) center/100% 100% no-repeat}
+[data-scene="pixel"] .px-slot:has(> .on):not(:has(~ .px-slot > .on))::after{visibility:inherit;animation:px-curdn .16s steps(2)}
+@keyframes px-curdn{from{transform:translateY(-12px)}to{transform:none}}
+
+/* ---------- 关卡地图：.px-node 圆章（锁着深蓝、亮了金色、白闪全白）、章上的数字、章下的关卡名；.px-road 点路 ---------- */
+/* 关卡点压在点路上面（点路从圆章中心连到中心，圆章盖住两头） */
+[data-scene="pixel"] .px-node{z-index:1;width:96px;height:96px;background:var(--px-node-off) 0 0/100% 100% no-repeat;filter:drop-shadow(8px 8px 0 #0B0B1E)}
+[data-scene="pixel"] .px-node:not(.abs){position:relative}
+[data-scene="pixel"] .px-node::after{content:attr(data-n);position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding-bottom:4px;
+  font:400 48px/1 var(--f-hand);color:var(--px-n5);text-shadow:none;pointer-events:none}
+[data-scene="pixel"] .px-node:not(.px-goal):is(.px-on,:has(> .on)):not(.px-wait){background-image:var(--px-node-on)}
+[data-scene="pixel"] .px-node:not(.px-goal):is(.px-on,:has(> .on)):not(.px-wait)::after{color:var(--px-k)}
+[data-scene="pixel"] .px-node:not(.px-goal).px-flash{background-image:var(--px-node-w)}
+/* 起点（.px-on）：章上画一面小旗，不写数字 */
+[data-scene="pixel"] .px-node.px-on::after{content:"";inset:20px 20px 20px 28px;background:var(--px-flag) center/48px 56px no-repeat}
+/* 关卡名：章下面居中（盒子比章宽，字短的话左右都有空） */
+[data-scene="pixel"] .px-node > b{position:absolute;left:-72px;right:-72px;top:calc(100% + 16px);font:400 48px/48px var(--f-hand);color:var(--px-w);text-align:center;white-space:nowrap}
+/* 终点（.px-goal）：不画圆章，里面放一个图标；到拍时四角冒闪光 */
+[data-scene="pixel"] .px-node.px-goal{background:none;filter:none}
+[data-scene="pixel"] .px-node.px-goal::after{content:none}
+[data-scene="pixel"] .px-node.px-goal:has(> .on):not(.px-wait)::before{content:"";position:absolute;inset:-32px;pointer-events:none;
+  background:var(--px-spark) 0 0/28px 28px no-repeat,var(--px-spark) 100% 12px/28px 28px no-repeat,var(--px-spark) 8px 100%/28px 28px no-repeat}
+/* 点路：铺满舞台的一层，里面每段一个 <b>（pixel.js 建页时按 data-path 生成）；暗的一层不带拍，亮的一层到拍时逐段亮起 */
+[data-scene="pixel"] :is(.px-road,.px-road-base){position:absolute;left:0;top:0;width:1920px;height:1080px;pointer-events:none}
+[data-scene="pixel"] :is(.px-road,.px-road-base) > b{position:absolute;background:var(--px-road-on) 0 0/24px 24px repeat}
+[data-scene="pixel"] .px-road-base > b{background-image:var(--px-road-off)}
+
+/* ---------- 命令菜单 .px-menu（.px-2col 两列）：光标 ▶ 只显示最新到拍的那个；选过的项变灰，当前项金色；选中时反白闪两下 ---------- */
+[data-scene="pixel"] .px-menu{display:grid;grid-template-columns:1fr;gap:16px 32px;margin:0;padding:40px;list-style:none;font:400 48px/64px var(--f-hand);color:var(--px-w)}
+[data-scene="pixel"] .px-menu.px-2col{grid-template-columns:1fr 1fr}
+[data-scene="pixel"] .px-menu > li{position:relative;margin:0;padding:0 8px 0 48px;white-space:nowrap}
+[data-scene="pixel"] .px-cur{position:absolute;left:4px;top:14px;width:24px;height:36px;background:var(--px-cursor) center/100% 100% no-repeat}
+[data-scene="pixel"] .px-menu > li:has(~ li > .px-cur.on) > .px-cur{visibility:hidden}
+[data-scene="pixel"] .px-menu > li:has(> .px-cur.on){color:var(--px-n5)}
+[data-scene="pixel"] .px-menu > li:has(> .px-cur.on):not(:has(~ li > .px-cur.on)){color:var(--px-y)}
+[data-scene="pixel"] .px-menu > li.px-sel{color:var(--px-k);background:var(--px-y);text-shadow:none}
+
+/* ---------- 血条 .px-bar > .px-cut：20 格（宽 488：两边各 4px 框，一格 24px）；掉空的一段是暗蓝抖动 ---------- */
+[data-scene="pixel"] .px-bar{height:40px;box-sizing:border-box;background:var(--px-k);
+  box-shadow:0 -4px 0 0 var(--px-w),0 4px 0 0 var(--px-w),-4px 0 0 0 var(--px-w),4px 0 0 0 var(--px-w),8px 8px 0 0 var(--px-k)}
+[data-scene="pixel"] .px-bar:not(.abs){position:relative}
+[data-scene="pixel"] .px-bar::before{content:"";position:absolute;inset:4px;
+  background:repeating-linear-gradient(90deg,transparent 0 20px,var(--px-k) 20px 24px),linear-gradient(var(--px-l) 0 4px,var(--px-g) 4px 24px,var(--px-d) 24px)}
+[data-scene="pixel"] .px-cut{position:absolute;top:4px;bottom:4px;left:calc(4px + (100% - 8px) * var(--from,0));right:calc(4px + (100% - 8px) * (1 - var(--to,1)));
+  background:repeating-linear-gradient(90deg,transparent 0 20px,var(--px-k) 20px 24px),var(--px-dith-12) 0 0/8px 8px}
+
+/* ---------- 敌人 .px-foe：最后一击（.px-ko）到拍以后敌人一直藏着（出场时 .px-hold 先留住它闪三下）；伤害数字 .px-dmg ---------- */
+[data-scene="pixel"] .px-foe:not(.abs){position:relative}
+[data-scene="pixel"] .px-foe:has(.px-ko.on):not(.px-hold) > .px-icon{visibility:hidden}
+[data-scene="pixel"] .px-dmg{font:400 96px/1 var(--f-hand);color:var(--px-a);white-space:nowrap;
+  text-shadow:-4px 0 0 #0B0B1E,4px 0 0 #0B0B1E,0 -4px 0 #0B0B1E,0 4px 0 #0B0B1E,8px 8px 0 #0B0B1E}

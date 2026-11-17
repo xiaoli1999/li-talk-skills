@@ -1,0 +1,27 @@
+/* 像素游戏 pixel 自己的样板页的页面样式（和 samples/pixel.js 配套）
+   - 每条选择器都以 [data-id="t-pixel-…"] 开头，只管那一页；抄样板时连同这里的规则一起抄，[data-id="…"] 换成新页面的 id
+   - 版式组件（.px-*）的样子在 scenes/pixel.css 里，这里只补这几页自己的字色、间距；颜色用像素游戏的调色板变量 --px-*
+   - 像素规矩：尺寸、位移都是 4 的倍数，字号只用 24、48、96、144 */
+
+/* 标题画面：上面一行「出品」暗紫；副标题两边各一颗像素闪光；讲者一行暗紫（只占字那么宽，形象才站得到它左边） */
+[data-id="t-pixel-cover"] .t-pixel-cover-by{font-size:48px;line-height:48px;color:var(--px-n5)}
+[data-id="t-pixel-cover"] .t-pixel-cover-sub{font-size:48px;line-height:48px;color:var(--px-n6)}
+[data-id="t-pixel-cover"] .t-pixel-cover-sub span{display:inline-flex;align-items:center;gap:24px}
+[data-id="t-pixel-cover"] .t-pixel-cover-sub span::before,
+[data-id="t-pixel-cover"] .t-pixel-cover-sub span::after{content:"";width:28px;height:28px;background:var(--px-spark) center/100% 100% no-repeat}
+[data-id="t-pixel-cover"] .t-pixel-cover-me{display:inline-block;font-size:48px;line-height:48px;color:var(--px-n5)}
+
+/* 道具栏：对话框上下各收一点（两行字，底边停在 y 976）；说明那一行用浅紫 */
+[data-id="t-pixel-items"] .px-msg{padding-top:28px;padding-bottom:28px}
+[data-id="t-pixel-items"] .t-pixel-items-say{color:var(--px-n6)}
+
+/* 回合制战斗：敌人窗口里名字一行、血条一行（「HP」金色）；对话框和命令菜单一样高（224） */
+[data-id="t-pixel-boss"] .t-pixel-boss-name{margin:0 0 16px;font-size:48px;line-height:48px}
+[data-id="t-pixel-boss"] .t-pixel-boss-hp{display:flex;align-items:center;gap:24px;font-size:48px;line-height:48px;color:var(--px-y)}
+[data-id="t-pixel-boss"] .px-msg{padding-top:48px;padding-bottom:48px}
+
+/* 结尾：名牌让到形象右边；致谢小窗一行 48px，窗框用金色（和对话框的白框分开） */
+[data-id="t-pixel-end"] .px-msg{padding:64px 72px 56px}
+[data-id="t-pixel-end"] .px-who{left:160px}
+[data-id="t-pixel-end"] .t-pixel-end-thanks{--ring:var(--px-y)}
+[data-id="t-pixel-end"] .t-pixel-end-thanks p{margin:0;font-size:48px;line-height:48px;white-space:nowrap}
