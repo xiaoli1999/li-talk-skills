@@ -170,7 +170,7 @@
 - **原因**：正文小于 34px；或者标了 `data-small` 的小字小于 24px。
 - **怎么改**：
   1. 正文改到 34px 以上（直接删掉自己写的 `font-size`，默认就是 36px）。放不下就删字、拆页，不要缩字。
-  2. 确实是注释类的小字（编号、图例、出处），在那个元素上加 `data-small`，字号不小于 24px。小格 `.cell` 里的 `<i>` 编号要加 `data-small`；截图位的说明（报「……字号 32px」，文字就是 `data-caption` 的内容）在截图位 `<figure class="shot">` 上加 `data-small`。
+  2. 确实是注释类的小字（编号、图例、出处），在那个元素上加 `data-small`，字号不小于 24px。小格 `.cell` 里的 `<i>` 编号要加 `data-small`。
   3. 不要给整张卡片或整页加 `data-small` 来躲检查。
 
 ### 出现滚动条（scrollbar）
