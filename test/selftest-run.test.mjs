@@ -83,6 +83,20 @@ test('真实浏览器：good 没有错误，overflow 报出文字溢出', { skip
   assert.ok(bad.issues.some(i => i.type === 'text-overflow'), JSON.stringify(bad.issues, null, 2));
 });
 
+// 可读性三项：字太淡、竖排太长、讲过的看不见了；对照（正常的字、短题签、data-transient 的过场字）不报
+test('真实浏览器：可读性提醒（对比度、竖排、讲过的看不见了），对照不误报', { skip: !browser && '本机没找到 Edge / Chrome' }, async () => {
+  const r = await selftest(browser, join(FIX, 'readability'), { w: 1920, h: 1080 });
+  const all = JSON.stringify(r.issues, null, 2);
+  assert.equal(r.issues.filter(i => i.level === 'error').length, 0, all);
+  const of = type => r.issues.filter(i => i.type === type);
+  assert.deepEqual(of('low-contrast').map(i => i.id), ['rd1'], all);
+  assert.match(of('low-contrast')[0].msg, /颜色太淡/);
+  assert.deepEqual(of('vertical-long').map(i => [i.id, i.data.chars]), [['rd2', 20]], all);
+  assert.deepEqual(of('gone').map(i => [i.id, i.beat]), [['rd3', 1], ['rd3', 2]], all);
+  assert.ok(!all.includes('-30'), '标了 data-transient 的过场字不该报');
+  assert.equal(r.issues.length, 4, all);
+});
+
 /* ---------- check --browser 的流程：用假的浏览器和自检结果，不真的开浏览器 ---------- */
 
 // 把测试课件复制到临时目录，免得往仓库里写 .li-talk/

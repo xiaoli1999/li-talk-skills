@@ -1,0 +1,10 @@
+/* 自检测试：可读性 */
+[data-id="rd1"] .rd-pale{left:160px;top:320px;color:#DCD8CF}
+[data-id="rd1"] .rd-ok{left:160px;top:460px}
+[data-id="rd2"] .rd-vert{left:900px;top:220px;height:780px;writing-mode:vertical-rl}
+[data-id="rd2"] .rd-tag{left:1500px;top:260px;writing-mode:vertical-rl}
+[data-id="rd3"] .rd-dlg{left:160px;top:620px;width:1600px}
+/* 对话框只留最新一句：后面有一句出来了，前面的就藏起来 */
+[data-id="rd3"] .rd-dlg p:has(~ p.on){display:none}
+[data-id="rd3"] .rd-hit{left:160px;top:320px}
+[data-id="rd3"] .rd-hit b:has(~ b.on){display:none}
