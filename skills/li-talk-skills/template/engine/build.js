@@ -96,10 +96,11 @@
   /* 最后一页的署名（设计文档 5.4）：不进拍、第 0 拍就在、点它复制链接（ui.js 的点击处理走 data-copy，拦下跳转）；
      不提供关闭的开关。颜色用 --sign-color，风格可以在自己的 CSS 里改；位置由 ui.js 的 placeSign 定 */
   function addSign(p) {
-    const a = el('a', 'li-sign', `由 li-talk-skills 提供支持 · ${esc(I.SIGN_URL.replace(/^https?:\/\//, ''))}`);
+    // 屏幕上只写署名；仓库链接放在 href 和 data-copy 里，点一下复制，悬停时在提示里看得到
+    const a = el('a', 'li-sign', '由 小黎 · li-talk-skills 提供支持');
     a.href = I.SIGN_URL; a.target = '_blank'; a.rel = 'noopener';
     a.dataset.copy = I.SIGN_URL;
-    a.title = '点一下复制链接';
+    a.title = '点一下复制项目链接：' + I.SIGN_URL.replace(/^https?:\/\//, '');
     p.el.appendChild(a);
     dom.sign = a;
   }
