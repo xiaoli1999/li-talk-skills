@@ -5,7 +5,7 @@ import { mkdirSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { UserError } from './cli.mjs';
 import { checkStatic } from './check-static.mjs';
-import { readDeck } from './deck.mjs';
+import { readDeck, deckEntry } from './deck.mjs';
 import { findBrowser } from './browser.mjs';
 import { openBrowser } from './selftest-run.mjs';
 import { formatReport, mergeIssues } from './report.mjs';
@@ -31,6 +31,9 @@ export async function run(args = {}, opts = {}) {
   const target = args._ && args._[0];
   if (!target) throw new UserError('check 后面要写课件目录，比如：check ./我的分享 --browser');
   const dir = resolve(String(target));
+  // 入口文件：平常是 index.html；模板目录（index.html 带 {{…}} 占位符、旁边有 gallery.html）改查样册，两种检查都一样
+  const entry = deckEntry(dir);
+  if (entry !== 'index.html') log(`这是模板目录：index.html 是带占位符的入口模板，改查样册 ${entry}（全部风格、形象和样板页）。\n`);
 
   // 1. 不开浏览器的检查（目录不对时 checkStatic 会抛带中文说明的错误）
   const st = await checkStatic(dir);
@@ -65,7 +68,7 @@ export async function run(args = {}, opts = {}) {
       const [w, h] = SIZES[i];
       log(`  正在用 ${w}×${h} 自检（${i + 1}/${SIZES.length}）…`);
       try {
-        runs.push({ w, h, result: await b.selftest(dir, { w, h, pages, scene }) });
+        runs.push({ w, h, result: await b.selftest(dir, { w, h, pages, scene, entry }) });
       } catch (e) {
         if (i === 0) throw e;   // 第一个尺寸就跑不了，后面多半也一样，直接停下说明原因
         runs.push({ w, h, error: reason(e) });
@@ -83,7 +86,7 @@ export async function run(args = {}, opts = {}) {
       for (const p of list) {
         log(`  截图 第 ${p.no} 页（${++shotCount}/${list.length}）…`);
         const file = join(shotDir, `p${String(p.no).padStart(pad, '0')}.png`);
-        await b.screenshot(dir, file, { w: SHOT[0], h: SHOT[1], page: p.no, beat: p.total || 0, scene });
+        await b.screenshot(dir, file, { w: SHOT[0], h: SHOT[1], page: p.no, beat: p.total || 0, scene, entry });
       }
     }
   } finally {
@@ -97,11 +100,11 @@ export async function run(args = {}, opts = {}) {
   if (shotDir) log(`\n截图存在：${shotDir}（每页最后一拍，${SHOT[0]}×${SHOT[1]}，共 ${shotCount} 张）`);
 
   // 4. 记下这次自检，guide 用它判断自检是不是过期、有没有错误（两种检查的错误合计，和退出码一致）。
-  //    只查部分页面或临时换风格时不记，免得把没查的页也算成通过
+  //    只查部分页面或临时换风格时不记，免得把没查的页也算成通过；模板目录不是课件，也不记（免得把 .li-talk/ 留在模板里）
   const total = { errors: st.errors + errors.length, warnings: st.warnings + warnings.length };
   if (pages || scene) {
-    log(`\n${pages ? '只查了部分页面' : '临时换了风格'}，没有更新自检记录；改完后跑一次完整的 check --browser。`);
-  } else {
+    if (entry === 'index.html') log(`\n${pages ? '只查了部分页面' : '临时换了风格'}，没有更新自检记录；改完后跑一次完整的 check --browser。`);
+  } else if (entry === 'index.html') {
     const rec = {
       at: new Date().toISOString(),
       slidesMtime,

@@ -1,0 +1,14 @@
+/* 样板页的页面样式（和 samples.js 配套）
+   - 每条选择器都以 [data-id="t-…"] 开头，只管那一页；抄样板时连同这里的规则一起抄，[data-id="…"] 换成新页面的 id
+   - 只写大小和位置，不写颜色：颜色一律来自风格的 CSS 变量，换风格不用改 */
+
+/* 封面的大标题比普通大字（84px）再大一号 */
+[data-id="t-cover"] .cover-title{font-size:112px;line-height:1.15;letter-spacing:.03em}
+
+/* 清单的卡片：内容只有两行，给个最小高度，三张卡片才像一排便签，不像细长条 */
+[data-id="t-list"] .card{min-height:270px}
+/* 圈注的圈比字宽出一圈（左右各约 22px），被圈的词前后留点空，圈才不会划过旁边的字 */
+[data-id="t-list"] [data-mark]{margin:0 .5em}
+
+/* 步骤的标题大一号（42px → 50px），一排三步才撑得起一页 */
+[data-id="t-steps"] .steps>li>b{font-size:var(--fs-lg)}

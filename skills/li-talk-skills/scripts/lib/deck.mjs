@@ -108,13 +108,28 @@ function walk(root) {
 }
 
 /**
+ * 课件的入口文件名：平常是 index.html。
+ * 模板目录（skill 的 template/）里的 index.html 是带 {{…}} 占位符的入口模板，打不开；
+ * 旁边有样册 gallery.html 时改用它（样册引入了全部风格、形象和样板页），检查模板就是检查样板页。
+ */
+export function deckEntry(dir) {
+  const abs = resolve(dir);
+  const index = join(abs, 'index.html');
+  const gallery = join(abs, 'gallery.html');
+  if (existsSync(gallery) && statSync(gallery).isFile() && existsSync(index) && readText(index).includes('{{')) return 'gallery.html';
+  return 'index.html';
+}
+
+/**
  * 读课件目录。
- * 返回 { dir, indexHtml, chapterJs, chapterCss, sceneFiles, scenes, slidesOnDisk, slidesMtime }
+ * 返回 { dir, entry, indexHtml, chapterJs, chapterCss, sceneFiles, scenes, slidesOnDisk, slidesMtime }
+ * entry 是入口文件名（见 deckEntry），indexHtml 是入口文件的内容
  */
 export function readDeck(dir) {
   const abs = resolve(dir);
   if (!existsSync(abs) || !statSync(abs).isDirectory()) throw userError(`找不到课件目录：${abs}`);
-  const indexFile = join(abs, 'index.html');
+  const entry = deckEntry(abs);
+  const indexFile = join(abs, entry);
   if (!existsSync(indexFile)) throw userError(`${abs} 里没有 index.html，不像是一份课件。还没搭骨架的话先运行 new。`);
   const indexHtml = readText(indexFile);
   const { js, css } = chapterRefs(indexHtml);
@@ -132,6 +147,7 @@ export function readDeck(dir) {
   const { files, mtime } = walk(join(abs, 'slides'));
   return {
     dir: abs,
+    entry,
     indexHtml,
     chapterJs: unique(js),
     chapterCss: unique(css),

@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>li-talk-skills 样册</title>
+<!-- 样册：全部风格、全部形象、4 种样板页（封面、清单、步骤、结尾）。
+     地址加 ?scene=<键名> 整份换成那个风格看；左下角的小条点一下也是这样换。
+     不写 li-talk-mascot：形象跟着风格走（科技暗黑用微光，其余用朵朵）。
+     引入顺序照入口模板 index.html（接口约定 G）；样板页放在两对「章节」注释之间，check 读模板目录时查的就是它们 -->
+<script>/* 自检用：记下页面里的报错和加载失败 */window.__deckErrors=[];addEventListener('error',function(e){var t=e.target;__deckErrors.push(t&&t!==window&&(t.src||t.href)?'加载失败：'+(t.src||t.href):String(e.message))},true);(function(c){var o=c.error;c.error=function(){__deckErrors.push([].slice.call(arguments).join(' '));return o.apply(c,arguments)}})(console);</script>
+<link rel="stylesheet" href="vendor/fonts/wenkai-lite.css">
+<link rel="stylesheet" href="engine/engine.css">
+<link rel="stylesheet" href="scenes/paper.css">
+<link rel="stylesheet" href="scenes/board.css">
+<link rel="stylesheet" href="scenes/journal.css">
+<link rel="stylesheet" href="scenes/desk.css">
+<link rel="stylesheet" href="scenes/watercolor.css">
+<link rel="stylesheet" href="scenes/dark.css">
+<!-- 章节样式（开始） -->
+<link rel="stylesheet" href="samples/samples.css">
+<!-- 章节样式（结束） -->
+<style>
+/* 换风格的小条：固定在窗口左下角，盖在舞台上面一小块，可以收起；不属于课件，自检模式下不放 */
+.gl-bar{position:fixed;left:12px;bottom:12px;z-index:700;display:flex;align-items:center;gap:4px;max-width:calc(100vw - 24px);padding:5px;border-radius:12px;
+  background:rgba(24,26,30,.8);box-shadow:0 6px 18px rgba(0,0,0,.28);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  font:500 13px/1 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;color:#E9EBEE;user-select:none;-webkit-user-select:none}
+.gl-bar button{margin:0;padding:7px 10px;border:0;border-radius:8px;background:transparent;color:inherit;font:inherit;cursor:pointer;white-space:nowrap}
+.gl-bar button:hover{background:rgba(255,255,255,.12)}
+.gl-bar button:focus-visible{outline:2px solid #9CC3F5;outline-offset:1px}
+.gl-bar button[aria-current="true"]{background:#F1F3F5;color:#17191D}
+.gl-bar .gl-toggle{font-weight:700}
+.gl-bar .gl-list{display:flex;flex-wrap:wrap;align-items:center;gap:2px}
+.gl-bar .gl-fam{padding:0 2px 0 8px;color:rgba(233,235,238,.5);white-space:nowrap}
+.gl-bar .gl-hint{padding:0 8px 0 10px;color:rgba(233,235,238,.5);white-space:nowrap}
+.gl-bar.folded .gl-list,.gl-bar.folded .gl-hint{display:none}
+</style>
+</head>
+<body class="loading">
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/rough.min.js"></script>
+<script src="engine/core.js"></script>
+<script src="engine/build.js"></script>
+<script src="engine/beats.js"></script>
+<script src="engine/mascot.js"></script>
+<script src="engine/pages.js"></script>
+<script src="engine/ui.js"></script>
+<script src="engine/presenter.js"></script>
+<script src="engine/selftest.js"></script>
+<script src="scenes/paper.js"></script>
+<script src="scenes/board.js"></script>
+<script src="scenes/journal.js"></script>
+<script src="scenes/desk.js"></script>
+<script src="scenes/watercolor.js"></script>
+<script src="scenes/dark.js"></script>
+<script src="mascots/duoduo.js"></script>
+<script src="mascots/weiguang.js"></script>
+<!-- 章节（开始）：样板页（samples/samples.js），页面顺序 = 引入顺序 -->
+<script src="samples/samples.js"></script>
+<!-- 章节（结束） -->
+<script>
+/* 换风格的小条：点一个风格，就用 ?scene=<键名> 重新打开，停在当前这一页这一拍（地址里的 #页/拍 保留）。
+   风格的名字从风格注册表里取（引擎内部的 Deck._，只有样册这么用，课件页面里不要这么写）；收起与否记在本次会话里 */
+(function () {
+  'use strict';
+  var qs = new URLSearchParams(location.search);
+  if (qs.has('selftest') || !window.Deck || !Deck._) return;
+  var I = Deck._, FAMILY = I.FAMILY || {};
+  var keys = Object.keys(I.SCENES).filter(function (k) { return k !== 'plain'; });
+  if (!keys.length) return;
+  var asked = qs.get('scene');
+  var cur = asked && I.SCENES[asked] ? asked : (I.DEFS[0] && I.SCENES[I.DEFS[0].scene] ? I.DEFS[0].scene : keys[0]);
+  var FOLD = 'li-talk-gallery-folded';
+  var folded = innerWidth < 1200;   // 窗口窄时先收起，免得盖住舞台太多；点一下展开
+  try { var saved = sessionStorage.getItem(FOLD); if (saved) folded = saved === '1'; } catch (e) { /* 存不了就按窗口宽度 */ }
+
+  var bar = document.createElement('nav');
+  bar.className = 'gl-bar' + (folded ? ' folded' : '');
+  bar.setAttribute('aria-label', '换风格');
+  var toggle = document.createElement('button');
+  toggle.type = 'button';
+  toggle.className = 'gl-toggle';
+  var list = document.createElement('div');
+  list.className = 'gl-list';
+  var hint = document.createElement('span');
+  hint.className = 'gl-hint';
+  hint.textContent = '← → 翻页';
+  var setToggle = function () {
+    toggle.textContent = folded ? '换风格 ▸' : '风格 ◂';
+    toggle.title = folded ? '展开风格列表' : '收起';
+    toggle.setAttribute('aria-expanded', folded ? 'false' : 'true');
+  };
+  setToggle();
+  toggle.addEventListener('click', function () {
+    folded = !folded;
+    bar.classList.toggle('folded', folded);
+    setToggle();
+    try { sessionStorage.setItem(FOLD, folded ? '1' : '0'); } catch (e) { /* 存不了就算了 */ }
+  });
+
+  // 按家分组：手绘家、现代家、像素家（同一份课件只在同一家里混用）
+  ['hand', 'modern', 'pixel'].forEach(function (fam) {
+    var ks = keys.filter(function (k) { return I.SCENES[k].family === fam; });
+    if (!ks.length) return;
+    var f = document.createElement('span');
+    f.className = 'gl-fam';
+    f.textContent = (FAMILY[fam] || fam) + '：';
+    list.appendChild(f);
+    ks.forEach(function (k) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = I.SCENES[k].label || k;
+      b.title = k;
+      if (k === cur) b.setAttribute('aria-current', 'true');
+      b.addEventListener('click', function () {
+        if (k === cur) return;
+        location.href = '?scene=' + encodeURIComponent(k) + location.hash;
+      });
+      list.appendChild(b);
+    });
+  });
+
+  bar.appendChild(toggle);
+  bar.appendChild(list);
+  bar.appendChild(hint);
+  document.body.appendChild(bar);
+})();
+</script>
+</body>
+</html>

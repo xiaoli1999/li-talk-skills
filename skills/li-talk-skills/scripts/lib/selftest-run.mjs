@@ -32,9 +32,9 @@ function userError(message, exitCode = 1) {
 }
 const sleep = ms => new Promise(ok => setTimeout(ok, ms));
 
-// 课件 index.html 的 file: 地址；中文和空格会被转义
-export function deckUrl(deckDir, query = '', hash = '') {
-  const u = pathToFileURL(join(resolve(deckDir), 'index.html'));
+// 课件入口的 file: 地址；中文和空格会被转义。entry 是入口文件名，默认 index.html（模板目录用样册 gallery.html，见 deck.mjs 的 deckEntry）
+export function deckUrl(deckDir, query = '', hash = '', entry = 'index.html') {
+  const u = pathToFileURL(join(resolve(deckDir), entry || 'index.html'));
   if (query) u.search = query;
   if (hash) u.hash = hash;
   return u.href;
@@ -144,21 +144,21 @@ export async function openBrowser(browser, { callTimeout = CALL_TIMEOUT } = {}) 
   let shown = null;   // 截图用的页面地址（不带 #），同一个地址只改 # 翻页
 
   // 设好视口再打开地址；先回到空白页，免得读到上一次的结果
-  async function load(url, w, h) {
+  async function load(url, w, h, entry = 'index.html') {
     await call('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: false });
     await call('Page.navigate', { url: 'about:blank' });
     const r = await call('Page.navigate', { url });
-    if (r.errorText) throw userError(`打不开课件（${r.errorText}），检查目录里有没有 index.html。`);
+    if (r.errorText) throw userError(`打不开课件（${r.errorText}），检查目录里有没有 ${entry || 'index.html'}。`);
   }
 
-  // 在 w×h 的视口里跑一次自检，返回引擎写的结果（接口约定 D）
-  async function selftest(deckDir, { w, h, pages, scene, timeout = RUN_TIMEOUT } = {}) {
+  // 在 w×h 的视口里跑一次自检，返回引擎写的结果（接口约定 D）；entry 是入口文件名，默认 index.html
+  async function selftest(deckDir, { w, h, pages, scene, entry, timeout = RUN_TIMEOUT } = {}) {
     const q = new URLSearchParams({ selftest: '1' });
     if (pages) q.set('pages', pages);
     if (scene) q.set('scene', scene);
     shown = null;
     await call('Emulation.setEmulatedMedia', { features: [LIGHT] });
-    await load(deckUrl(deckDir, '?' + q.toString()), w, h);
+    await load(deckUrl(deckDir, '?' + q.toString(), '', entry), w, h, entry);
     const fail = why => userError(`${w}×${h} 没读到自检结果：${why}`);
     const start = Date.now();
     let completeAt = 0;
@@ -181,12 +181,12 @@ export async function openBrowser(browser, { callTimeout = CALL_TIMEOUT } = {}) 
   }
 
   // 截一张 w×h 的图：打开 #页/拍。开着「减少动态」，引擎直接跳到最终状态，不用等动画
-  async function screenshot(deckDir, file, { w, h, page, beat, scene, settle = SETTLE }) {
-    const base = deckUrl(deckDir, scene ? '?scene=' + encodeURIComponent(scene) : '');
+  async function screenshot(deckDir, file, { w, h, page, beat, scene, entry, settle = SETTLE }) {
+    const base = deckUrl(deckDir, scene ? '?scene=' + encodeURIComponent(scene) : '', '', entry);
     const hash = `#${page}/${beat}`;
     await call('Emulation.setEmulatedMedia', { features: [LIGHT, { name: 'prefers-reduced-motion', value: 'reduce' }] });
     if (shown !== base) {
-      await load(base + hash, w, h);
+      await load(base + hash, w, h, entry);
       const start = Date.now();
       while (Date.now() - start < CALL_TIMEOUT && !(await evaluate("document.readyState === 'complete'"))) await sleep(POLL);
       shown = base;
