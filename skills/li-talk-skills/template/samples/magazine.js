@@ -67,7 +67,7 @@ Deck.add({
     <div class="mag-clip side abs ct-item" data-beat="1" data-no="01" data-mascot="1" data-mascot-side="right" style="left:640px;top:258px;width:860px;--r:-.8deg">
       <span class="mag-kick" data-small>备器<small>P.03</small></span><h3>三样东西，备齐再动手</h3><p>盖碗、茶叶、热水，一样不能少</p>
     </div>
-    <div class="mag-clip side ink-g abs ct-item" data-beat="2" data-no="02" data-mascot="2" data-mascot-side="right" style="left:790px;top:498px;width:660px;--r:1deg">
+    <div class="mag-clip side mag-g abs ct-item" data-beat="2" data-no="02" data-mascot="2" data-mascot-side="right" style="left:790px;top:498px;width:660px;--r:1deg">
       <span class="mag-kick" data-small>图解<small>P.04</small></span><h3>泡茶只要三步</h3><p>温杯、投茶、注水</p>
     </div>
     <div class="mag-clip side news abs ct-item" data-beat="3" data-no="03" data-mascot="3" data-mascot-side="right" style="left:700px;top:738px;width:740px;--r:-.6deg">

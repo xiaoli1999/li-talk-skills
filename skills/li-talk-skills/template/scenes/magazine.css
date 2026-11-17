@@ -298,7 +298,7 @@
    - data-no：套印大序号（宋体 150px，墨绿、背后一版橘红没套准）。序号就是阅读顺序：01、02、03，别拿页码当序号（页码写进栏目小标的 <small>）。
      默认压在纸条左上角往上探出去约一个字高，上方要留出约 110px 的空；有序号时胶带改贴右上角。
      加 side：序号挪到纸条左边、竖直居中（图解步骤、目录用），左边要留出约 170px，纸条的 padding-left 加到 50px 以上
-   - 纸色：默认纸白；ink-g 墨绿纸（字反成米白，栏目小标也是米白），news 旧报纸的米黄；t-* 的卡片颜色也认
+   - 纸色：默认纸白；mag-g 墨绿纸（字反成米白，栏目小标也是米白），news 旧报纸的米黄；t-* 的卡片颜色也认
    - 歪（--r）不超过 ±1.5deg：再歪字就不好读了
    - 不写死 height（字多了会溢出）；要几张一样高写 min-height ---------- */
 [data-scene="magazine"] .mag-clip{--mag-tp:1;--mag-lf:0;--mag-gx:5px;--mag-gy:4px;padding:30px 40px 32px;color:var(--card-ink);rotate:var(--r);
@@ -307,7 +307,7 @@
   transition:translate .35s cubic-bezier(.2,.7,.2,1),box-shadow .3s}
 [data-scene="magazine"] :is(.mag-clip,.mag-col,.mag-pull):not(.abs){position:relative}
 [data-scene="magazine"] .mag-clip.news{--tint:#F2E8D2}
-[data-scene="magazine"] .mag-clip.ink-g{--tint:var(--mag-green);--card-ink:var(--mag-cream);--card-ink-2:rgba(244,238,225,.86);--ink:var(--mag-cream);--ink-2:rgba(244,238,225,.86)}
+[data-scene="magazine"] .mag-clip.mag-g{--tint:var(--mag-green);--card-ink:var(--mag-cream);--card-ink-2:rgba(244,238,225,.86);--ink:var(--mag-cream);--ink-2:rgba(244,238,225,.86)}
 [data-scene="magazine"] .mag-clip h3{margin:0 0 6px;font:900 var(--fs-md)/1.25 var(--f-hand);letter-spacing:.02em;color:var(--card-ink)}
 [data-scene="magazine"] .mag-clip p{font:600 var(--fs-body)/1.45 var(--f-hand);color:var(--card-ink-2)}
 [data-scene="magazine"] .mag-clip::before{content:"";position:absolute;z-index:2;left:-40px;top:-14px;width:132px;height:34px;pointer-events:none;
@@ -317,17 +317,17 @@
   font:400 var(--mag-nf,150px)/1 var(--f-hand);letter-spacing:-.04em;color:var(--mag-green);text-shadow:var(--mag-gx) var(--mag-gy) 0 var(--mag-orange);
   -webkit-text-stroke:calc(var(--mag-thin,0) * 2px) currentColor}
 [data-scene="magazine"] .mag-clip.side[data-no]::after{left:auto;right:calc(100% - 30px);top:50%;translate:0 -54%}
-[data-scene="magazine"] .mag-clip.ink-g[data-no]::after{color:var(--mag-orange);text-shadow:var(--mag-gx) var(--mag-gy) 0 var(--mag-ink)}
+[data-scene="magazine"] .mag-clip.mag-g[data-no]::after{color:var(--mag-orange);text-shadow:var(--mag-gx) var(--mag-gy) 0 var(--mag-ink)}
 /* 墨绿纸剪报的 side 序号：也用墨绿序号（和别的几张一样，一眼看出是同一串 01、02、03），
    整个挪到纸外的米白纸上（压进墨绿纸的那一截会看不见） */
-[data-scene="magazine"] .mag-clip.ink-g.side[data-no]::after{right:calc(100% + 10px);color:var(--mag-green);text-shadow:var(--mag-gx) var(--mag-gy) 0 var(--mag-orange)}
+[data-scene="magazine"] .mag-clip.mag-g.side[data-no]::after{right:calc(100% + 10px);color:var(--mag-green);text-shadow:var(--mag-gx) var(--mag-gy) 0 var(--mag-orange)}
 /* 栏目小标：橘红短线 + 黑体小字（26px，页面里要写 data-small）；<small> 是推到右头的页码 */
 [data-scene="magazine"] .mag-kick{display:flex;align-items:center;gap:12px;margin:0 0 10px;white-space:nowrap;font:700 26px/1.2 var(--f-sans);letter-spacing:.16em;color:var(--mag-orange-d)}
 [data-scene="magazine"] .mag-kick::before{content:"";flex:none;width:30px;height:6px;background:currentColor}
 [data-scene="magazine"] .mag-kick small{margin-left:auto;padding-left:24px;font:inherit;letter-spacing:.06em}
 /* 墨绿纸上：橘红字对比度只有 2.6:1，字换成米白，短线保留橘红 */
-[data-scene="magazine"] .ink-g .mag-kick{color:var(--mag-cream)}
-[data-scene="magazine"] .ink-g .mag-kick::before{background:var(--mag-orange)}
+[data-scene="magazine"] .mag-g .mag-kick{color:var(--mag-cream)}
+[data-scene="magazine"] .mag-g .mag-kick::before{background:var(--mag-orange)}
 
 /* ---------- 套印大字 .mag-no：一个大号宋体数字（或一两个字），墨绿，背后一版橘红偏出去一点没套准
    <b class="mag-no abs" data-beat="0" style="left:…;top:…;font-size:400px">80<small>℃</small></b>

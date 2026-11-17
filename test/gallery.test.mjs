@@ -173,6 +173,26 @@ test('样册里列出的风格样板：文件都在、页面 id 带风格前缀�
   }
 });
 
+// 风格专用组件的类名前缀：每种风格一个，别的风格的文件里不许用（工位桌面曾经用了科技暗黑的 dk-，杂志用过水墨的 ink-）
+const PREFIX = { paper: 'pp', board: 'bd', journal: 'jn', desk: 'dsk', watercolor: 'wc', ink: 'ink', blueprint: 'bp', comic: 'cm',
+  dark: 'dk', frost: 'fr', glass: 'gl', flat: 'fl', magazine: 'mag', brutal: 'bz', pixel: 'px' };
+test('风格专用组件的类名前缀不撞：风格文件和它的样板里只用自己的前缀', () => {
+  assert.deepEqual(Object.keys(PREFIX).sort(), [...SCENES].sort());
+  for (const key of SCENES) {
+    const files = [join(TPL, 'scenes', key + '.css'), join(TPL, 'scenes', key + '.js'), join(TPL, 'samples', key + '.js'), join(TPL, 'samples', key + '.css')].filter(f => existsSync(f));
+    for (const f of files) {
+      const txt = readFileSync(f, 'utf8');
+      for (const [other, p] of Object.entries(PREFIX)) {
+        if (other === key) continue;
+        // 类名：选择器里的 .xx-，或 class="… xx-…"、classList 里的 'xx-…'（CSS 变量 --xx- 不算）
+        const re = new RegExp(`(?:\\.|class(?:Name)?=["'\`][^"'\`]*\\b|classList\\.\\w+\\(['"\`])${p}-[a-z]`, 'g');
+        const hit = txt.match(re);
+        assert.ok(!hit, `${f.replace(TPL, 'template')} 用了 ${other}（${p}-）的前缀：${hit && hit.slice(0, 3).join('、')}`);
+      }
+    }
+  }
+});
+
 // 真实浏览器：样板页在 15 种风格下（1920×1080）都没有错误、没有提醒；有自己样板的风格放的是它自己的页。完整的 5 个尺寸用
 // node skills/li-talk-skills/scripts/li-talk.mjs check skills/li-talk-skills/template --browser --scene <键名>
 const browser = findBrowser();

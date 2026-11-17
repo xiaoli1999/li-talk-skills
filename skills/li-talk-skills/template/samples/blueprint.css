@@ -17,9 +17,9 @@
 
 /* ---------- 工艺流程图 ---------- */
 /* 工序框 330×200（y 370–570），起止框 210×130；框下的尺寸标注从 y 580 往下伸 110 */
-[data-id="t-blueprint-flow"] .fl-box{width:330px;height:200px}
-[data-id="t-blueprint-flow"] .fl-end{width:210px;height:130px}
-[data-id="t-blueprint-flow"] .fl-dim{top:580px;height:110px}
+[data-id="t-blueprint-flow"] .flow-box{width:330px;height:200px}
+[data-id="t-blueprint-flow"] .flow-end{width:210px;height:130px}
+[data-id="t-blueprint-flow"] .flow-dim{top:580px;height:110px}
 
 /* ---------- 修订记录 ---------- */
 /* 三列对齐：云线 300 宽、箭头 150 长、铭牌 480 宽 */

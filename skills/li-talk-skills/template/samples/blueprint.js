@@ -151,16 +151,16 @@ Deck.add({
       <circle class="t" cx="20" cy="20" r="17"/><circle class="dot" cx="20" cy="20" r="10"/>
     </svg>
     <i class="bp-arrow abs" data-beat="1" style="left:170px;top:458px;width:50px"></i>
-    <div class="bp-box abs fl-box" data-beat="1" data-mascot="1" data-mascot-side="top" style="left:220px;top:370px"><i class="bp-no">01</i><b>温杯</b><span>热水把盖碗烫一遍</span></div>
+    <div class="bp-box abs flow-box" data-beat="1" data-mascot="1" data-mascot-side="top" style="left:220px;top:370px"><i class="bp-no">01</i><b>温杯</b><span>热水把盖碗烫一遍</span></div>
     <i class="bp-arrow abs" data-beat="2" style="left:550px;top:458px;width:100px"></i>
-    <div class="bp-box abs fl-box" data-beat="2" data-mascot="2" data-mascot-side="top" style="left:650px;top:370px"><i class="bp-no">02</i><b>投茶</b><span>三克茶叶铺满碗底</span></div>
-    <i class="bp-dim abs fl-dim" data-beat="2" style="left:650px;width:330px"><b>3 g</b></i>
+    <div class="bp-box abs flow-box" data-beat="2" data-mascot="2" data-mascot-side="top" style="left:650px;top:370px"><i class="bp-no">02</i><b>投茶</b><span>三克茶叶铺满碗底</span></div>
+    <i class="bp-dim abs flow-dim" data-beat="2" style="left:650px;width:330px"><b>3 g</b></i>
     <i class="bp-arrow abs" data-beat="3" style="left:980px;top:458px;width:100px"></i>
-    <div class="bp-box abs fl-box" data-beat="3" data-mascot="3" data-mascot-side="top" style="left:1080px;top:370px"><i class="bp-no">03</i><b>注水</b><span>八十度水沿碗边倒</span></div>
-    <i class="bp-dim abs fl-dim" data-beat="3" style="left:1080px;width:330px"><b><em class="key">80℃</em></b></i>
+    <div class="bp-box abs flow-box" data-beat="3" data-mascot="3" data-mascot-side="top" style="left:1080px;top:370px"><i class="bp-no">03</i><b>注水</b><span>八十度水沿碗边倒</span></div>
+    <i class="bp-dim abs flow-dim" data-beat="3" style="left:1080px;width:330px"><b><em class="key">80℃</em></b></i>
     <i class="bp-arrow abs" data-beat="4" style="left:1410px;top:458px;width:180px"></i>
-    <i class="bp-dim abs fl-dim" data-beat="4" style="left:1410px;width:180px"><b>60 s</b></i>
-    <div class="bp-box end abs fl-end" data-beat="4" data-mascot="4" data-mascot-side="top" data-mascot-dy="-8" style="left:1590px;top:405px"><b>出汤</b></div>
+    <i class="bp-dim abs flow-dim" data-beat="4" style="left:1410px;width:180px"><b>60 s</b></i>
+    <div class="bp-box end abs flow-end" data-beat="4" data-mascot="4" data-mascot-side="top" data-mascot-dy="-8" style="left:1590px;top:405px"><b>出汤</b></div>
     <button class="abs copy" type="button" data-beat="4" data-delay=".5" style="left:220px;top:812px" data-copy="tea brew --green --temp 80">tea brew --green --temp 80</button>
     <div class="bp-titleblock" data-speaker="〈你的名字〉"></div>
     <div class="mascot guide" style="left:88px;top:316px"></div>`,

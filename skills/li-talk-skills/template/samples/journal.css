@@ -1,0 +1,37 @@
+/* 像素手账 journal 自己的样板页的页面样式（和 samples/journal.js 配套）
+   - 每条选择器都以 [data-id="t-journal-…"] 开头，只管那一页；抄样板时连同这里的规则一起抄，[data-id="…"] 换成新页面的 id
+   - 手账组件（.jn-*）的样子在 scenes/journal.css 里，这里只补这几页自己的字号、间距 */
+
+/* 封面：标签纸里书名 96px、副题 40px 居中；讲者一行写在标签底部一道点线上（靠左，右下角留给印章） */
+[data-id="t-journal-cover"] .t-journal-cover-title{margin:54px 0 0;text-align:center;font:700 96px/1.2 var(--f-hand);letter-spacing:.04em;color:var(--ink)}
+[data-id="t-journal-cover"] .t-journal-cover-sub{margin:14px 0 0;text-align:center;font:400 40px/1.3 var(--f-hand);color:var(--ink-2)}
+[data-id="t-journal-cover"] .t-journal-cover-me{display:inline-block;margin:44px 0 0 64px;padding:0 10px 4px 4px;font:400 36px/1.3 var(--f-hand);color:var(--ink);border-bottom:3px dotted rgba(31,59,47,.4)}
+
+/* 贴纸页：贴纸和底纸上的格子一样大（290×172，行距 226）；每行说明 44px，前面的箭头和字隔开一点 */
+[data-id="t-journal-stickers"] .jn-sticker,[data-id="t-journal-stickers"] .jn-slot{width:290px;height:172px}
+[data-id="t-journal-stickers"] .jn-sticker > .jn-art{width:110px}
+[data-id="t-journal-stickers"] .t-journal-stickers-note{margin:0;font:400 44px/1.3 var(--f-hand);color:var(--ink);white-space:nowrap}
+[data-id="t-journal-stickers"] .t-journal-stickers-note .jn-arw{margin-right:14px}
+
+/* 打卡表：表头一条淡琥珀实色底（压在表线下面）；表头 52px、备注 42px */
+[data-id="t-journal-tracker"] .t-journal-tracker-head{display:block;background:#FBEFD6;border-radius:6px 6px 0 0}
+[data-id="t-journal-tracker"] .t-journal-tracker-th{margin:0;font:700 52px/1.2 var(--f-hand);color:var(--ink)}
+[data-id="t-journal-tracker"] .t-journal-tracker-td{margin:0;font:400 42px/1.3 var(--f-hand);color:var(--ink)}
+
+/* 索引卡（高 284）：红色页眉线上面是坑 58px（前面红叉）；下面是横线格，一格 64：第一格一道朝下的箭头，第二格写破法 46px（后面绿勾），
+   字的底边落在横线上 */
+[data-id="t-journal-pits"] .jn-card{--jn-head:112px;height:284px;padding:0 34px}
+[data-id="t-journal-pits"] .t-journal-pits-bad{display:flex;align-items:center;gap:16px;height:112px;margin:0;font:700 58px/1.2 var(--f-hand)}
+[data-id="t-journal-pits"] .t-journal-pits-to{display:flex;align-items:center;height:64px;margin:0 0 0 8px;font-size:44px;line-height:1}
+[data-id="t-journal-pits"] .t-journal-pits-good{display:flex;align-items:flex-end;gap:6px;height:58px;margin:0;font:400 46px/1.2 var(--f-hand)}
+[data-id="t-journal-pits"] .t-journal-pits-good .jn-tick{align-self:center;margin-left:12px}
+/* 口袋上的星星小贴纸压在口袋正面上面 */
+[data-id="t-journal-pits"] .t-journal-pits-star{z-index:4}
+
+/* 涂色记录格：左边名字 56px；右边的数 120px，单位小一号、跟在数后面 */
+[data-id="t-journal-numbers"] .t-journal-numbers-lab{margin:0;font:700 56px/1.2 var(--f-hand);color:var(--ink)}
+[data-id="t-journal-numbers"] .t-journal-numbers-num{margin:0;font:700 120px/1.15 var(--f-hand);color:var(--ink);white-space:nowrap}
+[data-id="t-journal-numbers"] .t-journal-numbers-num small{margin-left:10px;font-size:52px;font-weight:700}
+
+/* 结尾：金句 96px 居中写在便签正中 */
+[data-id="t-journal-end"] .t-journal-end-quote{position:absolute;left:0;right:0;top:142px;margin:0;text-align:center;font:700 96px/1.2 var(--f-hand);letter-spacing:.03em;color:var(--ink)}
