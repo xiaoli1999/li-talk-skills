@@ -15,6 +15,7 @@ import { sha256 } from '../skills/li-talk-skills/scripts/lib/fonts.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const TPL = join(ROOT, 'skills', 'li-talk-skills', 'template');
+const SKILL_VERSION = readFileSync(join(ROOT, 'skills', 'li-talk-skills', 'version.txt'), 'utf8').trim();
 
 const made = [];
 const tmp = () => { const d = mkdtempSync(join(tmpdir(), 'li-talk-new-')); made.push(d); return d; };
@@ -67,7 +68,7 @@ test('只带选中的风格和它的形象', async () => {
   // 现场工具（总览、黑屏、激光笔、进度条）排在演讲者视图之后、自检之前
   assert.match(html, /engine\/presenter\.js"><\/script>\r?\n<script src="engine\/tools\.js"><\/script>\r?\n<script src="engine\/selftest\.js">/);
   assert.match(html, /name="li-talk-mascot" content="jianjian"/);
-  assert.match(html, /name="li-talk-engine" content="0\.1\.0"/);
+  assert.ok(html.includes(`name="li-talk-engine" content="${SKILL_VERSION}"`), '引擎版本取 version.txt');
   assert.match(html, /href="vendor\/fonts\/wenkai-lite\.css"/);
   assert.doesNotMatch(html, /\{\{/);
   // 章节区的两对注释原样保留，读课件靠它们
@@ -81,7 +82,7 @@ test('只带选中的风格和它的形象', async () => {
   assert.equal(meta.title, '我的分享');
   assert.deepEqual(meta.scenes, ['paper']);
   assert.equal(meta.mascot, 'jianjian');
-  assert.equal(meta.version, '0.1.0');
+  assert.equal(meta.version, SKILL_VERSION);
   assert.deepEqual(meta.confirmed, { outline: false, script: false, style: false, trial: false, review: false });
   assert.ok(!Number.isNaN(Date.parse(meta.created)));
 });

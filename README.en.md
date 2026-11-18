@@ -4,9 +4,9 @@
 
 A skill for AI coding tools: hand your topic, ideas, screenshots or script to the AI and get an **HTML talk deck** back. It steps through beat by beat like slides, opens offline with a double-click, and comes with a presenter view, timer, rehearsal mode and animations. Every style has its own little mascot.
 
-![The same slide in 9 styles](docs/images/hero.jpg)
+![One topic, a signature slide in each of 9 styles](docs/images/hero.jpg)
 
-<sub>The same sample slide (a made-up "brew tea in three steps") in 9 styles, at its last beat: steps already covered fade out, and the mascot walks over to the current one.</sub>
+<sub>The same made-up topic ("how to brew a good cup of tea") in the gallery, one signature slide from each of 9 styles, at its last beat: every style has its own layout, and the points already covered stay on the slide.</sub>
 
 **Good for**: tech talks, training sessions, reports and presentations, when you want web slides you click through beat by beat, with a presenter view for your notes.
 
@@ -61,6 +61,8 @@ You can switch conversations or models halfway: progress lives in files in the d
 ## 15 styles
 
 Three families. A deck can switch styles by chapter, but only within one family. Each style has a default mascot, and you can swap in another style's mascot.
+
+A style is more than a color scheme: its layouts, structure and what happens on each beat all follow its own look. Graph Paper corrects in red pen, Blueprint draws an assembly list, Comic tells it in four panels, Pixel Game walks a level map. Each style turns the same topic into 5–6 sample slides, and the AI writes your deck after the samples of the style you pick. The images below show one signature slide per style.
 
 ### Hand-drawn (Kai script)
 
@@ -119,6 +121,7 @@ The AI writes each slide by hand, and the hard part is knowing whether it looks 
 
 - **A check without a browser**: takes seconds and catches authoring mistakes, things outside the technical limits (such as loading network resources), and notes that don't match the beats.
 - **A headless browser self-check**: opens the deck in your local Edge or Chrome in the background and measures every beat of every slide at five sizes (1920×1080, 1440×900, 1280×720, 1024×768, and 390×844 portrait reading mode) for overflow, overlap, text covered by the mascot, text that's too small, leftovers after stepping back, errors and so on. The report says which slide and beat, which size, the measured numbers and how to fix it, so weaker models that can't see images can fix issues by following it.
+- **Readability**: however rich a style's layout is, every slide must be complete and readable from the back row at its last beat. The self-check warns about three things: text with less than 3:1 contrast against its background (faded, already-covered beats included), vertical text that runs too long, and text from an earlier beat that is no longer visible at the last beat.
 
 The AI only shows you the deck once every error is cleared.
 

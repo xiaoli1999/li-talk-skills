@@ -39,7 +39,7 @@ test('命令模块还不存在时给一句中文，不抛 Node 的错误', async
 
 test('version 打印版本号（和 version.txt 一致）、安装位置；在仓库里运行时说明不自动更新', () => {
   const v = readFileSync(join(SKILL, 'version.txt'), 'utf8').trim();
-  assert.equal(v, '0.1.0');
+  assert.match(v, /^\d+\.\d+\.\d+$/);
   const r = cli('version');
   assert.equal(r.code, 0, r.err);
   const lines = r.out.trim().split(/\r?\n/);
