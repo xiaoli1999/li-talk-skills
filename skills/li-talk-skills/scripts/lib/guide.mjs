@@ -1077,11 +1077,22 @@ function stageDone(s) {
     '发给别人：把整个课件目录拷走（或压缩成 zip），对方双击 index.html 就能看。',
     ['以后再改：改完跑后台自检清零，再运行 guide 看一眼：', cli('check', quote(s.dir), '--browser')],
   ];
-  return render(9, {
-    where, steps,
-    asks: [{ q: '还要做什么吗？', opts: ['不用了，就这样（推荐）', '再改改：说改哪里', '彩排过了：贴上彩排小结，删减超时页的讲词'] }],
-    say: '再从头帮我看一遍讲词，有没有错别字',
-  });
+  const asks = [{ q: '还要做什么吗？', opts: ['不用了，就这样（推荐）', '再改改：说改哪里', '彩排过了：贴上彩排小结，删减超时页的讲词'] }];
+  const hosted = s.meta.hosted;
+  if (typeof hosted === 'string' && /^https?:\/\//.test(hosted)) {
+    where.push(`在线链接：${hosted}`);
+    steps.splice(3, 0, `告诉用户在线链接：${hosted}（发给别人点开就能看；课件改过以后，要重新发布一次链接里才会更新）`);
+  } else if (!hosted) {
+    // 在线托管：上传前必须问用户（课件里可能有内部截图），用户说发才发
+    steps.unshift(['先看你所在的 AI 工具能不能把网页托管成在线链接（比如 WorkBuddy、Codex 等带网页发布、托管功能的工具；Claude 的 Artifact 也能发布多文件网页）：',
+      '能托管：先问用户问题 1，用户说「发」才上传。把整个课件目录原样发布成一个网页（index.html 和 slides/、engine/、scenes/、mascots/、vendor/、素材/ 等全部文件，保持原来的相对路径；.li-talk/ 和 讲稿.md 不用传）。只支持单个 HTML 文件的工具发不了，告诉用户这一版还不支持，记成不托管。',
+      '  发好后运行下面这条记下链接，再把链接告诉用户，并说清楚这个链接谁能打开（只有自己、知道链接的人，还是所有人）：',
+      '  ' + cli('confirm', quote(s.dir), 'host', '--url', '〈在线链接〉'),
+      '用户选「不发」，或者你的工具没有托管功能（这种情况不用问用户）：运行下面这条记下，之后不再提：',
+      '  ' + cli('confirm', quote(s.dir), 'host', '--skip')]);
+    asks.unshift({ q: '要不要把课件发成一个在线链接？发给别人点开就能看，不用拷文件。（会把整个课件上传到当前 AI 工具的服务器，包括里面的截图）', opts: ['发（推荐）', '不发：只留在本机'] });
+  }
+  return render(9, { where, steps, asks, say: '再从头帮我看一遍讲词，有没有错别字' });
 }
 
 const RENDER = [null, stageStart, stageOutline, stageScript, stageStyle, stageBuild, stageTrial, stageFull, stageReview, stageDone];

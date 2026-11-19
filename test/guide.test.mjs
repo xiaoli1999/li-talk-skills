@@ -915,3 +915,31 @@ test('过稿：用了方果风格，先问要不要加「关于我们」页，�
   writeMeta(dir, { aboutUs: 'added' });
   assert.doesNotMatch(guideText(dir), /关于我/);
 });
+
+// ⑨ 完成：没问过托管时先问要不要发成在线链接（上传前必须问）；confirm host --url 记下链接以后，⑨ 里告诉用户链接
+test('完成：先问要不要托管成在线链接，记下链接以后告诉用户', async () => {
+  const dir = await builtDeck({ scriptPages: 3, confirm: ['trial', 'review'] });
+  writeFileSync(join(dir, 'slides', 'ch1.js'), chapter(['p01', 'p02', 'p03']));
+  selftest(dir);
+  writeMeta(dir, { aboutUs: 'skipped' });
+  let t = guideText(dir);
+  assert.match(t, /【现在在哪一步】⑨ 完成/);
+  assert.match(t, /问题 1：要不要把课件发成一个在线链接？/);
+  assert.match(t, /包括里面的截图/);
+  assert.match(t, /用户说「发」才上传/);
+  assert.ok(t.includes(cmd('confirm', q(dir), 'host', '--skip')), t);
+  checkShape(t);
+
+  let lines = [];
+  await assert.rejects(() => runConfirm({ _: [dir, 'host'] }, { log: s => lines.push(s) }), e => /--url/.test(e.userMessage));
+  const code = await runConfirm({ _: [dir, 'host'], url: 'https://example.com/deck/' }, { log: s => lines.push(s) });
+  assert.equal(code, 0);
+  assert.equal(readMeta(dir).hosted, 'https://example.com/deck/');
+  t = guideText(dir);
+  assert.doesNotMatch(t, /要不要把课件发成一个在线链接/);
+  assert.ok(t.includes("在线链接：https://example.com/deck/"), t);
+
+  await runConfirm({ _: [dir, 'host'], skip: true }, { log: () => {} });
+  t = guideText(dir);
+  assert.doesNotMatch(t, /在线链接/);
+});

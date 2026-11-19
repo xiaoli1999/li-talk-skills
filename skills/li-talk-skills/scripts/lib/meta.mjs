@@ -1,6 +1,7 @@
 // 课件进度文件 .li-talk.json 的读写，以及 confirm 命令
 //   confirm <课件目录> <outline|script|style|trial|review> [--scenes a,b] [--mascot m]
 //   confirm <课件目录> about [--skip]   记下用户要不要「关于我们」（方果）或「关于我」（别的风格）页：加了 / 不加
+//   confirm <课件目录> host --url 链接 | --skip   记下托管成的在线链接，或者不托管
 // 五处必须停下等用户确认的环节（提纲、讲稿、风格、3 页试做、过稿），用户点头后由 AI 运行 confirm 记下来，
 // guide 据此判断做到哪一步；换对话、换模型也能接着做。
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
@@ -94,6 +95,18 @@ export async function run(args = {}, opts = {}) {
     if (!existsSync(join(dir, 'index.html'))) throw new UserError(`${dir} 还没搭骨架（没有 index.html），先写好课件再记「关于」页。`);
     writeMeta(dir, { aboutUs: args.skip ? 'skipped' : 'added' });
     log(args.skip ? '已记下：这份课件不加「关于」页，之后不再问。' : '已记下：这份课件已经加了「关于」页。');
+    log(`下一步：运行 guide ${target} 看接下来做什么。`);
+    return 0;
+  }
+  // 在线托管：⑨ 完成时问过用户，发了就记下链接（--url），不发或工具托管不了就记 --skip，guide 之后不再问
+  if (step === 'host') {
+    const dir = resolve(String(target));
+    if (!existsSync(join(dir, 'index.html'))) throw new UserError(`${dir} 还没搭骨架（没有 index.html），谈不上托管。`);
+    if (!args.skip && (typeof args.url !== 'string' || !/^https?:\/\/\S+$/.test(args.url))) {
+      throw new UserError('发好了就写上在线链接：confirm <课件目录> host --url https://…；不发或托管不了：confirm <课件目录> host --skip');
+    }
+    writeMeta(dir, { hosted: args.skip ? 'skipped' : args.url });
+    log(args.skip ? '已记下：这份课件不托管，之后不再问。' : `已记下在线链接：${args.url}`);
     log(`下一步：运行 guide ${target} 看接下来做什么。`);
     return 0;
   }
