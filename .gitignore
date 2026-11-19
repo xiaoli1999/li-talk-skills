@@ -14,3 +14,6 @@ _private/
 
 # 课件的自检结果和截图（check --browser 生成）
 .li-talk/
+
+# 教程网页的打包输出（node pages.mjs 生成，推到 gh-pages 分支）
+.pages/
