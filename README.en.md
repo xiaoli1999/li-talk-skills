@@ -2,7 +2,7 @@
 
 [中文](README.md) | English
 
-A skill for AI coding tools: hand your topic, ideas, screenshots or script to the AI and get an **HTML talk deck** back. It steps through beat by beat like slides, opens offline with a double-click, and comes with a presenter view, timer, rehearsal mode and animations. Every style has its own little mascot.
+A skill for AI agents: **you focus on what you want to say; the AI takes care of layout, style and animation.** Hand your topic, ideas, screenshots or script to the AI and get an **HTML talk deck** back. It steps through beat by beat like slides, opens offline with a double-click, and comes with a presenter view, timer, rehearsal mode and animations. Every style has its own little mascot.
 
 ![The gallery home page: all 16 styles on one screen](docs/images/hero.jpg)
 
@@ -12,25 +12,25 @@ A skill for AI coding tools: hand your topic, ideas, screenshots or script to th
 
 **Not for**: exporting to pptx or pdf, plain documents, or data dashboards.
 
-Works in AI coding tools that can run commands and read and write local files, such as Claude Code, Codex and Cursor. Browser-based chat apps can't run it.
+Works in any AI agent that can run commands and read and write local files: Claude Code, Codex, Cursor, and Chinese tools such as DeepSeek and WorkBuddy. Browser-based chat apps can't run it.
 
 > The guide, command output and in-deck labels are currently in Chinese. The AI can relay them in your language.
 
 ## Install
 
-Requires Node 18 or later.
+**Easiest**: just ask the AI
 
-**Command line** (Claude Code):
+> Install xiaoli1999/li-talk-skills from GitHub globally, then open the tutorial and walk me through it
+
+No setup needed on your side: the skill needs Node 18 or later, and if it isn't installed the AI will install it for you first.
+
+**Command line** (Claude Code, Node 18+ already installed):
 
 ```bash
 npx skills add xiaoli1999/li-talk-skills -g -a claude-code -y
 ```
 
 For Codex, replace `claude-code` with `codex`; for Cursor, with `cursor`.
-
-**Or just ask the AI**:
-
-> Install xiaoli1999/li-talk-skills from GitHub globally, then open the tutorial and walk me through it
 
 Install globally only, not into a project. Start a new conversation afterwards so the skill gets loaded.
 

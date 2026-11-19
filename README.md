@@ -2,7 +2,7 @@
 
 中文 | [English](README.en.md)
 
-一个给 AI 编程工具用的 skill：把你的主题、想法、截图或讲稿，交给 AI 做成一份 **HTML 演讲课件**。像幻灯片一样一拍一拍地翻，双击就能离线打开，带演讲者视图、计时、彩排和动效，每种风格还有自己的小形象。
+一个给 AI 智能体用的 skill：**你专心讲好内容，版式、风格和动效交给 AI。** 把主题、想法、截图或讲稿交给 AI，它做成一份 **HTML 演讲课件**：像幻灯片一样一拍一拍地翻，双击就能离线打开，带演讲者视图、计时、彩排和动效，每种风格还有自己的小形象。
 
 ![样册首页：16 种风格一屏看完](docs/images/hero.jpg)
 
@@ -12,23 +12,23 @@
 
 **不适合**：要导出 pptx 或 pdf、要的是纯文档或数据看板。
 
-能用在 Claude Code、Codex、Cursor 这类能跑命令、能读写本地文件的 AI 编程工具里；网页版聊天框用不了。
+能跑命令、能读写本地文件的 AI 智能体都能用：Claude Code、Codex、Cursor，以及 DeepSeek、WorkBuddy 等国产 AI 工具；网页版聊天框用不了。
 
 ## 怎么装
 
-需要 Node 18 及以上。
+**最省事**：直接对 AI 说
 
-**命令行**（Claude Code）：
+> 从 GitHub 仓库 xiaoli1999/li-talk-skills 安装到全局，装好后打开新手教程带我过一遍
+
+不用自己准备环境：这个 skill 要用 Node 18 以上，电脑上没有的话，AI 会先帮你装好。
+
+**自己敲命令**（Claude Code，需要已装 Node 18 以上）：
 
 ```bash
 npx skills add xiaoli1999/li-talk-skills -g -a claude-code -y
 ```
 
 用 Codex 就把 `claude-code` 换成 `codex`，用 Cursor 换成 `cursor`。
-
-**不想敲命令**：直接对 AI 说
-
-> 从 GitHub 仓库 xiaoli1999/li-talk-skills 安装到全局，装好后打开新手教程带我过一遍
 
 只装到全局目录，不装进某个项目。装好后新开一个对话，新装的 skill 才会加载。
 

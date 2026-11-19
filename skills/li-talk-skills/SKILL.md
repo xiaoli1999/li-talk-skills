@@ -5,6 +5,17 @@ description: 把想法、笔记、截图或讲稿做成 HTML 演讲课件（演�
 
 # li-talk-skills：做一份一拍一拍翻的网页课件
 
+## 先确认有 Node（没有就帮用户装）
+
+所有命令都要 Node 18 以上。很多用户不是开发者，**不要让用户自己去装**：
+
+1. 先运行 `node -v`。显示 v18 或更高就往下走。
+2. 没有 Node、或版本低于 18：告诉用户一句「这个 skill 要用 Node，我帮你装一下」，用户同意后由你来装：
+   - Windows：`winget install OpenJS.NodeJS.LTS`（没有 winget 就请用户从 https://nodejs.org 下载 LTS 安装包，双击装）
+   - macOS：有 Homebrew 就 `brew install node`，没有就请用户从 https://nodejs.org 下载 LTS 安装包
+   - Linux：用系统的包管理器装 Node LTS（比如 `sudo apt install nodejs npm`，版本不够 18 时改用 nvm）
+3. 装完新开一个终端（或重启 AI 工具），再运行 `node -v` 确认，然后接着做。装不上时把报错原文转给用户，不要绕过。
+
 ## 先做这件事：运行 guide
 
 **每次开工、每次换对话、每做完一步，都先运行 `guide`，照它的输出做。** 不要凭记忆判断做到哪了：`guide` 会读课件目录里的实际文件（讲稿.md、.li-talk.json、页面、上次自检的结果），告诉你现在在哪一步、下一步做什么。中途换了对话、换了模型，也能从这里接着做。
