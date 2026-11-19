@@ -298,18 +298,24 @@ window.LI_TALK_STYLES = [
     try { box.focus({ preventScroll: true }); } catch (e) { /* 老浏览器不认参数 */ }
 
     // 缩小的舞台按卡片宽度缩放
-    // 列数：从 4 到 8 列里挑卡片最大、又能整屏放下的那个；都放不下（窗口太矮或太窄）就退回 CSS 的列数，允许滚动
+    // 排成方阵：16 种就是 4 列 4 行，整块居中，方便一张图截下全部风格。
+    // 卡片宽度取「按窗口宽度能放多宽」和「按窗口高度能放多宽」里小的那个，保证一屏放下；
+    // 算出来太小（手机、很矮的窗口）就退回 CSS 的列数，允许滚动
     var layout = function () {
-      var n = grid.children.length, W = wrap.clientWidth, gap = 14;
-      var top = grid.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop;
-      var avail = box.clientHeight - top - 24, info = 52, best = 0;
-      for (var c = 4; c <= 8; c++) {
-        var cw = (W - (c - 1) * gap) / c, rows = Math.ceil(n / c);
-        var h = rows * (cw * 9 / 16 + info) + (rows - 1) * gap;
-        if (h <= avail && cw >= 150 && cw > best) { best = cw; grid.style.gridTemplateColumns = 'repeat(' + c + ', minmax(0, 1fr))'; }
+      var n = grid.children.length, gap = 14, info = 52, pad = 64;
+      var c = Math.ceil(Math.sqrt(n)), rows = Math.ceil(n / c);
+      wrap.style.maxWidth = '';
+      for (var pass = 0; pass < 2; pass++) {   // 第二遍：标题区宽度变了可能换行，高度跟着变，再算一次
+        var top = grid.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop;
+        var avail = box.clientHeight - top - 32;
+        var byW = (box.clientWidth - pad - (c - 1) * gap) / c;
+        var byH = ((avail - (rows - 1) * gap) / rows - info) * 16 / 9;
+        var cw = Math.floor(Math.min(byW, byH));
+        if (cw < 170) { grid.style.gridTemplateColumns = ''; wrap.style.maxWidth = ''; box.classList.remove('sv-fit'); return; }
+        grid.style.gridTemplateColumns = 'repeat(' + c + ', ' + cw + 'px)';
+        wrap.style.maxWidth = (c * cw + (c - 1) * gap + pad) + 'px';
       }
-      if (!best) grid.style.gridTemplateColumns = '';
-      box.classList.toggle('sv-fit', !!best);
+      box.classList.add('sv-fit');
     };
     var fit = function () { layout(); minis.forEach(function (m) { var w = m.parentNode.clientWidth; if (w) m.style.transform = 'scale(' + (w / 1920) + ')'; }); };
     fit();
