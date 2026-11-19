@@ -285,12 +285,12 @@ test('open：按系统选打开方式；没有 index.html 时说明', async () =
   assert.match(out.join('\n'), /手动/);
 });
 
-test('风格说明 index.json：15 种按家排好，字段齐全，和风格文件一致', () => {
+test('风格说明 index.json：16 种按家排好，字段齐全，和风格文件一致', () => {
   const list = JSON.parse(readFileSync(join(TPL, 'scenes', 'index.json'), 'utf8'));
   // 顺序按家：手绘家、现代家、像素家，同一家的排在一起
   assert.deepEqual(list.map(s => s.key), ['paper', 'board', 'journal', 'desk', 'watercolor', 'ink', 'blueprint', 'comic',
-    'dark', 'frost', 'glass', 'flat', 'magazine', 'brutal', 'pixel']);
-  assert.deepEqual(list.map(s => s.family), [...Array(8).fill('hand'), ...Array(6).fill('modern'), 'pixel']);
+    'dark', 'frost', 'glass', 'flat', 'magazine', 'brutal', 'fangguo', 'pixel']);
+  assert.deepEqual(list.map(s => s.family), [...Array(8).fill('hand'), ...Array(7).fill('modern'), 'pixel']);
   for (const s of list) {
     for (const k of ['key', 'label', 'family', 'mascot', 'look', 'fit', 'notFit', 'risk']) {
       assert.ok(typeof s[k] === 'string' && s[k].trim(), `${s.key} 缺少 ${k}`);
@@ -354,6 +354,31 @@ test('没选像素游戏：不带像素字体', async () => {
   const r = await createDeck(dir, { title: 't', scenes: ['paper'] }, offline());
   assert.deepEqual(r.sceneFonts, []);
   assert.ok(!existsSync(join(dir, 'vendor', 'fonts', 'pixel')), '没选 pixel 不该带像素字体');
+});
+
+/* ------------------------------------------------------------------
+   风格自带的品牌素材：方果的 Logo 和二维码放在 template/vendor/brand/fangguo/，
+   规则和像素字体一样，只有选了 fangguo 时 new 才把它复制进课件
+   ------------------------------------------------------------------ */
+
+test('选了方果：带上 vendor/brand/fangguo/，风格 CSS 引用的 Logo、二维码都找得到；没选不带', async () => {
+  const dir = join(tmp(), '方果课件');
+  const r = await createDeck(dir, { title: '方果', scenes: ['fangguo'] }, offline());
+  assert.equal(r.mascot, 'fangfang');
+  assert.deepEqual(r.sceneBrands, ['fangguo']);
+  const src = join(TPL, 'vendor', 'brand', 'fangguo');
+  const got = join(dir, 'vendor', 'brand', 'fangguo');
+  assert.deepEqual(readdirSync(got).sort(), readdirSync(src).sort());
+  for (const f of readdirSync(src)) assert.equal(sha256(readFileSync(join(got, f))), sha256(readFileSync(join(src, f))), f);
+  const css = readFileSync(join(dir, 'scenes', 'fangguo.css'), 'utf8');
+  const urls = [...css.matchAll(/url\("(\.\.\/vendor\/brand\/fangguo\/[^"]+)"\)/g)].map(m => m[1]);
+  assert.ok(urls.length >= 4, 'fangguo.css 里没找到 Logo 和二维码的引用');
+  for (const u of urls) assert.ok(existsSync(join(dir, 'scenes', u)), '课件里 fangguo.css 引用的文件不存在：' + u);
+
+  const other = join(tmp(), 'deck');
+  const r2 = await createDeck(other, { title: 't', scenes: ['paper'] }, offline());
+  assert.deepEqual(r2.sceneBrands, []);
+  assert.ok(!existsSync(join(other, 'vendor', 'brand')), '没选 fangguo 不该带品牌素材');
 });
 
 test('new 命令：选了像素游戏时说一声带了它的字体', async () => {

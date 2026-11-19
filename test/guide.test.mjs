@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { GALLERY, guideText, HINTS, run as runGuide, talkMinutes, targetChars } from '../skills/li-talk-skills/scripts/lib/guide.mjs';
 import { run as runStyles } from '../skills/li-talk-skills/scripts/lib/styles.mjs';
-import { confirmStep, readMeta } from '../skills/li-talk-skills/scripts/lib/meta.mjs';
+import { confirmStep, readMeta, writeMeta, run as runConfirm } from '../skills/li-talk-skills/scripts/lib/meta.mjs';
 import { createDeck } from '../skills/li-talk-skills/scripts/lib/new.mjs';
 import { readDeck } from '../skills/li-talk-skills/scripts/lib/deck.mjs';
 import { sha256 } from '../skills/li-talk-skills/scripts/lib/fonts.mjs';
@@ -455,7 +455,7 @@ test('风格：后加的 9 种风格也能按讲稿里的词推到第一', () =>
   assert.match(bp, /更像蓝图，但它是深色底；在投影上讲，优先浅色底/);
 });
 
-test('风格关键词：15 种都有，每种 5–10 个；同一个词只归一种风格，也不会被别的风格的词顺带数到', () => {
+test('风格关键词：16 种都有，每种 5–10 个；同一个词只归一种风格，也不会被别的风格的词顺带数到', () => {
   const keys = JSON.parse(readFileSync(join(SKILL_DIR, 'template', 'scenes', 'index.json'), 'utf8')).map(s => s.key);
   assert.deepEqual(Object.keys(HINTS).sort(), [...keys].sort());
   // 去掉 (?<!非)、(?!行) 这类前后限定，剩下的就是词
@@ -518,7 +518,7 @@ test('风格：问题直接给 4 个选项——按推荐的、两个备选、�
   assert.match(t, /不要改成「你想要什么风格」这样的开放式提问，也不要等用户开口要看风格/);
   assert.match(t, /【可以这样对 AI 说】「就用水彩田园」/);
   // guideText 不碰浏览器：提示 AI 自己运行 styles --open
-  assert.ok(t.startsWith('请运行 styles --open 打开样册给用户看，15 种风格都能点开体验：'), t.slice(0, 200));
+  assert.ok(t.startsWith('请运行 styles --open 打开样册给用户看，16 种风格都能点开体验：'), t.slice(0, 200));
   assert.ok(t.includes(cmd('styles', '--open')), t);
 });
 
@@ -531,7 +531,7 @@ test('风格：guide 一到 ④ 就自动打开样册，记下 galleryOpened，�
   assert.equal(await runGuide({ _: [dir] }, { log: s => lines.push(s), opener, env: {} }), 0);
   let t = lines.join('\n');
   assert.deepEqual(opened, [GALLERY]);
-  assert.ok(t.startsWith(`已经在浏览器里打开了样册：${fwd(GALLERY)}，15 种风格都能点开体验。\n【现在在哪一步】④ 风格`), t.slice(0, 300));
+  assert.ok(t.startsWith(`已经在浏览器里打开了样册：${fwd(GALLERY)}，16 种风格都能点开体验。\n【现在在哪一步】④ 风格`), t.slice(0, 300));
   assert.match(t, /样册已经在用户的浏览器里打开了，不用等用户开口要看风格/);
   assert.match(askOf(t), /问题 1：风格怎么定？（样册已经在浏览器里打开，可以先点开体验）/);
   checkShape(t);
@@ -764,10 +764,10 @@ test('styles：按家分组列出所有风格，末尾写推荐规则', async ()
   const code = await runStyles({ _: [] }, { log: s => lines.push(s) });
   const t = lines.join('\n');
   assert.equal(code, 0);
-  assert.match(t, /内置风格：15 种能用/);
+  assert.match(t, /内置风格：16 种能用/);
   // 按家分组：每种风格都列在自己那一家的标题下面
   const groups = [['手绘家', ['paper', 'board', 'journal', 'desk', 'watercolor', 'ink', 'blueprint', 'comic']],
-    ['现代家', ['dark', 'frost', 'glass', 'flat', 'magazine', 'brutal']], ['像素家', ['pixel']]];
+    ['现代家', ['dark', 'frost', 'glass', 'flat', 'magazine', 'brutal', 'fangguo']], ['像素家', ['pixel']]];
   const heads = groups.map(([name]) => t.indexOf('\n' + name));
   assert.ok(heads.every((h, i) => h > 0 && (i === 0 || h > heads[i - 1])), '三家按顺序都在');
   groups.forEach(([name, ks], i) => {
@@ -873,4 +873,34 @@ test('tour：打开教程并记下 seen；--skip 只记下 skipped；打不开�
   code = await runTour({ _: [] }, { log: s => lines.push(s), dataDir: fresh, tour: join(tmp(), '没有.html'), opener: async () => true });
   assert.equal(code, 1);
   assert.match(lines.join('\n'), /新手教程课件不在/);
+});
+
+// 方果风格：过稿前先问要不要在最后加「关于我们」页；confirm about / about --skip 记下以后不再问
+test('过稿：用了方果风格，先问要不要加「关于我们」页，记下以后再过稿', async () => {
+  const dir = await builtDeck({ scriptPages: 3, confirm: ['trial'] });
+  writeFileSync(join(dir, 'slides', 'ch1.js'), chapter(['p01', 'p02', 'p03']));
+  selftest(dir);
+  writeMeta(dir, { scenes: ['fangguo'] });   // 只改记录：这里不依赖方果的风格文件
+  let t = guideText(dir);
+  assert.match(t, /【现在在哪一步】⑧ 过稿/);
+  assert.match(t, /问题 1：要不要在课件最后加一页「关于我们」？/);
+  assert.match(t, /samples\/fangguo\.js 里「关于我们」那页/);
+  assert.ok(t.includes(cmd('confirm', q(dir), 'about')), t);
+  assert.ok(t.includes(cmd('confirm', q(dir), 'about', '--skip')), t);
+  assert.ok(!t.includes(cmd('confirm', q(dir), 'review')), '没问完关于我们之前不过稿');
+  checkShape(t);
+
+  for (const [skip, want] of [[true, 'skipped'], [false, 'added']]) {
+    const lines = [];
+    const code = await runConfirm({ _: [dir, 'about'], skip }, { log: s => lines.push(s) });
+    assert.equal(code, 0);
+    assert.equal(readMeta(dir).aboutUs, want);
+    t = guideText(dir);
+    assert.doesNotMatch(t, /关于我们/);
+    assert.ok(t.includes(cmd('confirm', q(dir), 'review')));
+  }
+
+  // 别的风格不问
+  writeMeta(dir, { scenes: ['paper'], aboutUs: null });
+  assert.doesNotMatch(guideText(dir), /关于我们/);
 });

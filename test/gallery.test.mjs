@@ -1,5 +1,5 @@
 // 模板目录的样册和样板页：check 读模板目录时改用 gallery.html（静态检查、浏览器自检、截图都一样），
-// 样板页在 15 种风格下自检没有错误
+// 样板页在 16 种风格下自检没有错误
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
@@ -16,7 +16,7 @@ const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const TPL = join(ROOT, 'skills', 'li-talk-skills', 'template');
 // 样册引入的全部风格，按家排：手绘家、现代家、像素家（和 scenes/index.json 一致）
 const SCENES = ['paper', 'board', 'journal', 'desk', 'watercolor', 'ink', 'blueprint', 'comic',
-  'dark', 'frost', 'glass', 'flat', 'magazine', 'brutal', 'pixel'];
+  'dark', 'frost', 'glass', 'flat', 'magazine', 'brutal', 'fangguo', 'pixel'];
 
 const TMP = [];
 const tmp = prefix => { const d = mkdtempSync(join(tmpdir(), prefix)); TMP.push(d); return d; };
@@ -163,7 +163,9 @@ test('样册里列出的风格样板：文件都在、页面 id 带风格前缀�
     assert.ok(SCENES.includes(key), key + ' 不是样册里的风格');
     for (const ext of ['.js', '.css']) assert.ok(existsSync(join(TPL, 'samples', key + ext)), `缺 samples/${key}${ext}`);
     const ids = nativeIds(key);
-    assert.ok(ids.length >= 5 && ids.length <= 6, `${key} 的样板页要 5–6 页，现在 ${ids.length} 页`);
+    // 一般 5–6 页；方果是给公司用的品牌风格，样板照定稿做成 8 页（一份客户演讲或汇报常用的版式）
+    const most = key === 'fangguo' ? 8 : 6;
+    assert.ok(ids.length >= 5 && ids.length <= most, `${key} 的样板页要 5–${most} 页，现在 ${ids.length} 页`);
     assert.ok(ids.every(id => id.startsWith('t-' + key + '-')), `${key}：页面 id 要以 t-${key}- 开头：${ids}`);
     const dir = join(ROOT, 'test', 'fixtures', 'decks', 'native-' + key);
     assert.ok(existsSync(join(dir, 'index.html')), `缺预览课件 test/fixtures/decks/native-${key}/`);
@@ -175,7 +177,7 @@ test('样册里列出的风格样板：文件都在、页面 id 带风格前缀�
 
 // 风格专用组件的类名前缀：每种风格一个，别的风格的文件里不许用（工位桌面曾经用了科技暗黑的 dk-，杂志用过水墨的 ink-）
 const PREFIX = { paper: 'pp', board: 'bd', journal: 'jn', desk: 'dsk', watercolor: 'wc', ink: 'ink', blueprint: 'bp', comic: 'cm',
-  dark: 'dk', frost: 'fr', glass: 'gl', flat: 'fl', magazine: 'mag', brutal: 'bz', pixel: 'px' };
+  dark: 'dk', frost: 'fr', glass: 'gl', flat: 'fl', magazine: 'mag', brutal: 'bz', fangguo: 'fg', pixel: 'px' };
 test('风格专用组件的类名前缀不撞：风格文件和它的样板里只用自己的前缀', () => {
   assert.deepEqual(Object.keys(PREFIX).sort(), [...SCENES].sort());
   for (const key of SCENES) {
@@ -193,10 +195,10 @@ test('风格专用组件的类名前缀不撞：风格文件和它的样板里�
   }
 });
 
-// 真实浏览器：样板页在 15 种风格下（1920×1080）都没有错误、没有提醒；有自己样板的风格放的是它自己的页。完整的 5 个尺寸用
+// 真实浏览器：样板页在 16 种风格下（1920×1080）都没有错误、没有提醒；有自己样板的风格放的是它自己的页。完整的 5 个尺寸用
 // node skills/li-talk-skills/scripts/li-talk.mjs check skills/li-talk-skills/template --browser --scene <键名>
 const browser = findBrowser();
-test('真实浏览器：样板页在 15 种风格下自检清零', { skip: !browser && '本机没找到 Edge / Chrome' }, async () => {
+test('真实浏览器：样板页在 16 种风格下自检清零', { skip: !browser && '本机没找到 Edge / Chrome' }, async () => {
   const b = await openBrowser(browser);
   try {
     for (const scene of SCENES) {
@@ -209,7 +211,7 @@ test('真实浏览器：样板页在 15 种风格下自检清零', { skip: !brow
   } finally { await b.close(); }
 });
 
-// 真实浏览器：直接打开是风格总览（15 张卡片按三家分组、每张有形象，地址不被写上 #）；
+// 真实浏览器：直接打开是风格总览（16 张卡片按三家分组、每张有形象，地址不被写上 #）；
 // 带 ?scene=、#页/拍、?selftest 时都不显示总览（check 截图走 #页/拍，自检走 ?selftest&scene=）
 test('真实浏览器：样册的风格总览和换风格的小条', { skip: !browser && '本机没找到 Edge / Chrome' }, async () => {
   const b = await openBrowser(browser);
@@ -231,8 +233,8 @@ test('真实浏览器：样册的风格总览和换风格的小条', { skip: !br
   try {
     const home = await b.peek(TPL, { entry: 'gallery.html', expression: probe });
     assert.equal(home.home, true, '直接打开样册要显示风格总览');
-    assert.deepEqual(home.fams, [['手绘家', SCENES.slice(0, 8)], ['现代家', SCENES.slice(8, 14)], ['像素家', ['pixel']]]);
-    assert.equal(home.art, 15, '每张卡片都画出形象');
+    assert.deepEqual(home.fams, [['手绘家', SCENES.slice(0, 8)], ['现代家', SCENES.slice(8, 15)], ['像素家', ['pixel']]]);
+    assert.equal(home.art, 16, '每张卡片都画出形象');
     assert.deepEqual(home.hrefs, SCENES.map(k => '?scene=' + k));
     assert.equal(home.hash, '', '总览开着时引擎不往地址里写 #页/拍');
     assert.equal(home.bar, false, '总览上不放换风格的小条');

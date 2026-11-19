@@ -630,12 +630,13 @@ export const HINTS = {
   flat: /流程|插画|图解|科普|零基础|通俗/g,
   magazine: /观点|读书|书单|复盘|思考|心得|反思|拆解/g,
   brutal: /实操|动手|清单|攻略|玩法|速成|内部分享|周会/g,
+  fangguo: /方果|ERP|POD|SaaS|客户|汇报|经营|季度|增长|数据/g,
   // 像素家
   pixel: /新人|新同事|入职|引导|闯关|通关|关卡|游戏|轻松/g,
 };
 // 命中次数一样时的先后：最早的 6 种在前，后加的按「通用程度」排在后面
 const DEFAULT_ORDER = ['paper', 'watercolor', 'board', 'dark', 'desk', 'journal',
-  'flat', 'frost', 'magazine', 'ink', 'blueprint', 'comic', 'glass', 'brutal', 'pixel'];
+  'flat', 'frost', 'magazine', 'ink', 'blueprint', 'comic', 'glass', 'brutal', 'pixel', 'fangguo'];
 
 // 讲稿（尤其「给组织方」里的场合）写了在投影、幕布上讲
 const PROJECTOR = /投影|幕布|会议室/;
@@ -998,9 +999,26 @@ function stageFull(s) {
   return render(7, { where, steps: checkSteps(s, lead), noAsk, say });
 }
 
-// ⑧ 过稿
+// ⑧ 过稿。用了方果风格（fangguo）、还没问过「关于我们」页（.li-talk.json 里没有 aboutUs）时，
+// 先问要不要在最后加一页（问题 1），记下以后再过稿
 function stageReview(s) {
   const where = [`课件目录：${posix(s.dir)}`, progress(s.meta), `课件 ${s.pages.length} 页`, `自检：${s.st.text}`];
+  if (s.meta.scenes.includes('fangguo') && !s.meta.aboutUs) {
+    const sample = posix(join(TPL_DIR, 'samples', 'fangguo.js'));
+    return render(8, {
+      where,
+      steps: [
+        ['这份课件用了方果风格：过稿之前，先问用户要不要在最后加一页「关于我们」（问题 1），照用户选的做：',
+          `选「加」：照 ${sample} 里「关于我们」那页（页面开头的注释写着「关于我们」）抄到最后一章的末尾，当课件的最后一页；id 接着讲稿的页号往下排，公司简介、二维码、电话、地址照样板原样用；讲稿.md 末尾也补上这一页。写完跑 check --browser 清零，再运行：`,
+          '  ' + cli('confirm', quote(s.dir), 'about'),
+          '选「不加」：运行下面这条记下，之后不再问：',
+          '  ' + cli('confirm', quote(s.dir), 'about', '--skip')],
+        guideStep(s.dir),
+      ],
+      asks: [{ q: '要不要在课件最后加一页「关于我们」？（放公司简介、二维码、电话和地址）', opts: ['加（推荐：对外讲的时候留个联系方式）', '不加'] }],
+      say: '加吧，放在最后一页',
+    });
+  }
   const steps = [
     ['用浏览器打开整份课件给用户过稿：', cli('open', quote(s.dir))],
     '告诉用户怎么看：→ 或空格下一拍，← 上一拍，O 总览跳页（点一页或敲页码回车跳过去），B 或「.」黑屏，L 激光笔，S 演讲者视图（看讲词、重点词和下一拍；在那里按 H 彩排一遍，看每页用时和哪几页超时），T 计时开始或暂停，R 计时归零，F 全屏。',

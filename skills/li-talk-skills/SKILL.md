@@ -44,9 +44,9 @@ node "<本 skill 目录>/scripts/li-talk.mjs" guide "<课件目录>"
 
 这是最小可用版，只承诺下面这些：
 
-- **15 种风格**，分三家：手绘家 8 种（方格纸 `paper`、黑板 `board`、像素手账 `journal`、工位桌面 `desk`、水彩田园 `watercolor`、水墨国风 `ink`、蓝图 `blueprint`、漫画 `comic`），现代家 6 种（科技暗黑 `dark`、毛玻璃 `frost`、液态玻璃 `glass`、扁平插画 `flat`、杂志复古 `magazine`、新粗野主义 `brutal`），像素家 1 种（像素游戏 `pixel`）。
-- **15 个形象**：尖尖 `jianjian`（方格纸）、沙沙 `shasha`（黑板）、点点 `diandian`（像素手账）、卷卷 `juanjuan`（工位桌面）、朵朵 `duoduo`（水彩田园）、墨丸 `mowan`、圈圈 `quanquan`、叨叨 `daodao`、微光 `weiguang`、小雾 `xiaowu`、透透 `toutou`、小页 `xiaoye`、小铅 `xiaoqian`、砰砰 `pengpeng`、小旗 `xiaoqi`；其余每种风格有自己的默认形象，`styles` 会列出来。
-- **样板页两套**：每种风格自己的样板页（`template/samples/<键名>.js`，同一个主题按这种风格的版式和每拍动作做 5–6 页，用风格的专用组件），加 4 页通用样板（封面、清单、步骤、结尾）。说明和对照表在 `references/templates.md`。
+- **16 种风格**，分三家：手绘家 8 种（方格纸 `paper`、黑板 `board`、像素手账 `journal`、工位桌面 `desk`、水彩田园 `watercolor`、水墨国风 `ink`、蓝图 `blueprint`、漫画 `comic`），现代家 7 种（科技暗黑 `dark`、毛玻璃 `frost`、液态玻璃 `glass`、扁平插画 `flat`、杂志复古 `magazine`、新粗野主义 `brutal`、方果 `fangguo`），像素家 1 种（像素游戏 `pixel`）。
+- **16 个形象**：尖尖 `jianjian`（方格纸）、沙沙 `shasha`（黑板）、点点 `diandian`（像素手账）、卷卷 `juanjuan`（工位桌面）、朵朵 `duoduo`（水彩田园）、墨丸 `mowan`、圈圈 `quanquan`、叨叨 `daodao`、微光 `weiguang`、小雾 `xiaowu`、透透 `toutou`、小页 `xiaoye`、小铅 `xiaoqian`、砰砰 `pengpeng`、小旗 `xiaoqi`、方方 `fangfang`（方果）；其余每种风格有自己的默认形象，`styles` 会列出来。
+- **样板页两套**：每种风格自己的样板页（`template/samples/<键名>.js`，同一个主题按这种风格的版式和每拍动作做 5–6 页（方果 8 页），用风格的专用组件），加 4 页通用样板（封面、清单、步骤、结尾）。说明和对照表在 `references/templates.md`。
 - **课件本身**：按拍出现、讲过的拍变淡、主题行、重点词、圈注、手绘线和箭头、卡片、步骤、对比、终端窗口、点击复制、截图位（点开看大图）、形象每拍走到内容旁、演讲者视图（S）、计时（T / R）、彩排（演讲者视图里按 H，记每页用时、标出超时的页）、总览跳页（O）、黑屏（B）、激光笔（L）、底部进度条、全屏（F）、竖屏阅读模式、刷新不丢位置、最后一页自动署名。双击 `index.html` 离线打开。
 - **检查**：不开浏览器的检查 `check`，后台浏览器自检 `check --browser`（5 个尺寸逐页逐拍量，出中文报告）。
 
@@ -154,7 +154,7 @@ node "<本 skill 目录>/scripts/li-talk.mjs" guide "<课件目录>"
 | 什么时候 | 读哪份 |
 |---|---|
 | ③ 写讲稿之前；整理用户已有的讲稿时 | `script-format.md`：讲稿的提纲、四段格式、规则和两页完整示例 |
-| ④ 推荐风格、用户想换风格时 | `styles.md`：15 种风格的样子、适合、脾气、禁区，按章分配，搭好骨架后换风格 |
+| ④ 推荐风格、用户想换风格时 | `styles.md`：16 种风格的样子、适合、脾气、禁区，按章分配，搭好骨架后换风格 |
 | ⑥ 写页面之前（先读） | 所选风格的 `template/samples/<键名>.js`（这种风格自己的样板页），再读 `templates.md`：每种风格有哪几页样板，以及 4 页通用样板的完整代码 |
 | ⑥ ⑦ 写页面时查写法 | `authoring.md`：`Deck.add` 字段、节拍、组件、形象、讲词、`onBeat`、字号留白、技术边界、常见的坑 |
 | 检查报了问题、给用户看之前 | `checklist.md`：交付前自查清单，报告里每类问题怎么改 |

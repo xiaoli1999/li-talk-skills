@@ -31,6 +31,7 @@
 <link rel="stylesheet" href="scenes/flat.css">
 <link rel="stylesheet" href="scenes/magazine.css">
 <link rel="stylesheet" href="scenes/brutal.css">
+<link rel="stylesheet" href="scenes/fangguo.css">
 <link rel="stylesheet" href="scenes/pixel.css">
 <!-- 章节样式（开始） -->
 <link rel="stylesheet" href="samples/samples.css">
@@ -51,7 +52,7 @@
 .gl-bar .gl-fam::after{content:"："}
 .gl-bar .gl-hint{padding:0 8px 0 10px;color:rgba(233,235,238,.5);white-space:nowrap}
 .gl-bar.folded .gl-list,.gl-bar.folded .gl-hint{display:none}
-/* 15 个按钮加「全部风格」：窗口不到 1600 宽时排紧一点（字小一号、家名换成一道细竖线、不显示「← → 翻页」），
+/* 16 个按钮加「全部风格」：窗口不到 1600 宽时排紧一点（字小一号、家名换成一道细竖线、不显示「← → 翻页」），
    1280 宽时展开的小条也只占左边一排，不压右下角的署名（署名最宽的像素游戏也还隔着几十 px） */
 @media (max-width:1599px){
   .gl-bar{gap:2px;font-size:12px}
@@ -135,6 +136,7 @@
 <script src="scenes/flat.js"></script>
 <script src="scenes/magazine.js"></script>
 <script src="scenes/brutal.js"></script>
+<script src="scenes/fangguo.js"></script>
 <script src="scenes/pixel.js"></script>
 <script src="mascots/jianjian.js"></script>
 <script src="mascots/shasha.js"></script>
@@ -151,12 +153,13 @@
 <script src="mascots/xiaoqi.js"></script>
 <script src="mascots/quanquan.js"></script>
 <script src="mascots/daodao.js"></script>
+<script src="mascots/fangfang.js"></script>
 <script>
 /* 每种风格自己的样板页：地址带 ?scene=<键名>、NATIVE 里有这种风格时，只放它自己的样板页（id 以 t-<键名>- 开头），
    下面通用样板页的 Deck.add 在这里拦下；引入它自己的样板文件在章节注释后面那段。
    新做好一种风格的样板，就把键名加进 NATIVE（test/gallery.test.mjs 会对照 samples/ 里的文件） */
 (function () {
-  var NATIVE = ['blueprint', 'board', 'brutal', 'comic', 'dark', 'desk', 'flat', 'frost', 'glass', 'ink', 'journal', 'magazine', 'paper', 'pixel', 'watercolor'];
+  var NATIVE = ['blueprint', 'board', 'brutal', 'comic', 'dark', 'desk', 'fangguo', 'flat', 'frost', 'glass', 'ink', 'journal', 'magazine', 'paper', 'pixel', 'watercolor'];
   var k = new URLSearchParams(location.search).get('scene');
   if (!k || NATIVE.indexOf(k) < 0 || !window.Deck) return;
   window.LI_TALK_SAMPLES = k;
@@ -192,6 +195,7 @@ window.LI_TALK_STYLES = [
   {"key":"flat","label":"扁平插画","family":"modern","mascot":"xiaoye","look":"统一左上受光的几何扁平插画，珊瑚、明黄、墨蓝三组配色，组件右下一道深色厚度、投影落向右下","fit":"上手教程、产品介绍、流程步骤、新人或非技术听众"},
   {"key":"magazine","label":"杂志复古","family":"modern","mascot":"xiaoqian","look":"墨绿、橘红、米白撞色拼贴，撕边纸、胶带、套印错位，宋体大标题","fit":"观点、方法论、读书分享、复盘总结"},
   {"key":"brutal","label":"新粗野主义","family":"modern","mascot":"pengpeng","look":"奶黄底加墨点阵，粗黑描边、不带模糊的硬阴影，黄粉蓝三种色块，卡片「砸」下来","fit":"上手教程、流程步骤、产品和工具介绍、内部分享"},
+  {"key":"fangguo","label":"方果","family":"modern","mascot":"fangfang","look":"方果 ERP 的品牌风格：近白底上慢慢流动的淡蓝柔光和网格，纯白大圆角卡片，品牌蓝主色，大气的大数字和图表，左上角带方果 Logo","fit":"给客户演讲、领导汇报、产品介绍、经营数据"},
   {"key":"pixel","label":"像素游戏","family":"pixel","mascot":"xiaoqi","look":"像 8-bit 游戏的标题画面：深夜蓝抖动夜空和远山，全页对齐 4px 网格、只用 16 色，金色像素大标题","fit":"上手教程、新人引导、闯关式分步、轻松的团队分享"}
 ];
 </script>

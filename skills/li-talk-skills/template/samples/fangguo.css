@@ -1,0 +1,25 @@
+/* 方果 fangguo 自己的样板页的页面样式（和 samples/fangguo.js 配套）
+   - 每条选择器都以 [data-id="t-fangguo-…"] 开头，只管那一页；抄样板时连同这里的规则一起抄，[data-id="…"] 换成新页面的 id
+   - 版式组件（.fg-*）的样子在 scenes/fangguo.css 里，这里只补这几页自己的字号和位置
+   - 不给讲过的块另加透明度、不调灰：讲过的只由引擎退到 .8 */
+
+/* 大数字：主数字 330px，说明离它远一点 */
+[data-id="t-fangguo-hero"] .t-fangguo-hero-n{font-size:380px}
+[data-id="t-fangguo-hero"] .t-fangguo-hero-n small{font-size:.42em}
+[data-id="t-fangguo-hero"] .fg-cap{margin-top:24px}
+
+/* 指标卡页：进度环卡里那行说明 */
+[data-id="t-fangguo-kpi"] .t-fangguo-kpi-say{margin-top:22px;font-size:34px;line-height:1.45;color:var(--ink-2)}
+
+/* 图表：柱状图卡右边留出被环形图卡压住的空白，环形图卡在上层、投影更深；第 2 拍的形象目标是九月那根柱子下面的一小块（不显示） */
+[data-id="t-fangguo-chart"] .card{min-height:600px}
+[data-id="t-fangguo-chart"] .t-fangguo-chart-bar{padding-right:120px}
+[data-id="t-fangguo-chart"] .t-fangguo-chart-pie{z-index:2;box-shadow:0 2px 4px rgba(22,35,63,.05),0 36px 80px rgba(22,35,63,.14)}
+[data-id="t-fangguo-chart"] .t-fangguo-chart-hi{position:absolute;right:140px;bottom:0;width:150px;height:1px}
+
+/* 封面：大标题 112px；浮窗的进度环小一号 */
+[data-id="t-fangguo-cover"] .t-fangguo-cover-h{font-size:112px;line-height:1.14}
+
+/* 大数字：右边三张小卡往左错开，排成台阶 */
+[data-id="t-fangguo-hero"] .t-fangguo-hero-side>:nth-child(2){margin-left:-50px}
+[data-id="t-fangguo-hero"] .t-fangguo-hero-side>:nth-child(3){margin-left:-100px}

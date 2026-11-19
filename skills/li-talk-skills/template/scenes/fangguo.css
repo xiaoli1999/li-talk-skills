@@ -1,0 +1,439 @@
+/* =====================================================================
+   风格 · 方果 fangguo 的样子（行为在 fangguo.js）
+   近白底 + 会慢慢动的背景（组合 A 柔光 + 波纹 / 组合 B 晕染 + 网格），纯白大圆角卡片、极淡投影，
+   主色品牌蓝 #3B74F0（渐变 #6BA6FF → #3B74F0），品牌红 #ED5E6E 只用来点题；
+   数字 Bahnschrift / DIN Alternate 600、等宽数字，单位 0.36 倍、颜色淡。所有选择器的第一段都带 [data-scene="fangguo"]
+   - Logo 用相对路径 ../vendor/brand/fangguo/logo.svg（new 选了这个风格时把 vendor/brand/fangguo/ 带进课件），双击离线打开也显示
+   - --recede（讲过的拍变到多淡）由 fangguo.js 的 recede 写入：.8，这里不写
+   - 讲过的块淡到 .8 后字和底色的对比度还要到 3:1：淡色字（单位、说明）最浅用 #66738A，不用样页里更浅的 #8A96A8
+   ===================================================================== */
+
+/* 变量 */
+[data-scene="fangguo"]{
+  --f-hand:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei","Source Han Sans SC","Noto Sans SC",sans-serif;
+  --f-sans:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei","Source Han Sans SC","Noto Sans SC",sans-serif;
+  --f-mono:"JetBrains Mono","Cascadia Mono",Consolas,"SF Mono",Menlo,"PingFang SC","Microsoft YaHei",monospace;
+  --f-num:"Bahnschrift","DIN Alternate","DIN Pro","Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  --rough-r:24px;
+  --bg:#F8F9FB; --ink:#16233F; --ink-2:#46546B; --ink-3:#66738A; --line:#8EA9D8;
+  --mark:#3B74F0; --key-ink:#16233F; --hl:rgba(59,116,240,.16); --accent:#3B74F0;
+  --card-ink:#16233F; --card-ink-2:#46546B; --paper:#FFFFFF;
+  /* 卡片颜色：都是很浅的一层底色（蓝、青、珊瑚、琥珀），白色最常用 */
+  --t-yellow:#FFF5DF; --t-mint:#E4F6F1; --t-pink:#FDEBED; --t-blue:#EAF3FC; --t-white:#FFFFFF; --t-peach:#FFEEE7;
+  --term-bg:#16233F; --term-ink:#E8EEF8;
+  --human:#E0603F; --ai:#3B74F0; --idle:#6F7B8F;
+  --sign-color:rgba(70,84,107,.62);
+  --scene-bg:#F8F9FB;
+  --fg-blue:#3B74F0; --fg-blue-ink:#2C5FD6; --fg-blue2:#6BA6FF; --fg-sky:#EAF3FC; --fg-red:#ED5E6E; --fg-sep:#ECEFF4; --fg-mute:#66738A;
+  --fg-grad:linear-gradient(160deg,#6BA6FF,#3B74F0);
+  --fg-card:0 1px 2px rgba(22,35,63,.04),0 18px 48px rgba(22,35,63,.07);
+  --fg-ease:cubic-bezier(.22,.61,.36,1);
+}
+
+/* =====================================================================
+   背景层（fangguo.js 的 backdrop 放进去）：两组，当前页是哪一型就显示哪一组（页型由 decorate 写在 .slide 的 data-fg-bg 上）
+   坐标按舞台写：舞台在背景层里居中（calc(50% - 960px + x)），宽屏时向舞台外延伸
+   动画只动 transform 和 mask，20–100 秒一圈；减少动态、自检（html.fg-still）时停住
+   ===================================================================== */
+.bg[data-scene="fangguo"]{background:#FAFBFD}
+[data-scene="fangguo"] :is(.fg-bga,.fg-bgb){position:absolute;inset:0;overflow:hidden;pointer-events:none;opacity:0;transition:opacity .8s ease}
+[data-scene="fangguo"] :is(.fg-bga,.fg-bgb) > *{position:absolute;display:block}
+#world:has(.slide.active[data-scene="fangguo"][data-fg-bg="a"]) > .bg[data-scene="fangguo"] > .fg-bga,
+#world:has(.slide.active[data-scene="fangguo"][data-fg-bg="b"]) > .bg[data-scene="fangguo"] > .fg-bgb{opacity:1}
+/* 不认 :has 的浏览器：一律用组合 B */
+@supports not selector(:has(*)){ .bg[data-scene="fangguo"] > .fg-bgb{opacity:1} }
+
+/* 组合 A「柔光 + 波纹」：三团很浅的柔光（不透明度 .6）各走各的，底部四条细波浪向左流淌 */
+[data-scene="fangguo"] .fg-bga{background:#FAFBFE}
+[data-scene="fangguo"] .fg-sf{border-radius:50%;filter:blur(100px);opacity:.6}
+[data-scene="fangguo"] .fg-s1{left:calc(50% - 1160px);top:calc(50% - 780px);width:900px;height:760px;background:#E3EDFE;animation:fg-sf1 34s ease-in-out infinite alternate}
+[data-scene="fangguo"] .fg-s2{left:calc(50% + 360px);top:calc(50% - 460px);width:760px;height:700px;background:#ECE8FE;animation:fg-sf2 40s ease-in-out infinite alternate}
+[data-scene="fangguo"] .fg-s3{left:calc(50% - 480px);top:calc(50% + 260px);width:900px;height:600px;background:#E2F5EF;animation:fg-sf3 30s ease-in-out infinite alternate}
+@keyframes fg-sf1{to{transform:translate(180px,120px) scale(1.08)}}
+@keyframes fg-sf2{to{transform:translate(-220px,140px) scale(.92)}}
+@keyframes fg-sf3{to{transform:translate(260px,-90px) scale(1.1)}}
+[data-scene="fangguo"] .fg-wv{left:0;top:0;width:200%;height:100%;fill:none;overflow:visible}
+[data-scene="fangguo"] .fg-wv path{stroke-width:2.4;vector-effect:non-scaling-stroke;animation:fg-wv linear infinite}
+@keyframes fg-wv{to{transform:translateX(-1920px)}}
+
+/* 组合 B「晕染 + 网格」：两团淡蓝光晕漂移呼吸；1px 极淡网格（对准舞台坐标，80 的倍数落在格线上）；
+   一团柔光沿网格游走，照到的格线微微泛蓝（这一层不透明度 .35） */
+[data-scene="fangguo"] .fg-bgb{background:#FFFFFF}
+[data-scene="fangguo"] .fg-gw{border-radius:50%}
+[data-scene="fangguo"] .fg-g1{left:calc(50% - 1320px);top:calc(50% - 920px);width:1300px;height:1100px;background:radial-gradient(closest-side,#E3EDFD,rgba(227,237,253,0));animation:fg-gw1 24s ease-in-out infinite alternate}
+[data-scene="fangguo"] .fg-g2{left:calc(50% - 20px);top:calc(50% - 280px);width:1400px;height:1200px;background:radial-gradient(closest-side,#DFEBFC,rgba(223,235,252,0));animation:fg-gw2 28s ease-in-out infinite alternate}
+@keyframes fg-gw1{to{transform:translate(120px,80px) scale(1.1)}}
+@keyframes fg-gw2{to{transform:translate(-140px,-70px) scale(1.08)}}
+[data-scene="fangguo"] .fg-grd{inset:0;background-image:linear-gradient(#E9EEF5 1px,transparent 1px),linear-gradient(90deg,#E9EEF5 1px,transparent 1px);
+  background-size:80px 80px;background-position:calc(50% - 960px) calc(50% - 540px);
+  -webkit-mask-image:radial-gradient(ellipse 72% 66% at 50% 46%,#000 8%,transparent 86%);mask-image:radial-gradient(ellipse 72% 66% at 50% 46%,#000 8%,transparent 86%)}
+[data-scene="fangguo"] .fg-grd.fg-lit{background-image:linear-gradient(#A9C6F5 1px,transparent 1px),linear-gradient(90deg,#A9C6F5 1px,transparent 1px);opacity:.35;
+  -webkit-mask-image:radial-gradient(circle 360px at center,#000,transparent 100%);mask-image:radial-gradient(circle 360px at center,#000,transparent 100%);
+  -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-size:720px 720px;mask-size:720px 720px;-webkit-mask-position:10% 20%;mask-position:10% 20%;
+  animation:fg-lit 22s ease-in-out infinite}
+@keyframes fg-lit{0%{-webkit-mask-position:10% 20%;mask-position:10% 20%}25%{-webkit-mask-position:60% 8%;mask-position:60% 8%}50%{-webkit-mask-position:92% 60%;mask-position:92% 60%}75%{-webkit-mask-position:38% 92%;mask-position:38% 92%}100%{-webkit-mask-position:10% 20%;mask-position:10% 20%}}
+
+/* 出血底板（封面等）：页面里写 <i class="fg-bleed" hidden></i>（默认右边，加 fg-left 换到左边），
+   背景层里这一块浅蓝底板从舞台 x 1000（左边是 x 920）一直铺到窗口边缘、上下出血；窗口不是 16:9 时也铺满，不在舞台边上断开 */
+[data-scene="fangguo"] .fg-sheet{position:absolute;overflow:hidden;top:0;bottom:0;opacity:0;transition:opacity .6s ease;background:linear-gradient(180deg,#EDF5FD,#E2EEFB);pointer-events:none}
+[data-scene="fangguo"] .fg-sheet-r{left:calc(50% - 960px + 1000px);right:0;border-radius:140px 0 0 0}
+[data-scene="fangguo"] .fg-sheet-l{left:0;right:calc(50% + 960px - 920px);border-radius:0 0 140px 0}
+[data-scene="fangguo"] .fg-sheet::after{content:"";position:absolute;width:900px;height:900px;border-radius:50%;top:calc(50% - 760px);background:radial-gradient(closest-side,rgba(255,255,255,.75),rgba(255,255,255,0));animation:fg-sheet-move 36s ease-in-out infinite alternate}
+[data-scene="fangguo"] .fg-sheet-r::after{left:180px}
+[data-scene="fangguo"] .fg-sheet-l::after{right:120px}
+@keyframes fg-sheet-move{to{transform:translate(-80px,260px) scale(1.12)}}
+#world:has(.slide.active[data-scene="fangguo"][data-fg-panel="right"]) > .bg[data-scene="fangguo"] .fg-sheet-r,
+#world:has(.slide.active[data-scene="fangguo"][data-fg-panel="left"]) > .bg[data-scene="fangguo"] .fg-sheet-l{opacity:1}
+[data-scene="fangguo"] .fg-bleed{display:none}
+/* 阅读模式没有背景层：出血底板画在这一页自己的右边（左边） */
+[data-scene="fangguo"].slide[data-fg-panel="right"]:is(.reading *){background:linear-gradient(90deg,transparent 1000px,#E8F1FC 1000px),#FAFBFD}
+[data-scene="fangguo"].slide[data-fg-panel="left"]:is(.reading *){background:linear-gradient(90deg,#E8F1FC 920px,transparent 920px),#FAFBFD}
+
+/* 停住：系统「减少动态效果」（截图时也是）、自检 */
+@media (prefers-reduced-motion:reduce){ .bg[data-scene="fangguo"] *{animation:none!important} }
+.bg[data-scene="fangguo"]:is(.fg-still *) *{animation:none!important}
+
+/* 阅读模式里没有背景层：每页自己画两团静止的淡光 */
+[data-scene="fangguo"].slide:is(.reading *){background:
+  radial-gradient(closest-side at 300px 120px,rgba(227,237,253,.9),rgba(227,237,253,0) 520px),
+  radial-gradient(closest-side at 1640px 960px,rgba(223,235,252,.9),rgba(223,235,252,0) 600px),#FAFBFD}
+
+/* =====================================================================
+   正文、主题行、标题、解释句、Logo
+   ===================================================================== */
+[data-scene="fangguo"].slide{letter-spacing:.01em}
+[data-scene="fangguo"] h1,[data-scene="fangguo"] h3,[data-scene="fangguo"] h4{margin:0}
+
+/* 主题行：Logo │ 章节（深色加粗）· 主题（淡色） */
+[data-scene="fangguo"] .s-topic{gap:0}
+[data-scene="fangguo"] .s-topic::before{content:"";flex:none;width:76px;height:30px;margin-right:18px;background:url("../vendor/brand/fangguo/logo.svg") left center/contain no-repeat}
+[data-scene="fangguo"] .s-topic .tc{padding:0 0 0 18px;border-left:1px solid #D5DBE3;font:600 26px/30px var(--f-hand);color:var(--ink)}
+[data-scene="fangguo"] .s-topic .ts{display:none}
+[data-scene="fangguo"] .s-topic .tt{padding:0;font:400 26px/30px var(--f-hand);color:var(--ink-3)}
+[data-scene="fangguo"] .s-topic .tt::before{content:"·";margin:0 .45em}
+
+[data-scene="fangguo"] .s-title{font-size:64px;font-weight:700;letter-spacing:.01em;color:var(--ink)}
+[data-scene="fangguo"] .explain{padding-left:24px;color:var(--ink-2)}
+[data-scene="fangguo"] .explain::before{width:5px;border-radius:3px;background:linear-gradient(180deg,#6BA6FF,#3B74F0)}
+[data-scene="fangguo"] .explain b{color:var(--ink)}
+[data-scene="fangguo"] .muted{color:var(--ink-2)}
+[data-scene="fangguo"] .quote{font-weight:700;letter-spacing:.01em;color:var(--ink)}
+/* 现代风格不歪：页面写的 --r 倾斜在这里不用 */
+[data-scene="fangguo"] :is(.card,.cell,.tag,.quote,.term,.copy,.shot){rotate:none}
+
+/* =====================================================================
+   重点词：字从墨色变成品牌蓝，底下铺开一道淡蓝（跟着引擎推的 --k 走）；引擎的放大一下压掉，不弹跳
+   ===================================================================== */
+[data-scene="fangguo"] .key{padding:0 .06em;color:var(--fg-blue-ink);transform:none!important}
+@supports (color:color-mix(in srgb,red 50%,blue)){
+  [data-scene="fangguo"] .key{color:color-mix(in srgb,var(--fg-blue-ink) calc(var(--k) * 100%),var(--ink))}
+}
+[data-scene="fangguo"] .key::before{content:"";position:absolute;left:0;right:0;bottom:.04em;height:.34em;z-index:-1;border-radius:.1em;pointer-events:none;
+  background:rgba(59,116,240,.16);transform-origin:0 50%;transform:scaleX(var(--k))}
+
+/* =====================================================================
+   通用组件
+   ===================================================================== */
+/* ---------- 卡片：纯白大圆角、极淡投影；t-* 是一层很浅的底色 ---------- */
+[data-scene="fangguo"] .card{padding:36px 40px 38px;border-radius:28px;background:#fff;box-shadow:var(--fg-card);color:var(--card-ink);transition:opacity .45s ease,translate .3s var(--fg-ease),box-shadow .3s ease}
+[data-scene="fangguo"] .card:is(.t-yellow,.t-mint,.t-pink,.t-blue,.t-peach){background:var(--tint)}
+[data-scene="fangguo"] .card.tape::before,[data-scene="fangguo"] .card.pin::before{content:none}
+[data-scene="fangguo"] .card h3{font-weight:700;color:var(--ink)}
+[data-scene="fangguo"] .card :is(p,li){color:var(--ink-2)}
+[data-scene="fangguo"] .card li::before{left:.18em;top:.62em;width:9px;height:9px;border-radius:50%;rotate:none;opacity:1;background:var(--fg-blue)}
+[data-scene="fangguo"] .lab{top:-22px;left:30px;padding:5px 20px 6px;border-radius:999px;background:var(--fg-sky);color:var(--fg-blue-ink);font-weight:600;font-family:var(--f-hand)}
+@media (hover:hover){ [data-scene="fangguo"] .card:hover{translate:0 -3px;box-shadow:0 1px 2px rgba(22,35,63,.05),0 24px 56px rgba(22,35,63,.1)} }
+
+/* ---------- 带序号的步骤：渐变蓝圆角序号；竖排是一行行带分隔线的清单，横排每步一张白卡 ---------- */
+[data-scene="fangguo"] .steps>li{position:relative;padding:22px 0 24px;border-bottom:2px solid var(--fg-sep)}
+[data-scene="fangguo"] .steps>li::before{width:58px;height:58px;border:0;border-radius:18px;background:var(--fg-grad);color:#fff;font:600 28px/1 var(--f-num);box-shadow:0 10px 22px rgba(59,116,240,.24)}
+[data-scene="fangguo"] .steps>li>b{font-weight:700;color:var(--ink)}
+[data-scene="fangguo"] .steps>li>span{color:var(--ink-2)}
+[data-scene="fangguo"] .steps.h>li{padding:30px 30px 32px;border:0;border-radius:28px;background:#fff;box-shadow:var(--fg-card)}
+
+/* ---------- 左右对比：中间一个淡蓝的符号 ---------- */
+[data-scene="fangguo"] .vs::before{font:500 60px/1 var(--f-num);color:var(--fg-blue)}
+
+/* ---------- 一排小格：白色圆角小卡，AI 顶上一道蓝、需要人顶上一道珊瑚 ---------- */
+[data-scene="fangguo"] .cell{padding:24px 16px 22px;border:0;border-radius:22px;background:#fff;box-shadow:var(--fg-card)}
+[data-scene="fangguo"] .cell>i{color:var(--ink-3);font-family:var(--f-num);font-weight:600}
+[data-scene="fangguo"] .cell>b{font-weight:700;color:var(--ink)}
+[data-scene="fangguo"] .cell>span{color:var(--ink-2)}
+[data-scene="fangguo"] .cell.ai{box-shadow:var(--fg-card),inset 0 4px 0 var(--ai)}
+[data-scene="fangguo"] .cell.human{box-shadow:var(--fg-card),inset 0 4px 0 var(--human)}
+[data-scene="fangguo"] .cell.human::after{top:16px;right:16px;width:12px;height:12px;background:var(--human);box-shadow:none}
+[data-scene="fangguo"] .cell.idle{background:#F3F5F8;box-shadow:none;color:var(--idle)}
+[data-scene="fangguo"] .cell.idle>:is(b,span,i){color:var(--idle)}
+
+/* ---------- 标签：浅蓝小胶囊 ---------- */
+[data-scene="fangguo"] .tag{padding:6px 22px 8px;border:0;border-radius:999px;background:var(--fg-sky);color:var(--fg-blue-ink);font-weight:600;font-family:var(--f-hand)}
+[data-scene="fangguo"] .dot{box-shadow:0 0 0 2px #fff}
+
+/* ---------- 终端：深墨蓝窗口 ---------- */
+[data-scene="fangguo"] .term{padding:0 0 24px;border-radius:22px;background:#16233F;color:var(--term-ink);box-shadow:0 26px 60px rgba(22,35,63,.2)}
+[data-scene="fangguo"] .term-bar{height:52px;padding:0 24px;background:rgba(255,255,255,.05);color:#9AA9C2}
+[data-scene="fangguo"] .term-bar i{width:12px;height:12px;background:#ED5E6E}
+[data-scene="fangguo"] .term-bar i:nth-child(2){background:#F4A62A}
+[data-scene="fangguo"] .term-bar i:nth-child(3){background:#27B79E}
+[data-scene="fangguo"] .term .in::before{color:#8DBBFF}
+[data-scene="fangguo"] .term .dim{color:#9AA9C2}
+[data-scene="fangguo"] .term .ok{color:#7FDCC6}
+[data-scene="fangguo"] .term .warn{color:#FFB59E}
+[data-scene="fangguo"] .term .hi{color:#FFFFFF}
+
+/* ---------- 可复制的命令：深墨蓝胶囊，悬停浮起一点 ---------- */
+[data-scene="fangguo"] .copy{padding:16px 28px;border-radius:999px;background:#16233F;color:#fff;font-weight:500;box-shadow:0 12px 28px rgba(22,35,63,.18)}
+[data-scene="fangguo"] .copy .ps{color:#8DBBFF;opacity:1}
+[data-scene="fangguo"] .copy .ic{background:#C9D6EC;opacity:1}
+[data-scene="fangguo"] .copy:focus-visible{outline:3px solid rgba(59,116,240,.5);outline-offset:5px}
+[data-scene="fangguo"] .copied-tip{height:60px;padding:0 26px 0 10px;gap:12px;border-radius:999px;background:#fff;color:var(--ink);font:600 28px/1 var(--f-hand);box-shadow:0 14px 32px rgba(22,35,63,.14)}
+[data-scene="fangguo"] .copied-tip svg{width:40px;height:40px;padding:10px;border-radius:50%;background:var(--fg-grad);overflow:visible}
+[data-scene="fangguo"] .copied-tip path{stroke:#fff;stroke-width:5}
+
+/* ---------- 截图位：白框圆角，不贴胶带 ---------- */
+[data-scene="fangguo"] .shot{padding:12px;border-radius:26px;background:#fff;box-shadow:var(--fg-card)}
+[data-scene="fangguo"] .shot::before{content:none}
+[data-scene="fangguo"] .shot-img{border-radius:16px;background:#EEF2F7}
+[data-scene="fangguo"] .shot figcaption{padding:14px 8px 6px;font:500 30px/1.3 var(--f-hand);color:var(--ink-2)}
+[data-scene="fangguo"] .shot-miss{font-family:var(--f-hand);color:var(--ink-3);background:repeating-linear-gradient(-45deg,#F3F6FA 0 14px,#EBF0F6 14px 28px)}
+
+/* ---------- 线稿、圈注：几乎是直的品牌蓝细线 ---------- */
+[data-scene="fangguo"] svg.marks{color:var(--fg-blue)}
+
+/* ---------- 形象：一点很淡的投影；说的话是白色小胶囊 ---------- */
+[data-scene="fangguo"] .mascot{--mascot-outline:#FFFFFF;--mascot-shadow:drop-shadow(0 10px 12px rgba(22,35,63,.12))}
+[data-scene="fangguo"] .mascot-say{padding:8px 20px 10px;border-radius:18px;background:#fff;color:var(--ink);font-family:var(--f-hand);font-weight:600;box-shadow:0 10px 26px rgba(22,35,63,.14)}
+[data-scene="fangguo"] .mascot-say::after{background:#fff}
+
+/* 点击涟漪 */
+[data-scene="fangguo"] .fg-ring-fx{position:absolute;left:0;top:0;width:200px;height:200px;margin:-100px 0 0 -100px;border-radius:50%;pointer-events:none;
+  border:2px solid rgba(59,116,240,.35);background:radial-gradient(circle,rgba(59,116,240,0) 55%,rgba(59,116,240,.08) 70%,rgba(59,116,240,0) 72%)}
+
+/* =====================================================================
+   常驻信息：没有主题行的页，章节标记前面放 Logo；右上角页码 + 节拍点（和主题行同一条中线）
+   ===================================================================== */
+#stage[data-scene="fangguo"] .chap{top:18px;height:60px;display:flex;align-items:center}
+#stage[data-scene="fangguo"] .chap::before{content:"";flex:none;width:76px;height:30px;background:url("../vendor/brand/fangguo/logo.svg") left center/contain no-repeat}
+#stage[data-scene="fangguo"] .chap span{margin-left:18px;padding-left:18px;border-left:1px solid #D5DBE3;font:500 26px/30px var(--f-hand);color:var(--ink-3)}
+#stage[data-scene="fangguo"] .meta{right:120px;top:18px;height:60px;gap:26px;font:500 22px/1 var(--f-num);color:#8A96A8;letter-spacing:.06em}
+#stage[data-scene="fangguo"] .pageno b{color:var(--ink-2);font-weight:600}
+#stage[data-scene="fangguo"] .meter{gap:14px}
+#stage[data-scene="fangguo"] .meter .dots{gap:8px}
+#stage[data-scene="fangguo"] .dots i{display:block;width:10px;height:10px;border-radius:5px;background:#D5DBE3;transition:width .35s var(--fg-ease),background-color .3s}
+#stage[data-scene="fangguo"] .dots i.on{background:#A9C6F5}
+#stage[data-scene="fangguo"] .dots i.now{width:28px;background:var(--fg-blue)}
+#stage[data-scene="fangguo"] .meter .ml{display:none}
+#stage[data-scene="fangguo"] .meter .ms{display:inline;font:500 22px/1 var(--f-num);color:#8A96A8}
+#stage[data-scene="fangguo"] .meter .ms b{color:var(--ink-2);font-weight:600}
+#stage[data-scene="fangguo"] .timer{font:500 22px/1 var(--f-num);color:#8A96A8}
+
+/* =====================================================================
+   方果自己的版式组件（.fg-*）：用法见 fangguo.js 开头的说明，样板页见 samples/fangguo.js
+   结束时的样子都写在这里；「当前」靠 .slide 的 data-now / b1…b6（引擎写的）点亮，过渡 .35 秒、平滑
+   ===================================================================== */
+/* ---------- 大数字：数字和单位分开排，单位 0.36 倍、颜色淡；fg-g 是淡蓝渐变 ---------- */
+[data-scene="fangguo"] .fg-num{display:inline-block;font:600 96px/1 var(--f-num);letter-spacing:-.015em;font-variant-numeric:tabular-nums;color:var(--ink);white-space:nowrap}
+[data-scene="fangguo"] .fg-num small{display:inline;margin-left:.12em;font-size:max(.36em,26px);font-weight:500;letter-spacing:0;color:var(--fg-mute);-webkit-text-fill-color:var(--fg-mute);font-family:var(--f-num),var(--f-hand)}
+@supports ((-webkit-background-clip:text) or (background-clip:text)){
+  [data-scene="fangguo"] .fg-num.fg-g{background:linear-gradient(180deg,#2F66E6 10%,#6FA6FF 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#2F66E6}
+}
+
+/* ---------- 渐变圆角图标 ---------- */
+[data-scene="fangguo"] .fg-ico{--fg-i1:#76B4FF;--fg-i2:#3B74F0;display:inline-grid;place-items:center;flex:none;width:72px;height:72px;border-radius:22px;
+  background:linear-gradient(160deg,var(--fg-i1),var(--fg-i2));box-shadow:inset 0 -6px 12px rgba(0,0,0,.07),0 10px 20px -10px rgba(30,60,110,.35)}
+[data-scene="fangguo"] .fg-ico svg{width:52%;height:52%;stroke:#fff;stroke-width:2.2}
+[data-scene="fangguo"] .fg-ico.fg-ico-s{width:46px;height:46px;border-radius:14px}
+[data-scene="fangguo"] .fg-ico[data-fg-tone="teal"]{--fg-i1:#72E0CB;--fg-i2:#27B79E}
+[data-scene="fangguo"] .fg-ico[data-fg-tone="coral"]{--fg-i1:#FFAB93;--fg-i2:#F2715A}
+[data-scene="fangguo"] .fg-ico[data-fg-tone="purple"]{--fg-i1:#ACA6FF;--fg-i2:#7166F0}
+[data-scene="fangguo"] .fg-ico[data-fg-tone="amber"]{--fg-i1:#FFD775;--fg-i2:#F4A62A}
+[data-scene="fangguo"] .fg-ico[data-fg-tone="red"]{--fg-i1:#FF95A0;--fg-i2:#E9505F}
+
+/* ---------- 浅蓝小胶囊 ---------- */
+[data-scene="fangguo"] .fg-chip{display:inline-flex;align-items:center;gap:10px;padding:10px 24px 11px;border-radius:999px;background:#E3EDFE;color:var(--fg-blue-ink);font:600 34px/1.2 var(--f-hand);white-space:nowrap}
+
+/* ---------- 浅蓝大底板（装饰） ---------- */
+[data-scene="fangguo"] .fg-panel{display:block;border-radius:96px 0 0 96px;background:linear-gradient(180deg,#EDF5FD,#E4F0FB);pointer-events:none}
+[data-scene="fangguo"] .fg-panel.fg-round{border-radius:44px}
+
+/* ---------- 白色界面窗：细描边、标题栏、浅灰骨架线 ---------- */
+[data-scene="fangguo"] .fg-win{background:#fff;border:3px solid #EEF1F5;border-radius:28px;box-shadow:0 26px 64px rgba(30,60,110,.11);overflow:hidden}
+[data-scene="fangguo"] .fg-win-hd{display:flex;align-items:center;gap:14px;padding:20px 26px;border-bottom:2px solid #F2F4F7;font:700 34px/1.2 var(--f-hand);color:var(--ink);white-space:nowrap}
+[data-scene="fangguo"] .fg-win-hd>span{margin-left:auto;font-size:26px;font-weight:500;color:var(--ink-3)}
+[data-scene="fangguo"] .fg-win-hd>.fg-btn{padding:8px 18px;border-radius:12px;background:var(--fg-blue);color:#fff}
+[data-scene="fangguo"] .fg-tiles{display:flex;gap:18px;padding:22px 26px 6px}
+[data-scene="fangguo"] .fg-tile{flex:1;min-width:0;padding:16px 20px 18px;border-radius:18px;background:#F3F8FE}
+[data-scene="fangguo"] .fg-tile>span{display:block;font:500 26px/1.2 var(--f-hand);color:var(--ink-3)}
+[data-scene="fangguo"] .fg-tile>.fg-num{margin-top:8px;font-size:56px}
+[data-scene="fangguo"] .fg-sk{display:block;height:16px;margin:16px 26px;border-radius:8px;background:#EEF1F5}
+[data-scene="fangguo"] .fg-phs{display:flex;gap:18px;padding:24px 26px 8px}
+[data-scene="fangguo"] .fg-ph{flex:1;display:block;height:140px;border-radius:16px;background:#F3F8FE;border:3px solid transparent;transition:border-color .35s ease}
+[data-scene="fangguo"] .fg-ph.on{border-color:var(--fg-blue)}
+
+/* ---------- 浮窗：叠在大窗前面、轻轻倾斜一点的小窗（倾斜不超过 2°），投影更深，拉出前后层次 ---------- */
+[data-scene="fangguo"] .fg-win.fg-float{rotate:var(--fg-tilt,-2deg);box-shadow:0 36px 80px rgba(30,60,110,.18),0 4px 10px rgba(30,60,110,.06)}
+[data-scene="fangguo"] .fg-float-b{display:flex;align-items:center;gap:26px;padding:22px 28px 26px}
+[data-scene="fangguo"] .fg-float-b p{font:500 30px/1.35 var(--f-hand);color:var(--ink-2)}
+[data-scene="fangguo"] .fg-float-b p b{display:block;font-size:36px;font-weight:700;color:var(--ink)}
+
+/* ---------- 折角标签（照方果工具箱「API」小卡）：卡片右下角切掉一块，切口上盖一片折过来的浅色三角，三角下面一道柔和投影，像纸角翘起来 ----------
+   - 卡面画在 ::before 上（clip-path 切角），折过来的三角是 ::after（SVG，左上一点小圆角，自带一道往左上落的投影）；
+     整体阴影用元素自己的 filter: drop-shadow，跟着切角走，不露方形阴影
+   - 元素自己留一层透明的渐变底：自检遇到渐变底不量对比度（白字其实压在蓝色卡面上，蓝色最浅处和白字也有 3.5:1）
+   - --fg-cut 是切角的大小；fg-fold 换颜色写 data-fg-tone（blue 默认、teal、coral、purple、amber、red） */
+[data-scene="fangguo"] .fg-fold{--fg-cut:36px;--fg-f1:#5B92F7;--fg-f2:#2F66E6;--fg-flap1:#DCE8FF;--fg-flap2:#A9C6FA;
+  isolation:isolate;padding:18px 54px 20px 30px;background:linear-gradient(rgba(255,255,255,0),rgba(255,255,255,0));color:#fff;
+  font:700 36px/1.2 var(--f-hand);white-space:nowrap;filter:drop-shadow(0 16px 22px rgba(30,60,130,.2)) drop-shadow(0 3px 5px rgba(30,60,130,.12))}
+[data-scene="fangguo"] .fg-fold:not(.abs){position:relative;display:inline-block}
+[data-scene="fangguo"] .fg-fold::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:20px;background:linear-gradient(135deg,var(--fg-f1),var(--fg-f2));
+  clip-path:polygon(0 0,100% 0,100% calc(100% - var(--fg-cut)),calc(100% - var(--fg-cut)) 100%,0 100%)}
+[data-scene="fangguo"] .fg-fold::after{content:"";position:absolute;right:0;bottom:0;width:var(--fg-cut);height:var(--fg-cut);
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23EEF4FF'/%3E%3Cstop offset='1' stop-color='%23B9D1FB'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 7a7 7 0 0 1 7-7h29L0 36Z' fill='url(%23g)'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat;
+  filter:drop-shadow(-3px -3px 4px rgba(20,50,120,.22))}
+[data-scene="fangguo"] .fg-fold[data-fg-tone="teal"]{--fg-f1:#3FCFB4;--fg-f2:#1E9C85}
+[data-scene="fangguo"] .fg-fold[data-fg-tone="coral"]{--fg-f1:#FF9479;--fg-f2:#E0603F}
+[data-scene="fangguo"] .fg-fold[data-fg-tone="purple"]{--fg-f1:#958CFF;--fg-f2:#5F54E0}
+[data-scene="fangguo"] .fg-fold[data-fg-tone="amber"]{--fg-f1:#F7B53F;--fg-f2:#D9870F}
+[data-scene="fangguo"] .fg-fold[data-fg-tone="red"]{--fg-f1:#F27685;--fg-f2:#D63E50}
+[data-scene="fangguo"] .fg-fold .fg-num{font-size:1.15em;color:#fff;-webkit-text-fill-color:#fff;background:none}
+
+/* ---------- 封面 ---------- */
+[data-scene="fangguo"] .fg-cover{display:flex;flex-direction:column;align-items:flex-start}
+[data-scene="fangguo"] .fg-hero{margin:32px 0 28px;font:700 96px/1.16 var(--f-hand);letter-spacing:.01em;color:var(--ink)}
+[data-scene="fangguo"] .fg-red{color:var(--fg-red)}
+[data-scene="fangguo"] .fg-sub{font:400 36px/1.4 var(--f-hand);color:var(--ink-2)}
+[data-scene="fangguo"] .fg-who{display:flex;gap:44px;font:400 34px/1.3 var(--f-hand);color:var(--ink-3)}
+[data-scene="fangguo"] .fg-who b{color:var(--ink);font-weight:600}
+
+/* ---------- 章节页 ---------- */
+[data-scene="fangguo"] .fg-bigno{font-size:460px;line-height:.9}
+[data-scene="fangguo"] .fg-part{font:600 28px/1 var(--f-num);letter-spacing:.2em;color:var(--fg-blue-ink)}
+[data-scene="fangguo"] .fg-chapter h1{margin:28px 0 24px;font:700 88px/1.15 var(--f-hand);color:var(--ink)}
+[data-scene="fangguo"] .fg-chapter p{font:400 36px/1.4 var(--f-hand);color:var(--ink-2)}
+[data-scene="fangguo"] .fg-toc{display:flex;gap:44px;font:400 34px/1.2 var(--f-hand);color:var(--ink-3);white-space:nowrap}
+[data-scene="fangguo"] .fg-toc b{margin-right:10px;font:600 34px/1 var(--f-num)}
+[data-scene="fangguo"] .fg-toc .on{color:var(--ink);font-weight:600}
+[data-scene="fangguo"] .fg-toc .on b{color:var(--fg-blue-ink)}
+
+/* ---------- 横着的小卡：左边大数字，右边说明 ---------- */
+[data-scene="fangguo"] .fg-mini{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:30px 40px;border-radius:28px;background:#fff;box-shadow:var(--fg-card)}
+[data-scene="fangguo"] .fg-mini>.fg-num{font-size:104px}
+[data-scene="fangguo"] .fg-mini>p{font:400 34px/1.4 var(--f-hand);color:var(--ink-2);text-align:right}
+[data-scene="fangguo"] .fg-cap{font:400 36px/1.4 var(--f-hand);color:var(--ink-2)}
+[data-scene="fangguo"] .fg-foot{display:flex;justify-content:space-between;font:400 26px/1.2 var(--f-hand);color:var(--ink-3)}
+
+/* ---------- 指标卡 ---------- */
+[data-scene="fangguo"] .fg-kpi{padding:30px 38px 32px;border-radius:28px;background:#fff;box-shadow:var(--fg-card)}
+[data-scene="fangguo"] .fg-kpi-l{display:flex;justify-content:space-between;align-items:center;gap:16px;font:500 30px/1.2 var(--f-hand);color:var(--ink-3)}
+[data-scene="fangguo"] .fg-kpi>.fg-num{margin:18px 0 10px}
+[data-scene="fangguo"] .fg-delta{font:600 28px/1.2 var(--f-hand);color:#178A5D}
+[data-scene="fangguo"] .fg-delta.down{color:#C93B4A}
+
+/* ---------- 图表卡片里的标题行（名字 + 右边的单位） ---------- */
+[data-scene="fangguo"] .fg-ch{display:flex;justify-content:space-between;align-items:baseline;gap:20px;font:700 34px/1.2 var(--f-hand);color:var(--ink);white-space:nowrap}
+[data-scene="fangguo"] .fg-ch>span{font-size:26px;font-weight:400;color:var(--ink-3)}
+
+/* ---------- 柱状图：读数、月份是真的字；当前那根用渐变蓝 ---------- */
+[data-scene="fangguo"] .fg-bars{position:relative;display:flex;flex-direction:column;height:400px}
+[data-scene="fangguo"] .fg-bars-plot{position:relative;flex:1;min-height:0;display:flex;align-items:stretch;gap:calc(64% / var(--n) * .9);padding:0 2%;
+  background:linear-gradient(#EEF1F5,#EEF1F5) 0 100%/100% 2px no-repeat,linear-gradient(#F2F4F7,#F2F4F7) 0 66%/100% 2px no-repeat,linear-gradient(#F2F4F7,#F2F4F7) 0 33%/100% 2px no-repeat}
+[data-scene="fangguo"] .fg-bar{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
+[data-scene="fangguo"] .fg-bar>b{margin-bottom:12px;font:600 30px/1 var(--f-num);color:var(--ink-3);white-space:nowrap;transition:color .35s ease,font-size .35s var(--fg-ease)}
+[data-scene="fangguo"] .fg-bar>i{position:relative;display:block;width:100%;height:calc(var(--v) * (100% - 72px));border-radius:14px 14px 6px 6px;background:#DCE8FB;overflow:hidden}
+[data-scene="fangguo"] .fg-bar>i::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#6BA6FF,#3B74F0);opacity:0;transition:opacity .4s ease}
+[data-scene="fangguo"] .fg-bar.fg-hi>b{font-size:44px;color:var(--fg-blue-ink)}
+[data-scene="fangguo"] .fg-bar.fg-hi>i::after{opacity:1}
+/* 写了 data-fg-hi-beat：到那一拍才点亮 */
+[data-scene="fangguo"] .fg-bar.fg-hi[data-fg-at]>b{font-size:30px;color:var(--ink-3)}
+[data-scene="fangguo"] .fg-bar.fg-hi[data-fg-at]>i::after{opacity:0}
+[data-scene="fangguo"].b1 .fg-bar.fg-hi[data-fg-at="1"]>b,[data-scene="fangguo"].b2 .fg-bar.fg-hi[data-fg-at="2"]>b,[data-scene="fangguo"].b3 .fg-bar.fg-hi[data-fg-at="3"]>b,
+[data-scene="fangguo"].b4 .fg-bar.fg-hi[data-fg-at="4"]>b,[data-scene="fangguo"].b5 .fg-bar.fg-hi[data-fg-at="5"]>b,[data-scene="fangguo"].b6 .fg-bar.fg-hi[data-fg-at="6"]>b{font-size:44px;color:var(--fg-blue-ink)}
+[data-scene="fangguo"].b1 .fg-bar.fg-hi[data-fg-at="1"]>i::after,[data-scene="fangguo"].b2 .fg-bar.fg-hi[data-fg-at="2"]>i::after,[data-scene="fangguo"].b3 .fg-bar.fg-hi[data-fg-at="3"]>i::after,
+[data-scene="fangguo"].b4 .fg-bar.fg-hi[data-fg-at="4"]>i::after,[data-scene="fangguo"].b5 .fg-bar.fg-hi[data-fg-at="5"]>i::after,[data-scene="fangguo"].b6 .fg-bar.fg-hi[data-fg-at="6"]>i::after{opacity:1}
+[data-scene="fangguo"] .fg-bars-x{display:flex;gap:calc(64% / 6 * .9);padding:14px 2% 0}
+[data-scene="fangguo"] .fg-bars-x>span{flex:1;min-width:0;text-align:center;font:400 26px/1.2 var(--f-hand);color:var(--ink-3);white-space:nowrap}
+
+/* ---------- 环形图：中间放合计；图例 ---------- */
+[data-scene="fangguo"] .fg-donut{position:relative;display:grid;place-items:center;align-content:center;width:280px;height:280px;text-align:center}
+[data-scene="fangguo"] .fg-donut>svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+[data-scene="fangguo"] .fg-donut circle{fill:none;stroke-width:15}
+[data-scene="fangguo"] .fg-donut .fg-track{stroke:#EEF1F5}
+[data-scene="fangguo"] .fg-donut>.fg-num{position:relative;font-size:60px}
+[data-scene="fangguo"] .fg-donut>span{position:relative;margin-top:8px;font:400 26px/1.2 var(--f-hand);color:var(--ink-3)}
+[data-scene="fangguo"] .fg-legend{display:grid;gap:14px}
+[data-scene="fangguo"] .fg-legend>p{display:flex;align-items:center;gap:14px;font:400 34px/1.25 var(--f-hand);color:var(--ink-2);white-space:nowrap}
+[data-scene="fangguo"] .fg-legend>p>i{flex:none;width:16px;height:16px;border-radius:5px;background:var(--fg-blue)}
+[data-scene="fangguo"] .fg-legend>p>b{margin-left:auto;font:600 36px/1 var(--f-num);color:var(--ink)}
+
+/* ---------- 趋势线 ---------- */
+[data-scene="fangguo"] .fg-line{position:relative;height:300px;margin-bottom:46px}
+[data-scene="fangguo"] .fg-line>svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+[data-scene="fangguo"] .fg-line-grid line{stroke:#EEF1F5;stroke-width:2;vector-effect:non-scaling-stroke}
+[data-scene="fangguo"] .fg-line-path{fill:none;stroke:#3B74F0;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+[data-scene="fangguo"] .fg-line-dot{position:absolute;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;background:#fff;border:6px solid #3B74F0}
+[data-scene="fangguo"] .fg-line-v{position:absolute;right:30px;margin-top:-62px;font:600 40px/1 var(--f-num);color:var(--fg-blue-ink)}
+[data-scene="fangguo"] .fg-line-x{position:absolute;left:0;right:0;top:100%;height:40px}
+[data-scene="fangguo"] .fg-line-x>span{position:absolute;top:12px;transform:translateX(-50%);font:400 26px/1.2 var(--f-hand);color:var(--ink-3);white-space:nowrap}
+[data-scene="fangguo"] .fg-line-x>span:first-child{transform:none}
+[data-scene="fangguo"] .fg-line-x>span:last-child{transform:translateX(-100%)}
+
+/* ---------- 进度环 ---------- */
+[data-scene="fangguo"] .fg-ring{--fg-tone:#3B74F0;position:relative;display:grid;place-items:center;flex:none;width:200px;height:200px}
+[data-scene="fangguo"] .fg-ring>svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+[data-scene="fangguo"] .fg-ring circle{fill:none;stroke-width:12}
+[data-scene="fangguo"] .fg-ring-t{stroke:color-mix(in srgb,var(--fg-tone) 14%,#fff)}
+[data-scene="fangguo"] .fg-ring-p{stroke:var(--fg-tone);stroke-linecap:round}
+[data-scene="fangguo"] .fg-ring>.fg-num{position:relative;font-size:58px}
+
+/* ---------- 功能卡：当前这一拍的卡描边变蓝 ---------- */
+[data-scene="fangguo"] .fg-feats{display:grid;grid-template-columns:repeat(var(--cols,3),minmax(0,1fr));gap:var(--gap,28px)}
+[data-scene="fangguo"] .fg-fc{padding:40px 40px 34px;border:3px solid transparent;border-radius:28px;background:#fff;box-shadow:var(--fg-card);transition:opacity .45s ease,border-color .35s ease,box-shadow .35s ease}
+[data-scene="fangguo"] .fg-fc h4{margin:26px 0 10px;font:700 40px/1.2 var(--f-hand);color:var(--ink)}
+[data-scene="fangguo"] .fg-fc p{font:400 34px/1.45 var(--f-hand);color:var(--ink-2)}
+[data-scene="fangguo"] .fg-fc-m{margin-top:24px;padding-top:22px;border-top:2px solid var(--fg-sep)}
+[data-scene="fangguo"] .fg-fc-m>.fg-num{font-size:84px}
+[data-scene="fangguo"][data-now="1"] .fg-fc[data-beat="1"],[data-scene="fangguo"][data-now="2"] .fg-fc[data-beat="2"],[data-scene="fangguo"][data-now="3"] .fg-fc[data-beat="3"],
+[data-scene="fangguo"][data-now="4"] .fg-fc[data-beat="4"],[data-scene="fangguo"][data-now="5"] .fg-fc[data-beat="5"],[data-scene="fangguo"][data-now="6"] .fg-fc[data-beat="6"]{border-color:#C9DBFD;box-shadow:0 24px 60px rgba(59,116,240,.16)}
+
+/* ---------- 已对接平台横栏 ---------- */
+[data-scene="fangguo"] .fg-plat{display:flex;align-items:center;gap:18px;padding:22px 34px;border-radius:24px;background:#fff;box-shadow:0 1px 2px rgba(22,35,63,.04),0 10px 30px rgba(22,35,63,.05);white-space:nowrap}
+[data-scene="fangguo"] .fg-plat>span{margin-right:10px;font:400 28px/1.2 var(--f-hand);color:var(--ink-3)}
+[data-scene="fangguo"] .fg-plat>b{padding:6px 16px 8px;border-radius:12px;background:#F3F6FA;font:700 34px/1.2 var(--f-num),var(--f-hand);color:var(--ink-2)}
+
+/* ---------- 流程清单：名字第 0 拍就在，说明到拍出现；讲到的序号变浅蓝，当前一项是渐变蓝 ---------- */
+[data-scene="fangguo"] .fg-flow{counter-reset:fgst;display:flex;flex-direction:column}
+[data-scene="fangguo"] .fg-step{counter-increment:fgst;display:flex;align-items:flex-start;gap:28px;padding:24px 0 26px;border-bottom:2px solid var(--fg-sep)}
+[data-scene="fangguo"] .fg-step::before{content:counter(fgst);flex:none;display:grid;place-items:center;width:58px;height:58px;border-radius:18px;background:#EEF2F7;color:var(--ink-3);
+  font:600 28px/1 var(--f-num);transition:background-color .35s ease,color .35s ease,box-shadow .35s ease}
+[data-scene="fangguo"] .fg-step h4{margin:6px 0 6px;font:700 40px/1.2 var(--f-hand);color:var(--ink);transition:color .35s ease}
+[data-scene="fangguo"] .fg-step p{font:400 34px/1.4 var(--f-hand);color:var(--ink-2)}
+[data-scene="fangguo"] .fg-step:has([data-beat].on)::before{background:#E3EDFE;color:var(--fg-blue-ink)}
+[data-scene="fangguo"][data-now="1"] .fg-step:has([data-beat="1"])::before,[data-scene="fangguo"][data-now="2"] .fg-step:has([data-beat="2"])::before,
+[data-scene="fangguo"][data-now="3"] .fg-step:has([data-beat="3"])::before,[data-scene="fangguo"][data-now="4"] .fg-step:has([data-beat="4"])::before,
+[data-scene="fangguo"][data-now="5"] .fg-step:has([data-beat="5"])::before,[data-scene="fangguo"][data-now="6"] .fg-step:has([data-beat="6"])::before{background:var(--fg-grad);color:#fff;box-shadow:0 10px 22px rgba(59,116,240,.3)}
+[data-scene="fangguo"][data-now="1"] .fg-step:has([data-beat="1"]) h4,[data-scene="fangguo"][data-now="2"] .fg-step:has([data-beat="2"]) h4,
+[data-scene="fangguo"][data-now="3"] .fg-step:has([data-beat="3"]) h4,[data-scene="fangguo"][data-now="4"] .fg-step:has([data-beat="4"]) h4,
+[data-scene="fangguo"][data-now="5"] .fg-step:has([data-beat="5"]) h4,[data-scene="fangguo"][data-now="6"] .fg-step:has([data-beat="6"]) h4{color:var(--fg-blue-ink)}
+
+/* ---------- 关于我们：二维码卡、联系方式 ---------- */
+[data-scene="fangguo"] .fg-about h1{margin:26px 0 28px;font:700 84px/1.15 var(--f-hand);color:var(--ink)}
+[data-scene="fangguo"] .fg-about>p{font:400 34px/1.6 var(--f-hand);color:var(--ink-2)}
+[data-scene="fangguo"] .fg-facts{display:flex;gap:60px}
+[data-scene="fangguo"] .fg-facts .fg-num{font-size:80px}
+[data-scene="fangguo"] .fg-facts p{margin-top:12px;font:400 28px/1.2 var(--f-hand);color:var(--ink-3)}
+[data-scene="fangguo"] .fg-qrs{display:flex;gap:26px}
+[data-scene="fangguo"] .fg-qr{width:250px;padding:24px 24px 20px;border-radius:28px;background:#fff;box-shadow:var(--fg-card);text-align:center;font:500 28px/1.2 var(--f-hand);color:var(--ink-2)}
+[data-scene="fangguo"] .fg-qr::before{content:"";display:block;width:198px;height:198px;margin:0 auto 14px;background:center/contain no-repeat}
+[data-scene="fangguo"] .fg-qr[data-fg-qr="wechat"]::before{background-image:url("../vendor/brand/fangguo/qr-wechat.png")}
+[data-scene="fangguo"] .fg-qr[data-fg-qr="douyin"]::before{background-image:url("../vendor/brand/fangguo/qr-douyin.png")}
+[data-scene="fangguo"] .fg-qr[data-fg-qr="business"]::before{background-image:url("../vendor/brand/fangguo/qr-business.png")}
+[data-scene="fangguo"] .fg-contact{padding:28px 40px;border-radius:28px;background:#fff;box-shadow:var(--fg-card)}
+[data-scene="fangguo"] .fg-contact>p{display:grid;grid-template-columns:auto 1fr;column-gap:18px;font:400 34px/1.5 var(--f-hand);color:var(--ink-2)}
+[data-scene="fangguo"] .fg-contact>p+p{margin-top:8px}
+[data-scene="fangguo"] .fg-contact>p>b{color:var(--ink);font-weight:600}
+
+/* 阅读模式（所有拍直接摆好）和减少动态：点亮的过渡不播，直接到位 */
+[data-scene="fangguo"].slide:is(.reading *) :is(.fg-bar>b,.fg-bar>i::after,.fg-fc,.fg-step::before,.fg-step h4,.fg-ph){transition:none}
+@media (prefers-reduced-motion:reduce){
+  [data-scene="fangguo"] :is(.fg-bar>b,.fg-fc,.fg-step h4,.fg-ph),[data-scene="fangguo"] .fg-bar>i::after,[data-scene="fangguo"] .fg-step::before{transition:none}
+}

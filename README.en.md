@@ -60,7 +60,7 @@ Then it works step by step and **stops at five points for your OK**:
 
 You can switch conversations or models halfway: progress lives in files in the deck folder, and the AI checks them before every step.
 
-## 15 styles
+## 16 styles
 
 Three families. A deck can switch styles by chapter, but only within one family. Each style has a default mascot, and you can swap in another style's mascot.
 
@@ -89,6 +89,7 @@ A style is more than a color scheme: its layouts, structure and what happens on 
 | <img src="docs/images/styles/flat.jpg" width="240" alt="Flat Illustration"> | **Flat Illustration** `flat` | Xiaoye: a geometric fox in a yellow scarf | Tutorials, product intros, step-by-step flows, newcomers |
 | <img src="docs/images/styles/magazine.jpg" width="240" alt="Retro Magazine"> | **Retro Magazine** `magazine` | Xiaoqian: an orange-red type block | Opinions, methodology, book talks, retrospectives |
 | <img src="docs/images/styles/brutal.jpg" width="240" alt="Neo-Brutalism"> | **Neo-Brutalism** `brutal` | Pengpeng: a yellow burst-sticker monster | Tutorials, step-by-step flows, product and tool intros, internal talks |
+| <img src="docs/images/styles/fangguo.jpg" width="240" alt="Fangguo"> | **Fangguo** `fangguo` | Fangfang: a little red square fruit drawn from the Fangguo logo | Client pitches, reports to management, product intros, business numbers |
 
 ### Pixel (Chinese pixel font)
 

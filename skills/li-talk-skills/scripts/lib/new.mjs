@@ -1,7 +1,7 @@
 // new 命令：按选中的风格搭一份课件的骨架
 //   new <课件目录> --title 标题 --scenes 风格[,风格] [--mascot 形象]
 // 复制引擎、选中的风格、用到的形象、vendor、起步章节，装字体（选中的风格自带字体的，比如像素游戏，
-// 把 template/vendor/fonts/<风格键名>/ 一起带上），按模板生成 index.html，记下 .li-talk.json。
+// 把 template/vendor/fonts/<风格键名>/ 一起带上；自带品牌素材的，比如方果，把 template/vendor/brand/<风格键名>/ 一起带上），按模板生成 index.html，记下 .li-talk.json。
 // 目录可以已经存在，但里面只能有 讲稿.md、素材/、.li-talk.json、.li-talk/（以及 . 开头的文件）；
 // 已经有 engine/ 的说明搭过了，不重搭，免得覆盖写好的页面。
 import {
@@ -97,6 +97,11 @@ export function resolveMascot(input, scenes = [], tplDir = TPL_DIR) {
 // 风格自带的字体目录 template/vendor/fonts/<风格键名>/：有就返回它的路径，没有返回 null
 function sceneFontDir(tplDir, key) {
   const d = join(tplDir, 'vendor', 'fonts', key);
+  return existsSync(d) && statSync(d).isDirectory() ? d : null;
+}
+// 风格自带的品牌素材目录 template/vendor/brand/<风格键名>/（比如方果的 Logo 和二维码）：有就返回它的路径，没有返回 null
+function sceneBrandDir(tplDir, key) {
+  const d = join(tplDir, 'vendor', 'brand', key);
   return existsSync(d) && statSync(d).isDirectory() ? d : null;
 }
 
@@ -213,7 +218,8 @@ export async function createDeck(dir, choice = {}, opts = {}) {
     }
     mkdirSync(join(deckDir, 'mascots'), { recursive: true });
     copyFileSync(join(tplDir, 'mascots', mascot.key + '.js'), join(deckDir, 'mascots', mascot.key + '.js'));
-    copyTree(join(tplDir, 'vendor'), join(deckDir, 'vendor'), name => name === 'fonts');   // 字体整个交给 installFonts
+    // 字体整个交给 installFonts；品牌素材只带选中的风格的（见下面）
+    copyTree(join(tplDir, 'vendor'), join(deckDir, 'vendor'), name => name === 'fonts' || name === 'brand');
     mkdirSync(join(deckDir, '素材'), { recursive: true });
 
     // 起步章节：标题在 JS 字符串里用 {{TITLE}}，在页面 HTML（模板字符串）里用 {{TITLE_HTML}}
@@ -237,6 +243,10 @@ export async function createDeck(dir, choice = {}, opts = {}) {
     // 风格的 CSS 用 ../vendor/fonts/<风格键名>/… 引用它；没选这个风格就不带
     const sceneFonts = keys.filter(k => sceneFontDir(tplDir, k));
     for (const k of sceneFonts) copyTree(sceneFontDir(tplDir, k), join(deckDir, 'vendor', 'fonts', k));
+    // 风格自带的品牌素材（比如方果的 Logo 和二维码）：规则和字体一样，模板里有 vendor/brand/<风格键名>/ 就整个复制过去，
+    // 风格的 CSS 用 ../vendor/brand/<风格键名>/… 引用它；没选这个风格就不带
+    const sceneBrands = keys.filter(k => sceneBrandDir(tplDir, k));
+    for (const k of sceneBrands) copyTree(sceneBrandDir(tplDir, k), join(deckDir, 'vendor', 'brand', k));
 
     // 入口 index.html
     let html = fill(readFileSync(join(tplDir, 'index.html'), 'utf8'), {
@@ -258,7 +268,7 @@ export async function createDeck(dir, choice = {}, opts = {}) {
     writeMeta(deckDir, { version: VERSION, title, scenes: keys, mascot: mascot.key });
 
     if (font !== 'full') log(liteNotice(cache ? cache.missing.length : undefined, deckDir));
-    return { dir: deckDir, title, scenes: keys, mascot: mascot.key, font, sceneFonts };
+    return { dir: deckDir, title, scenes: keys, mascot: mascot.key, font, sceneFonts, sceneBrands };
   } catch (e) {
     // 只删这次新建的条目；目录是这次建的、删完是空的，就连目录一起删
     try {
@@ -293,6 +303,10 @@ export async function run(args = {}, opts = {}) {
   if (r.sceneFonts && r.sceneFonts.length) {
     const named = resolveScenes(r.sceneFonts, opts.tplDir || TPL_DIR).map(s => `${s.label}（vendor/fonts/${s.key}/）`).join('、');
     log(`  风格自带的字体：${named}`);
+  }
+  if (r.sceneBrands && r.sceneBrands.length) {
+    const named = resolveScenes(r.sceneBrands, opts.tplDir || TPL_DIR).map(s => `${s.label}（vendor/brand/${s.key}/）`).join('、');
+    log(`  风格自带的品牌素材：${named}`);
   }
   log(`  起步章节：slides/ch1.js（一页封面）`);
   log(`下一步：照 references/templates.md 先写 3 页（封面、一页图示、一页清单），然后运行 check ${target} --browser`);
