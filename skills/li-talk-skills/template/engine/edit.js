@@ -1350,12 +1350,12 @@
   const CSS_TEXT = [
     'body.lt-editing #toast{top:70px}',
     /* 液态玻璃面板：浅色风格是半透明白，深色风格（body.lt-darkui）是半透明深色；强调色取风格的 --accent */
-    '.lt-edit-glass{--lt-bg:rgba(255,255,255,.62);--lt-fg:#1d2330;--lt-sub:#5b6474;--lt-line:rgba(255,255,255,.8);--lt-sep:rgba(20,30,50,.12);--lt-hov:rgba(20,30,50,.07);--lt-on:rgba(20,30,50,.1);--lt-acc:var(--lt-accent,#2563eb);' +
+    '.lt-edit-glass{--lt-bg:rgba(255,255,255,.32);--lt-fg:#1d2330;--lt-sub:#5b6474;--lt-line:rgba(255,255,255,.8);--lt-sep:rgba(20,30,50,.12);--lt-hov:rgba(20,30,50,.07);--lt-on:rgba(20,30,50,.1);--lt-acc:var(--lt-accent,#2563eb);' +
       'position:fixed;z-index:960;display:flex;align-items:center;gap:2px;padding:5px;border-radius:16px;background:var(--lt-bg);color:var(--lt-fg);' +
-      '-webkit-backdrop-filter:blur(20px) saturate(1.6);backdrop-filter:blur(20px) saturate(1.6);border:1px solid var(--lt-line);' +
-      'box-shadow:0 12px 32px rgba(15,23,42,.16),0 2px 6px rgba(15,23,42,.08),inset 0 1px 0 rgba(255,255,255,.55);' +
+      '-webkit-backdrop-filter:blur(14px) saturate(1.8);backdrop-filter:blur(14px) saturate(1.8);border:1px solid var(--lt-line);' +
+      'box-shadow:0 12px 32px rgba(15,23,42,.12),0 2px 6px rgba(15,23,42,.06),inset 0 1px 0 rgba(255,255,255,.55);' +
       'font:500 13px/1 system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;letter-spacing:0;user-select:none;-webkit-user-select:none;white-space:nowrap}',
-    'body.lt-darkui .lt-edit-glass{--lt-bg:rgba(30,34,44,.6);--lt-fg:#eef1f6;--lt-sub:#a3acbb;--lt-line:rgba(255,255,255,.16);--lt-sep:rgba(255,255,255,.14);--lt-hov:rgba(255,255,255,.09);--lt-on:rgba(255,255,255,.16);' +
+    'body.lt-darkui .lt-edit-glass{--lt-bg:rgba(30,34,44,.34);--lt-fg:#eef1f6;--lt-sub:#a3acbb;--lt-line:rgba(255,255,255,.16);--lt-sep:rgba(255,255,255,.14);--lt-hov:rgba(255,255,255,.09);--lt-on:rgba(255,255,255,.16);' +
       'box-shadow:0 12px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.08)}',
     '.lt-edit-glass[hidden],.lt-edit-glass [hidden]{display:none!important}',
     '.lt-edit-bar{left:50%;top:12px;transform:translateX(-50%)}',
