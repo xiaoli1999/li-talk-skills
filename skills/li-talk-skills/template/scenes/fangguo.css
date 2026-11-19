@@ -569,3 +569,43 @@
   [data-scene="fangguo"] :is(.fg-cursor,.fg-lens,.fg-token,.fg-st>.fg-ico,.fg-key){transition:none;animation:none}
   [data-scene="fangguo"] :is(.fg-chk,.fg-old,.fg-pipe)::after{transition:none}
 }
+
+/* ---------- 截图叠放 .fg-stack > figure.shot：几张截图错落叠在一起（可以写 --r 轻微倾斜，不超过 2°），
+   一拍出一张，当前讲的那张浮到最上面、放大一点、外面一圈品牌蓝；讲过的退回原位，仍看得清 ---------- */
+[data-scene="fangguo"] .fg-stack{position:relative}
+[data-scene="fangguo"] .fg-stack>.shot{position:absolute;rotate:var(--r);transition:opacity .45s ease,scale .5s var(--fg-ease),box-shadow .5s ease;transform-origin:50% 50%}
+[data-scene="fangguo"] .fg-stack>.shot figcaption{padding:12px 10px 4px;text-align:left;font-size:28px;font-weight:600;color:var(--ink)}
+[data-scene="fangguo"][data-now="1"] .fg-stack>.shot[data-beat="1"],[data-scene="fangguo"][data-now="2"] .fg-stack>.shot[data-beat="2"],
+[data-scene="fangguo"][data-now="3"] .fg-stack>.shot[data-beat="3"],[data-scene="fangguo"][data-now="4"] .fg-stack>.shot[data-beat="4"]{z-index:5;scale:1.03;
+  box-shadow:0 0 0 4px #3B74F0,0 30px 70px rgba(30,60,110,.22)}
+
+/* ---------- 价值观网格 .fg-values > .fg-val：编辑式排版，不做卡片。每条一个编号、一个大字关键词、一句小字说明，
+   中间一栏往下错开；关键词第 0 拍就在（深墨色），说明到拍出现，顶上一道细线铺成品牌蓝，当前这一拍的关键词变成品牌蓝 ---------- */
+[data-scene="fangguo"] .fg-values{display:grid;grid-template-columns:repeat(var(--cols,3),minmax(0,1fr));column-gap:var(--gap,64px);row-gap:56px;counter-reset:fgv}
+[data-scene="fangguo"] .fg-values>.fg-val:nth-child(3n+2){translate:0 56px}
+[data-scene="fangguo"] .fg-val{position:relative;counter-increment:fgv;padding-top:26px}
+[data-scene="fangguo"] .fg-val::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;border-radius:2px;background:#E1E8F2}
+[data-scene="fangguo"] .fg-val::after{content:"";position:absolute;left:0;right:0;top:0;height:3px;border-radius:2px;background:linear-gradient(90deg,#3B74F0,#8DBBFF);transform-origin:0 50%;transform:scaleX(0);transition:transform .6s var(--fg-ease)}
+[data-scene="fangguo"] .fg-val:has(> p.on)::after{transform:scaleX(1)}
+[data-scene="fangguo"] .fg-val>i{display:block;font:600 28px/1 var(--f-num);font-style:normal;letter-spacing:.12em;color:#7F9CCB}
+[data-scene="fangguo"] .fg-val>i::before{content:counter(fgv,decimal-leading-zero)}
+[data-scene="fangguo"] .fg-val>b{display:block;margin:16px 0 14px;font:700 60px/1.15 var(--f-hand);letter-spacing:.02em;color:var(--ink);transition:color .4s ease}
+[data-scene="fangguo"] .fg-val>p{font:400 34px/1.5 var(--f-hand);color:var(--ink-2)}
+[data-scene="fangguo"][data-now="1"] .fg-val:has(> p[data-beat="1"])>b,[data-scene="fangguo"][data-now="2"] .fg-val:has(> p[data-beat="2"])>b,
+[data-scene="fangguo"][data-now="3"] .fg-val:has(> p[data-beat="3"])>b,[data-scene="fangguo"][data-now="4"] .fg-val:has(> p[data-beat="4"])>b{color:var(--fg-blue-ink)}
+
+/* ---------- 图文拼贴 .fg-collage > figure.shot：照片大小错落拼在一起，第一张最大（主图），其余叠在边上；
+   同一张横幅照片可以用不同的 --pos 裁出几块。照片之间只叠图、不叠图注 ---------- */
+[data-scene="fangguo"] .fg-collage{position:relative}
+[data-scene="fangguo"] .fg-collage>.shot{position:absolute;padding:10px;border-radius:24px}
+[data-scene="fangguo"] .fg-collage>.shot .shot-img{border-radius:16px}
+[data-scene="fangguo"] .fg-collage>.shot figcaption{padding:10px 8px 2px;text-align:left;font-size:28px;font-weight:600;color:var(--ink)}
+[data-scene="fangguo"] .fg-collage>.shot:first-child{box-shadow:0 2px 4px rgba(22,35,63,.05),0 36px 80px rgba(22,35,63,.14)}
+
+/* 叠放、拼贴里的截图：「点开看大图」的角标平时藏起来（几张都挂着太乱），鼠标移上去再出现；照样点一下就能看大图 */
+[data-scene="fangguo"] :is(.fg-stack,.fg-collage)>.shot .shot-zoom{opacity:0;transition:opacity .25s ease}
+@media (hover:hover){ [data-scene="fangguo"] :is(.fg-stack,.fg-collage)>.shot:hover .shot-zoom{opacity:1} }
+[data-scene="fangguo"].slide:is(.reading *) :is(.fg-stack>.shot,.fg-val>b),[data-scene="fangguo"].slide:is(.reading *) .fg-val::after{transition:none}
+@media (prefers-reduced-motion:reduce){
+  [data-scene="fangguo"] :is(.fg-stack>.shot,.fg-val>b),[data-scene="fangguo"] .fg-val::after{transition:none}
+}

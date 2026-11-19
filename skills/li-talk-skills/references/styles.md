@@ -280,6 +280,11 @@
   - 聚焦框：在 `.fg-win`（或 `.fg-lensbox`）里给要框的元素写 `data-fg-focus="拍号"`，到那一拍框移过去，四周压暗一点（字仍看得清）。说明写在框外面，一拍一句，讲完留着。
   - 按位滚动的数字：`<b class="fg-num fg-odo">2,318</b>`，到拍时每一位先快速翻动、再从左到右依次停在读数上（只改这个数字自己的字，不用写 `data-to`；逗号、小数点、单位不动）。
   - 新旧对比：`<p class="fg-vs"><s class="fg-old">20 分钟</s><i class="fg-arrow"></i><b class="fg-num fg-new" data-beat="1">10<small>秒</small></b></p>`，新数字到拍时旧的划一道红线（仍读得清）。新数字也可以写在 `.fg-vs` 后面。
+- **配图和文字为主的页**（没有数字时用）：
+  - 截图叠放：`<div class="fg-stack" style="width;height"><figure class="shot" data-beat="1" data-src="素材/a.png" data-caption="上架工具" style="left;top;width;--ar:512/375;--fit:contain;--r:-1.5deg"></figure>…</div>`。几张截图错落叠在一起，可以轻微倾斜（`--r` 不超过 2°），一拍出一张，当前讲的那张浮到最上面、放大一点、外面一圈品牌蓝。截图之间只叠图、别叠住别的截图的图注。
+  - 图文拼贴：`<div class="fg-collage" style="width;height"><figure class="shot" …></figure>…</div>`。第一张是主图（投影更深），其余叠在边上；同一张横幅照片可以用不同的 `--pos` 裁出几块（点开大图时看到的是整张原图）。
+  - 价值观网格：`<div class="fg-values"><div class="fg-val"><i></i><b>长期主义</b><p data-beat="1">长期价值和短期利益，选长期</p></div>…</div>`。编辑式排版、不做卡片：自动编号、大字关键词、一句小字说明，中间一栏往下错开；关键词第 0 拍就在，说明到拍出现，顶上的细线铺成品牌蓝，当前一拍的关键词变蓝。一行三条（`--cols` 可改），说明 14 个字以内。
+  - 叠放、拼贴里的截图，「点开看大图」的角标平时藏起来，鼠标移上去才出现，照样点一下就能看大图。
 - **版式工具**：出血底板 `<i class="fg-bleed" hidden></i>` 有四种——默认右边一块浅蓝、`fg-left` 左边、`fg-slant` 右边一块斜切的浅蓝、`fg-wash` 整屏一层淡蓝晕染（金句页用）；金句 `<p class="fg-quote">…<span class="fg-hl">词</span>…</p>`（112px 深墨色大字，上面一道品牌蓝渐变短线，关键词是品牌蓝渐变，一页一句）；一组淡蓝同心细圆环装饰 `<i class="fg-deco"></i>`（不放字）。
   - 指标卡 `.fg-kpi`、渐变圆角图标 `.fg-ico[data-fg-ico="box"]`（`data-fg-tone`：blue、teal、coral、purple、amber、red）、白色界面窗 `.fg-win`（加 `fg-float` 是倾斜 2° 的浮窗）、折角标签 `.fg-fold`、小胶囊 `.fg-chip`、横小卡 `.fg-mini`、功能卡 `.fg-feats > .fg-fc`、平台横栏 `.fg-plat`、流程清单 `.fg-flow > .fg-step`（当前一步点亮）、封面 `.fg-cover`、章节页 `.fg-chapter` 加 `.fg-bigno`、关于我们 `.fg-about` 加二维码卡 `.fg-qr[data-fg-qr="wechat|douyin|business"]` 和联系方式 `.fg-contact`。
 
