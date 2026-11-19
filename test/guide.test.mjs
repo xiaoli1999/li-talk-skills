@@ -817,3 +817,60 @@ test('styles：说明里有、文件还没做好的风格标出来，别让 AI �
   await runStyles({ _: [] }, { log: s => lines.push(s), tplDir: tpl });
   assert.match(lines.join('\n'), /ink.*还没做好/);
 });
+
+// 新手教程：本机没有 tour.json 时，① 起点先问要不要过一遍教程（问题 1）；看过或跳过后不再问
+test('起点：第一次用先问新手教程，放在问题 1；看过或跳过后不再问', () => {
+  const dir = join(tmpdir(), 'li-talk-not-exist-' + Date.now());
+  const t = guideText(dir, { tour: null });
+  assert.match(t, /^第一次用 li-talk-skills：先问用户要不要过一遍新手教程/);
+  assert.match(t, /问题 1：第一次用 li-talk-skills，要不要先花 3 分钟过一遍新手教程？/);
+  assert.match(t, /1\. 先过一遍新手教程（推荐：第一次用）\n {4}2\. 先不学，直接开始做课件/);
+  assert.match(t, /问题 2：你手上现在有什么？/);
+  assert.match(t, /教程看完或跳过后，问用户手上有什么（问题 2）。/);
+  assert.ok(t.includes(cmd('tour')), t);
+  assert.ok(t.includes(cmd('tour', '--skip')), t);
+  assert.match(t, /必须由你运行，不要只把路径发给用户/);
+  checkShape(t);
+
+  for (const state of ['seen', 'skipped']) {
+    const t2 = guideText(dir, { tour: { state, at: '2026-11-19T00:00:00.000Z' } });
+    assert.doesNotMatch(t2, /新手教程/);
+    assert.match(t2, /先问用户手上有什么（问题 1）。/);
+  }
+});
+
+test('tour：打开教程并记下 seen；--skip 只记下 skipped；打不开浏览器、教程不在都给中文说明', async () => {
+  const { run: runTour, readTour, TOUR } = await import('../skills/li-talk-skills/scripts/lib/tour.mjs');
+  assert.ok(TOUR.endsWith(join('template', 'tour', 'index.html')));
+  const dataDir = join(tmp(), 'data');
+  const tour = join(tmp(), 'index.html');
+  writeFileSync(tour, '<!doctype html>');
+  assert.equal(readTour(dataDir), null);
+
+  let lines = [];
+  let code = await runTour({ _: [], skip: true }, { log: s => lines.push(s), dataDir, tour, opener: async () => { throw new Error('跳过时不该打开'); } });
+  assert.equal(code, 0);
+  assert.equal(readTour(dataDir).state, 'skipped');
+  assert.match(lines.join('\n'), /打开 li-talk-skills 新手教程/);
+
+  const opened = [];
+  lines = [];
+  code = await runTour({ _: [] }, { log: s => lines.push(s), dataDir, tour, opener: async f => { opened.push(f); return true; } });
+  assert.equal(code, 0);
+  assert.deepEqual(opened, [tour]);
+  assert.equal(readTour(dataDir).state, 'seen');
+  assert.match(lines.join('\n'), /已用浏览器打开新手教程/);
+  assert.ok(lines.join('\n').includes(cmd('styles', '--open')), '看完教程要接着打开样册');
+
+  const fresh = join(tmp(), 'data2');
+  lines = [];
+  code = await runTour({ _: [] }, { log: s => lines.push(s), dataDir: fresh, tour, opener: async () => false });
+  assert.equal(code, 2);
+  assert.match(lines.join('\n'), /打不开浏览器，请用户手动双击打开新手教程/);
+  assert.equal(readTour(fresh), null, '没打开就不记，下次还会问');
+
+  lines = [];
+  code = await runTour({ _: [] }, { log: s => lines.push(s), dataDir: fresh, tour: join(tmp(), '没有.html'), opener: async () => true });
+  assert.equal(code, 1);
+  assert.match(lines.join('\n'), /新手教程课件不在/);
+});

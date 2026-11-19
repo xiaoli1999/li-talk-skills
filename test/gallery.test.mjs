@@ -251,3 +251,23 @@ test('真实浏览器：样册的风格总览和换风格的小条', { skip: !br
     assert.equal(st.bar, false, '自检模式不放小条');
   } finally { await b.close(); }
 });
+
+// 新手教程课件 template/tour/：tour 命令打开它。不开浏览器的检查清零；真实浏览器 1920×1080 自检清零
+// （完整的 5 个尺寸用 node skills/li-talk-skills/scripts/li-talk.mjs check skills/li-talk-skills/template/tour --browser，
+//  跑完删掉 template/tour/.li-talk/）
+const TOUR_DIR = join(TPL, 'tour');
+test('新手教程课件：不开浏览器的检查没有错误和提醒', async () => {
+  assert.ok(existsSync(join(TOUR_DIR, 'index.html')), '缺 template/tour/index.html');
+  const st = await checkStatic(TOUR_DIR);
+  assert.equal(st.errors, 0, st.text);
+  assert.equal(st.warnings, 0, st.text);
+  assert.ok(!existsSync(join(TOUR_DIR, '.li-talk')), 'template/tour/.li-talk/ 是自检记录，不能留在模板里');
+});
+test('真实浏览器：新手教程课件自检清零', { skip: !browser && '本机没找到 Edge / Chrome' }, async () => {
+  const b = await openBrowser(browser);
+  try {
+    const r = await b.selftest(TOUR_DIR, { w: 1920, h: 1080 });
+    assert.ok(r.pages >= 8, '教程至少 8 页');
+    assert.deepEqual(r.issues, [], JSON.stringify(r.issues, null, 2));
+  } finally { await b.close(); }
+});

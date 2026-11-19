@@ -13,6 +13,8 @@
 //   ⑧ 过稿     confirmed.review 不为 true
 //   ⑨ 完成
 //
+// ① 起点：本机还没有新手教程记录（~/.li-talk-skills/tour.json，见 tour.mjs）时，先问要不要过一遍教程，放在问题 1。
+//
 // 输出固定四块：【现在在哪一步】【下一步做什么】【问用户】【可以这样对 AI 说】。
 // 较弱的模型会照着一步步做，所以：命令写全（skill 和课件都用绝对路径、正斜杠，各种终端都认），
 // 问题带编号选项、推荐项放第一个并标（推荐…），每个问题最多 4 个选项（Claude Code 的提问卡片最多放 4 个）。
@@ -30,6 +32,7 @@ import { collectPages, readDeck, scriptPageHeads } from './deck.mjs';
 import { mascotList, sceneIndex } from './new.mjs';
 import { cacheDir, loadManifest } from './fonts.mjs';
 import { describeLastCheck, installKind } from './update.mjs';
+import { readTour } from './tour.mjs';
 
 /* ------------------------------------------------------------------
    公用的小工具（materials、styles 也用）
@@ -347,8 +350,11 @@ function envLine() {
    各阶段
    ------------------------------------------------------------------ */
 
-// ① 起点
-function stageStart(s) {
+// ① 起点。本机还没有新手教程的记录（~/.li-talk-skills/tour.json）时，先问要不要过一遍教程，放在问题 1；
+// ctx.tour 换记录（测试用，传 null 当作第一次用）
+function stageStart(s, ctx = {}) {
+  const first = !('tour' in ctx ? ctx.tour : readTour());
+  const q = n => '问题 ' + (n + (first ? 1 : 0));
   const foreign = s.exists ? foreignFiles(s.dir) : [];
   const decks = s.exists ? decksUnder(s.dir) : [];
   // 目录里已经有别的文件：课件要单独一个目录，在里面另起一个没被占用的名字
@@ -367,11 +373,18 @@ function stageStart(s) {
   where.push(envLine());
 
   const steps = [];
+  if (first) {
+    steps.push(['第一次用 li-talk-skills：先问用户要不要过一遍新手教程（问题 1），照用户选的做：',
+      '选「先过一遍」：你自己运行下面这条打开教程（必须由你运行，不要只把路径发给用户），再照它的输出带用户看完教程、过一遍样册：',
+      '  ' + cli('tour'),
+      '选「先不学」：运行下面这条记下（以后不再问），然后接着问下面的问题：',
+      '  ' + cli('tour', '--skip')]);
+  }
   if (decks.length) {
     steps.push(['用户要接着做以前的课件，就对那个目录运行 guide，不用从头来：', ...decks.map(d => cli('guide', quote(d)))]);
   }
   const askDir = !s.given || foreign.length > 0;
-  steps.push(`先问用户手上有什么（问题 1）${askDir ? '，再确认课件放在哪（问题 2）' : ''}。`);
+  steps.push(`${first ? '教程看完或跳过后，' : '先'}问用户手上有什么（${q(1)}）${askDir ? `，再确认课件放在哪（${q(2)}）` : ''}。`);
   steps.push([`建好课件目录和里面的 素材 子目录，再写讲稿文件（第一行写「# 〈主题〉」，主题用用户的话；还不清楚就先写「# 我的分享」）：`,
     `${posix(dir)}/讲稿.md`]);
   steps.push(['按用户的回答做：',
@@ -387,9 +400,11 @@ function stageStart(s) {
     ? [`${have[1]}（推荐：素材/ 里已经有文件了）`, have[0], have[2]]
     : [`${have[0]}（推荐：拿不准就选这个，一问一答带着做）`, have[1], have[2]];
   const asks = [{ q: '你手上现在有什么？', opts }];
+  if (first) asks.unshift({ q: '第一次用 li-talk-skills，要不要先花 3 分钟过一遍新手教程？我会在浏览器里打开教程课件和全部风格的样册。', opts: ['先过一遍新手教程（推荐：第一次用）', '先不学，直接开始做课件'] });
   if (askDir) asks.push({ q: '课件放在哪个目录？', opts: [`${posix(dir)}（推荐）`, '换个位置或名字：直接告诉我'] });
 
   return render(1, {
+    lead: first ? ['第一次用 li-talk-skills：先问用户要不要过一遍新手教程（下面的问题 1）。'] : undefined,
     where, steps, asks,
     say: mat.files ? '材料都放进素材文件夹了，你先看看，缺什么再问我' : '我想做一个 20 分钟的分享，讲……；笔记和截图在桌面的「分享素材」文件夹里',
   });

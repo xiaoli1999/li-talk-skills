@@ -1,0 +1,70 @@
+/* 新手教程 · 第一章的页面样式（和 slides/ch1.js 配套）
+   - 每条选择器都以 [data-id="p0n"] 开头，只管那一页；自己的零件类名用 tour- 开头
+   - 颜色一律用扁平插画的变量（--ink、--fl-coral、--fl-sun……），照风格的受光规矩画：右下暗部、左上亮边、投影落向右下、不模糊 */
+
+/* ---------- 网页窗口（封面、它能做什么）：白色窗体，顶上三颗点，里面一页小课件 ---------- */
+[data-id="p01"] .tour-win,[data-id="p02"] .tour-win{box-sizing:border-box;padding:74px 40px 40px;border-radius:30px;background:#FFFFFF;
+  box-shadow:inset -7px -8px 0 var(--fl-paper-d),12px 14px 0 rgba(31,42,68,.1)}
+[data-id="p01"] .tour-win::before,[data-id="p02"] .tour-win::before{content:"";position:absolute;left:30px;top:26px;width:16px;height:16px;border-radius:50%;
+  background:var(--fl-coral);box-shadow:26px 0 0 var(--fl-sun),52px 0 0 var(--fl-line-d)}
+/* 小课件：墨蓝浅色的一页，上面一条珊瑚标题、两条灰线，右下角三颗节拍点（两颗亮、一颗暗） */
+[data-id="p01"] .tour-mini,[data-id="p02"] .tour-mini{position:relative;height:230px;border-radius:20px;background:var(--fl-ink-t);box-shadow:inset -5px -6px 0 #CBD3E2}
+[data-id="p02"] .tour-mini{height:170px}
+[data-id="p01"] .tour-bar,[data-id="p02"] .tour-bar{position:absolute;left:34px;height:22px;border-radius:11px;background:#FFFFFF}
+[data-id="p01"] .tour-bar.a,[data-id="p02"] .tour-bar.a{top:34px;width:52%;height:30px;border-radius:15px;background:var(--fl-coral);box-shadow:inset -3px -4px 0 var(--fl-coral-d)}
+[data-id="p01"] .tour-bar.b,[data-id="p02"] .tour-bar.b{top:92px;width:70%}
+[data-id="p01"] .tour-bar.c,[data-id="p02"] .tour-bar.c{top:132px;width:44%}
+[data-id="p02"] .tour-bar.b{top:84px}
+[data-id="p02"] .tour-bar.c{top:120px}
+[data-id="p01"] .tour-dots,[data-id="p02"] .tour-dots{position:absolute;right:28px;bottom:24px;display:flex;gap:10px}
+[data-id="p01"] .tour-dots i,[data-id="p02"] .tour-dots i{display:block;width:30px;height:14px;border-radius:7px;background:var(--fl-coral-l)}
+[data-id="p01"] .tour-dots i:nth-child(2),[data-id="p02"] .tour-dots i:nth-child(2){width:52px;background:var(--fl-coral)}
+[data-id="p01"] .tour-dots i:nth-child(3),[data-id="p02"] .tour-dots i:nth-child(3){background:#FFFFFF}
+
+/* ---------- 封面 ---------- */
+[data-id="p01"] .tour-cover-name{margin:0;font:700 56px/1.2 var(--f-mono);color:var(--ink-2);white-space:nowrap}
+[data-id="p01"] .tour-cover-sub{margin:0;font:600 44px/1.3 var(--f-sans);color:var(--ink-2);white-space:nowrap}
+[data-id="p01"] .tour-cover-dot{flex:none;width:20px;height:20px;border-radius:50%;background:var(--fl-coral);box-shadow:inset -3px -4px 0 var(--fl-coral-d),inset 2px 2px 0 var(--fl-coral-l)}
+
+/* ---------- 它能做什么 ---------- */
+[data-id="p02"] .tour-win>h3{margin:30px 0 0;font:800 54px/1.25 var(--f-sans);color:var(--ink)}
+[data-id="p02"] .tour-win>p{margin:12px 0 0;font:500 38px/1.35 var(--f-sans);color:var(--ink-2)}
+[data-id="p02"] .fl-pill{font-size:44px}
+
+/* ---------- 怎么开始 ---------- */
+/* 大气泡里是一整句话：字号降到 52px，内边距跟着收 */
+[data-id="p03"] .fl-bubble{padding:42px 64px 50px;border-radius:56px}
+[data-id="p03"] .fl-bubble>p{font-size:52px;letter-spacing:0}
+[data-id="p03"] .fl-bubble::after{bottom:-50px;width:96px;height:60px}
+/* 三块标签牌一样高 */
+[data-id="p03"] .fl-tag{min-height:224px;box-sizing:border-box;align-content:start}
+
+/* ---------- 五处停下 ---------- */
+/* 横轨：一条浅墨蓝的圆角粗线，串起五个站点的序号圆片 */
+[data-id="p04"] .tour-rail{display:block;height:16px;border-radius:8px;background:var(--fl-line);box-shadow:inset -3px -3px 0 var(--fl-line-d)}
+/* 站点：五列，每列一枚受光的序号圆片（珊瑚、明黄、墨蓝轮换），下面站名和一句说明，居中 */
+[data-id="p04"] .tour-stops{display:grid;grid-template-columns:repeat(5,1fr);margin:0;padding:0;list-style:none;counter-reset:tour-st}
+[data-id="p04"] .tour-stops>li{counter-increment:tour-st;display:flex;flex-direction:column;align-items:center;padding:0 14px;text-align:center;
+  --tb:#E5503C;--tbd:#BC3826;--tbl:#FF7B64;--ton:#FFFFFF}
+[data-id="p04"] .tour-stops>li:nth-child(3n+2){--tb:var(--fl-sun);--tbd:var(--fl-sun-d);--tbl:var(--fl-sun-l);--ton:var(--fl-ink)}
+[data-id="p04"] .tour-stops>li:nth-child(3n){--tb:var(--fl-ink);--tbd:var(--fl-ink-d);--tbl:var(--fl-ink-l);--ton:#FFFFFF}
+[data-id="p04"] .tour-stops>li::before{content:counter(tour-st);display:grid;place-items:center;width:100px;height:100px;border-radius:50%;
+  font:800 50px/1 var(--f-sans);color:var(--ton);background:var(--tb);
+  box-shadow:0 0 0 10px var(--bg),inset -6px -7px 0 var(--tbd),inset 4px 4px 0 var(--tbl),5px 6px 0 10px rgba(31,42,68,.06)}
+[data-id="p04"] .tour-stops>li>b{margin-top:26px;font:800 46px/1.25 var(--f-sans);color:var(--ink);white-space:nowrap}
+[data-id="p04"] .tour-stops>li>span{margin-top:8px;font:500 36px/1.35 var(--f-sans);color:var(--ink-2)}
+/* 最后一拍的胶囊：白色，前面一颗明黄小圆片 */
+[data-id="p04"] .tour-save{font-size:40px}
+[data-id="p04"] .tour-save-dot{width:22px;height:22px;border-radius:50%;background:var(--fl-sun);box-shadow:inset -3px -4px 0 var(--fl-sun-d),inset 2px 2px 0 var(--fl-sun-l)}
+
+/* ---------- 15 种风格 ---------- */
+[data-id="p05"] .fl-num{min-height:440px;box-sizing:border-box}
+[data-id="p05"] .tour-rule{font-size:40px}
+
+/* ---------- 质量怎么把关 ---------- */
+/* 五个屏幕尺寸：按真实比例缩小（约 0.15 倍），底边对齐，下面一行尺寸 */
+[data-id="p06"] .tour-devs{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-end;gap:44px 46px}
+[data-id="p06"] .tour-dev{display:flex;flex-direction:column;align-items:center;gap:14px}
+[data-id="p06"] .tour-dev>i{display:block;box-sizing:border-box;width:var(--w);height:var(--h);border:10px solid var(--fl-ink);border-radius:16px;
+  background:linear-gradient(var(--fl-coral-t) 0 22%,#FFFFFF 22%);box-shadow:inset -4px -5px 0 var(--fl-paper-d),6px 7px 0 rgba(31,42,68,.14)}
+[data-id="p06"] .tour-dev>span{font:700 28px/1 var(--f-mono);color:var(--ink);white-space:nowrap}

@@ -10,17 +10,18 @@ if (major < 18) {
   process.exit(2);
 }
 
-const BOOLS = ['browser', 'shots', 'open', 'yes', 'force'];
+const BOOLS = ['browser', 'shots', 'open', 'yes', 'force', 'skip'];
 const COMMANDS = {
   guide: './lib/guide.mjs', styles: './lib/styles.mjs', materials: './lib/materials.mjs',
   new: './lib/new.mjs', open: './lib/open.mjs', confirm: './lib/meta.mjs',
   check: './lib/check.mjs', fonts: './lib/fonts.mjs', version: './lib/version.mjs',
-  update: './lib/update.mjs',
+  update: './lib/update.mjs', tour: './lib/tour.mjs',
 };
 // 这两个命令自己处理更新，不在命令开始前自动检查
 const NO_AUTO_UPDATE = ['version', 'update'];
 const HELP = `用法：node li-talk.mjs <命令> [参数]
   guide [课件目录]                    看做到哪一步、下一步做什么
+  tour [--skip]                       打开新手教程；--skip 记下这次先不看
   styles [--open]                     列出所有风格；--open 打开样册
   materials <素材目录>                列素材清单，生成截图说明表
   new <课件目录> --title 标题 --scenes 风格[,风格] [--mascot 形象]

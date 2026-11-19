@@ -28,9 +28,11 @@ npx skills add xiaoli1999/li-talk-skills -g -a claude-code -y
 
 **不想敲命令**：直接对 AI 说
 
-> 从 GitHub 仓库 xiaoli1999/li-talk-skills 安装到全局，装好后带我上手
+> 从 GitHub 仓库 xiaoli1999/li-talk-skills 安装到全局，装好后打开新手教程带我过一遍
 
 只装到全局目录，不装进某个项目。装好后新开一个对话，新装的 skill 才会加载。
+
+**新手教程**：第一次用时，AI 会先问你要不要花 3 分钟过一遍新手教程。选了的话，AI 会在浏览器里打开一份讲「这个工具怎么用」的课件，再打开样册带你看全部风格；不想看可以跳过，以后对 AI 说「打开 li-talk-skills 新手教程」随时能回来。
 
 ## 怎么用
 
