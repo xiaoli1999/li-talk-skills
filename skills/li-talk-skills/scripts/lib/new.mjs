@@ -13,7 +13,7 @@ import { TPL_DIR, VERSION } from './paths.mjs';
 import { readMeta, writeMeta } from './meta.mjs';
 import { ensureCache, installFonts, liteNotice } from './fonts.mjs';
 
-const FAMILY = { hand: '手绘家', modern: '现代家', pixel: '像素家' };
+const FAMILY = { corp: '企业家', hand: '手绘家', modern: '现代家', pixel: '像素家' };
 // 搭骨架前目录里允许已有的东西（. 开头的另算，一律放过）
 const ALLOWED = new Set(['讲稿.md', '素材', '.li-talk.json', '.li-talk']);
 const OS_JUNK = new Set(['thumbs.db', 'desktop.ini']);

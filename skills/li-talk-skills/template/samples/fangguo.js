@@ -1,38 +1,36 @@
 /* =====================================================================
-   方果 fangguo 自己的样板页：一份方果 ERP 的客户演讲 / 季度汇报，主题照定稿（方果-第三轮.html）：方果 ERP、自动套图、Q3 增长
-   - 8 页，覆盖一份客户演讲或领导汇报：
-     t-fangguo-cover 封面、t-fangguo-part 章节页、t-fangguo-hero 大数字、t-fangguo-chart 柱状图加环形图、
-     t-fangguo-kpi 指标卡加趋势线加进度环、t-fangguo-feat 功能卡加合作平台、t-fangguo-flow 流程清单、t-fangguo-about 关于我们（最后一页）
-   - 每拍发生的事由方果的版式组件（.fg-*）自己完成：数字从 0 滚到读数、柱子和环按拍生长、趋势线画出来、当前一步用品牌蓝点亮。
-     页面里只写结构和 data-beat，不写 onBeat、不写风格专用的 data-in
-   - 背景按页型自动换：封面、章节页、关于我们是组合 A（柔光 + 波纹），其余是组合 B（晕染 + 网格）
-   - 可读性：要点讲完一直留在页上；讲过的块只由引擎退到 .8；渐变只给大数字；一页的蓝色点亮、红字加起来不超过 3 处
+   方果 fangguo 自己的样板页：一份方果 ERP 的客户演讲（完整的 20 页演示在仓库外的 _private/brand/方果演示/，这里挑了最有代表性的 10 页）
+   - t-fangguo-cover 封面、t-fangguo-quote 深色金句页、t-fangguo-hero 大数字、t-fangguo-chart 柱状图加环形图、
+     t-fangguo-demo 界面演示★、t-fangguo-mock 套图★、t-fangguo-pipe 订单流水线★、t-fangguo-lens 聚焦框★、t-fangguo-hub 平台汇聚★、
+     t-fangguo-about 关于我们（最后一页）。★ 是方果的招牌交互
+   - 动效为内容服务，像一场高级的产品发布会：每拍 0.3–0.8 秒、平滑，同一页里一次只动一处主角——光标点按钮、印花套上商品、
+     订单卡走到下一站、聚焦框移过去、光点流向方果、数字按位滚上来。页面里只写结构和 data-beat，不写 onBeat、不写风格专用的 data-in
+   - 版式每页不重复：出血底板、深色整屏、超大数字压版、卡片叠放和倾斜浮窗、圆形汇聚；大页和密页交替
+   - 背景按页型自动换：封面、关于我们是组合 A（柔光 + 波纹），深色金句页是整屏深蓝，其余是组合 B（晕染 + 网格）
+   - 可读性：要点讲完一直留在页上（提示不自己消失、聚焦框四周只压暗一点）；讲过的块只由引擎退到 .8；渐变只给大数字
    - 组件只在方果里有样子（换成别的风格会乱）：这几页只给 scene: 'fangguo' 用
-   - 抄过去时：id 换成 p〈讲稿页号〉，samples/fangguo.css 里对应的 [data-id="t-fangguo-…"] 一起换；字照讲稿改；
-     坐标都是舞台坐标（1920×1080），版式组件的用法见 scenes/fangguo.js 开头的说明。
-     除了「关于我们」和大数字页的官网数字，其余经营数字都是示例数字，换成你的
+   - 抄过去时：id 换成 p〈讲稿页号〉，samples/fangguo.css 里对应的 [data-id="t-fangguo-…"] 和 t-fangguo-… 的类名一起换；字照讲稿改；
+     坐标都是舞台坐标（1920×1080），版式组件的用法见 scenes/fangguo.js 开头的说明和 references/styles.md 的方果一节。
+     除了大数字页、关于我们的官网数字和公司信息，其余经营数字、案例都是示例数字，换成你的
    ===================================================================== */
 
-/* 封面（对客户）：不对称构图。左边一组大字——浅蓝小胶囊、两行 112px 的大标题（品牌红只点「少出错」三个字）、一句副标题；
-   右边一整块浅蓝底板从舞台 x 1000 一直铺到窗口边缘、上下出血（.fg-bleed，画在背景层里，窗口不是 16:9 也铺满），
-   底板上一扇放大的白色界面窗（订单中心，两个浅蓝小格里的数字从 0 滚上来），左下角叠一扇轻轻倾斜的浮窗（进度环 98%），
-   右上角一枚折角标签「10 万+ 用户」压在窗角上。
-   1 拍：讲者和日期淡入，折角标签浮上来，方方开心一下。
-   抄过去改哪里：小胶囊、大标题（两行，每行 7 个字以内；.fg-red 只包一两个词）、副标题、讲者和日期；
-   界面窗的标题和两个小格、浮窗里的进度和两行字（示例数字，换成你的）；折角标签的字。
-   浮窗只盖住界面窗里的骨架线和图片占位，不盖字 */
+/* 封面（对客户）：不对称构图。左边一组大字（品牌红只点「一站式」三个字），右边一整块出血的浅蓝底板（.fg-bleed，画在背景层里，
+   窗口不是 16:9 也铺满），上面一扇放大的界面窗（数字从 0 滚上来），左下叠一扇倾斜 2° 的浮窗，右上一枚折角标签压在窗角上。
+   1 拍：讲者和日期淡入，折角标签浮上来，方方开心一下（happy）。
+   抄过去改哪里：小胶囊、大标题（两行，每行 7 个字以内；.fg-red 只包一两个词）、副标题、讲者和日期；界面窗、浮窗、折角标签里的字。
+   界面窗和浮窗里的数字是示例数字，换成你的 */
 Deck.add({
   id: 't-fangguo-cover',
   chapter: '开场',
   scene: 'fangguo',
-  title: '让 POD 工厂多接单、少出错',
+  title: '方果 ERP：POD 工厂的一站式生产系统',
   noTitle: true,
   html: `
     <i class="fg-bleed" hidden></i>
-    <div class="abs fg-cover" data-beat="0" style="left:150px;top:230px;width:840px">
-      <span class="fg-chip">方果 ERP · 解决方案</span>
-      <h1 class="fg-hero t-fangguo-cover-h">让 POD 工厂<br>多接单、<span class="fg-red">少出错</span></h1>
-      <p class="fg-sub">从接单、套图到生产发货，一套系统跑通</p>
+    <div class="abs fg-cover" data-beat="0" style="left:150px;top:220px;width:860px">
+      <span class="fg-chip">方果 ERP · 客户方案</span>
+      <h1 class="fg-hero t-fangguo-cover-h">POD 工厂的<br><span class="fg-red">一站式</span>生产系统</h1>
+      <p class="fg-sub">接单、套图、生产、发货，一套系统跑通</p>
     </div>
     <div class="abs fg-win" data-beat="0" data-recede="off" style="left:1100px;top:200px;width:700px">
       <div class="fg-win-hd"><i class="fg-ico fg-ico-s" data-fg-ico="layers"></i>订单中心<span data-small>今日</span></div>
@@ -50,72 +48,70 @@ Deck.add({
         <p data-small><b>自动套图</b>今日完成率</p>
       </div>
     </div>
-    <p class="abs fg-who" data-beat="1" style="left:150px;top:880px"><span>主讲 <b>产品部</b></span><span>2026 年 11 月</span></p>
+    <p class="abs fg-who" data-beat="1" style="left:150px;top:880px"><span>主讲 <b>方果产品部</b></span><span>2026 年 11 月</span></p>
     <div class="abs fg-fold" data-beat="1" data-recede="off" data-mascot="1" data-mascot-side="stay" data-mascot-pose="happy" style="left:1530px;top:140px"><b class="fg-num" data-to="10">10</b> 万+ 用户</div>
     <div class="mascot guide" style="left:1580px;top:820px"></div>`,
   notes: [
-    { beat: 0, key: '少出错', say: '大家好，今天花二十分钟，讲讲方果怎么帮 POD 工厂多接单、少出错。' },
-    { beat: 1, say: '我是产品部的同事。方果现在已经服务了十万多家用户。' },
+    { beat: 0, key: '一站式', say: '大家好，今天花二十分钟，讲讲方果 ERP 怎么帮 POD 工厂把接单、套图、生产、发货一套跑通。' },
+    { beat: 1, say: '我是方果产品部的同事。方果现在服务了十万多家用户。' },
   ],
 });
 
-/* 章节页（超大编号）：左边一个 460px 的淡蓝渐变编号，右边「PART 01」、章节名、一句说明；底下一排目录，本章加粗点亮。
-   1 拍：章节名和说明浮上来；2 拍：目录淡入，方方在旁边想一想（think）。
-   抄过去改哪里：编号（两位数）、PART 后面的数字、章节名（8 个字以内）、一句说明；目录的条目和 .on（本章是哪一条） */
+/* 金句页（深色）：整屏品牌深蓝（.fg-bleed.fg-deep，背景层和这一页都铺同一种深蓝），一页只放一个问题，右边一枚很淡的大果子（.fg-deco）。
+   1 拍补一句来由，2 拍亮出三个关键词；方方歪头疑问（ask）。
+   为什么这样排：讲痛点前先抛一个问题，大页和密页交替，节奏一下子拉开。
+   抄过去改哪里：问题（两行，每行 7 个字以内；.fg-hl 点一个词）、来由、三个关键词 */
 Deck.add({
-  id: 't-fangguo-part',
-  chapter: '一、关于方果',
-  chapterShort: '第一部分',
-  topic: '关于方果',
+  id: 't-fangguo-quote',
+  chapter: '引子',
+  chapterShort: '行业痛点',
+  topic: '先问一个问题',
   scene: 'fangguo',
-  title: '关于方果',
+  title: '订单越多，工厂反而越乱？',
   noTitle: true,
   html: `
-    <b class="abs fg-num fg-g fg-bigno" data-beat="0" style="left:110px;top:260px">01</b>
-    <div class="abs fg-chapter" data-beat="1" style="left:820px;top:350px;width:900px">
-      <p class="fg-part" data-small>PART 01</p>
-      <h1>关于方果</h1>
-      <p>一家只做 POD 的软件公司，和它的客户</p>
-    </div>
-    <p class="abs fg-toc" data-beat="2" data-mascot="2" data-mascot-side="stay" data-mascot-pose="think" style="left:820px;top:860px"><span class="on"><b>01</b>关于方果</span><span><b>02</b>增长与效率</span><span><b>03</b>核心能力</span><span><b>04</b>自动套图</span></p>
-    <div class="mascot guide" style="left:1640px;top:300px"></div>`,
+    <i class="fg-bleed fg-deep" hidden></i>
+    <p class="abs fg-quote" data-beat="0" data-mascot="0" data-mascot-side="right" data-mascot-pose="ask" data-mascot-dy="40" style="left:150px;top:270px;white-space:nowrap">订单越多，<br>工厂反而<span class="fg-hl">越乱</span>？</p>
+    <p class="abs fg-quote-by" data-beat="1" style="left:154px;top:620px">这是我们走访 POD 工厂时，听到最多的一句话</p>
+    <p class="abs t-fangguo-quote-tags" data-beat="2" data-stagger=".1" style="left:150px;top:740px"><span>接单乱</span><span>套图慢</span><span>错发漏发</span></p>
+    <i class="abs fg-deco" style="left:1220px;top:200px;width:620px"></i>
+    <div class="mascot guide" style="left:1500px;top:760px"></div>`,
   notes: [
-    { beat: 0, say: '先进入第一部分。' },
-    { beat: 1, say: '第一部分，先简单介绍一下方果。' },
-    { beat: 2, say: '今天一共讲四部分：关于方果、增长与效率、核心能力、自动套图。' },
+    { beat: 0, key: '越乱', say: '先问大家一个问题：订单越来越多，工厂是不是反而越来越乱？' },
+    { beat: 1, say: '这是我们走访 POD 工厂时，听到最多的一句话。' },
+    { beat: 2, key: '接单乱', say: '乱在哪？基本就是三件事：接单乱、套图慢、错发漏发。' },
   ],
 });
 
-/* 大数字（一个主数字 + 三个辅助）：左边一个超大的主数字（330px，淡蓝渐变）和一句说明，右边一列三张横着的小卡，
-   每张左边一个大数字、右边两行说明；底部一行数据来源。
-   1 拍：主数字从 0 滚到 10，方方惊讶一下（wow）；2–4 拍：右边三张小卡一张张浮上来，数字滚到读数。
-   抄过去改哪里：主数字（data-to 和字一起改，单位写在 <small>）、说明；三张小卡的数字、两行说明（每行 6 个字以内）；
-   数据来源。这一页的数字取自方果官网 */
+/* 大数字（一个主数字 + 三个辅助）：380px 的主数字压在版面上做视觉锚点，右边三张小卡错开成台阶。
+   数字都写成 .fg-num.fg-odo：到拍时每一位像计数器一样从 0 滚到读数（页面上的字一直是真的读数）。
+   1 拍主数字滚上来、方方惊讶（wow）；2–4 拍三张小卡依次浮上来。
+   抄过去改哪里：主数字（单位写在 <small>）、说明；三张小卡的数字、两行说明。这一页的数字取自方果官网 */
 Deck.add({
   id: 't-fangguo-hero',
-  chapter: '一、关于方果',
-  chapterShort: '关于方果',
+  chapter: '一、方果是谁',
+  chapterShort: '方果是谁',
   topic: '用数字说话',
   scene: 'fangguo',
   title: '专注 POD 的 SaaS ERP',
   html: `
-    <div class="abs" data-beat="1" data-mascot="1" data-mascot-side="right" data-mascot-pose="wow" data-mascot-dy="-40" style="left:120px;top:290px">
-      <b class="fg-num fg-g t-fangguo-hero-n" data-to="10">10<small>万+</small></b>
+    <div class="abs" data-beat="1" data-mascot="1" data-mascot-side="right" data-mascot-pose="wow" data-mascot-dy="-40" style="left:120px;top:280px">
+      <b class="fg-num fg-g fg-odo t-fangguo-hero-n">10<small>万+</small></b>
       <p class="fg-cap">累计服务用户</p>
     </div>
     <div class="abs col t-fangguo-hero-side" style="left:1100px;top:270px;width:700px;--gap:26px">
-      <div class="fg-mini" data-beat="2"><b class="fg-num" data-to="70">70<small>%+</small></b><p>POD 市场<br>占有率</p></div>
-      <div class="fg-mini" data-beat="3"><b class="fg-num" data-to="95">95<small>%</small></b><p>覆盖<br>印花行业</p></div>
-      <div class="fg-mini" data-beat="4"><b class="fg-num" data-to="8">8<small>年</small></b><p>专注<br>POD 行业</p></div>
+      <div class="fg-mini" data-beat="2"><b class="fg-num fg-odo">70<small>%+</small></b><p>POD 市场<br>占有率</p></div>
+      <div class="fg-mini" data-beat="3"><b class="fg-num fg-odo">95<small>%</small></b><p>覆盖<br>印花行业</p></div>
+      <div class="fg-mini" data-beat="4"><b class="fg-num fg-odo">8<small>年</small></b><p>专注<br>POD 行业</p></div>
     </div>
     <p class="abs fg-foot" data-beat="0" style="left:120px;right:120px;top:960px"><span data-small>数据来源：方果官网</span><span data-small>fangguo.com</span></p>
     <div class="mascot guide" style="left:760px;top:820px"></div>`,
   notes: [
-    { beat: 0, say: '先用几个数字认识一下方果。' },
-    { beat: 1, key: '10 万+', say: '方果累计服务的用户已经超过十万。' },
+    { beat: 0, say: '先用几个数字认识方果。' },
+    { beat: 1, key: '10 万+', say: '方果累计服务的用户超过十万。' },
     { beat: 2, key: '70%', say: 'POD 行业的市场占有率超过七成。' },
     { beat: 3, key: '95%', say: '覆盖了九成五的印花行业。' },
-    { beat: 4, key: '8 年', say: '我们只做一件事，专注 POD 已经八年。' },
+    { beat: 4, key: '8 年', say: '我们只做这一件事，已经八年。' },
   ],
 });
 
@@ -127,7 +123,7 @@ Deck.add({
    .fg-donut 的 data-fg-donut（各段比例）、中间的合计（data-to 和字）、图例的名字和百分比。示例数字，换成你的 */
 Deck.add({
   id: 't-fangguo-chart',
-  chapter: '二、增长与效率',
+  chapter: '一、方果是谁',
   chapterShort: '增长',
   topic: '季度数字',
   scene: 'fangguo',
@@ -153,112 +149,170 @@ Deck.add({
   ],
 });
 
-/* 图表（指标卡 + 趋势线 + 进度环）：上面一排三张指标卡（名字、小图标、大数字、一行变化），
-   下面左边一张卡是日均处理订单的趋势线（带面积，终点一个圆点和读数），右边一张卡是自动套图覆盖率的进度环。
-   1 拍：三张指标卡依次浮上来，数字滚到读数；2 拍：趋势线从左往右画出来；3 拍：进度环长到 90%，方方点个赞（ok）。
-   抄过去改哪里：指标卡的名字、图标（data-fg-ico、data-fg-tone）、数字（data-to 和字一起改）、单位、变化（变差了给 fg-delta 加 down）；
-   .fg-line 的 data-fg-line（每个点的读数）、data-fg-labels（横轴，空的不写）；.fg-ring 的 data-fg-ring 和中间的数字、旁边的说明。
-   示例数字，换成你的 */
+/* 界面演示（招牌页）：一扇产品界面窗按拍「操作」起来，像在现场演示产品。
+   1 拍：光标移到「一键拉单」点一下，订单一行行拉进来、行首的勾画出来；2 拍：光标点「批量审单」，底部出一行汇总；
+   3 拍：右上角弹出「订单已全部到齐」，右边「2 小时」划掉、「3 分钟」顶上来，方方点赞（ok）。
+   怎么写：窗口加 fg-demo；要「点」的元素写 data-fg-click="拍号"（光标跟着 data-now 移过去，0.6 秒）；列表一行 .fg-demo-row 带 data-beat；
+   提示 .fg-toast 带 data-beat，留在版面上不消失。抄过去改哪里：标题栏、按钮、每一行的四格字、汇总、提示、右边的新旧对比。
+   界面里的订单号和数字都是示例 */
 Deck.add({
-  id: 't-fangguo-kpi',
-  chapter: '二、增长与效率',
-  chapterShort: '效率',
-  topic: '生产端',
+  id: 't-fangguo-demo',
+  chapter: '二、核心能力',
+  chapterShort: '多平台接单',
+  topic: '现场演示',
   scene: 'fangguo',
-  title: '生产效率：三个数都在变好',
+  title: '一键拉单，几分钟就到齐',
   html: `
-    <div class="abs grid" data-beat="1" data-stagger=".1" style="left:120px;top:250px;width:1680px;--cols:3;--gap:36px">
-      <div class="fg-kpi"><p class="fg-kpi-l"><span data-small>日均处理订单</span><i class="fg-ico fg-ico-s" data-fg-ico="box"></i></p><b class="fg-num fg-g" data-to="52">52<small>万单</small></b><p class="fg-delta" data-small>▲ 环比 +12%</p></div>
-      <div class="fg-kpi"><p class="fg-kpi-l"><span data-small>一款图套图用时</span><i class="fg-ico fg-ico-s" data-fg-ico="img" data-fg-tone="teal"></i></p><b class="fg-num" data-to="10">10<small>秒</small></b><p class="fg-delta" data-small>▼ 原来约 20 分钟</p></div>
-      <div class="fg-kpi"><p class="fg-kpi-l"><span data-small>客户续费率</span><i class="fg-ico fg-ico-s" data-fg-ico="check" data-fg-tone="amber"></i></p><b class="fg-num" data-to="91">91<small>%</small></b><p class="fg-delta" data-small>▲ 同比 +4 个点</p></div>
-    </div>
-    <div class="abs card" data-beat="2" style="left:120px;top:560px;width:1100px">
-      <p class="fg-ch">日均处理订单<span data-small>单位：万单</span></p>
-      <div class="fg-line" data-fg-line="31,32,34,35,37,40,42,45,49,52" data-fg-labels="4 月,,,6 月,,,8 月,,,9 月" style="height:200px;margin-top:26px"></div>
-    </div>
-    <div class="abs card" data-beat="3" data-mascot="3" data-mascot-side="top" data-mascot-x=".7" data-mascot-pose="ok" style="left:1260px;top:560px;width:540px">
-      <div class="row" style="--gap:30px;--align:center">
-        <div class="fg-ring" data-fg-ring="90" data-fg-tone="teal" style="width:170px;height:170px"><b class="fg-num" data-to="90">90<small>%</small></b></div>
-        <p class="fg-ch">自动套图<br>覆盖率</p>
+    <div class="abs fg-win fg-demo" data-beat="0" data-recede="off" style="left:120px;top:250px;width:1180px">
+      <div class="fg-win-hd"><i class="fg-ico fg-ico-s" data-fg-ico="cart"></i>订单中心 · 拉取订单<span data-small>今日 11:20</span></div>
+      <div class="fg-demo-bar"><span class="fg-key" data-fg-click="1" data-small>一键拉单</span><i class="fg-search"></i><span class="fg-key fg-ghost" data-fg-click="2" data-small>批量审单</span></div>
+      <div class="fg-demo-rows" data-small>
+        <div class="fg-demo-row" data-beat="1"><i class="fg-chk"></i><b>TEMU-2311-0841</b><span>圆领 T 恤 · 白 · L</span><em>已拉取</em></div>
+        <div class="fg-demo-row" data-beat="1"><i class="fg-chk"></i><b>SHEIN-7720-113</b><span>卫衣 · 黑 · M</span><em>已拉取</em></div>
+        <div class="fg-demo-row" data-beat="1"><i class="fg-chk"></i><b>AMZ-5521-090</b><span>手机壳 · iPhone 16</span><em>已拉取</em></div>
+        <div class="fg-demo-row" data-beat="1"><i class="fg-chk"></i><b>DY-8830-276</b><span>帆布包 · 米白</span><em>已拉取</em></div>
       </div>
-      <p class="t-fangguo-kpi-say">九成订单不用人工套图，目标年底 95%</p>
+      <p class="t-fangguo-demo-sum" data-beat="2" data-small>已审核 <b>2,296</b> 单 · 待处理 <b>22</b> 单（地址不全）</p>
+      <span class="fg-toast" data-beat="3" data-small>订单已全部到齐</span>
     </div>
-    <div class="mascot guide" style="left:1640px;top:100px"></div>`,
+    <div class="abs t-fangguo-demo-r" data-beat="0" style="left:1380px;top:330px;width:420px">
+      <p class="fg-kpi-l"><span data-small>拉单、审单用时</span></p>
+      <p class="fg-vs t-fangguo-demo-vs"><s class="fg-old">2 小时</s><i class="fg-arrow"></i></p>
+      <b class="fg-num fg-g fg-new t-fangguo-demo-new" data-beat="3" data-to="3" data-mascot="3" data-mascot-side="bottom" data-mascot-x=".2" data-mascot-pose="ok">3<small>分钟</small></b>
+    </div>
+    <div class="mascot guide" style="left:1660px;top:96px"></div>`,
   notes: [
-    { beat: 0, say: '效率这边，生产端有三个数都在变好。' },
-    { beat: 1, key: '52 万单', say: '日均处理订单五十二万单，环比涨了百分之十二；一款图套图只要十秒；客户续费率百分之九十一。' },
-    { beat: 2, key: '日均处理订单', say: '从四月到九月，日均订单一路往上走。' },
-    { beat: 3, key: '90%', say: '自动套图已经覆盖九成订单，年底目标是百分之九十五。' },
+    { beat: 0, say: '我们现场看一下，在方果里拉单是什么样子。' },
+    { beat: 1, key: '一键拉单', say: '点一下一键拉单，各个平台的订单一行行进来，自动打勾。' },
+    { beat: 2, key: '批量审单', say: '再点批量审单，两千多单审完，地址不全的二十几单单独拎出来。' },
+    { beat: 3, key: '3 分钟', say: '订单全部到齐。以前拉单审单要两个小时，现在三分钟。' },
   ],
 });
 
-/* 功能卡（渐变图标 + 合作平台）：一排三张功能卡，每张一个渐变圆角图标、名字、一句说明，底下一条分隔线和一个大数字；
-   最下面一条「已对接平台」横栏。1–3 拍：功能卡一张张浮上来，当前这一张描边变蓝、数字滚上来；4 拍：平台横栏淡入，方方冒出灵感（idea）。
-   抄过去改哪里：图标（data-fg-ico、data-fg-tone）、名字（6 个字以内）、说明（两行，24 个字以内）、大数字和单位；
-   平台横栏的名字（9 个以内，放不下就删几个）。示例数字，换成你的 */
+/* 套图（招牌页）：左边一张印花，一拍套一批商品——印花复制一份飞到商品的印花位置上落下，商品上的印花随后显出来。
+   1 拍 T 恤（方方冒出灵感 idea），2 拍卫衣、手机壳、帆布包，3 拍马克杯、抱枕。
+   怎么写：印花 <i class="fg-print"></i>（写宽高）；商品 <div class="fg-prod" data-fg-prod="tee" data-beat="1"><span>T 恤</span></div>，
+   轮廓是 SVG：tee T 恤、hoodie 卫衣、case 手机壳、bag 帆布包、mug 马克杯、pillow 抱枕。
+   抄过去改哪里：商品的种类、名字、拍号；一页 3–6 件为宜 */
 Deck.add({
-  id: 't-fangguo-feat',
-  chapter: '三、核心能力',
-  chapterShort: '核心能力',
-  topic: '三件事',
-  scene: 'fangguo',
-  title: '方果帮工厂做好三件事',
-  html: `
-    <p class="abs fg-cap" data-beat="0" style="left:120px;top:186px">每一件都直接省人、省时间</p>
-    <div class="abs fg-feats" style="left:120px;top:280px;width:1680px">
-      <div class="fg-fc" data-beat="1"><i class="fg-ico" data-fg-ico="layers"></i><h4>多平台接单</h4><p>TEMU、SHEIN、亚马逊等平台订单自动汇总</p><div class="fg-fc-m"><b class="fg-num fg-g" data-to="30">30<small>+ 平台</small></b></div></div>
-      <div class="fg-fc" data-beat="2"><i class="fg-ico" data-fg-ico="img" data-fg-tone="purple"></i><h4>自动套图</h4><p>一张印花自动套进全部款式和尺码</p><div class="fg-fc-m"><b class="fg-num fg-g" data-to="10">10<small>秒 / 款</small></b></div></div>
-      <div class="fg-fc" data-beat="3"><i class="fg-ico" data-fg-ico="truck" data-fg-tone="teal"></i><h4>智能分拣发货</h4><p>批次、面单、快递自动匹配</p><div class="fg-fc-m"><b class="fg-num fg-g">0<small>漏发错发</small></b></div></div>
-    </div>
-    <div class="abs fg-plat" data-beat="4" data-mascot="4" data-mascot-side="right" data-mascot-pose="idea" style="left:120px;top:840px"><span data-small>已对接平台</span><b>TEMU</b><b>SHEIN</b><b>亚马逊</b><b>TikTok</b><b>Shopee</b><b>速卖通</b><b>淘宝</b><b>拼多多</b><b>抖音</b></div>
-    <div class="mascot guide" style="left:1660px;top:100px"></div>`,
-  notes: [
-    { beat: 0, say: '方果帮工厂做好三件事，每一件都直接省人、省时间。' },
-    { beat: 1, key: '多平台接单', say: '第一件，多平台接单：三十多个平台的订单自动汇总到一处。' },
-    { beat: 2, key: '自动套图', say: '第二件，自动套图：一张印花自动套进全部款式和尺码，十秒一款。' },
-    { beat: 3, key: '智能分拣发货', say: '第三件，智能分拣发货：批次、面单、快递自动匹配，不漏发、不错发。' },
-    { beat: 4, say: '主流的跨境和国内平台都已经对接好了。' },
-  ],
-});
-
-/* 流程清单（当前一步点亮）：左边四步，名字一开始就摆出来（整条路先看清），每拍讲一步：说明淡入、序号变成渐变蓝、名字变蓝，
-   讲过的序号留成浅蓝；右边一整块出血的浅蓝底板（.fg-bleed，铺到窗口边缘）上一扇放大的「套图工具」界面窗。
-   3 拍讲到自动套图时，界面窗左下角叠上一扇轻轻倾斜的浮窗「全部尺码已生成」。
-   4 拍讲完最后一步时，右上角的折角标签「20 分钟 → 10 秒」浮上来，方方点个赞（ok）。
-   抄过去改哪里：每一步的名字（6 个字以内）、说明（一行，16 个字以内）；步骤多一步就加一个 .fg-step、data-beat 往后排；
-   界面窗的标题、按钮；折角标签的字（示例数字，换成你的） */
-Deck.add({
-  id: 't-fangguo-flow',
-  chapter: '三、自动套图',
+  id: 't-fangguo-mock',
+  chapter: '二、核心能力',
   chapterShort: '自动套图',
-  topic: '四步走完',
+  topic: '一张图套全款',
   scene: 'fangguo',
-  title: '四步，从印花到生产',
+  title: '一张印花，自动套进全部商品',
   html: `
-    <p class="abs fg-cap" data-beat="0" style="left:120px;top:186px">以前设计师一张张套，现在系统按款式自动生成</p>
-    <div class="abs fg-flow" style="left:120px;top:280px;width:780px">
-      <div class="fg-step" data-mascot="1" data-mascot-side="right"><div><h4>上传印花</h4><p data-beat="1">拖进来就行，支持 PSD、PNG</p></div></div>
-      <div class="fg-step" data-mascot="2" data-mascot-side="right"><div><h4>匹配款式</h4><p data-beat="2">按订单 SKU 找到对应模板</p></div></div>
-      <div class="fg-step" data-mascot="3" data-mascot-side="right" data-mascot-pose="idea"><div><h4>自动套图</h4><p data-beat="3">全部尺码一次生成，位置自动对齐</p></div></div>
-      <div class="fg-step" data-mascot="4" data-mascot-side="right" data-mascot-pose="ok"><div><h4>推送生产</h4><p data-beat="4">生成的图直接进生产批次</p></div></div>
+    <div class="abs t-fangguo-mock-src" data-beat="0" style="left:120px;top:300px;width:420px">
+      <i class="fg-print" style="width:360px;height:360px"></i>
+      <p class="fg-cap">一张印花（PNG）</p>
     </div>
-    <i class="fg-bleed" hidden></i>
-    <div class="abs fg-win" data-beat="0" data-recede="off" style="left:1080px;top:330px;width:720px">
-      <div class="fg-win-hd"><i class="fg-ico fg-ico-s" data-fg-ico="img"></i>套图工具<span class="fg-btn" data-small>本地套图</span></div>
-      <div class="fg-phs"><i class="fg-ph on"></i><i class="fg-ph on"></i><i class="fg-ph"></i></div>
-      <i class="fg-sk" style="width:60%"></i><i class="fg-sk" style="width:40%;margin-bottom:30px"></i>
+    <i class="abs t-fangguo-mock-arrow" data-beat="0" style="left:560px;top:450px"></i>
+    <div class="abs t-fangguo-mock-grid" style="left:700px;top:270px;width:1100px">
+      <div class="fg-prod" data-fg-prod="tee" data-beat="1" data-mascot="1" data-mascot-side="stay" data-mascot-pose="idea"><span>T 恤</span></div>
+      <div class="fg-prod" data-fg-prod="hoodie" data-beat="2"><span>卫衣</span></div>
+      <div class="fg-prod" data-fg-prod="case" data-beat="2"><span>手机壳</span></div>
+      <div class="fg-prod" data-fg-prod="bag" data-beat="2"><span>帆布包</span></div>
+      <div class="fg-prod" data-fg-prod="mug" data-beat="3"><span>马克杯</span></div>
+      <div class="fg-prod" data-fg-prod="pillow" data-beat="3"><span>抱枕</span></div>
     </div>
-    <div class="abs fg-win fg-float" data-beat="3" data-recede="off" style="left:1040px;top:720px;width:470px;--fg-tilt:2deg">
-      <div class="fg-float-b"><i class="fg-ico" data-fg-ico="check" data-fg-tone="teal"></i><p data-small><b>S / M / L / XL</b>全部尺码已生成</p></div>
-    </div>
-    <div class="abs fg-fold" data-beat="4" data-recede="off" style="left:1380px;top:268px"><b class="fg-num">20</b> 分钟 → <b class="fg-num">10</b> 秒</div>
-    <div class="mascot guide" style="left:930px;top:820px"></div>`,
+    <div class="mascot guide" style="left:400px;top:780px"></div>`,
   notes: [
-    { beat: 0, key: '自动生成', say: '自动套图怎么用？一共四步。以前设计师一张张套，现在系统按款式自动生成。' },
-    { beat: 1, key: '上传印花', say: '第一步上传印花，拖进来就行。' },
-    { beat: 2, key: '匹配款式', say: '第二步，系统按订单的 SKU 找到对应的模板。' },
-    { beat: 3, key: '自动套图', say: '第三步自动套图，全部尺码一次生成，位置自动对齐。' },
-    { beat: 4, key: '推送生产', say: '第四步，生成的图直接进生产批次。一款图从二十分钟变成十秒。' },
+    { beat: 0, key: '一张印花', say: '再说套图。客户给你的，往往就是这样一张印花。' },
+    { beat: 1, key: 'T 恤', say: '方果按订单的款式，自动把它套到 T 恤上，位置、尺寸都对齐。' },
+    { beat: 2, key: '卫衣', say: '卫衣、手机壳、帆布包，不同版型一起生成。' },
+    { beat: 3, key: '全部商品', say: '马克杯、抱枕也一样。一张印花，全部商品自动套好。' },
+  ],
+});
+
+/* 订单流水线（招牌页）：四个工位第 0 拍就摆好（灰），一拍亮一站：图标变彩色、计数从 0 滚上来，
+   一张订单卡沿轨道移到当前工位，轨道一段段填成品牌蓝；最后一站方方点赞（ok）。
+   怎么写：<div class="fg-pipe"> 里放 .fg-st（图标、<b>工位名</b>、<p data-beat="n">计数和说明</p>），订单卡由风格补上，工位数自动算（最多 6 个）。
+   抄过去改哪里：工位的图标、名字（4 个字以内）、计数（示例数字，换成你的）、说明 */
+Deck.add({
+  id: 't-fangguo-pipe',
+  chapter: '二、核心能力',
+  chapterShort: '智能生产',
+  topic: '订单流水线',
+  scene: 'fangguo',
+  title: '订单进来，一路自动流到发货',
+  html: `
+    <p class="abs fg-cap" data-beat="0" style="left:120px;top:186px">每一站都由系统接力，数字实时更新</p>
+    <div class="abs fg-pipe" style="left:120px;top:330px;width:1680px">
+      <div class="fg-st" data-mascot="1" data-mascot-side="bottom" data-mascot-x=".36" data-mascot-pose="idea"><i class="fg-ico" data-fg-ico="cart"></i><b>接单</b><p data-beat="1" data-small><b class="fg-num" data-to="2318">2,318</b>今日订单</p></div>
+      <div class="fg-st" data-mascot="2" data-mascot-side="bottom" data-mascot-x=".36"><i class="fg-ico" data-fg-ico="img" data-fg-tone="purple"></i><b>套图</b><p data-beat="2" data-small><b class="fg-num" data-to="2296">2,296</b>款自动生成</p></div>
+      <div class="fg-st" data-mascot="3" data-mascot-side="bottom" data-mascot-x=".36"><i class="fg-ico" data-fg-ico="shirt" data-fg-tone="amber"></i><b>生产</b><p data-beat="3" data-small><b class="fg-num" data-to="2280">2,280</b>件进生产批次</p></div>
+      <div class="fg-st" data-mascot="4" data-mascot-side="bottom" data-mascot-x=".36" data-mascot-pose="ok"><i class="fg-ico" data-fg-ico="truck" data-fg-tone="teal"></i><b>发货</b><p data-beat="4" data-small><b class="fg-num" data-to="2268">2,268</b>件当天发出</p></div>
+    </div>
+    <div class="mascot guide" style="left:1660px;top:820px"></div>`,
+  notes: [
+    { beat: 0, say: '订单进来以后，在方果里是一条流水线。' },
+    { beat: 1, key: '接单', say: '第一站接单，今天进来两千三百多单。' },
+    { beat: 2, key: '套图', say: '第二站自动套图，两千两百多款图自动生成。' },
+    { beat: 3, key: '生产', say: '第三站，生成的图直接进生产批次。' },
+    { beat: 4, key: '发货', say: '最后一站发货，当天就发出去两千两百多件。' },
+  ],
+});
+
+/* 聚焦框（招牌页）：一扇生产看板，一拍框住一处，四周压暗一点（字仍看得清），框 0.6 秒移过去；右边一拍出一句说明，讲完都留着。
+   1 拍框住缺料的那一批（标红），2 拍框住机台，3 拍框住今日进度；方方在旁边想（think）。
+   怎么写：要框的元素写 data-fg-focus="拍号"，放在 .fg-win（或 .fg-lensbox）里，聚焦框由风格补上。
+   抄过去改哪里：看板里的表格（示例数据）、要框的位置、右边三句说明（每句标题 6 个字以内，说明 18 个字以内） */
+Deck.add({
+  id: 't-fangguo-lens',
+  chapter: '二、核心能力',
+  chapterShort: '智能生产',
+  topic: '生产看板',
+  scene: 'fangguo',
+  title: '哪一批卡住了，一眼就看到',
+  html: `
+    <div class="abs fg-win t-fangguo-lens-win" data-beat="0" data-recede="off" style="left:120px;top:250px;width:1160px">
+      <div class="fg-win-hd"><i class="fg-ico fg-ico-s" data-fg-ico="shirt" data-fg-tone="amber"></i>生产看板<span data-small>3 号车间</span></div>
+      <div class="t-fangguo-lens-t" data-small>
+        <p class="t-fangguo-lens-h"><span>批次</span><span>款式</span><span>机台</span><span>进度</span></p>
+        <p><b>B-1101</b><span>T 恤 · 白</span><span>DTG-01</span><span><i style="--v:1"></i>完成</span></p>
+        <p><b>B-1102</b><span>卫衣 · 黑</span><span data-fg-focus="2">DTG-02</span><span><i style="--v:.72"></i>72%</span></p>
+        <p data-fg-focus="1" class="t-fangguo-lens-bad"><b>B-1103</b><span>帆布包</span><span>热转印-01</span><span><i style="--v:.3"></i>缺料</span></p>
+        <p><b>B-1104</b><span>手机壳</span><span>UV-01</span><span><i style="--v:.55"></i>55%</span></p>
+      </div>
+      <div class="t-fangguo-lens-sum" data-fg-focus="3" data-small><span>今日完成</span><b class="fg-num fg-g">82<small>%</small></b><span>预计 18:30 全部完成</span></div>
+    </div>
+    <div class="abs t-fangguo-lens-notes" style="left:1340px;top:280px;width:460px">
+      <p data-beat="1"><b>缺料自动标红</b>B-1103 帆布包缺料，先停下补料</p>
+      <p data-beat="2"><b>机台自动排产</b>空出来的机台马上接下一批</p>
+      <p data-beat="3"><b>进度实时汇总</b>不用跑车间，也知道今天能不能交</p>
+    </div>
+    <div class="mascot guide" data-pose="think" style="left:1660px;top:860px"></div>`,
+  notes: [
+    { beat: 0, say: '生产这边，车间主任最常看的是这块生产看板。' },
+    { beat: 1, key: '缺料', say: '先看这一行：帆布包这一批缺料，系统自动标红，先停下补料。' },
+    { beat: 2, key: '排产', say: '机台空出来，系统马上把下一批排上去。' },
+    { beat: 3, key: '82%', say: '今天的完成进度实时汇总，不用跑车间也知道能不能按时交。' },
+  ],
+});
+
+/* 平台汇聚（招牌页）：十四个平台胶囊围成一圈，右半圈跨境、左半圈国内，一拍亮一半；
+   每个胶囊亮起时，一条线从它画向中间的方果，一颗光点沿线流过去（只流一趟）；方方开心一下（happy）。
+   怎么写：<div class="fg-hub" style="width;height"> 里放 <b class="fg-plt" data-beat="n">平台名</b>，风格按顺序从正上方顺时针排成一圈、补上连线和中间的方果；
+   data-fg-rx、data-fg-ry 是圈的横竖半径（占宽高的百分比，默认 40）。抄过去改哪里：平台名和拍号（一圈 6–14 个为宜） */
+Deck.add({
+  id: 't-fangguo-hub',
+  chapter: '四、合作与联系',
+  chapterShort: '合作平台',
+  topic: '已对接平台',
+  scene: 'fangguo',
+  title: '已对接 30+ 主流电商平台',
+  html: `
+    <div class="abs fg-hub t-fangguo-hub-hub" data-fg-rx="42" data-fg-ry="40" style="left:120px;top:220px;width:1680px;height:760px">
+      <b class="fg-plt" data-beat="1">TEMU</b><b class="fg-plt" data-beat="1">SHEIN</b><b class="fg-plt" data-beat="1">亚马逊</b><b class="fg-plt" data-beat="1">TikTok</b><b class="fg-plt" data-beat="1">Shopee</b><b class="fg-plt" data-beat="1">Lazada</b><b class="fg-plt" data-beat="1">速卖通</b>
+      <b class="fg-plt" data-beat="2">淘宝</b><b class="fg-plt" data-beat="2">拼多多</b><b class="fg-plt" data-beat="2">抖音</b><b class="fg-plt" data-beat="2">京东</b><b class="fg-plt" data-beat="2">小红书</b><b class="fg-plt" data-beat="2">1688</b><b class="fg-plt" data-beat="2" data-mascot="2" data-mascot-side="stay" data-mascot-pose="happy">快手</b>
+    </div>
+    <p class="abs t-fangguo-hub-tag" data-beat="1" style="left:1560px;top:250px">跨境</p>
+    <p class="abs t-fangguo-hub-tag" data-beat="2" style="left:240px;top:250px">国内</p>
+    <div class="mascot guide" style="left:1660px;top:840px"></div>`,
+  notes: [
+    { beat: 0, say: '最后说说合作平台。' },
+    { beat: 1, key: '跨境', say: '跨境这边，TEMU、SHEIN、亚马逊、TikTok、Shopee、Lazada、速卖通都已对接。' },
+    { beat: 2, key: '国内', say: '国内的淘宝、拼多多、抖音、京东、小红书、1688、快手也都接好了，加起来三十多个平台。' },
   ],
 });
 

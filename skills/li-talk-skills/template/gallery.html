@@ -9,7 +9,7 @@
        地址带 ?scene=<键名>、这种风格有自己的样板时，样册只放它自己的样板页（见下面引入章节前后的两段小脚本）。
      - 通用样板页 samples/samples.js、.css（封面、清单、步骤、结尾 4 页）：只用通用组件，哪种风格都能用。
        地址不带 ?scene=，或者这种风格还没有自己的样板时放它；它保持通用，不加只有某种风格认的东西。
-     直接打开（地址不带 ?scene=、?selftest、#页/拍）先显示风格总览：每种风格一张卡片，按三家分组，点一张就用 ?scene=<键名> 从第一页看。
+     直接打开（地址不带 ?scene=、?selftest、#页/拍）先显示风格总览：每种风格一张卡片，按家分组（企业家、手绘家、现代家、像素家），点一张就用 ?scene=<键名> 从第一页看。
      地址加 ?scene=<键名> 换成那个风格看；左下角的小条点一下也是这样换（一律回到第一页、播开场），点「全部风格」回到总览。
      不写 li-talk-mascot：形象跟着风格走（每种风格用自己的默认形象，见 scenes/index.json）。
      引入顺序照入口模板 index.html（接口约定 G）；通用样板页放在两对「章节」注释之间，不开浏览器的 check 读模板目录时查的是它们；
@@ -63,7 +63,7 @@
   .gl-bar .gl-hint{display:none}
 }
 
-/* 风格总览：直接打开样册时的首页，铺满窗口、盖在课件上面；每种风格一张卡片，按三家分组。
+/* 风格总览：直接打开样册时的首页，铺满窗口、盖在课件上面；每种风格一张卡片，按家分组（企业家、手绘家、现代家、像素家）。
    卡片套 data-scene，风格的 CSS 变量（底色、墨色、强调色、字体）直接生效；上半截是缩小的 1920×1080 舞台，
    放这种风格的背景层（从引擎建好的背景层复制）、风格名和形象；下半截写「样子」和「适合讲什么」。
    类名用 sv- 开头，免得撞上风格自己的类名（液态玻璃用了 gl-） */
@@ -103,6 +103,26 @@
   font:500 11px/1.5 ui-monospace,Consolas,"Cascadia Mono",monospace;letter-spacing:.02em}
 /* 像素字体 12px 一格才清楚 */
 [data-scene="pixel"] .sv-info{font-size:12px;line-height:18px}
+/* 一屏放下全部风格：一个网格，列数由脚本按窗口算（.sv-fit）；放不下时退回下面按宽度定的列数、可以滚动 */
+.sv-home.sv-fit{overflow:hidden}
+.sv-wrap{padding:22px 32px 20px}
+.sv-head{margin:0 0 14px;gap:6px 18px}
+.sv-head h1{font-size:26px}
+.sv-head p{font-size:14px}
+.sv-legend{display:flex;flex-wrap:wrap;gap:8px;width:100%}
+.sv-chip{display:inline-flex;align-items:center;gap:8px;padding:3px 12px 4px;border-radius:999px;background:rgba(255,255,255,.07);font-size:12.5px;color:rgba(233,235,238,.7)}
+.sv-chip b{font-weight:700;color:#fff}
+.sv-chip::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--fc)}
+.sv-f-corp{--fc:#ED5E6E}.sv-f-hand{--fc:#E9B86B}.sv-f-modern{--fc:#6BA6FF}.sv-f-pixel{--fc:#8BD57A}
+.sv-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.sv-grid .sv-info{gap:2px;padding:7px 11px 9px;font-size:12.5px;line-height:1.45}
+.sv-grid .sv-look,.sv-grid .sv-fit{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.sv-tag{position:absolute;left:8px;top:8px;padding:1px 8px 2px;border-radius:6px;background:rgba(20,22,26,.62);color:#F1F3F5;font:600 11px/1.5 system-ui,"Microsoft YaHei",sans-serif}
+.sv-tag::before{content:"";display:inline-block;width:6px;height:6px;margin-right:5px;border-radius:50%;background:var(--fc);vertical-align:1px}
+.sv-card.sv-corp{box-shadow:0 0 0 2px #ED5E6E,0 8px 22px rgba(0,0,0,.35)}
+@media (max-width:999px){.sv-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:699px){.sv-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:420px){.sv-grid{grid-template-columns:1fr}}
 @media (max-width:1599px){.sv-wrap{--cols:4}}
 @media (max-width:999px){.sv-wrap{--cols:3;padding:26px 24px 40px}}
 @media (max-width:699px){.sv-wrap{--cols:2;padding:22px 16px 32px}.sv-head h1{font-size:24px}}
@@ -181,6 +201,7 @@ if (window.LI_TALK_SAMPLES) (function (b) {
 /* 风格总览用的风格说明：从 scenes/index.json 抄来的 key、label、family、mascot、look、fit。
    样册是双击打开的本地文件，不能 fetch，所以写在这里；改了 index.json 要同步改这里（test/gallery.test.mjs 会对照） */
 window.LI_TALK_STYLES = [
+  {"key":"fangguo","label":"方果","family":"corp","mascot":"fangfang","look":"方果 ERP 的品牌风格：近白底上慢慢流动的淡蓝柔光和网格，纯白大圆角卡片，品牌蓝主色，大气的大数字和图表，左上角带方果 Logo","fit":"给客户演讲、领导汇报、产品介绍、经营数据"},
   {"key":"paper","label":"方格纸","family":"hand","mascot":"jianjian","look":"浅色方格纸，左侧一列活页孔，便签翘起纸角","fit":"开场、总览、愿景、收尾"},
   {"key":"board","label":"黑板","family":"hand","mascot":"shasha","look":"深绿板面，只有白粉笔和一支黄粉笔，翻页用板擦","fit":"基础教学、命令清单、安装步骤"},
   {"key":"journal","label":"像素手账","family":"hand","mascot":"diandian","look":"很淡的点阵纸，像素只留给形象、对话框和节拍格","fit":"以角色为主线的章节、讲原理的示意图"},
@@ -195,13 +216,12 @@ window.LI_TALK_STYLES = [
   {"key":"flat","label":"扁平插画","family":"modern","mascot":"xiaoye","look":"统一左上受光的几何扁平插画，珊瑚、明黄、墨蓝三组配色，组件右下一道深色厚度、投影落向右下","fit":"上手教程、产品介绍、流程步骤、新人或非技术听众"},
   {"key":"magazine","label":"杂志复古","family":"modern","mascot":"xiaoqian","look":"墨绿、橘红、米白撞色拼贴，撕边纸、胶带、套印错位，宋体大标题","fit":"观点、方法论、读书分享、复盘总结"},
   {"key":"brutal","label":"新粗野主义","family":"modern","mascot":"pengpeng","look":"奶黄底加墨点阵，粗黑描边、不带模糊的硬阴影，黄粉蓝三种色块，卡片「砸」下来","fit":"上手教程、流程步骤、产品和工具介绍、内部分享"},
-  {"key":"fangguo","label":"方果","family":"modern","mascot":"fangfang","look":"方果 ERP 的品牌风格：近白底上慢慢流动的淡蓝柔光和网格，纯白大圆角卡片，品牌蓝主色，大气的大数字和图表，左上角带方果 Logo","fit":"给客户演讲、领导汇报、产品介绍、经营数据"},
   {"key":"pixel","label":"像素游戏","family":"pixel","mascot":"xiaoqi","look":"像 8-bit 游戏的标题画面：深夜蓝抖动夜空和远山，全页对齐 4px 网格、只用 16 色，金色像素大标题","fit":"上手教程、新人引导、闯关式分步、轻松的团队分享"}
 ];
 </script>
 <script>
 /* 样册的两样东西（都不属于课件，自检模式 ?selftest 下都不放）：
-   1. 风格总览：地址不带 ?scene=、?selftest、#页/拍 时显示，盖在课件上面。每种风格一张卡片，按三家分组；
+   1. 风格总览：地址不带 ?scene=、?selftest、#页/拍 时显示，盖在课件上面。每种风格一张卡片，按家分组（企业家、手绘家、现代家、像素家）；
       点一张就用 ?scene=<键名> 重新打开，从第一页看（带开场）。开着总览时课件不接键盘和点击，
       也不让引擎往地址里写 #页/拍（不然刷新一下总览就没了）。
    2. 换风格的小条：点一个风格，就用 ?scene=<键名> 重新打开，回到第一页、播开场（地址里的 #页/拍 去掉）；
@@ -214,7 +234,7 @@ window.LI_TALK_STYLES = [
   var I = Deck._, FAMILY = I.FAMILY || {};
   var keys = Object.keys(I.SCENES).filter(function (k) { return k !== 'plain'; });
   if (!keys.length) return;
-  var FAMS = [['hand', '手绘家', '楷书'], ['modern', '现代家', '黑体，杂志复古用宋体'], ['pixel', '像素家', '像素字体']];
+  var FAMS = [['corp', '企业家', '公司品牌专属'], ['hand', '手绘家', '楷书'], ['modern', '现代家', '黑体，杂志复古用宋体'], ['pixel', '像素家', '像素字体']];
   var home = location.href.split(/[?#]/)[0];   // 不带 ?、# 的地址：打开就是总览
   var el = function (tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 
@@ -250,25 +270,26 @@ window.LI_TALK_STYLES = [
     wrap.appendChild(el('p', 'sv-eyebrow', 'li-talk-skills 样册'));
     var head = el('header', 'sv-head');
     head.appendChild(el('h1', '', known.length + ' 种风格'));
-    head.appendChild(el('p', '', '点一张卡片，从第一页看这种风格的样板页；看的时候 ← → 翻页，左下角的小条随时换风格，点「全部风格」回到这里。同一份课件按章换风格时，只在同一家里换。'));
+    head.appendChild(el('p', '', '点一张卡片，从第一页看这种风格；← → 翻页，左下角的小条随时换风格。同一份课件按章换风格时，只在同一家里换。'));
     wrap.appendChild(head);
-    var fams = el('div', 'sv-fams');
+    // 一屏放下全部风格：所有卡片排在一个网格里，按家的顺序（企业家、手绘家、现代家、像素家），每张左上角标出属于哪一家；
+    // 列数按窗口算（见下面的 fit），窗口太矮放不下时才滚动
+    var legend = el('div', 'sv-legend');
+    var grid = el('div', 'sv-grid');
     var minis = [];
     var groups = FAMS.map(function (f) { return f; });
     known.forEach(function (s) { if (!groups.some(function (f) { return f[0] === s.family; })) groups.push([s.family, FAMILY[s.family] || s.family, '']); });
     groups.forEach(function (f) {
       var list = known.filter(function (s) { return s.family === f[0]; });
       if (!list.length) return;
-      var sec = el('section', 'sv-fam');
-      sec.style.setProperty('--n', String(list.length));
-      var h2 = el('h2', '', f[1]);
-      h2.appendChild(el('span', '', (f[2] ? f[2] + ' · ' : '') + list.length + ' 种'));
-      sec.appendChild(h2);
-      var cards = el('div', 'sv-cards');
-      list.forEach(function (s) { cards.appendChild(card(s, minis)); });
-      sec.appendChild(cards);
-      fams.appendChild(sec);
+      var chip = el('span', 'sv-chip sv-f-' + f[0]);
+      chip.appendChild(el('b', '', f[1]));
+      chip.appendChild(document.createTextNode((f[2] ? f[2] + ' · ' : '') + list.length + ' 种'));
+      legend.appendChild(chip);
+      list.forEach(function (s) { grid.appendChild(card(s, minis, f)); });
     });
+    head.appendChild(legend);
+    var fams = grid;
     wrap.appendChild(fams);
     box.appendChild(wrap);
     // 点击、触屏只给总览自己：不往下传到课件（课件在 document 上听点击翻拍、滑动翻页）
@@ -277,14 +298,28 @@ window.LI_TALK_STYLES = [
     try { box.focus({ preventScroll: true }); } catch (e) { /* 老浏览器不认参数 */ }
 
     // 缩小的舞台按卡片宽度缩放
-    var fit = function () { minis.forEach(function (m) { var w = m.parentNode.clientWidth; if (w) m.style.transform = 'scale(' + (w / 1920) + ')'; }); };
+    // 列数：从 4 到 8 列里挑卡片最大、又能整屏放下的那个；都放不下（窗口太矮或太窄）就退回 CSS 的列数，允许滚动
+    var layout = function () {
+      var n = grid.children.length, W = wrap.clientWidth, gap = 14;
+      var top = grid.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop;
+      var avail = box.clientHeight - top - 24, info = 52, best = 0;
+      for (var c = 4; c <= 8; c++) {
+        var cw = (W - (c - 1) * gap) / c, rows = Math.ceil(n / c);
+        var h = rows * (cw * 9 / 16 + info) + (rows - 1) * gap;
+        if (h <= avail && cw >= 150 && cw > best) { best = cw; grid.style.gridTemplateColumns = 'repeat(' + c + ', minmax(0, 1fr))'; }
+      }
+      if (!best) grid.style.gridTemplateColumns = '';
+      box.classList.toggle('sv-fit', !!best);
+    };
+    var fit = function () { layout(); minis.forEach(function (m) { var w = m.parentNode.clientWidth; if (w) m.style.transform = 'scale(' + (w / 1920) + ')'; }); };
     fit();
-    if (window.ResizeObserver) new ResizeObserver(fit).observe(wrap); else addEventListener('resize', fit);
+    addEventListener('resize', fit);
   }
 
   // 一张卡片：<a href="?scene=键名">，上半截是缩小的舞台（背景层 + 风格名 + 形象），下半截是样子和适合讲什么
-  function card(s, minis) {
-    var a = el('a', 'sv-card');
+  function card(s, minis, f) {
+    var a = el('a', 'sv-card' + (f && f[0] === 'corp' ? ' sv-corp' : ''));
+    a.title = (s.label || s.key) + '\n' + (s.look || '') + (s.fit ? '\n适合：' + s.fit : '');
     a.href = '?scene=' + encodeURIComponent(s.key);
     a.dataset.scene = s.key;
     a.setAttribute('aria-label', (s.label || s.key) + '：' + (s.look || '') + (s.fit ? '。适合' + s.fit : '') + '。点开从第一页看');
@@ -297,6 +332,7 @@ window.LI_TALK_STYLES = [
     if (art) mini.appendChild(art);
     pv.appendChild(mini);
     pv.appendChild(el('span', 'sv-key', s.key));
+    if (f) pv.appendChild(el('span', 'sv-tag sv-f-' + f[0], f[1]));
     minis.push(mini);
     a.appendChild(pv);
     var info = el('span', 'sv-info');

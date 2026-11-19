@@ -62,9 +62,15 @@ You can switch conversations or models halfway: progress lives in files in the d
 
 ## 16 styles
 
-Three families. A deck can switch styles by chapter, but only within one family. Each style has a default mascot, and you can swap in another style's mascot.
+Four families. A deck can switch styles by chapter, but only within one family. Each style has a default mascot, and you can swap in another style's mascot.
 
 A style is more than a color scheme: its layouts, structure and what happens on each beat all follow its own look. Graph Paper corrects in red pen, Blueprint draws an assembly list, Comic tells it in four panels, Pixel Game walks a level map. Each style turns the same topic into 5–6 sample slides, and the AI writes your deck after the samples of the style you pick. The images below show one signature slide per style.
+
+### Corporate (company brand)
+
+| Look | Style | Default mascot | Good for |
+|---|---|---|---|
+| <img src="docs/images/styles/fangguo.jpg" width="240" alt="Fangguo"> | **Fangguo** `fangguo` | Fangfang: a little red square fruit drawn from the Fangguo logo | Client pitches, reports to management, product intros, business numbers |
 
 ### Hand-drawn (Kai script)
 
@@ -89,7 +95,6 @@ A style is more than a color scheme: its layouts, structure and what happens on 
 | <img src="docs/images/styles/flat.jpg" width="240" alt="Flat Illustration"> | **Flat Illustration** `flat` | Xiaoye: a geometric fox in a yellow scarf | Tutorials, product intros, step-by-step flows, newcomers |
 | <img src="docs/images/styles/magazine.jpg" width="240" alt="Retro Magazine"> | **Retro Magazine** `magazine` | Xiaoqian: an orange-red type block | Opinions, methodology, book talks, retrospectives |
 | <img src="docs/images/styles/brutal.jpg" width="240" alt="Neo-Brutalism"> | **Neo-Brutalism** `brutal` | Pengpeng: a yellow burst-sticker monster | Tutorials, step-by-step flows, product and tool intros, internal talks |
-| <img src="docs/images/styles/fangguo.jpg" width="240" alt="Fangguo"> | **Fangguo** `fangguo` | Fangfang: a little red square fruit drawn from the Fangguo logo | Client pitches, reports to management, product intros, business numbers |
 
 ### Pixel (Chinese pixel font)
 

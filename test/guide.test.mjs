@@ -766,10 +766,10 @@ test('styles：按家分组列出所有风格，末尾写推荐规则', async ()
   assert.equal(code, 0);
   assert.match(t, /内置风格：16 种能用/);
   // 按家分组：每种风格都列在自己那一家的标题下面
-  const groups = [['手绘家', ['paper', 'board', 'journal', 'desk', 'watercolor', 'ink', 'blueprint', 'comic']],
-    ['现代家', ['dark', 'frost', 'glass', 'flat', 'magazine', 'brutal', 'fangguo']], ['像素家', ['pixel']]];
+  const groups = [['企业家', ['fangguo']], ['手绘家', ['paper', 'board', 'journal', 'desk', 'watercolor', 'ink', 'blueprint', 'comic']],
+    ['现代家', ['dark', 'frost', 'glass', 'flat', 'magazine', 'brutal']], ['像素家', ['pixel']]];
   const heads = groups.map(([name]) => t.indexOf('\n' + name));
-  assert.ok(heads.every((h, i) => h > 0 && (i === 0 || h > heads[i - 1])), '三家按顺序都在');
+  assert.ok(heads.every((h, i) => h > 0 && (i === 0 || h > heads[i - 1])), '四家按顺序都在');
   groups.forEach(([name, ks], i) => {
     for (const k of ks) {
       const at = t.indexOf(`\n  ${k}  `);

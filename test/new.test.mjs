@@ -287,10 +287,10 @@ test('open：按系统选打开方式；没有 index.html 时说明', async () =
 
 test('风格说明 index.json：16 种按家排好，字段齐全，和风格文件一致', () => {
   const list = JSON.parse(readFileSync(join(TPL, 'scenes', 'index.json'), 'utf8'));
-  // 顺序按家：手绘家、现代家、像素家，同一家的排在一起
-  assert.deepEqual(list.map(s => s.key), ['paper', 'board', 'journal', 'desk', 'watercolor', 'ink', 'blueprint', 'comic',
-    'dark', 'frost', 'glass', 'flat', 'magazine', 'brutal', 'fangguo', 'pixel']);
-  assert.deepEqual(list.map(s => s.family), [...Array(8).fill('hand'), ...Array(7).fill('modern'), 'pixel']);
+  // 顺序按家：企业家、手绘家、现代家、像素家，同一家的排在一起
+  assert.deepEqual(list.map(s => s.key), ['fangguo', 'paper', 'board', 'journal', 'desk', 'watercolor', 'ink', 'blueprint', 'comic',
+    'dark', 'frost', 'glass', 'flat', 'magazine', 'brutal', 'pixel']);
+  assert.deepEqual(list.map(s => s.family), ['corp', ...Array(8).fill('hand'), ...Array(6).fill('modern'), 'pixel']);
   for (const s of list) {
     for (const k of ['key', 'label', 'family', 'mascot', 'look', 'fit', 'notFit', 'risk']) {
       assert.ok(typeof s[k] === 'string' && s[k].trim(), `${s.key} 缺少 ${k}`);

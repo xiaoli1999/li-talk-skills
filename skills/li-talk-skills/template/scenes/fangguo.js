@@ -71,7 +71,22 @@
        序号自动生成。名字第 0 拍就在（整条路先摆出来），说明到拍出现；讲到的一项序号变浅蓝，当前一项序号是渐变蓝、名字变蓝
      · .fg-about 关于我们：.fg-qr[data-fg-qr="wechat|douyin|business"]（二维码卡：公众号、抖音号、商务合作企业微信，
        图片在 vendor/brand/fangguo/，卡里只写下面那行字），.fg-contact（电话、官网、地址，一行一个 <p><b>电话</b>…</p>）
-   - 自己加的出场名：fgrise、fgfade，只在这个风格里认（别的风格会提醒并换成它的默认出场）。页面里不用写，组件按类名自动选
+   - 招牌交互（只有方果有，讲 SaaS 产品和 POD 工厂最贴切；同一页一次只动一处主角，0.3–0.8 秒）：
+     · .fg-demo 界面演示：一扇界面窗（.fg-win.fg-demo）按拍「操作」起来。要点的按钮写 data-fg-click="拍号"（.fg-key 是蓝色按钮，加 fg-ghost 是描边按钮），
+       到那一拍光标移过去点一下（光标跟着页面的 data-now 走，位置由这里量）；列表一行 .fg-demo-row（.fg-chk 勾、<b> 编号、<span> 内容、<em> 状态，
+       <em class="fg-wait"> 是待处理）带 data-beat，出现后行首的勾画出来；.fg-toast 是右上角弹出的提示，留在版面上不消失
+     · .fg-lens 聚焦框：在 .fg-win（或 .fg-lensbox）里给要框的元素写 data-fg-focus="拍号"，到那一拍框移过去、四周压暗一点；框由这里补上
+     · .fg-print + .fg-prod 套图：印花 <i class="fg-print">（写宽高），商品 <div class="fg-prod" data-fg-prod="tee" data-beat="1"><span>T 恤</span></div>，
+       轮廓 tee hoodie case bag mug pillow；到拍时印花复制一份飞到商品的印花位置上落下（出场 fgmock）
+     · .fg-pipe > .fg-st 订单流水线：一站一个 .fg-st（.fg-ico、<b>站名</b>、<p data-beat="n">计数和说明</p>），站第 0 拍就摆好（灰），
+       讲到的站亮起，订单卡 .fg-token（这里补上）沿轨道走到当前站，轨道一段段填成品牌蓝（最多 6 站）
+     · .fg-hub > b.fg-plt 平台汇聚：平台胶囊从正上方顺时针排成一圈（data-fg-rx、data-fg-ry 是横竖半径，占宽高的百分比，默认 40），
+       中间是方果；胶囊亮起时一条线画向中间、一颗光点沿线流过去（出场 fghub，只流一趟）
+     · .fg-num.fg-odo 按位滚动的数字：每一位像计数器一样从 0 滚到读数；滚动时临时叠一层数字条，页面上的字一直是真的读数
+     · .fg-vs 新旧对比：<s class="fg-old">旧</s><i class="fg-arrow"></i><b class="fg-new" data-beat="n">新</b>，新的到拍时旧的划一道红线（仍读得清）
+     · 版式工具：.fg-bleed 加 fg-slant 是斜切分区、加 fg-deep 是整屏品牌深蓝的金句页（字自动换白）；.fg-quote 金句（.fg-hl 点一个词）；
+       .fg-deco 深色页上的同心细圆环装饰
+   - 自己加的出场名：fgrise、fgfade、fgmock、fghub，只在这个风格里认（别的风格会提醒并换成它的默认出场）。页面里不用写，组件按类名自动选
    - 禁区（zones，舞台坐标 1920×1080）：
      · 左上角主题行（x 120 起，宽 1260，y 18–78）
      · 右上角页码和节拍点（.meta 改到 right 120、top 18、高 60：按每页最多 4 拍量，留出余量后是 x 1400–1820、y 14–82）
@@ -169,8 +184,8 @@
     let end = 0;
     const charts = (e.matches(CHARTS) ? [e] : []).concat(ownKids(e, CHARTS));
     charts.forEach(c => { end = Math.max(end, .08 + grow(tl, c, t + .08)); });
-    const nums = (e.matches('.fg-num[data-to]') ? [e] : []).concat(ownKids(e, '.fg-num[data-to]'));
-    nums.forEach(n => { end = Math.max(end, .1 + countUp(tl, n, t + .1, .5)); });
+    const nums = (e.matches('.fg-num[data-to], .fg-odo') ? [e] : []).concat(ownKids(e, '.fg-num[data-to], .fg-odo'));
+    nums.forEach(n => { end = Math.max(end, .1 + (n.classList.contains('fg-odo') ? odoRoll(tl, n, t + .1) : countUp(tl, n, t + .1, .5))); });
     return end;
   }
 
@@ -187,9 +202,9 @@
     tl.fromTo(e, { autoAlpha: 0 }, { autoAlpha: 1, duration: .45, ease: 'power1.out', immediateRender: true, onComplete: off, onInterrupt: off }, t);
     return Math.max(.45, inner(tl, e, t));
   }
-  const FX = { fgrise: rise, fgfade: fade };
+  const FX = { fgrise: rise, fgfade: fade, fgmock: (tl, e, t) => mockIn(tl, e, t), fghub: (tl, e, t) => hubIn(tl, e, t) };
   /* 默认出场按类名分：底板、超大编号只淡入，其余都是 fgrise */
-  const BY = { 'fg-panel': 'fgfade', 'fg-bigno': 'fgfade' };
+  const BY = { 'fg-panel': 'fgfade', 'fg-bigno': 'fgfade', 'fg-prod': 'fgmock', 'fg-plt': 'fghub' };
 
   /* 开场里给第 0 拍的元素选出场（和引擎选默认出场的规则一致：data-in 优先，再按类名，最后是 fgrise） */
   function runFx(tl, e, t) {
@@ -301,6 +316,176 @@
     c.insertAdjacentHTML('afterbegin', `<svg viewBox="0 0 120 120" aria-hidden="true"><circle class="fg-ring-t" cx="60" cy="60" r="${r}"/>`
       + `<circle class="fg-ring-p" cx="60" cy="60" r="${r}" data-c="${f1(C)}" style="stroke-dasharray:${f1(C)} ${f1(C)};stroke-dashoffset:${f1(C * (1 - pct / 100))}"/></svg>`);
   }
+
+  /* =================================================================
+     招牌交互（只有方果有）：界面演示、套图、订单流水线、平台汇聚、按位滚动的数字、新旧对比、聚焦框
+     - 结束时的样子都是静态的 CSS / DOM：自检、阅读模式、总览、减少动态直接摆到最后一拍也是对的
+     - 光标、聚焦框跟着页面的 data-now 走（MutationObserver 盯着这一页的 data-now，算出目标的位置；位移交给 CSS 过渡，0.6 秒）
+     - 套图里印花飞过去、汇聚里光点沿线跑一趟，都是到拍时只播一次，不循环
+     ================================================================= */
+  /* 元素相对某个祖先的位置（不受舞台缩放影响：offsetLeft / offsetTop 一层层加上去） */
+  function posIn(e, host) {
+    let x = 0, y = 0, n = e;
+    while (n && n !== host) { x += n.offsetLeft; y += n.offsetTop; n = n.offsetParent; }
+    if (n !== host) { const a = e.getBoundingClientRect(), b = host.getBoundingClientRect(), k = (b.width / (host.offsetWidth || b.width)) || 1; return { x: (a.left - b.left) / k, y: (a.top - b.top) / k, w: a.width / k, h: a.height / k }; }
+    return { x, y, w: e.offsetWidth, h: e.offsetHeight };
+  }
+  /* 拍号不大于 now 的最后一个目标 */
+  function pick(list, attr, now) {
+    let best = null, bv = -1;
+    list.forEach(e => { const v = parseInt(e.getAttribute(attr), 10); if (v <= now && v >= bv) { best = e; bv = v; } });
+    return best;
+  }
+  /* 界面演示的光标：移到这一拍要「点」的元素（data-fg-click="拍号"）上，点一下；没有目标时停在右下角、淡掉 */
+  function syncCursor(s, now) {
+    s.querySelectorAll('.fg-demo').forEach(d => {
+      const cur = d.querySelector(':scope > .fg-cursor');
+      if (!cur) return;
+      const ts = [...d.querySelectorAll('[data-fg-click]')];
+      ts.forEach(t => t.classList.remove('fg-hit'));
+      const t = pick(ts, 'data-fg-click', now);
+      if (!t) { cur.classList.remove('on'); cur.style.transform = `translate(${d.offsetWidth - 90}px,${d.offsetHeight - 80}px)`; return; }
+      const p = posIn(t, d);
+      cur.classList.add('on');
+      cur.style.transform = `translate(${Math.round(p.x + p.w * .62)}px,${Math.round(p.y + p.h * .55)}px)`;
+      if (parseInt(t.getAttribute('data-fg-click'), 10) === now) t.classList.add('fg-hit');
+    });
+  }
+  /* 聚焦框：框到这一拍的目标（data-fg-focus="拍号"）上，四周压暗一点；没有目标时不显示 */
+  function syncLens(s, now) {
+    s.querySelectorAll('.fg-lens').forEach(l => {
+      const host = l.parentElement, t = pick([...host.querySelectorAll('[data-fg-focus]')], 'data-fg-focus', now);
+      if (!t) { l.classList.remove('on'); return; }
+      const p = posIn(t, host), pad = 12;
+      l.classList.add('on');
+      l.style.transform = `translate(${Math.round(p.x - pad)}px,${Math.round(p.y - pad)}px)`;
+      l.style.width = Math.round(p.w + pad * 2) + 'px';
+      l.style.height = Math.round(p.h + pad * 2) + 'px';
+    });
+  }
+  function watchNow(s) {
+    const run = () => { const now = parseInt(s.dataset.now, 10) || 0; syncCursor(s, now); syncLens(s, now); };
+    new MutationObserver(run).observe(s, { attributes: true, attributeFilter: ['data-now'] });
+    // 字体到位后版面会动一点：再量一次
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => setTimeout(run, 60));
+  }
+
+  /* ---------- 套图：印花和商品轮廓（SVG，viewBox 200×220） ---------- */
+  const PRINT = '<circle cx="50" cy="50" r="48" fill="#EAF3FC"/>'
+    + '<g transform="translate(50 50)">' + [0, 60, 120, 180, 240, 300].map(a => `<ellipse rx="11" ry="22" cy="-21" fill="#F2715A" opacity=".92" transform="rotate(${a})"/>`).join('') + '</g>'
+    + '<path d="M50 70c-14 6-20 16-20 26M50 70c12 4 18 12 19 22" stroke="#27B79E" stroke-width="5" fill="none" stroke-linecap="round"/>'
+    + '<circle cx="50" cy="50" r="11" fill="#F4A62A"/><circle cx="50" cy="50" r="5" fill="#fff" opacity=".7"/>';
+  const printSvg = (x, y, w, cls) => `<svg class="${cls || ''}" x="${x}" y="${y}" width="${w}" height="${w}" viewBox="0 0 100 100">${PRINT}</svg>`;
+  const PROD = {
+    tee: { d: 'M70 22 48 30 18 58l20 26 16-12v128h92V72l16 12 20-26-30-28-22-8c-4 14-16 22-30 22S74 36 70 22Z', p: [66, 78, 68], name: 'T 恤' },
+    hoodie: { d: 'M74 30c4-16 48-16 52 0l26 14 30 34-20 24-14-10v118H52V92L38 102 18 78l30-34 26-14Z M80 34c2 18 38 18 40 0', p: [70, 96, 60], name: '卫衣' },
+    case: { d: 'M70 14h60a20 20 0 0 1 20 20v152a20 20 0 0 1-20 20H70a20 20 0 0 1-20-20V34a20 20 0 0 1 20-20Z', p: [64, 78, 72], extra: '<rect x="62" y="26" width="34" height="34" rx="10" fill="#EEF2F7" stroke="#C9D6EC" stroke-width="3"/>', name: '手机壳' },
+    bag: { d: 'M40 74h120l-6 130H46L40 74Z', p: [64, 104, 72], extra: '<path d="M72 76c0-40 56-40 56 0" fill="none" stroke="#C9D6EC" stroke-width="7" stroke-linecap="round"/>', name: '帆布包' },
+    mug: { d: 'M44 50h100v120a24 24 0 0 1-24 24H68a24 24 0 0 1-24-24V50Z', p: [60, 82, 68], extra: '<path d="M144 82h12a22 22 0 0 1 0 44h-12" fill="none" stroke="#C9D6EC" stroke-width="9"/>', name: '马克杯' },
+    pillow: { d: 'M34 40q66-14 132 0 12 70 0 140-66 14-132 0-12-70 0-140Z', p: [62, 72, 76], name: '抱枕' },
+  };
+  function buildPrint(el) {
+    if (el.querySelector('svg')) return;
+    el.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true">${PRINT}</svg>`;
+    el.setAttribute('aria-hidden', 'true');
+  }
+  function buildProd(el) {
+    if (el.querySelector(':scope > svg')) return;
+    const k = el.dataset.fgProd, P = PROD[k];
+    if (!P) { warnOnce(`商品 data-fg-prod="${k}" 不认识，可选：${Object.keys(PROD).join('、')}`); return; }
+    el.insertAdjacentHTML('afterbegin', `<svg class="fg-prod-svg" viewBox="0 0 200 220" aria-hidden="true"><path class="fg-prod-body" d="${P.d}"/>${P.extra || ''}<g class="fg-pp">${printSvg(P.p[0], P.p[1], P.p[2])}</g></svg>`);
+  }
+  /* 套图出场：商品轮廓淡入上浮，同一页的 .fg-print 复制一份飞到商品的印花位置上落下，商品上的印花随后显出来 */
+  function mockIn(tl, e, t) {
+    const off = () => clean(e);
+    tl.fromTo(e, { autoAlpha: 0, y: 18 }, { autoAlpha: 1, y: 0, duration: .45, ease: EASE, immediateRender: true, onComplete: off, onInterrupt: off }, t);
+    const pp = e.querySelector('.fg-pp'), slide = e.closest('.slide'), src = slide && slide.querySelector('.fg-print');
+    if (!pp || !src || !Deck.motion) return .45;
+    const show = () => pp.style.removeProperty('opacity');
+    tl.fromTo(pp, { opacity: 0 }, { opacity: 1, duration: .25, ease: 'power1.out', immediateRender: true, onComplete: show, onInterrupt: show }, t + .7);
+    tl.call(() => {
+      const sr = slide.getBoundingClientRect(), k = sr.width / 1920 || 1, a = src.getBoundingClientRect(), b = pp.getBoundingClientRect();
+      const fly = document.createElement('i');
+      fly.className = 'fg-fly';
+      fly.setAttribute('aria-hidden', 'true');
+      fly.innerHTML = `<svg viewBox="0 0 100 100">${PRINT}</svg>`;
+      fly.style.cssText = `left:${((a.left - sr.left) / k).toFixed(1)}px;top:${((a.top - sr.top) / k).toFixed(1)}px;width:${(a.width / k).toFixed(1)}px;height:${(a.height / k).toFixed(1)}px`;
+      slide.appendChild(fly);
+      gs().to(fly, { x: (b.left - a.left) / k, y: (b.top - a.top) / k, scale: b.width / (a.width || 1), transformOrigin: '0 0', duration: .5, ease: 'power2.inOut', onComplete: () => fly.remove() });
+    }, null, t + .2);
+    return .95;
+  }
+
+  /* ---------- 订单流水线：一张订单卡（.fg-token）停在讲到的那个工位下面 ---------- */
+  function buildPipe(p) {
+    if (!p.querySelector(':scope > .fg-token')) p.insertAdjacentHTML('beforeend', '<i class="fg-token" aria-hidden="true"></i>');
+    p.style.setProperty('--n', String(p.querySelectorAll(':scope > .fg-st').length || 1));
+  }
+
+  /* ---------- 平台汇聚：平台胶囊排成一圈，各自一条曲线连到中间的方果 ---------- */
+  function buildHub(h) {
+    if (h.querySelector(':scope > .fg-hub-core')) return;
+    const chips = [...h.children].filter(c => c.classList.contains('fg-plt'));
+    const W = h.offsetWidth || parseFloat(h.style.width) || 1000, H = h.offsetHeight || parseFloat(h.style.height) || 600;
+    const n = chips.length, rx = parseFloat(h.dataset.fgRx) || 40, ry = parseFloat(h.dataset.fgRy) || 40;
+    chips.forEach((c, i) => {
+      const a = (-90 + 360 * i / n) * Math.PI / 180;
+      const x = 50 + rx * Math.cos(a), y = 50 + ry * Math.sin(a);
+      const dx = (50 - x) / 100 * W, dy = (50 - y) / 100 * H, cx = dx * .5 - dy * .18, cy = dy * .5 + dx * .18;
+      const wrap = document.createElement('span');
+      wrap.className = 'fg-hub-pos';
+      wrap.style.left = f1(x) + '%'; wrap.style.top = f1(y) + '%';
+      c.replaceWith(wrap);
+      wrap.appendChild(c);
+      c.insertAdjacentHTML('afterbegin', `<svg class="fg-hub-ln" aria-hidden="true"><path d="M0 0Q${f1(cx)} ${f1(cy)} ${f1(dx)} ${f1(dy)}"/></svg>`);
+    });
+    h.insertAdjacentHTML('beforeend', '<i class="fg-hub-core" aria-hidden="true"></i>');
+  }
+  /* 汇聚出场：胶囊淡入，连线从胶囊画向中间，一颗光点沿线跑过去（只跑一趟） */
+  function hubIn(tl, e, t) {
+    const off = () => clean(e);
+    tl.fromTo(e, { autoAlpha: 0, scale: .9 }, { autoAlpha: 1, scale: 1, duration: .4, ease: EASE, immediateRender: true, onComplete: off, onInterrupt: off }, t);
+    const path = e.querySelector('.fg-hub-ln path');
+    if (!path || !Deck.motion) return .4;
+    let L = 0;
+    try { L = path.getTotalLength(); } catch (err) { L = 0; }
+    if (!L) return .4;
+    const done = () => { path.style.removeProperty('stroke-dasharray'); path.style.removeProperty('stroke-dashoffset'); };
+    tl.fromTo(path, { strokeDasharray: `${L} ${L}`, strokeDashoffset: L }, { strokeDashoffset: 0, duration: .6, ease: 'power1.inOut', immediateRender: true, onComplete: done, onInterrupt: done }, t + .1);
+    const svg = path.ownerSVGElement, dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    dot.setAttribute('r', '7'); dot.setAttribute('class', 'fg-hub-dot');
+    const o = { v: 0 };
+    tl.call(() => svg.appendChild(dot), null, t + .2);
+    tl.fromTo(o, { v: 0 }, { v: 1, duration: .6, ease: 'power1.in', onUpdate: () => { const q = path.getPointAtLength(o.v * L); dot.setAttribute('cx', q.x); dot.setAttribute('cy', q.y); }, onComplete: () => dot.remove(), onInterrupt: () => dot.remove() }, t + .2);
+    return .85;
+  }
+
+  /* ---------- 按位滚动的数字（.fg-num.fg-odo）：每一位像计数器一样从 0 滚到读数 ----------
+     页面上的字一直是真的读数；滚动时临时叠一层一位一列的数字条，播完拿掉 */
+  function odoRoll(tl, el, t) {
+    if (!Deck.motion || !el.offsetParent) return 0;
+    const host = el.offsetParent, html = [];
+    el.childNodes.forEach(n => {
+      if (n.nodeType === 3) [...n.nodeValue].forEach(ch => html.push(/\d/.test(ch) ? `<i class="fg-col" style="--d:${ch}"><i>0<br>1<br>2<br>3<br>4<br>5<br>6<br>7<br>8<br>9</i></i>` : `<i class="fg-ch">${esc(ch)}</i>`));
+      else if (n.outerHTML) html.push(n.outerHTML);
+    });
+    const fx = document.createElement('span');
+    fx.className = el.className + ' fg-odo-fx';
+    fx.setAttribute('aria-hidden', 'true');
+    fx.style.cssText = `left:${el.offsetLeft}px;top:${el.offsetTop}px;font-size:${getComputedStyle(el).fontSize}`;
+    fx.innerHTML = html.join('');
+    const cols = [...fx.querySelectorAll('.fg-col > i')];
+    const undo = () => { fx.remove(); el.style.removeProperty('opacity'); };
+    tl.call(() => { host.appendChild(fx); el.style.opacity = '0'; }, null, t);
+    cols.forEach((c, i) => {
+      const d = parseInt(c.parentElement.style.getPropertyValue('--d'), 10) || 0;
+      tl.fromTo(c, { yPercent: 0 }, { yPercent: -d * 10, duration: .7, ease: 'power2.out', immediateRender: false }, t + .02 + i * .06);
+    });
+    const end = t + .02 + cols.length * .06 + .72;
+    tl.call(undo, null, end);
+    return end - t;
+  }
+
   function decorate(s, p) {
     s.querySelectorAll('.fg-ico[data-fg-ico]').forEach(el => {
       const name = el.dataset.fgIco;
@@ -313,6 +498,14 @@
     s.querySelectorAll('.fg-donut').forEach(buildDonut);
     s.querySelectorAll('.fg-line').forEach(buildLine);
     s.querySelectorAll('.fg-ring').forEach(buildRing);
+    s.querySelectorAll('.fg-print').forEach(buildPrint);
+    s.querySelectorAll('.fg-prod[data-fg-prod]').forEach(buildProd);
+    s.querySelectorAll('.fg-pipe').forEach(buildPipe);
+    s.querySelectorAll('.fg-hub').forEach(buildHub);
+    s.querySelectorAll('.fg-demo').forEach(d => { if (!d.querySelector(':scope > .fg-cursor')) d.insertAdjacentHTML('beforeend', '<i class="fg-cursor" aria-hidden="true"></i>'); });
+    const lensHosts = new Set([...s.querySelectorAll('[data-fg-focus]')].map(t => t.closest('.fg-win, .fg-lensbox')).filter(Boolean));
+    lensHosts.forEach(hst => { if (!hst.querySelector(':scope > .fg-lens')) hst.insertAdjacentHTML('beforeend', '<i class="fg-lens" aria-hidden="true"></i>'); });
+    if (s.querySelector('.fg-demo, .fg-lens')) watchNow(s);
     s.querySelectorAll('.fg-qr[data-fg-qr]').forEach(q => { q.setAttribute('role', 'img'); if (!q.getAttribute('aria-label')) q.setAttribute('aria-label', '二维码：' + q.textContent.trim()); });
     // 页型：封面、章节、结尾、关于我们用 A（柔光 + 波纹），其余用 B（晕染 + 网格）
     const mark = s.querySelector('[data-fg-bg]');
@@ -321,7 +514,7 @@
     s.dataset.fgBg = want;
     // 出血底板：页面里写了 <i class="fg-bleed" hidden></i>（加 fg-left 在左边），背景层显示对应的那块
     const bleed = s.querySelector('.fg-bleed');
-    if (bleed) s.dataset.fgPanel = bleed.classList.contains('fg-left') ? 'left' : 'right';
+    if (bleed) s.dataset.fgPanel = ['deep', 'slant', 'left'].find(k => bleed.classList.contains('fg-' + k)) || 'right';
   }
 
   /* =================================================================
@@ -341,12 +534,12 @@
       + `<svg class="fg-wv" viewBox="0 0 3840 1080" preserveAspectRatio="none" aria-hidden="true">${wv}</svg></div>`
       + '<div class="fg-bgb"><i class="fg-gw fg-g1"></i><i class="fg-gw fg-g2"></i><i class="fg-grd"></i><i class="fg-grd fg-lit"></i></div>'
       // 出血底板：页面里有 .fg-bleed 时显示，从舞台里一直铺到窗口边缘
-      + '<i class="fg-sheet fg-sheet-r"></i><i class="fg-sheet fg-sheet-l"></i>');
+      + '<i class="fg-sheet fg-sheet-r"></i><i class="fg-sheet fg-sheet-l"></i><i class="fg-sheet fg-sheet-s"></i><i class="fg-sheet fg-sheet-d"></i>');
   }
 
   Deck.scene('fangguo', {
     label: '方果',
-    family: 'modern',
+    family: 'corp',
     dark: false,
     mascot: 'fangfang',
     enter: 'fgrise',

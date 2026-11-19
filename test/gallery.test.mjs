@@ -14,9 +14,9 @@ import { run as check } from '../skills/li-talk-skills/scripts/lib/check.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const TPL = join(ROOT, 'skills', 'li-talk-skills', 'template');
-// 样册引入的全部风格，按家排：手绘家、现代家、像素家（和 scenes/index.json 一致）
-const SCENES = ['paper', 'board', 'journal', 'desk', 'watercolor', 'ink', 'blueprint', 'comic',
-  'dark', 'frost', 'glass', 'flat', 'magazine', 'brutal', 'fangguo', 'pixel'];
+// 样册引入的全部风格，按家排：企业家、手绘家、现代家、像素家（和 scenes/index.json 一致）
+const SCENES = ['fangguo', 'paper', 'board', 'journal', 'desk', 'watercolor', 'ink', 'blueprint', 'comic',
+  'dark', 'frost', 'glass', 'flat', 'magazine', 'brutal', 'pixel'];
 
 const TMP = [];
 const tmp = prefix => { const d = mkdtempSync(join(tmpdir(), prefix)); TMP.push(d); return d; };
@@ -163,8 +163,8 @@ test('样册里列出的风格样板：文件都在、页面 id 带风格前缀�
     assert.ok(SCENES.includes(key), key + ' 不是样册里的风格');
     for (const ext of ['.js', '.css']) assert.ok(existsSync(join(TPL, 'samples', key + ext)), `缺 samples/${key}${ext}`);
     const ids = nativeIds(key);
-    // 一般 5–6 页；方果是给公司用的品牌风格，样板照定稿做成 8 页（一份客户演讲或汇报常用的版式）
-    const most = key === 'fangguo' ? 8 : 6;
+    // 一般 5–6 页；方果是给公司用的品牌风格，样板挑了 10 页（常用版式加 5 个招牌交互）
+    const most = key === 'fangguo' ? 10 : 6;
     assert.ok(ids.length >= 5 && ids.length <= most, `${key} 的样板页要 5–${most} 页，现在 ${ids.length} 页`);
     assert.ok(ids.every(id => id.startsWith('t-' + key + '-')), `${key}：页面 id 要以 t-${key}- 开头：${ids}`);
     const dir = join(ROOT, 'test', 'fixtures', 'decks', 'native-' + key);
@@ -219,9 +219,8 @@ test('真实浏览器：样册的风格总览和换风格的小条', { skip: !br
     var home = document.querySelector('.sv-home');
     return {
       home: !!home && getComputedStyle(home).display !== 'none',
-      fams: [].map.call(document.querySelectorAll('.sv-fam'), function (f) {
-        return [f.querySelector('h2').firstChild.textContent, [].map.call(f.querySelectorAll('.sv-card'), function (c) { return c.dataset.scene; })];
-      }),
+      fams: [].map.call(document.querySelectorAll('.sv-card'), function (c) { return [c.querySelector('.sv-tag').textContent, c.dataset.scene]; }),
+      fit: !!document.querySelector('.sv-home.sv-fit'),
       art: document.querySelectorAll('.sv-card .sv-mini-art svg').length,
       hrefs: [].map.call(document.querySelectorAll('.sv-card'), function (c) { return c.getAttribute('href'); }),
       hash: location.hash,
@@ -233,7 +232,10 @@ test('真实浏览器：样册的风格总览和换风格的小条', { skip: !br
   try {
     const home = await b.peek(TPL, { entry: 'gallery.html', expression: probe });
     assert.equal(home.home, true, '直接打开样册要显示风格总览');
-    assert.deepEqual(home.fams, [['手绘家', SCENES.slice(0, 8)], ['现代家', SCENES.slice(8, 15)], ['像素家', ['pixel']]]);
+    // 一屏放下：所有卡片在一个网格里，按家排（企业家的方果在第一个），每张标出属于哪一家
+    const fam = k => k === 'fangguo' ? '企业家' : k === 'pixel' ? '像素家' : SCENES.indexOf(k) <= SCENES.indexOf('comic') ? '手绘家' : '现代家';
+    assert.deepEqual(home.fams, SCENES.map(k => [fam(k), k]));
+    assert.equal(home.fit, true, '默认窗口里全部风格一屏放下，不用滚动');
     assert.equal(home.art, 16, '每张卡片都画出形象');
     assert.deepEqual(home.hrefs, SCENES.map(k => '?scene=' + k));
     assert.equal(home.hash, '', '总览开着时引擎不往地址里写 #页/拍');

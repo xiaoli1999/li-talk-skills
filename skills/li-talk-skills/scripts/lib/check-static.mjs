@@ -4,7 +4,7 @@ import { existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { readDeck, collectPages, readText, htmlTags, localRef, blankHtmlComments, scriptPageCount } from './deck.mjs';
 
-const FAMILY = { hand: '手绘家', modern: '现代家', pixel: '像素家' };
+const FAMILY = { corp: '企业家', hand: '手绘家', modern: '现代家', pixel: '像素家' };
 // 引擎内置的朴素风格：页面写了也不算没引入
 const BUILTIN_SCENES = { plain: { label: '朴素', family: 'modern' } };
 // 计算拍数时看的属性

@@ -1,6 +1,6 @@
 # 风格说明
 
-这一版有 16 种风格，分成三家。每种风格是课件目录 `scenes/` 下的一对文件（`<键名>.js` 和 `<键名>.css`），所有风格共用同一套组件类名和 CSS 变量，所以同一页内容换个风格不用改结构，只是样子、出场动效、强调方式、形象的描边跟着变。
+这一版有 16 种风格，分成四家。每种风格是课件目录 `scenes/` 下的一对文件（`<键名>.js` 和 `<键名>.css`），所有风格共用同一套组件类名和 CSS 变量，所以同一页内容换个风格不用改结构，只是样子、出场动效、强调方式、形象的描边跟着变。
 
 这份说明讲：怎么推荐和选、每种风格的样子和脾气、按章分配的规矩、搭好骨架后怎么换风格。`styles` 命令会列出同样的要点（样子、适合、不适合、注意、默认形象），这里写得更细。
 
@@ -17,14 +17,15 @@
 
 ---
 
-## 2. 三家
+## 2. 四家
 
 每种风格属于一家。同一家的风格字体、手感相近，可以在一份课件里按章混用；不同家的不混。
 
 | 家 | 字体 | 这一版有的风格 |
 |---|---|---|
+| 企业家 | 系统黑体，数字用 Bahnschrift / DIN | 方果 `fangguo`（公司品牌专属，只能单独用） |
 | 手绘家 | 楷书（霞鹜文楷） | 方格纸 `paper`、黑板 `board`、像素手账 `journal`、工位桌面 `desk`、水彩田园 `watercolor`、水墨国风 `ink`、蓝图 `blueprint`、漫画 `comic` |
-| 现代家 | 系统黑体（杂志复古用宋体），命令用等宽字 | 科技暗黑 `dark`、毛玻璃 `frost`、液态玻璃 `glass`、扁平插画 `flat`、杂志复古 `magazine`、新粗野主义 `brutal`、方果 `fangguo` |
+| 现代家 | 系统黑体（杂志复古用宋体），命令用等宽字 | 科技暗黑 `dark`、毛玻璃 `frost`、液态玻璃 `glass`、扁平插画 `flat`、杂志复古 `magazine`、新粗野主义 `brutal` |
 | 像素家 | 中文像素字体（缝合像素字体，选了才带进课件） | 像素游戏 `pixel` |
 
 像素手账 `journal` 名字里有「像素」，但正文是楷书，属于手绘家；整页像素风的是像素家的像素游戏 `pixel`，它的字体和 4px 网格自成一套，只能单独用。
@@ -246,6 +247,8 @@
 - **动效**：第一次打开时有约 1 秒的开场（主题行的章节块砸下、标题一个字一个字砸下来、节拍按钮盖下）；卡片、小格、步骤、终端、截图、命令从上面「砸」下来，落地压进阴影再弹回、两侧甩出冲击线，已经落定的卡片被震一下；标签啪地拍上，正文弹起；悬停时组件离阴影远一点、朝鼠标那侧歪一点，按下压进阴影；复制时按钮按到底闪黄、贴上「已复制」；退一拍时卡片被捏起来往上抛走；翻页时旧页被一把推开、新页冲进来。
 - **自带出场名**：`slam`、`smash`、`slap`、`snap`。只在这种风格里认，页面里别写（换风格会报提醒），风格会自己默认用。
 
+### 企业家
+
 #### 方果 `fangguo`
 
 - **样子**：方果 ERP 的品牌风格，学方果官网「工具箱」那组图：高级、干净、大气。近白底上一层很淡、会慢慢动的背景，按页型自动换两组：封面、章节页、结尾、关于我们是「柔光 + 波纹」（三团很浅的蓝、淡紫、薄荷柔光慢慢游移，底部四条细波浪向左流淌），内容页、数据页是「晕染 + 网格」（两团淡蓝光晕呼吸，1px 极淡网格，一团柔光沿网格游走）。卡片是纯白大圆角、极淡投影；主色品牌蓝 #3B74F0，品牌红 #ED5E6E 只点题。数字用 Bahnschrift（退到 DIN Alternate）字重 600、等宽数字，数字和单位分开排（单位 0.36 倍、颜色淡），可以带淡蓝渐变。主题行最前面是方果 Logo 加一道细竖线，节拍指示是右上角一排小圆点，当前拍拉成品牌蓝短条。字用系统黑体，命令用等宽字。
@@ -262,13 +265,22 @@
   - 页码和节拍点挪到 right 120、top 18，和主题行同一条中线，禁区是 x 1400–1820、y 14–82。
 - **默认形象**：方方 `fangfang`（方果 Logo 化来的红色圆角方块小果子，头顶 T 形果柄和一片叶子）。除了 `idle`、`point`、`happy`、`rest`，还有 `ask` 疑问、`think` 思考、`idea` 灵感、`wow` 惊讶、`ok` 点赞、`thanks` 致谢，写在 `data-mascot-pose` 里（讲「为什么」用 `ask`，讲关键数字用 `wow`，结尾用 `thanks`）。
 - **动效**：克制。第一次打开有约 1 秒的开场（背景淡入，主题行、大标题、第 0 拍依次淡入上浮）；每拍 0.3–0.5 秒、平滑缓动，不弹跳、不砸、不过冲：内容淡入上浮，数字从 0 滚到读数，柱子和环按拍生长，趋势线从左往右画出来，当前一步用品牌蓝点亮；重点词变成品牌蓝、底下铺开一道淡蓝（不放大）；翻页时旧页上收淡出、新页从下面浮上来。
-- **自带出场名**：`fgrise`、`fgfade`。只在这种风格里认，页面里别写（换风格会报提醒），风格会自己默认用。
+- **自带出场名**：`fgrise`、`fgfade`、`fgmock`、`fghub`。只在这种风格里认，页面里别写（换风格会报提醒），风格会自己默认用。
 - **专用组件**（类名 `fg-` 开头，只在方果里有样子；样板页 `samples/fangguo.js` 每个都用了一遍，完整说明在 `scenes/fangguo.js` 开头）。图表都是「填数字就能用」：
   - 大数字：`<b class="fg-num fg-g" data-to="52" style="font-size:96px">52<small>万单</small></b>`。单位写在 `<small>`；`fg-g` 是淡蓝渐变；写了 `data-to` 到拍时从 0 滚到读数（小数位数照 `data-to`，原字带千分位逗号就带逗号）。
   - 柱状图：`<div class="fg-bars" data-fg-bars="286,318,352,371,402,511" data-fg-labels="4 月,5 月,6 月,7 月,8 月,9 月" data-fg-hi="6" data-fg-hi-beat="2" style="height:400px"></div>`。`data-fg-hi` 是第几根用渐变蓝突出，`data-fg-hi-beat`（可选）是到第几拍才点亮，`data-fg-max`（可选）是纵轴上限；读数和月份是真的字。
   - 环形图：`<div class="fg-donut" data-fg-donut="52,27,21"><b class="fg-num" data-to="1284">1,284</b><span data-small>Q3 合计</span></div>`，中间放合计；旁边的图例 `<div class="fg-legend"><p><i></i>跨境平台<b>52%</b></p>…</div>` 色块按顺序自动对上（`data-fg-colors` 可以换颜色）。
   - 趋势线：`<div class="fg-line" data-fg-line="31,32,34,…,52" data-fg-labels="4 月,,,6 月,,,8 月,,,9 月" style="height:220px"></div>`，横轴标签空的不写；终点一个圆点和读数（`data-fg-end` 可以改）。
   - 进度环：`<div class="fg-ring" data-fg-ring="90" data-fg-tone="teal"><b class="fg-num" data-to="90">90<small>%</small></b></div>`。
+- **招牌交互**（只有方果有，讲 SaaS 产品和 POD 工厂最贴切；每拍 0.3–0.8 秒、平滑，同一页一次只动一处主角，减少动态和自检时直接到位）：
+  - 界面演示：窗口加 `fg-demo`，`<div class="fg-win fg-demo">…<span class="fg-key" data-fg-click="1">一键拉单</span>…<div class="fg-demo-row" data-beat="1"><i class="fg-chk"></i><b>订单号</b><span>商品</span><em>已拉取</em></div>…<span class="fg-toast" data-beat="3">订单已全部到齐</span></div>`。写了 `data-fg-click="拍号"` 的元素，到那一拍光标移过去点一下；列表一行行出现、行首打勾；右上角的提示 `.fg-toast` 留在版面上不消失。
+  - 套图：印花 `<i class="fg-print" style="width:360px;height:360px"></i>`，商品 `<div class="fg-prod" data-fg-prod="tee" data-beat="1"><span>T 恤</span></div>`（`tee` T 恤、`hoodie` 卫衣、`case` 手机壳、`bag` 帆布包、`mug` 马克杯、`pillow` 抱枕，轮廓是 SVG）。到拍时印花飞到商品的印花位置上落下。
+  - 订单流水线：`<div class="fg-pipe"><div class="fg-st"><i class="fg-ico" data-fg-ico="cart"></i><b>接单</b><p data-beat="1"><b class="fg-num" data-to="2318">2,318</b>今日订单</p></div>…</div>`。工位第 0 拍就摆好（灰），讲到哪一站，那一站亮起、计数滚上来，一张订单卡沿轨道走过去（最多 6 站）。
+  - 平台汇聚：`<div class="fg-hub" style="width:980px;height:720px"><b class="fg-plt" data-beat="1">TEMU</b>…</div>`。平台胶囊从正上方顺时针排成一圈，中间是方果；胶囊亮起时一条线画向中间、一颗光点沿线流过去（只流一趟）。`data-fg-rx`、`data-fg-ry` 调圈的大小。
+  - 聚焦框：在 `.fg-win`（或 `.fg-lensbox`）里给要框的元素写 `data-fg-focus="拍号"`，到那一拍框移过去，四周压暗一点（字仍看得清）。说明写在框外面，一拍一句，讲完留着。
+  - 按位滚动的数字：`<b class="fg-num fg-odo">2,318</b>`，到拍时每一位像计数器一样从 0 滚到读数（页面上的字一直是真的读数，不用写 `data-to`）。
+  - 新旧对比：`<p class="fg-vs"><s class="fg-old">20 分钟</s><i class="fg-arrow"></i><b class="fg-num fg-new" data-beat="1">10<small>秒</small></b></p>`，新数字到拍时旧的划一道红线（仍读得清）。新数字也可以写在 `.fg-vs` 后面。
+- **版式工具**：出血底板 `<i class="fg-bleed" hidden></i>` 有四种——默认右边一块浅蓝、`fg-left` 左边、`fg-slant` 右边一块斜切的浅蓝、`fg-deep` 整屏品牌深蓝（金句页，这一页的字自动换成白色和淡蓝）；金句 `<p class="fg-quote">…<span class="fg-hl">词</span>…</p>`（112px，一页一句）；深色页右边的同心细圆环装饰 `<i class="fg-deco"></i>`。
   - 指标卡 `.fg-kpi`、渐变圆角图标 `.fg-ico[data-fg-ico="box"]`（`data-fg-tone`：blue、teal、coral、purple、amber、red）、白色界面窗 `.fg-win`（加 `fg-float` 是倾斜 2° 的浮窗）、折角标签 `.fg-fold`、小胶囊 `.fg-chip`、横小卡 `.fg-mini`、功能卡 `.fg-feats > .fg-fc`、平台横栏 `.fg-plat`、流程清单 `.fg-flow > .fg-step`（当前一步点亮）、封面 `.fg-cover`、章节页 `.fg-chapter` 加 `.fg-bigno`、关于我们 `.fg-about` 加二维码卡 `.fg-qr[data-fg-qr="wechat|douyin|business"]` 和联系方式 `.fg-contact`。
 
 ### 像素家
