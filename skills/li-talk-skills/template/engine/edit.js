@@ -64,7 +64,7 @@
     on: false, loaded: false, items: [],
     sel: null, inner: [], hover: null, text: null, drag: null, lastDown: null,
     saveT: 0, dirty: false, notifying: false, reloading: false, inflight: null, again: false, saving: false, failed: false, notified: false,
-    bar: null, tools: null, selBox: null, beats: null, style: null, es: null,
+    bar: null, tools: null, pop: null, acc: '', selBox: null, beats: null, style: null, es: null,
     undo: [], redo: [], snap: '[]', touched: new Set(),   // 撤销、重做：每一步之前的修改记录（JSON），碰过的元素
   };
   /* 字号直接选数字：常用的几档（px），不给小于 32 的 */
@@ -388,6 +388,7 @@
     i.box = box;
     setVar(n, 'data-lt-w', '--lt-w', box.width !== i.base.width ? box.width + 'px' : null);
     setVar(n, 'data-lt-h', '--lt-h', box.height !== i.base.height ? box.height + 'px' : null);
+    box.width = n.offsetWidth || box.width; box.height = n.offsetHeight || box.height;   // 记实际画出来的大小（高度不会比内容还矮）
     // 改了大小以后版面位置可能跟着变（比如靠右对齐的元素），重新量一次，位移按量到的算
     const lay = I.boxIn(n, i.slide);
     const dx = box.left - lay.l, dy = box.top - lay.t;
@@ -799,7 +800,7 @@
     setHover(null);
     drawSel();
   }
-  function deselect() { E.sel = null; E.inner = []; drawSel(); }
+  function deselect() { E.sel = null; E.inner = []; closePop(); drawSel(); }
   function outer() {
     if (!E.sel) return;
     const i = info(E.sel), up = E.sel.parentElement ? blockOf(E.sel.parentElement, i.slide) : null;
@@ -812,6 +813,33 @@
     if (!E.inner.length) { I.toast('没有刚才那一层可以回去了', 2000); return; }
     select(E.inner.pop(), true);
   }
+  /* 元素实际画出来的样子（舞台坐标）：从它往上到页面累计的缩放和旋转（CSS 的 scale、rotate、transform 都算） */
+  function accum(n, stop) {
+    let s = 1, a = 0;
+    for (let x = n; x && x !== stop && x.nodeType === 1; x = x.parentElement) {
+      const cs = getComputedStyle(x);
+      if (cs.scale && cs.scale !== 'none') s *= parseFloat(cs.scale) || 1;
+      if (cs.rotate && cs.rotate !== 'none') {
+        const m = /(-?[\d.]+)(deg|rad|turn)\s*$/.exec(cs.rotate);
+        if (m) a += m[2] === 'deg' ? +m[1] : m[2] === 'rad' ? +m[1] * 180 / Math.PI : +m[1] * 360;
+      }
+      if (cs.transform && cs.transform !== 'none' && window.DOMMatrix) {
+        try { const M = new DOMMatrix(cs.transform); s *= Math.hypot(M.a, M.b) || 1; a += Math.atan2(M.b, M.a) * 180 / Math.PI; } catch (e) { /* 读不出来就当没有 */ }
+      }
+    }
+    return { s, a };
+  }
+  /* 中心取 getBoundingClientRect 的中心：矩形不管怎么旋转、缩放，外接框的中心都是它自己的中心；
+     宽高取没旋转时的尺寸乘上累计的缩放。返回 { cx, cy, w, h, a }（舞台坐标、角度） */
+  function geom(n) {
+    const i = info(n), sr = dom.stage.getBoundingClientRect(), k = scale(), r = n.getBoundingClientRect(), t = accum(n, i.slide);
+    return { cx: (r.left + r.width / 2 - sr.left) / k, cy: (r.top + r.height / 2 - sr.top) / k, w: n.offsetWidth * t.s, h: n.offsetHeight * t.s, a: t.a };
+  }
+  /* 舞台上的位移换成某个坐标系里的位移（先转回去，再除以缩放） */
+  function toLocal(dx, dy, t) {
+    const r = -t.a * Math.PI / 180, c = Math.cos(r), sn = Math.sin(r);
+    return { x: (dx * c - dy * sn) / t.s, y: (dx * sn + dy * c) / t.s };
+  }
   function drawSel() {
     const b = E.selBox;
     if (b) {
@@ -819,14 +847,13 @@
       else {
         const i = E.sel._lt;
         if (!i.box && !E.drag) i.base = boxOf(E.sel, i.slide);   // 没挪过、没改过框的：改了字号、文字以后大小会变，重新量
-        const bx = i.box || i.base;
-        // 整块缩放过的：框跟着缩放后的样子画（原点在中心或左上角）
-        const sc = i.sc ? i.sc.scale : 1, ox = i.sc && i.sc.origin === 'top left' ? 0 : .5;
-        const vw = bx.width * sc, vh = bx.height * sc;
+        const bx = i.box || i.base, g = geom(E.sel);
+        // 框按元素旋转前的尺寸画，再套上同样的旋转；把手跟着一起转
         b.hidden = false;
-        b.style.left = (bx.left + i.ot.x + (bx.width - vw) * ox) + 'px'; b.style.top = (bx.top + i.ot.y + (bx.height - vh) * ox) + 'px';
-        b.style.width = vw + 'px'; b.style.height = vh + 'px';
-        const pct = Math.round(sc * 100) + '%', size = bx.width + '×' + bx.height;
+        b.style.left = (g.cx - g.w / 2) + 'px'; b.style.top = (g.cy - g.h / 2) + 'px';
+        b.style.width = g.w + 'px'; b.style.height = g.h + 'px';
+        b.style.transform = Math.abs(g.a) > .01 ? 'rotate(' + g.a + 'deg)' : '';
+        const sc = i.sc ? i.sc.scale : 1, pct = Math.round(sc * 100) + '%', size = bx.width + '×' + bx.height;
         const mode = E.drag && E.drag.moved ? E.drag.mode : '';
         $('.lt-edit-size', b).textContent = (i.hidden ? '已隐藏 · ' : '') + (mode === 'scale' ? pct : mode === 'resize' ? size : size + (sc !== 1 ? ' · ' + pct : ''));
       }
@@ -841,9 +868,11 @@
     if (n) n.setAttribute('data-lt-hover', '');
   }
   function startDrag(e, mode, corner) {
-    const i = mode === 'scale' ? ensureScale(E.sel) : ensureBase(E.sel), b0 = Object.assign({}, i.box || i.base);
-    const sr = dom.stage.getBoundingClientRect();
-    E.drag = { mode, corner, x: e.clientX, y: e.clientY, k: scale(), b0, moved: false, sr, s0: i.sc ? i.sc.scale : 1 };
+    const n = E.sel, i = mode === 'scale' ? ensureScale(n) : ensureBase(n), b0 = Object.assign({}, i.box || i.base);
+    const sr = dom.stage.getBoundingClientRect(), g = geom(n);
+    // 拖动的位移在父元素的坐标系里算（父元素转过、缩放过也对），改框大小在元素自己的坐标系里算
+    E.drag = { mode, corner, x: e.clientX, y: e.clientY, k: scale(), b0, moved: false, sr, g, s0: i.sc ? i.sc.scale : 1,
+      pa: accum(n.parentElement, i.slide), ta: accum(n, i.slide) };
     window.addEventListener('pointermove', onDragMove, true);
     window.addEventListener('pointerup', onDragEnd, true);
     window.addEventListener('pointercancel', onDragEnd, true);
@@ -858,20 +887,24 @@
     const dx = sx / d.k, dy = sy / d.k, b0 = d.b0;
     let b;
     if (d.mode === 'scale') {
-      // 整块等比缩放：按指针离原点（中心；按住 Shift 是左上角）的距离算倍数
-      const i = E.sel._lt, origin = e.shiftKey ? 'top left' : 'center', ox = origin === 'top left' ? 0 : .5;
-      const cx = b0.left + i.ot.x + b0.width * ox, cy = b0.top + i.ot.y + b0.height * ox;
+      // 整块等比缩放：按指针离原点（中心；按住 Shift 是左上角）的距离算倍数。原点用拖动开始时元素实际画出来的位置（转过的也对）
+      const origin = e.shiftKey ? 'top left' : 'center', g = d.g;
+      let ox = g.cx, oy = g.cy;
+      if (origin === 'top left') {
+        const r = g.a * Math.PI / 180, hx = -g.w / 2, hy = -g.h / 2;
+        ox = g.cx + hx * Math.cos(r) - hy * Math.sin(r); oy = g.cy + hx * Math.sin(r) + hy * Math.cos(r);
+      }
       const px0 = (d.x - d.sr.left) / d.k, py0 = (d.y - d.sr.top) / d.k, px = (e.clientX - d.sr.left) / d.k, py = (e.clientY - d.sr.top) / d.k;
-      const d0 = Math.hypot(px0 - cx, py0 - cy) || 1;
-      const sc = clamp(Math.round(d.s0 * Math.hypot(px - cx, py - cy) / d0 * 100) / 100, .2, 5);
+      const d0 = Math.hypot(px0 - ox, py0 - oy) || 1;
+      const sc = clamp(Math.round(d.s0 * Math.hypot(px - ox, py - oy) / d0 * 100) / 100, .2, 5);
       applyScale(E.sel, { scale: sc, origin });
       drawSel();
       return;
     }
-    if (d.mode === 'move') b = { left: b0.left + dx, top: b0.top + dy, width: b0.width, height: b0.height };
+    if (d.mode === 'move') { const l = toLocal(dx, dy, d.pa); b = { left: b0.left + l.x, top: b0.top + l.y, width: b0.width, height: b0.height }; }
     else {
-      const west = /w/.test(d.corner), north = /n/.test(d.corner);
-      let w = Math.max(20, b0.width + (west ? -dx : dx)), h = Math.max(20, b0.height + (north ? -dy : dy));
+      const l = toLocal(dx, dy, d.ta), west = /w/.test(d.corner), north = /n/.test(d.corner);
+      let w = Math.max(20, b0.width + (west ? -l.x : l.x)), h = Math.max(20, b0.height + (north ? -l.y : l.y));
       if (e.shiftKey && b0.height) {   // 保持比例：以变化大的那一边为准
         const r = b0.width / b0.height;
         if (Math.abs(w / b0.width - 1) >= Math.abs(h / b0.height - 1)) h = w / r; else w = h * r;
@@ -893,8 +926,8 @@
     updateTools();
   }
   function nudge(dx, dy) {
-    const i = ensureBase(E.sel), b = Object.assign({}, i.box || i.base);
-    b.left += dx; b.top += dy;
+    const i = ensureBase(E.sel), b = Object.assign({}, i.box || i.base), l = toLocal(dx, dy, accum(E.sel.parentElement, i.slide));
+    b.left += Math.round(l.x); b.top += Math.round(l.y);
     applyBox(E.sel, b);
     recordBox(E.sel);
     drawSel();
@@ -924,6 +957,7 @@
     const sr = dom.stage.getBoundingClientRect(), k = scale();
     let h = '';
     set.forEach(n => {
+      if (n === E.sel) return;   // 选中的块：拍号在工具栏上，角标会压住把手，不画
       const r = n.getBoundingClientRect();
       if (!r.width && !r.height) return;
       const i = n._lt, b0 = i && i.beat0 ? i.beat0.beat : beatOf(n, p.el), b = i && i.beat0 ? i.beatCur : b0;
@@ -937,45 +971,107 @@
      样式工具栏：选中块或改字时浮在它旁边
      ================================================================= */
   function toolTarget() { return E.text ? E.text.el : E.sel; }
+  /* 两块面板跟着当前页的风格：深色风格（风格注册时写了 dark: true）用深色玻璃；强调色取这一页的 --accent */
+  function themeUi() {
+    const p = curPage();
+    if (!p) return;
+    const dark = !!I.sc(p.scene).dark;
+    document.body.classList.toggle('lt-darkui', dark);
+    const acc = (getComputedStyle(p.el).getPropertyValue('--accent') || '').trim() || '#2563eb';
+    if (acc === E.acc) return;
+    E.acc = acc;
+    document.body.style.setProperty('--lt-accent', acc);
+    // 强调色很浅（比如黄色）时，主按钮上的字用深色
+    const rgb = probe(p.el, 'color', acc).match(/[\d.]+/g) || [37, 99, 235];
+    const lum = (.2126 * rgb[0] + .7152 * rgb[1] + .0722 * rgb[2]) / 255;
+    document.body.style.setProperty('--lt-on-accent', lum > .62 ? '#1b1f27' : '#fff');
+  }
+  /* 当前字号（px 数字）：工具栏上显示它，−/+ 在常用档位里走 */
+  const pxOf = n => Math.round(parseFloat(getComputedStyle(n).fontSize) || 0);
+  function stepFont(dir) {
+    const n = toolTarget();
+    if (!n) return;
+    const cur = pxOf(n);
+    const next = dir > 0 ? PX.find(v => v > cur) : PX.slice().reverse().find(v => v < cur);
+    if (!next) { I.toast(dir > 0 ? '已经是最大的 120' : '最小 32，再小后排就看不清了', 2000); return; }
+    setStyle(n, 'fontSize', next + 'px');
+  }
+  function closePop() { if (E.pop) E.pop.hidden = true; }
+  function openPop(anchor) {
+    const n = toolTarget();
+    if (!n || !E.pop) return;
+    if (!E.pop.hidden) { closePop(); return; }
+    const st = ensureStyle(n).styleCur, cur = pxOf(n);
+    $$('[data-act=fs]', E.pop).forEach(b => {
+      const v = b.dataset.v;
+      b.classList.toggle('lt-edit-on', v === st.fontSize || (v === cur + 'px' && /px$/.test(st.fontSize)));
+      const px = b.querySelector('small');
+      if (px && /^var/.test(v)) px.textContent = Math.round(parseFloat(probe(n, 'fontSize', v)) || 0);
+    });
+    E.pop.hidden = false;
+    const r = anchor.getBoundingClientRect(), pw = E.pop.offsetWidth, ph = E.pop.offsetHeight;
+    let top = r.bottom + 6;
+    if (top + ph > innerHeight - 6) top = Math.max(6, r.top - ph - 6);
+    E.pop.style.left = Math.round(clamp(r.left, 6, innerWidth - pw - 6)) + 'px';
+    E.pop.style.top = Math.round(top) + 'px';
+  }
   function updateTools() {
     const t = E.tools;
     if (!t) return;
     const n = toolTarget();
-    if (!E.on || !n || E.drag) { t.hidden = true; return; }
+    if (!E.on || !n || E.drag) { t.hidden = true; closePop(); return; }
+    themeUi();
     t.hidden = false;
     const i = ensureStyle(n), st = i.styleCur;
-    // 调色板用这一页风格算出来的颜色
+    $('.lt-edit-fsv', t).textContent = pxOf(n);
+    // 调色板：这一页风格算出来的颜色，当前色打勾
+    const seen = new Set(), inPal = v => COLORS.some(([c]) => v === 'var(' + c + ')');
     $$('.lt-edit-sw', t).forEach(b => {
       const v = b.dataset.v;
-      b.style.background = probe(n, 'color', 'var(' + v + ')');
-      b.classList.toggle('lt-edit-on', st.color === 'var(' + v + ')');
+      if (v !== 'reset') {
+        const c = probe(n, 'color', 'var(' + v + ')');
+        b.style.setProperty('--sw', c);
+        b.hidden = seen.has(c);   // 风格里两个变量是同一个颜色（比如强调色和主色）：只留一个
+        seen.add(c);
+      }
+      b.classList.toggle('lt-edit-on', v === 'reset' ? st.color === i.style0.color && !inPal(st.color) : st.color === 'var(' + v + ')');
     });
-    $$('[data-act=fs]', t).forEach(b => b.classList.toggle('lt-edit-on', b.dataset.v === st.fontSize));
-    $('.lt-edit-fsnow', t).textContent = st.fontSize === i.style0.fontSize ? '' : '原来 ' + label(i.style0.fontSize);
     $('[data-act=bold]', t).classList.toggle('lt-edit-on', +st.fontWeight >= 600);
     $$('[data-act=align]', t).forEach(b => b.classList.toggle('lt-edit-on', st.textAlign === b.dataset.v));
-    $('[data-act=key]', t).hidden = !E.text;
-    const bg = $('.lt-edit-beat', t);
+    $('.lt-edit-g-key', t).hidden = !E.text;
+    const bg = $('.lt-edit-g-beat', t);
     bg.hidden = !!E.text || !E.sel;
-    if (E.sel && !E.text) { const bi = ensureBeat(E.sel); $('b', bg).textContent = bi.beatCur; }
-    $('[data-act=outer]', t).hidden = !!E.text || !E.sel;
-    $('[data-act=inner]', t).hidden = !!E.text || !E.inner.length;
+    if (E.sel && !E.text) $('.lt-edit-beatv', bg).textContent = ensureBeat(E.sel).beatCur;
+    $('[data-act=outer]', t).disabled = !!E.text || !E.sel;
+    $('[data-act=inner]', t).disabled = !!E.text || !E.inner.length;
     const bi = info(n);
     $('[data-act=reset]', t).disabled = !E.items.some(x => x.page === bi.page && (x.path === bi.path || x.path.indexOf(bi.path + '>') === 0));
-    // 位置：放在目标上面，上面放不下（挨着编辑条）就放下面
-    const r = n.getBoundingClientRect(), tw = t.offsetWidth, th = t.offsetHeight;
-    let top = r.top - th - 10;
-    if (top < 62) top = Math.min(innerHeight - th - 6, r.bottom + 10);
-    const left = clamp(r.left, 6, Math.max(6, innerWidth - tw - 6));
-    t.style.left = Math.round(left) + 'px'; t.style.top = Math.round(Math.max(62, top)) + 'px';
+    // 位置：贴着选中框（转过的按转后的外接框）的上方；上面放不下（挨着编辑条）就放下方；都放不下放在右边；不遮住元素
+    const box = E.sel && !E.text && E.selBox && !E.selBox.hidden ? E.selBox : n;
+    const r = box.getBoundingClientRect(), tw = t.offsetWidth, th = t.offsetHeight, gap = 12;
+    const barB = E.bar && !E.bar.hidden ? E.bar.getBoundingClientRect().bottom + 8 : 8;
+    let top = r.top - th - gap, left = r.left + r.width / 2 - tw / 2;
+    if (top < barB) {
+      top = r.bottom + gap + (box === E.selBox ? 22 : 0);   // 下方要让开框下面的尺寸标签
+      if (top + th > innerHeight - 6) {
+        top = clamp(r.top + r.height / 2 - th / 2, barB, innerHeight - th - 6);
+        left = r.right + gap + tw < innerWidth ? r.right + gap : r.left - gap - tw;
+      }
+    }
+    t.classList.toggle('lt-edit-up', top < r.top);   // 工具栏在上方时，悬停提示往上弹，不盖住元素
+    t.style.left = Math.round(clamp(left, 6, Math.max(6, innerWidth - tw - 6))) + 'px';
+    t.style.top = Math.round(top) + 'px';
   }
   function onTool(e) {
     const b = e.target.closest('[data-act]');
-    if (!b) return;
+    if (!b || b.disabled) return;
     const n = toolTarget();
     if (!n) return;
     const act = b.dataset.act, st = ensureStyle(n).styleCur;
+    if (act !== 'fsmenu') closePop();
+    if (act === 'fsmenu') { openPop(b); return; }
     if (act === 'fs') setStyle(n, 'fontSize', b.dataset.v === 'reset' ? null : b.dataset.v);
+    else if (act === 'fsstep') stepFont(+b.dataset.v);
     else if (act === 'reset') resetBlock();
     else if (act === 'color') setStyle(n, 'color', b.dataset.v === 'reset' ? null : 'var(' + b.dataset.v + ')');
     else if (act === 'bold') setStyle(n, 'fontWeight', +st.fontWeight >= 600 ? '400' : '700');
@@ -990,11 +1086,12 @@
   /* =================================================================
      指针
      ================================================================= */
-  function inUi(t) { return !!(t && t.closest && t.closest('.lt-edit-bar, .lt-edit-tools, .lt-edit-copy, #toast, #lightbox')); }
+  function inUi(t) { return !!(t && t.closest && t.closest('.lt-edit-bar, .lt-edit-tools, .lt-edit-pop, .lt-edit-copy, #toast, #lightbox')); }
   function onDown(e) {
     if (!E.on || e.button !== 0) return;
     const t = e.target;
     if (inUi(t)) return;
+    closePop();
     if (E.text) {
       if (E.text.el.contains(t)) return;   // 在正在改的字里点：放光标、选字，交给浏览器
       commitText();
@@ -1081,6 +1178,7 @@
     pi = clamp(pi, 0, PAGES.length - 1);
     deselect(); setHover(null);
     I.go(pi, PAGES[pi].total, { anim: false });
+    themeUi();
     drawBeats();
   }
   function enter() {
@@ -1156,33 +1254,57 @@
   /* =================================================================
      界面
      ================================================================= */
+  /* 线条图标（24×24，描边 currentColor） */
+  const ICONS = {
+    undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
+    redo: '<path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/>',
+    resetAll: '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>',
+    send: '<path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/>',
+    copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/>',
+    exit: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+    bold: '<path d="M7 5h6a3.5 3.5 0 0 1 0 7H7z"/><path d="M7 12h7a3.5 3.5 0 0 1 0 7H7z"/>',
+    left: '<path d="M4 6h16M4 10h10M4 14h16M4 18h10"/>',
+    center: '<path d="M4 6h16M7 10h10M4 14h16M7 18h10"/>',
+    right: '<path d="M4 6h16M10 10h10M4 14h16M10 18h10"/>',
+    key: '<path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/>',
+    outer: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+    inner: '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>',
+    erase: '<path d="M7 21h10"/><path d="m5.5 13.5 7-7a2 2 0 0 1 2.8 0l3.2 3.2a2 2 0 0 1 0 2.8L12 19H8z"/>',
+    minus: '<path d="M5 12h14"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    down: '<path d="m6 9 6 6 6-6"/>',
+    check: '<path d="m5 12 5 5L20 7"/>',
+  };
+  const icon = k => '<svg viewBox="0 0 24 24" aria-hidden="true">' + ICONS[k] + '</svg>';
+  /* 图标按钮：data-tip 是悬停提示（名字和快捷键） */
+  const ibtn = (cls, ic, tip, attrs) => '<button type="button" class="lt-edit-ib ' + cls + '" data-tip="' + tip + '" aria-label="' + tip + '"' + (attrs || '') + '>' + icon(ic) + '</button>';
   function updateBar() {
     if (!E.bar) return;
     const n = E.items.length;
-    const st = $('.lt-edit-status', E.bar), btn = $('.lt-edit-go', E.bar);
-    let s = n ? '已改 ' + n + ' 处 · ' : '还没改动';
-    if (n || E.failed) s += E.failed ? '保存失败，点这里重试' : E.saving || E.saveT ? '保存中…' : '已自动保存';
-    if (!n && E.failed) s = '保存失败，点这里重试';
-    st.textContent = s;
+    const dot = $('.lt-edit-dot', E.bar), st = $('.lt-edit-status', E.bar), btn = $('.lt-edit-go', E.bar);
+    const state = E.failed ? 'fail' : E.saving || E.saveT ? 'saving' : n ? 'saved' : 'idle';
+    dot.dataset.s = state;
+    $('.lt-edit-stxt', st).textContent = E.failed ? '保存失败' : n ? n + ' 处改动' : '未改动';
+    st.dataset.tip = { fail: '保存失败，点一下重试', saving: '正在保存…', saved: '已自动保存', idle: '还没改动' }[state];
     st.classList.toggle('lt-edit-fail', E.failed);
-    if (SERVER) btn.textContent = E.notifying ? '正在通知…' : E.notified ? '已通知，AI 正在改…' : '通知 AI 修改';
-    else btn.textContent = '复制修改给 AI';
+    $('.lt-edit-gotxt', btn).textContent = SERVER ? (E.notifying ? '正在通知…' : E.notified ? 'AI 正在改…' : '通知 AI 修改') : '复制修改给 AI';
     btn.disabled = !n || E.notifying || E.notified;
     $('.lt-edit-undo', E.bar).disabled = !E.undo.length;
     $('.lt-edit-redo', E.bar).disabled = !E.redo.length;
     $('.lt-edit-all', E.bar).disabled = !n;
+    themeUi();
   }
   function buildUi() {
     if (E.bar) return;
-    E.bar = el('div', 'lt-edit-bar',
-      '<span class="lt-edit-state">编辑中</span><button type="button" class="lt-edit-status"></button>' +
-      '<button type="button" class="lt-edit-undo" title="撤销（Ctrl+Z）">↶</button><button type="button" class="lt-edit-redo" title="重做（Ctrl+Shift+Z 或 Ctrl+Y）">↷</button>' +
-      '<button type="button" class="lt-edit-all" title="清掉所有还没合并的改动">全部还原</button>' +
-      '<button type="button" class="lt-edit-go"></button><button type="button" class="lt-edit-exit">退出编辑</button>');
+    const sep = '<i class="lt-edit-sep"></i>';
+    E.bar = el('div', 'lt-edit-bar lt-edit-glass',
+      '<button type="button" class="lt-edit-status" data-tip="还没改动"><i class="lt-edit-dot"></i><span class="lt-edit-stxt">未改动</span></button>' + sep +
+      ibtn('lt-edit-undo', 'undo', '撤销 Ctrl+Z') + ibtn('lt-edit-redo', 'redo', '重做 Ctrl+Shift+Z / Ctrl+Y') + ibtn('lt-edit-all', 'resetAll', '全部还原（清掉还没合并的改动）') + sep +
+      '<button type="button" class="lt-edit-go" data-tip="' + (SERVER ? '把改动交给 AI 合进源码' : '复制改动清单，贴给 AI') + '">' + icon(SERVER ? 'send' : 'copy') + '<span class="lt-edit-gotxt"></span></button>' +
+      ibtn('lt-edit-exit', 'exit', '退出编辑 E'));
     E.bar.setAttribute('role', 'toolbar');
     E.bar.setAttribute('data-noclick', '');
     E.bar.addEventListener('mousedown', e => e.preventDefault());   // 点按钮不抢焦点：免得之后按空格又点一次按钮
-    $('.lt-edit-state', E.bar).title = '单击选中，拖动挪位置；拖四个角整块缩放（Shift 以左上角为原点），按住 Alt 拖角改框的大小；Ctrl+Z 撤销、Ctrl+Y 重做；双击改文字（回车结束，Esc 取消）；方向键微调（Shift 一次 10px），Delete 隐藏；Alt+↑ 选外层、Alt+↓ 回内层；← → 翻页，E 退出；演讲者视图（S）里点讲词可以改';
     $('.lt-edit-status', E.bar).addEventListener('click', () => { if (E.failed) save(); });
     $('.lt-edit-go', E.bar).addEventListener('click', notify);
     $('.lt-edit-undo', E.bar).addEventListener('click', undo);
@@ -1191,24 +1313,34 @@
     $('.lt-edit-exit', E.bar).addEventListener('click', exit);
     document.body.appendChild(E.bar);
 
-    E.tools = el('div', 'lt-edit-tools',
-      '<div class="lt-edit-row"><span class="lt-edit-lab">字号</span>' + PX.map(v => '<button type="button" data-act="fs" data-v="' + v + 'px">' + v + '</button>').join('') +
-        '<span class="lt-edit-fsnow"></span></div>' +
-      '<div class="lt-edit-row"><span class="lt-edit-lab">档位</span>' + SIZES.map(([v, l]) => '<button type="button" data-act="fs" data-v="var(' + v + ')" title="风格的字号档位 ' + v + '">' + l + '</button>').join('') +
-        '<button type="button" data-act="fs" data-v="reset" title="回到原来的字号">原来</button></div>' +
-      '<div class="lt-edit-row"><span class="lt-edit-grp" title="颜色（风格的调色板）">' + COLORS.map(([v, l]) => '<button type="button" class="lt-edit-sw" data-act="color" data-v="' + v + '" title="' + l + '"></button>').join('') +
-        '<button type="button" data-act="color" data-v="reset" title="原来的颜色">原色</button></span>' +
-      '<button type="button" data-act="bold" title="加粗"><b>B</b></button>' +
-      '<span class="lt-edit-grp"><button type="button" data-act="align" data-v="left" title="左对齐">左</button><button type="button" data-act="align" data-v="center" title="居中">中</button><button type="button" data-act="align" data-v="right" title="右对齐">右</button></span>' +
-      '<button type="button" data-act="key" title="把选中的字设成重点词（再点一次取消）">重点</button>' +
-      '<span class="lt-edit-beat lt-edit-grp">第 <b>0</b> 拍出现<button type="button" data-act="beat" data-v="-1" title="早一拍">−</button><button type="button" data-act="beat" data-v="1" title="晚一拍">＋</button></span>' +
-      '<button type="button" data-act="outer" title="选外层（Alt+↑）">选外层</button><button type="button" data-act="inner" title="回到刚才那层（Alt+↓）">回内层</button>' +
-      '<button type="button" data-act="reset" title="这一块的所有改动回到原样">还原这一块</button></div>');
+    E.tools = el('div', 'lt-edit-tools lt-edit-glass',
+      '<span class="lt-edit-grp" data-tip="字号">' + ibtn('', 'minus', '字号小一档', ' data-act="fsstep" data-v="-1"') +
+        '<button type="button" class="lt-edit-fsbtn" data-act="fsmenu" data-tip="选字号"><b class="lt-edit-fsv">36</b>' + icon('down') + '</button>' +
+        ibtn('', 'plus', '字号大一档', ' data-act="fsstep" data-v="1"') + '</span>' + sep +
+      '<span class="lt-edit-grp">' + COLORS.map(([v, l]) => '<button type="button" class="lt-edit-sw" data-act="color" data-v="' + v + '" data-tip="' + l + '" aria-label="' + l + '">' + icon('check') + '</button>').join('') +
+        '<button type="button" class="lt-edit-sw lt-edit-sw0" data-act="color" data-v="reset" data-tip="原来的颜色" aria-label="原来的颜色">' + icon('check') + '</button></span>' + sep +
+      '<span class="lt-edit-grp">' + ibtn('', 'bold', '加粗', ' data-act="bold"') +
+        ibtn('', 'left', '左对齐', ' data-act="align" data-v="left"') + ibtn('', 'center', '居中', ' data-act="align" data-v="center"') + ibtn('', 'right', '右对齐', ' data-act="align" data-v="right"') + '</span>' +
+      '<span class="lt-edit-grp lt-edit-g-key">' + sep + ibtn('', 'key', '设成重点词（再点一次取消）', ' data-act="key"') + '</span>' +
+      '<span class="lt-edit-grp lt-edit-g-beat">' + sep + '<span class="lt-edit-beat" data-tip="第几拍出现">拍 <b class="lt-edit-beatv">0</b></span>' +
+        ibtn('', 'minus', '早一拍出现', ' data-act="beat" data-v="-1"') + ibtn('', 'plus', '晚一拍出现', ' data-act="beat" data-v="1"') + '</span>' + sep +
+      '<span class="lt-edit-grp">' + ibtn('', 'outer', '选外层 Alt+↑', ' data-act="outer"') + ibtn('', 'inner', '回内层 Alt+↓', ' data-act="inner"') +
+        ibtn('', 'erase', '还原这一块', ' data-act="reset"') + '</span>');
     E.tools.hidden = true;
     E.tools.setAttribute('data-noclick', '');
     E.tools.addEventListener('mousedown', e => e.preventDefault());   // 不抢改字框的焦点和选区
     E.tools.addEventListener('click', onTool);
     document.body.appendChild(E.tools);
+    // 字号下拉：常用的 px 和风格档位
+    E.pop = el('div', 'lt-edit-pop lt-edit-glass',
+      '<div class="lt-edit-poph">常用</div><div class="lt-edit-popg">' + PX.map(v => '<button type="button" data-act="fs" data-v="' + v + 'px">' + v + '</button>').join('') + '</div>' +
+      '<div class="lt-edit-poph">风格档位</div><div class="lt-edit-popl">' + SIZES.map(([v, l]) => '<button type="button" data-act="fs" data-v="var(' + v + ')">' + l + '<small></small></button>').join('') +
+      '<button type="button" data-act="fs" data-v="reset">原来的字号<small></small></button></div>');
+    E.pop.hidden = true;
+    E.pop.setAttribute('data-noclick', '');
+    E.pop.addEventListener('mousedown', e => e.preventDefault());
+    E.pop.addEventListener('click', onTool);
+    document.body.appendChild(E.pop);
 
     E.selBox = el('div', 'lt-edit-sel', '<span class="lt-edit-size"></span>' + ['nw', 'ne', 'sw', 'se'].map(c => '<i class="lt-edit-h" data-c="' + c + '"></i>').join(''));
     E.selBox.hidden = true;
@@ -1216,37 +1348,76 @@
     dom.stage.append(E.beats, E.selBox);
   }
   const CSS_TEXT = [
-    'body.lt-editing #toast{top:66px}',
-    '.lt-edit-bar,.lt-edit-tools{position:fixed;z-index:960;display:flex;align-items:center;gap:6px;border-radius:12px;background:#1d2433;color:#f3f5f9;font:500 14px/1.2 system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;box-shadow:0 6px 24px rgba(0,0,0,.35);user-select:none;-webkit-user-select:none;white-space:nowrap;letter-spacing:0}',
-    '.lt-edit-bar{left:50%;top:10px;transform:translateX(-50%);padding:6px 6px 6px 14px}',
-    '.lt-edit-tools{z-index:955;padding:5px 6px;gap:3px;flex-direction:column;align-items:stretch}',
-    '.lt-edit-row{display:flex;align-items:center;gap:4px}',
-    '.lt-edit-lab{color:#94a3b8;font-size:12px;width:2.6em}',
-    '.lt-edit-fsnow{color:#94a3b8;font-size:12px;padding-left:4px}',
-    '.lt-edit-bar[hidden],.lt-edit-tools[hidden],.lt-edit-tools [hidden]{display:none!important}',
-    '.lt-edit-bar button,.lt-edit-tools button,.lt-edit-tools select{font:inherit;border:0;border-radius:8px;padding:7px 12px;cursor:pointer;background:#33405c;color:inherit;margin:0}',
-    '.lt-edit-tools button{padding:5px 8px}',
-    '.lt-edit-tools button:disabled{opacity:.45;cursor:default;filter:none}',
-    '.lt-edit-bar button:hover,.lt-edit-tools button:hover{filter:brightness(1.18)}',
-    '.lt-edit-tools .lt-edit-on{background:#2563eb;color:#fff}',
-    '.lt-edit-grp{display:inline-flex;align-items:center;gap:3px;padding:0 3px}',
-    '.lt-edit-tools .lt-edit-sw{width:22px;height:22px;padding:0;border-radius:50%;box-shadow:inset 0 0 0 2px rgba(255,255,255,.75)}',
-    '.lt-edit-tools .lt-edit-sw.lt-edit-on{box-shadow:inset 0 0 0 2px #fff,0 0 0 2px #60a5fa}',
-    '.lt-edit-beat b{min-width:1em;text-align:center;color:#fde68a}',
-    '.lt-edit-bar .lt-edit-go{background:#2563eb;color:#fff}',
-    '.lt-edit-bar button:disabled{opacity:.55;cursor:default;filter:none}',
-    '.lt-edit-state{font-weight:700;cursor:help}',
-    '.lt-edit-bar .lt-edit-status{background:transparent;padding:7px 6px;cursor:default;color:#b9c2d3}',
-    '.lt-edit-bar .lt-edit-status.lt-edit-fail{color:#ffb4b4;text-decoration:underline;cursor:pointer}',
+    'body.lt-editing #toast{top:70px}',
+    /* 液态玻璃面板：浅色风格是半透明白，深色风格（body.lt-darkui）是半透明深色；强调色取风格的 --accent */
+    '.lt-edit-glass{--lt-bg:rgba(255,255,255,.62);--lt-fg:#1d2330;--lt-sub:#5b6474;--lt-line:rgba(255,255,255,.8);--lt-sep:rgba(20,30,50,.12);--lt-hov:rgba(20,30,50,.07);--lt-on:rgba(20,30,50,.1);--lt-acc:var(--lt-accent,#2563eb);' +
+      'position:fixed;z-index:960;display:flex;align-items:center;gap:2px;padding:5px;border-radius:16px;background:var(--lt-bg);color:var(--lt-fg);' +
+      '-webkit-backdrop-filter:blur(20px) saturate(1.6);backdrop-filter:blur(20px) saturate(1.6);border:1px solid var(--lt-line);' +
+      'box-shadow:0 12px 32px rgba(15,23,42,.16),0 2px 6px rgba(15,23,42,.08),inset 0 1px 0 rgba(255,255,255,.55);' +
+      'font:500 13px/1 system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;letter-spacing:0;user-select:none;-webkit-user-select:none;white-space:nowrap}',
+    'body.lt-darkui .lt-edit-glass{--lt-bg:rgba(30,34,44,.6);--lt-fg:#eef1f6;--lt-sub:#a3acbb;--lt-line:rgba(255,255,255,.16);--lt-sep:rgba(255,255,255,.14);--lt-hov:rgba(255,255,255,.09);--lt-on:rgba(255,255,255,.16);' +
+      'box-shadow:0 12px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.08)}',
+    '.lt-edit-glass[hidden],.lt-edit-glass [hidden]{display:none!important}',
+    '.lt-edit-bar{left:50%;top:12px;transform:translateX(-50%)}',
+    '.lt-edit-tools{z-index:955}',
+    '.lt-edit-pop{z-index:965;flex-direction:column;align-items:stretch;gap:4px;padding:8px;width:236px}',
+    '.lt-edit-glass button{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;min-width:32px;padding:0 8px;margin:0;border:0;border-radius:10px;background:transparent;color:inherit;font:inherit;cursor:pointer;position:relative}',
+    '.lt-edit-glass button:hover:not(:disabled){background:var(--lt-hov)}',
+    '.lt-edit-glass button:disabled{opacity:.35;cursor:default}',
+    '.lt-edit-glass button.lt-edit-on{background:var(--lt-on);color:var(--lt-acc)}',
+    '.lt-edit-glass svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}',
+    '.lt-edit-ib{padding:0!important;width:32px}',
+    '.lt-edit-sep{flex:none;width:1px;height:20px;margin:0 4px;background:var(--lt-sep)}',
+    '.lt-edit-grp{display:inline-flex;align-items:center;gap:2px}',
+    /* 悬停提示：名字和快捷键 */
+    '.lt-edit-glass [data-tip]:hover::after{content:attr(data-tip);position:absolute;left:50%;top:calc(100% + 8px);transform:translateX(-50%);padding:5px 8px;border-radius:7px;background:rgba(20,24,32,.88);color:#fff;font:500 12px/1.2 system-ui,"PingFang SC","Microsoft YaHei",sans-serif;white-space:nowrap;pointer-events:none;z-index:2}',
+    '.lt-edit-tools.lt-edit-up [data-tip]:hover::after{top:auto;bottom:calc(100% + 8px)}',
+    /* 顶部编辑条：圆点加短字的保存状态；「通知 AI 修改」是唯一的主按钮 */
+    '.lt-edit-status{padding:0 10px!important;color:var(--lt-sub)!important;cursor:default!important}',
+    '.lt-edit-status.lt-edit-fail{color:#e5484d!important;cursor:pointer!important}',
+    '.lt-edit-dot{width:8px;height:8px;border-radius:50%;background:#9aa3b2;flex:none}',
+    '.lt-edit-dot[data-s=saved]{background:#30a46c;box-shadow:0 0 0 3px rgba(48,164,108,.18)}',
+    '.lt-edit-dot[data-s=saving]{background:#f5a524;animation:lt-edit-blink 1s ease-in-out infinite}',
+    '.lt-edit-dot[data-s=fail]{background:#e5484d}',
+    '@keyframes lt-edit-blink{50%{opacity:.35}}',
+    '.lt-edit-glass .lt-edit-go{height:32px;padding:0 14px;margin:0 2px;background:var(--lt-acc);color:var(--lt-on-accent,#fff);font-weight:600;box-shadow:0 4px 12px -4px var(--lt-acc)}',
+    '.lt-edit-glass .lt-edit-go:hover:not(:disabled){background:var(--lt-acc);filter:brightness(1.08)}',
+    '.lt-edit-glass .lt-edit-go:disabled{opacity:.5}',
+    /* 工具栏：字号步进、色块、拍号步进 */
+    '.lt-edit-fsbtn{min-width:54px!important;padding:0 6px 0 10px!important;background:var(--lt-hov)!important}',
+    '.lt-edit-fsbtn b{font-weight:700;font-variant-numeric:tabular-nums}',
+    '.lt-edit-fsbtn svg{width:14px;height:14px}',
+    '.lt-edit-glass .lt-edit-sw{width:24px;min-width:24px;height:24px;padding:0;margin:0 2px;border-radius:50%;background:var(--sw,#888);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.85),0 0 0 1px rgba(0,0,0,.12)}',
+    '.lt-edit-glass .lt-edit-sw:hover:not(:disabled){background:var(--sw,#888);transform:scale(1.08)}',
+    '.lt-edit-glass .lt-edit-sw svg{width:14px;height:14px;stroke:#fff;stroke-width:3;opacity:0;filter:drop-shadow(0 0 1px rgba(0,0,0,.6))}',
+    '.lt-edit-glass .lt-edit-sw.lt-edit-on{background:var(--sw,#888);color:inherit}',
+    '.lt-edit-glass .lt-edit-sw.lt-edit-on svg{opacity:1}',
+    '.lt-edit-glass .lt-edit-sw0{--sw:transparent;box-shadow:inset 0 0 0 1.5px var(--lt-sub)}',
+    '.lt-edit-glass .lt-edit-sw0::before{content:"";position:absolute;left:4px;right:4px;top:50%;height:1.5px;background:var(--lt-sub);transform:rotate(-45deg)}',
+    '.lt-edit-glass .lt-edit-sw0 svg{stroke:var(--lt-fg);filter:none}',
+    '.lt-edit-beat{padding:0 4px 0 6px;color:var(--lt-sub)}',
+    '.lt-edit-beat b{color:var(--lt-fg);font-variant-numeric:tabular-nums}',
+    /* 字号下拉 */
+    '.lt-edit-poph{padding:4px 4px 2px;color:var(--lt-sub);font-size:12px}',
+    '.lt-edit-popg{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}',
+    '.lt-edit-popg button{background:var(--lt-hov)!important;font-variant-numeric:tabular-nums}',
+    '.lt-edit-popl{display:grid;grid-template-columns:1fr 1fr;gap:4px}',
+    '.lt-edit-popl button{justify-content:space-between!important;background:var(--lt-hov)!important}',
+    '.lt-edit-popl small{color:var(--lt-sub);font-size:11px}',
+    '.lt-edit-pop button.lt-edit-on{background:var(--lt-acc)!important;color:var(--lt-on-accent,#fff)!important}',
+    '.lt-edit-pop button.lt-edit-on small{color:inherit}',
+    /* 页面上的编辑状态 */
     'body.lt-editing .slide.active *{pointer-events:auto}',
     'body.lt-editing .slide .mascot,body.lt-editing .slide .mascot *{visibility:hidden!important}',
     'body.lt-editing .slide .past,body.lt-editing svg.marks g.past{opacity:1!important}',
     'body.lt-editing #stage *,body.lt-editing #stage *::before,body.lt-editing #stage *::after,body.lt-editing .bg *{animation-play-state:paused!important}',
-    'body.lt-editing [data-lt-hover]{outline:calc(2px * var(--lt-ik,1)) dashed rgba(37,99,235,.8)!important;outline-offset:calc(2px * var(--lt-ik,1));cursor:move}',
-    'body.lt-editing [data-lt-moved],body.lt-editing [data-lt-w],body.lt-editing [data-lt-h]{transition:none!important}',
+    'body.lt-editing [data-lt-hover]{outline:calc(2px * var(--lt-ik,1)) dashed var(--lt-accent,#2563eb)!important;outline-offset:calc(2px * var(--lt-ik,1));cursor:move}',
+    'body.lt-editing [data-lt-moved],body.lt-editing [data-lt-w],body.lt-editing [data-lt-h],body.lt-editing [data-lt-scale],body.lt-editing [data-lt-fs],body.lt-editing [data-lt-color],body.lt-editing [data-lt-fw],body.lt-editing [data-lt-ta]{transition:none!important}',   // 风格给 scale、字号写了过渡的：编辑时直接到位，选中框才量得准
     '[data-lt-moved]{translate:var(--lt-tx,0px) var(--lt-ty,0px)!important}',
     '[data-lt-w]{width:var(--lt-w)!important;max-width:none!important}',
-    '[data-lt-h]{height:var(--lt-h)!important;max-height:none!important}',
+    // 改高度用 min-height：框不能比内容还矮（不然内容跑出框，整块缩放的原点也会偏）
+    '[data-lt-h]{height:auto!important;min-height:var(--lt-h)!important;max-height:none!important}',
+    'img[data-lt-w],img[data-lt-h]{object-fit:contain}',
     '[data-lt-fs]{font-size:var(--lt-fs)!important}',
     '[data-lt-color]{color:var(--lt-color)!important}',
     '[data-lt-fw]{font-weight:var(--lt-fw)!important}',
@@ -1255,19 +1426,20 @@
     'html body [data-lt-scale][data-lt-scale]{scale:var(--lt-scale);transform-origin:var(--lt-origin)}',
     'body:not(.lt-editing) [data-lt-hide]{visibility:hidden!important}',
     'body.lt-editing [data-lt-hide]{opacity:.3!important;outline:calc(2px * var(--lt-ik,1)) dashed #e5484d!important}',
-    '.lt-edit-text{user-select:text!important;-webkit-user-select:text!important;cursor:text!important;outline:calc(2px * var(--lt-ik,1)) solid #2563eb!important;outline-offset:calc(4px * var(--lt-ik,1));background:rgba(37,99,235,.07)}',
-    '.lt-edit-sel{position:absolute;z-index:70;pointer-events:none;border:calc(2px * var(--lt-ik,1)) solid #2563eb;box-shadow:0 0 0 calc(1px * var(--lt-ik,1)) rgba(255,255,255,.85)}',
+    '.lt-edit-text{user-select:text!important;-webkit-user-select:text!important;cursor:text!important;outline:calc(2px * var(--lt-ik,1)) solid var(--lt-accent,#2563eb)!important;outline-offset:calc(4px * var(--lt-ik,1));background:rgba(127,127,127,.08)}',
+    /* 选中框：跟着元素旋转；颜色取风格的强调色 */
+    '.lt-edit-sel{position:absolute;z-index:70;pointer-events:none;transform-origin:50% 50%;border:calc(2px * var(--lt-ik,1)) solid var(--lt-accent,#2563eb);box-shadow:0 0 0 calc(1px * var(--lt-ik,1)) rgba(255,255,255,.85)}',
     '.lt-edit-sel[hidden]{display:none}',
-    '.lt-edit-h{position:absolute;width:calc(14px * var(--lt-ik,1));height:calc(14px * var(--lt-ik,1));background:#fff;border:calc(2px * var(--lt-ik,1)) solid #2563eb;border-radius:calc(3px * var(--lt-ik,1));pointer-events:auto;box-sizing:border-box}',
+    '.lt-edit-h{position:absolute;width:calc(14px * var(--lt-ik,1));height:calc(14px * var(--lt-ik,1));background:#fff;border:calc(2px * var(--lt-ik,1)) solid var(--lt-accent,#2563eb);border-radius:50%;pointer-events:auto;box-sizing:border-box;box-shadow:0 1px 3px rgba(0,0,0,.25)}',
     '.lt-edit-h[data-c=nw]{left:0;top:0;transform:translate(-50%,-50%);cursor:nwse-resize}',
     '.lt-edit-h[data-c=ne]{right:0;top:0;transform:translate(50%,-50%);cursor:nesw-resize}',
     '.lt-edit-h[data-c=sw]{left:0;bottom:0;transform:translate(-50%,50%);cursor:nesw-resize}',
     '.lt-edit-h[data-c=se]{right:0;bottom:0;transform:translate(50%,50%);cursor:nwse-resize}',
-    '.lt-edit-size{position:absolute;left:0;bottom:100%;margin-bottom:calc(6px * var(--lt-ik,1));padding:calc(2px * var(--lt-ik,1)) calc(6px * var(--lt-ik,1));border-radius:calc(4px * var(--lt-ik,1));background:#2563eb;color:#fff;font:500 calc(12px * var(--lt-ik,1))/1.3 system-ui,sans-serif;white-space:nowrap}',
+    '.lt-edit-size{position:absolute;right:0;top:100%;margin-top:calc(8px * var(--lt-ik,1));padding:calc(3px * var(--lt-ik,1)) calc(7px * var(--lt-ik,1));border-radius:calc(6px * var(--lt-ik,1));background:var(--lt-accent,#2563eb);color:var(--lt-on-accent,#fff);font:600 calc(12px * var(--lt-ik,1))/1.2 system-ui,sans-serif;white-space:nowrap;font-variant-numeric:tabular-nums}',
     '.lt-edit-beats{position:absolute;inset:0;z-index:69;pointer-events:none}',
-    '.lt-edit-badge{position:absolute;transform:translate(-30%,-60%);padding:calc(1px * var(--lt-ik,1)) calc(5px * var(--lt-ik,1));border-radius:calc(8px * var(--lt-ik,1));background:rgba(29,36,51,.78);color:#fff;font:600 calc(11px * var(--lt-ik,1))/1.3 system-ui,sans-serif;white-space:nowrap}',
+    '.lt-edit-badge{position:absolute;transform:translate(-30%,-60%);padding:calc(1px * var(--lt-ik,1)) calc(5px * var(--lt-ik,1));border-radius:calc(8px * var(--lt-ik,1));background:rgba(29,36,51,.72);color:#fff;font:600 calc(11px * var(--lt-ik,1))/1.3 system-ui,sans-serif;white-space:nowrap}',
     '.lt-edit-badge.lt-edit-moved{background:#ea580c}',
-    '.lt-edit-badge.lt-edit-cur{box-shadow:0 0 0 calc(2px * var(--lt-ik,1)) #60a5fa}',
+    '.lt-edit-badge.lt-edit-cur{box-shadow:0 0 0 calc(2px * var(--lt-ik,1)) var(--lt-accent,#60a5fa)}',
     '.lt-edit-copy{position:fixed;inset:0;z-index:970;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45);font:14px/1.5 system-ui,sans-serif}',
     '.lt-edit-copy-box{width:min(720px,92vw);padding:16px;border-radius:12px;background:#fff;color:#222;display:flex;flex-direction:column;gap:10px}',
     '.lt-edit-copy-box p{margin:0}',

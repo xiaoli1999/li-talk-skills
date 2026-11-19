@@ -348,7 +348,8 @@ test('真实浏览器：?edit=口令 自动进入编辑模式，改字、拖动�
     assert.ok(await ev('window.Deck && Deck._.editState && Deck._.editState().on'), '自动进入编辑模式');
     const st0 = await b.evaluate('Deck._.editState()');
     assert.equal(st0.server, true);
-    assert.match(st0.bar, /编辑中.*通知 AI 修改.*退出编辑/);
+    assert.match(st0.bar, /未改动.*通知 AI 修改/);
+    assert.equal(await b.evaluate(`!!document.querySelector('.lt-edit-bar .lt-edit-exit[data-tip^="退出编辑"]') && !!document.querySelector('.lt-edit-bar .lt-edit-undo[data-tip="撤销 Ctrl+Z"]')`), true, '编辑条上是带悬停提示的图标按钮');
     assert.equal(await b.evaluate('Deck.page.beat === Deck.page.total && Deck.page.no === 2'), true, '当前页摆到最后一拍');
 
     // 改字：双击第二张卡片的标题，全选后打字，回车
@@ -389,7 +390,7 @@ test('真实浏览器：?edit=口令 自动进入编辑模式，改字、拖动�
     await b.evaluate(`document.querySelector('.lt-edit-go').click()`);
     for (let i = 0; i < 50 && !readEdits(dir).notified; i++) await sleep(100);
     assert.ok(readEdits(dir).notified, '点通知以后 notified 有值');
-    assert.match(await ev(`Deck._.editState().bar.includes('已通知') && Deck._.editState().bar`), /已通知，AI 正在改/);
+    assert.match(await ev(`Deck._.editState().bar.includes('AI 正在改') && Deck._.editState().bar`), /AI 正在改/);
 
     // 改了源码：页面自动刷新，停在第 2 页、仍在编辑模式；没合并的修改摆回页面上
     await b.evaluate('window.__before = 1');
@@ -482,12 +483,15 @@ test('真实浏览器：样式工具栏（字号、颜色、加粗）、重点�
     await key('ArrowDown', 'ArrowDown', 40, 1);
     assert.equal((await b.evaluate('Deck._.editState()')).sel, 'div.grid>div.card:nth-of-type(2)');
     // 改拍号：第 2 拍 → 第 3 拍；角标跟着变
-    assert.match(await b.evaluate(`document.querySelector('.lt-edit-beat').textContent`), /第 2 拍出现/);
+    assert.match(await b.evaluate(`document.querySelector('.lt-edit-beat').textContent`), /拍 2/);
     await tool('[data-act=beat][data-v="1"]');
-    assert.match(await b.evaluate(`document.querySelector('.lt-edit-beat').textContent`), /第 3 拍出现/);
+    assert.match(await b.evaluate(`document.querySelector('.lt-edit-beat').textContent`), /拍 3/);
+    // 选中的块角标不画（拍号在工具栏上）；选外层以后，卡片的角标显示「拍 2→3」
+    await key('ArrowUp', 'ArrowUp', 38, 1);
     assert.ok(await b.evaluate(`[...document.querySelectorAll('.lt-edit-badge')].some(x => x.textContent === '拍 2→3')`));
+    await key('ArrowDown', 'ArrowDown', 40, 1);
     // 样式：字号「标题」、颜色主色、加粗
-    await tool('[data-act=fs][data-v="var(--fs-lg)"]');
+    await b.evaluate(`document.querySelector('.lt-edit-pop [data-act=fs][data-v="var(--fs-lg)"]').click()`);
     await tool('[data-act=color][data-v="--accent"]');
     await tool('[data-act=bold]');
     assert.equal(await b.evaluate(`getComputedStyle(document.querySelector('#slide-g2 .card:nth-of-type(2)')).fontSize`), '50px');
@@ -576,7 +580,7 @@ test('真实浏览器：拖角整块缩放、Alt 拖角改框、字号选数字�
     assert.ok(await b.evaluate(`document.querySelector('${C2}').offsetWidth`) > w0, 'Alt 拖角改了宽度');
     assert.equal(await kinds(), 'box,scale');
     // 字号选数字
-    await b.evaluate(`document.querySelector('.lt-edit-tools [data-act=fs][data-v="64px"]').click()`);
+    await b.evaluate(`document.querySelector('.lt-edit-pop [data-act=fs][data-v="64px"]').click()`);
     assert.equal(await b.evaluate(`getComputedStyle(document.querySelector('${C2}')).fontSize`), '64px');
     assert.equal((await st()).items.find(i => i.kind === 'style').after.fontSize, '64px');
     // 撤销三步、重做一步
@@ -673,5 +677,60 @@ test('真实浏览器：章节 css 写了 scale:1.3 的块用 pop 出场，动�
     const end = f[f.length - 1].s;
     assert.ok(Math.abs(end - 1.3) < .01, `放完是 1.3 倍，现在 ${end}`);
     assert.ok(Math.max(...f.map(x => x.s)) > 1.3, 'pop 有回弹，峰值超过 1.3 倍');
+  } finally { await b.close(); }
+});
+
+test('真实浏览器：旋转过的块，选中框跟着转、和元素重合，拖动按旋转后的坐标算；深色风格用深色玻璃面板，照样能选中', { skip: !browser && '本机没找到 Edge / Chrome', timeout: 90000 }, async () => {
+  const dir = deck();
+  // 第 1 页的便签转 -6°；第 2 页换成黑板（深色风格）
+  writeFileSync(join(dir, 'slides', 'ch1.css'), readFileSync(join(dir, 'slides', 'ch1.css'), 'utf8') + '\n[data-id="g1"] .g1-card{rotate:-6deg}\n');
+  for (const f of ['board.js', 'board.css']) cpSync(join(TPL, 'scenes', f), join(dir, 'scenes', f));
+  const html = join(dir, 'index.html');
+  writeFileSync(html, readFileSync(html, 'utf8').replace('<script src="scenes/paper.js"></script>', '<script src="scenes/paper.js"></script>\n<script src="scenes/board.js"></script>')
+    .replace('<link rel="stylesheet" href="scenes/paper.css">', '<link rel="stylesheet" href="scenes/paper.css">\n<link rel="stylesheet" href="scenes/board.css">'));
+  const js = join(dir, 'slides', 'ch1.js');
+  writeFileSync(js, readFileSync(js, 'utf8').replace("topic: '一页正常的内容',\n    scene: 'paper',", "topic: '一页正常的内容',\n    scene: 'board',"));
+  const b = await openBrowser(browser);
+  const mouse = (type, x, y, extra = {}) => b.call('Input.dispatchMouseEvent', { type, x, y, button: 'left', buttons: type === 'mouseReleased' ? 0 : 1, clickCount: 1, ...extra });
+  const rect = sel => b.evaluate(`(() => { const r = document.querySelector(${JSON.stringify(sel)}).getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height, cx: r.left + r.width / 2, cy: r.top + r.height / 2 }; })()`);
+  try {
+    const url = new URL('file:///' + join(dir, 'index.html').replace(/\\/g, '/'));
+    await b.goto(url.href + '#1', { w: 1280, h: 720 });
+    for (let i = 0; i < 60 && !(await b.evaluate(`window.Deck && Deck.page && !document.body.classList.contains('loading')`)); i++) await sleep(100);
+    await b.call('Input.dispatchKeyEvent', { type: 'keyDown', key: 'e', code: 'KeyE', windowsVirtualKeyCode: 69 });
+    await sleep(300);
+    const c = await rect('#slide-g1 .g1-card');
+    await mouse('mousePressed', c.cx, c.cy); await mouse('mouseReleased', c.cx, c.cy);
+    await sleep(200);
+    assert.equal((await b.evaluate('Deck._.editState()')).sel, 'div.card');
+    assert.match(await b.evaluate(`document.querySelector('.lt-edit-sel').style.transform`), /rotate\(-6deg\)/, '选中框跟着转');
+    let s = await rect('.lt-edit-sel'), e = await rect('#slide-g1 .g1-card');
+    assert.ok(Math.abs(s.x - e.x) < 2 && Math.abs(s.y - e.y) < 2 && Math.abs(s.w - e.w) < 2 && Math.abs(s.h - e.h) < 2, `框和元素重合：${JSON.stringify([s, e])}`);
+    // 拖动：在舞台上往右拖 60 屏幕像素，元素也往右走 60（不会因为旋转走歪）
+    await mouse('mousePressed', c.cx, c.cy);
+    for (let i = 1; i <= 4; i++) await mouse('mouseMoved', c.cx + 15 * i, c.cy);
+    await mouse('mouseReleased', c.cx + 60, c.cy);
+    const e2 = await rect('#slide-g1 .g1-card');
+    assert.ok(Math.abs(e2.cx - e.cx - 60) < 1.5 && Math.abs(e2.cy - e.cy) < 1.5, `拖动后中心挪了 ${e2.cx - e.cx}, ${e2.cy - e.cy}`);
+    // 整块缩放：框和元素仍然重合
+    const h = await rect('.lt-edit-h[data-c=se]');
+    await mouse('mousePressed', h.cx, h.cy);
+    for (let i = 1; i <= 4; i++) await mouse('mouseMoved', h.cx + 10 * i, h.cy + 6 * i);
+    await mouse('mouseReleased', h.cx + 40, h.cy + 24);
+    s = await rect('.lt-edit-sel'); e = await rect('#slide-g1 .g1-card');
+    assert.ok(Math.abs(s.x - e.x) < 2 && Math.abs(s.y - e.y) < 2 && Math.abs(s.w - e.w) < 2 && Math.abs(s.h - e.h) < 2, `缩放后框和元素重合：${JSON.stringify([s, e])}`);
+    assert.equal(await b.evaluate(`document.body.classList.contains('lt-darkui')`), false, '浅色风格用浅色玻璃');
+    // 翻到黑板页：深色玻璃，强调色取风格的 --accent，点卡片照样能选中
+    await b.call('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });   // 先取消选中，方向键才是翻页
+    await b.call('Input.dispatchKeyEvent', { type: 'keyDown', key: 'ArrowRight', code: 'ArrowRight', windowsVirtualKeyCode: 39 });
+    await sleep(300);
+    assert.equal(await b.evaluate('Deck.page.no'), 2);
+    assert.equal(await b.evaluate(`document.body.classList.contains('lt-darkui')`), true, '深色风格用深色玻璃');
+    assert.equal(await b.evaluate(`document.body.style.getPropertyValue('--lt-accent').trim() === getComputedStyle(document.querySelector('#slide-g2')).getPropertyValue('--accent').trim()`), true);
+    const c2 = await rect('#slide-g2 .card:nth-of-type(2)');
+    await mouse('mousePressed', c2.cx, c2.cy); await mouse('mouseReleased', c2.cx, c2.cy);
+    await sleep(200);
+    assert.equal((await b.evaluate('Deck._.editState()')).sel, 'div.grid>div.card:nth-of-type(2)');
+    assert.equal((await b.evaluate('Deck._.editState()')).tools, true);
   } finally { await b.close(); }
 });
