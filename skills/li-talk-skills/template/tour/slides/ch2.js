@@ -143,7 +143,7 @@ Deck.add({
   ],
 });
 
-/* p14 形象：左边四条一拍一条，方方走到这一条旁边、换一个动作；右边一张真图 */
+/* p14 形象：左边四条一拍一条，方小果走到这一条旁边、换一个动作；右边一张真图 */
 Deck.add({
   id: 'p14',
   chapter: '三、做一份课件',
@@ -161,7 +161,7 @@ Deck.add({
     <figure class="abs shot" data-beat="0" data-src="素材/styles/flat.jpg" data-caption="真图：扁平插画风格的一页和它的形象" style="left:1180px;top:300px;width:620px"></figure>
     <div class="mascot guide" style="left:1500px;top:820px"></div>`,
   notes: [
-    { beat: 0, say: '每种风格都有一个小形象。这份教程里的是方方。' },
+    { beat: 0, say: '每种风格都有一个小形象。这份教程里的是方小果。' },
     { beat: 1, key: '走过去', say: '讲到哪，它就走到哪块内容旁边。' },
     { beat: 2, key: '换动作', say: '它会换动作，指一指、惊讶一下、点个赞。' },
     { beat: 3, key: '玩', say: '鼠标移上去它会开心，点它会蹦一下，点它不会翻页。' },

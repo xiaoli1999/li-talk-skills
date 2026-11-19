@@ -515,10 +515,10 @@ Deck.add({
 | 砰砰 `pengpeng` | 165×154（看得见的身子约 125 高） | 同上 |
 | 小旗 `xiaoqi` | 112×128 | 同上 |
 | 圈圈 `quanquan` | 124×138（看得见的身子约 127 高） | 同上 |
-| 方方 `fangfang` | 124×134 | 同上 |
+| 方小果 `fangfang` | 124×134 | 同上 |
 | 叨叨 `daodao` | 177×143（比别的形象宽） | 同上 |
 
-方方 `fangfang`（方果风格的形象）除了四种基本姿势，`data-mascot-pose` 还认 `ask` 疑问、`think` 思考、`idea` 灵感、`wow` 惊讶、`ok` 点赞、`thanks` 致谢。
+方小果 `fangfang`（方果风格的形象）除了四种基本姿势，`data-mascot-pose` 还认 `ask` 疑问、`think` 思考、`idea` 灵感、`wow` 惊讶、`ok` 点赞、`thanks` 致谢。
 
 各个 side 需要的空地：
 

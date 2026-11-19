@@ -68,7 +68,7 @@ AI 会先问你手上有什么，从三种起点出发：
 
 | 样子 | 风格 | 默认形象 | 适合讲什么 |
 |---|---|---|---|
-| <img src="docs/images/styles/fangguo.jpg" width="240" alt="方果"> | **方果** `fangguo` | 方方：方果 Logo 化来的红色小方果 | 给客户演讲、领导汇报、产品介绍、经营数据 |
+| <img src="docs/images/styles/fangguo.jpg" width="240" alt="方果"> | **方果** `fangguo` | 方小果：公司 IP「方小果」，圆角方脑袋的小果子 | 给客户演讲、领导汇报、产品介绍、经营数据 |
 
 ### 手绘风（楷书）
 
