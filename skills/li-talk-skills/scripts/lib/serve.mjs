@@ -8,7 +8,8 @@
 // - /__li-talk/ 下的接口（edit.js 以外都要带 ?token=口令，不对就 403）：
 //     GET  events   SSE：slides/ 或 index.html 变了推 reload；edits.json 被 edits --done 清掉时推 merged
 //     GET  edits    当前的修改记录（浏览器进编辑模式时先读回来，接着改）
-//     POST edits    请求体是 { items: [...] }，整理后写进 .li-talk/edits.json（先写临时文件再改名）
+//     POST edits    请求体是 { items: [...] }，整理后写进 .li-talk/edits.json（先写临时文件再改名）；
+//                   已经被 edits --done 合并掉的条目按 done 去掉（applyDone），免得浏览器把旧修改存回来
 //     POST notify   把 edits.json 的 notified 设成现在，终端打印一行
 //   POST 只收 JSON（Content-Type: application/json），请求体最多 1MB。Host 头只认 127.0.0.1 / localhost，挡 DNS 重绑定。
 import { createServer } from 'node:http';
@@ -17,7 +18,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, unlinkSync,
 import { extname, join, resolve, sep } from 'node:path';
 import { UserError } from './cli.mjs';
 import { TPL_DIR } from './paths.mjs';
-import { cleanItem, deckDir, readEdits, writeEdits } from './edits.mjs';
+import { applyDone, cleanItem, deckDir, readEdits, writeEdits } from './edits.mjs';
 import { openPath } from './open.mjs';
 
 export const MAX_BODY = 1024 * 1024;
@@ -100,8 +101,9 @@ export async function startServer(dir, opts = {}) {
     const now = new Date().toISOString();
     if (name === 'edits') {
       if (!Array.isArray(data.items)) return send(res, 400, 'items 要是数组');
-      const items = data.items.map(cleanItem).filter(Boolean);
-      writeEdits(root, { version: 1, updated: now, notified: cur.notified, merged: cur.merged, items });
+      // 已经合并的条目（edits --done 清掉的）浏览器可能还没刷新、又存了回来：按 done 去掉，合并后又改过的换成新的 before
+      const items = applyDone(data.items.map(cleanItem).filter(Boolean), cur.done);
+      writeEdits(root, { ...cur, updated: now, items });
       return json(res, 200, { ok: true, count: items.length, updated: now });
     }
     writeEdits(root, { ...cur, notified: now });

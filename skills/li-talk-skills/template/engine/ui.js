@@ -219,11 +219,12 @@
      输入
      ================================================================= */
   function onKey(e) {
+    // 编辑模式（edit.js）最先问：改字时键盘归输入，选中元素时方向键微调、Alt+↑↓ 选外层 / 回内层，翻页只翻整页
+    if (S.editing && I.editKey && I.editKey(e)) return;
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     const k = e.key;
     if (!dom.lb.hidden) { if (k === 'Escape' || NEXT_KEYS.has(k) || PREV_KEYS.has(k)) { e.preventDefault(); closeShot(); } return; }
     if (S.reading) return;
-    if (I.editKey && I.editKey(e)) return;   // 编辑模式（edit.js）：改字时键盘归输入，选中元素时方向键微调，翻页只翻整页
     const ae = document.activeElement;
     if (ae && ae !== document.body && ae.matches && ae.matches('button,[data-copy],.shot')) ae.blur();
     if (I.toolKey && I.toolKey(e)) return;   // 现场工具（tools.js）：O 总览、B 黑屏、L 激光笔；总览、黑屏开着时翻页键归它们管

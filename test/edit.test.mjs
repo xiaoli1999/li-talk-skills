@@ -9,7 +9,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { injectEdit, run as runServe, startServer } from '../skills/li-talk-skills/scripts/lib/serve.mjs';
 import { run as runWait } from '../skills/li-talk-skills/scripts/lib/wait.mjs';
-import { formatEdits, itemLine, readEdits, run as runEdits, writeEdits } from '../skills/li-talk-skills/scripts/lib/edits.mjs';
+import { applyDone, formatEdits, itemLine, readEdits, run as runEdits, writeEdits } from '../skills/li-talk-skills/scripts/lib/edits.mjs';
 import { guideText } from '../skills/li-talk-skills/scripts/lib/guide.mjs';
 import { confirmStep } from '../skills/li-talk-skills/scripts/lib/meta.mjs';
 import { readDeck } from '../skills/li-talk-skills/scripts/lib/deck.mjs';
@@ -197,7 +197,7 @@ test('edits：每条一行写清页号、元素、改了什么；末尾是合并
   await runEdits({ _: [dir] }, { log: l => logs.push(l) });
   const out = logs.join('\n');
   assert.match(out, /用户还没点「通知 AI 修改」/);
-  assert.match(out, /用户在浏览器里改了 3 处（第 2 页 1 处、第 1 页 1 处、第 3 页 1 处）：/);
+  assert.match(out, /用户在浏览器里改了 3 处（第 2 页 1 处、第 1 页 1 处、第 3 页 1 处），批次 b[0-9a-z]+：/);
   assert.match(out, /  1\. 第 2 页（g2）div\.grid>div\.card:nth-of-type\(2\)>h3「第二张」：文字「第二张」→「第 2 张」\n/);
   assert.match(out, /  2\. 第 1 页（g1）p\.lead「三页干净的内容」：位置 left 160→200、top 300→340\n/);
   assert.match(out, /  3\. 第 3 页（g3）p\.g3-sub「自检清零，再给别人看」：隐藏（删掉这个元素）\n/);
@@ -210,10 +210,64 @@ test('edits：每条一行写清页号、元素、改了什么；末尾是合并
 
   logs.length = 0;
   await runEdits({ _: [dir], done: true }, { log: l => logs.push(l) });
-  assert.match(logs.join('\n'), /已清空 3 处修改/);
+  assert.match(logs.join('\n'), /已清掉这一批的 3 处修改/);
   const d = readEdits(dir);
   assert.deepEqual(d.items, []);
   assert.ok(d.merged);
+});
+
+test('edits --done 只清打印过的那一批：合并期间新加的、又改过的留着（又改过的 before 换成已经合并的值）', async () => {
+  const dir = deck();
+  const a = { ...ITEMS[0], id: 'e1', at: 100 }, b = { ...ITEMS[1], id: 'e2', at: 100 };
+  writeEdits(dir, { version: 1, updated: null, notified: null, merged: null, items: [a, b] });
+  const logs = [];
+  await runEdits({ _: [dir] }, { log: l => logs.push(l) });
+  const batch = /批次 (b[0-9a-z]+)/.exec(logs.join('\n'))[1];
+  assert.match(logs.join('\n'), new RegExp('edits ".*" --done ' + batch));
+  // AI 合并期间：用户又挪了一次 b，又新改了一处
+  const b2 = { ...b, at: 200, after: { ...b.after, left: 260 } };
+  const c = { ...ITEMS[2], id: 'e3', at: 150 };
+  writeEdits(dir, { ...readEdits(dir), items: [a, b2, c] });
+  await assert.rejects(runEdits({ _: [dir, 'bnope'], done: true }, { log: () => {} }), /批次号对不上/);
+  logs.length = 0;
+  await runEdits({ _: [dir, batch], done: true }, { log: l => logs.push(l) });
+  assert.match(logs.join('\n'), /已清掉这一批的 1 处修改.*又改了 2 处，留着/);
+  const d = readEdits(dir);
+  assert.deepEqual(d.items.map(i => i.id), ['e2', 'e3']);
+  assert.deepEqual(d.items[0].before, b.after, '又改过的：before 换成已经合并的值');
+  assert.equal(d.items[0].after.left, 260);
+  assert.ok(d.merged && !d.batch);
+  assert.deepEqual(d.done.map(x => x.id).sort(), ['e1', 'e2']);
+  // 浏览器还没刷新、把旧的 a、b 存回来：服务按 done 去掉 a，b 只剩合并后又改的部分
+  assert.deepEqual(applyDone([a, b2, c], d.done).map(i => i.id), ['e2', 'e3']);
+  assert.deepEqual(applyDone([a, b], d.done), [], '没再改过的都去掉');
+});
+
+test('serve：浏览器把已经合并的修改存回来时，按 done 去掉', async () => {
+  const dir = deck();
+  writeEdits(dir, { version: 1, updated: null, notified: null, merged: null, items: [], done: [{ id: 'e1', at: 100, after: ITEMS[0].after }] });
+  const s = await startServer(dir, { token: 'tok' });
+  try {
+    const body = JSON.stringify({ items: [{ ...ITEMS[0], id: 'e1', at: 100 }, { ...ITEMS[2], id: 'e9', at: 300 }] });
+    assert.equal((await http(s.port, 'POST', '/__li-talk/edits?token=tok', { body, type: 'application/json' })).status, 200);
+    assert.deepEqual(readEdits(dir).items.map(i => i.id), ['e9']);
+  } finally { await s.close(); }
+});
+
+test('edits：样式、拍号、讲词的写法', () => {
+  const style = { page: 'p02', no: 2, path: 'p.lead', hint: '一句话', kind: 'style',
+    before: { fontSize: 'var(--fs-body)', color: 'var(--ink)', fontWeight: '400', textAlign: 'left' },
+    after: { fontSize: 'var(--fs-lg)', color: 'var(--accent)', fontWeight: '700', textAlign: 'left' } };
+  assert.equal(itemLine(style), '第 2 页（p02）p.lead「一句话」：样式 字号 var(--fs-body)→var(--fs-lg)、颜色 var(--ink)→var(--accent)、粗细 400→700');
+  const beat = { page: 'p02', no: 2, path: 'div.card', hint: '卡片', kind: 'beat', own: true, mascot: true, before: { beat: 1 }, after: { beat: 2 } };
+  assert.equal(itemLine(beat), '第 2 页（p02）div.card「卡片」：拍号 第 1 拍→第 2 拍出现（元素上还有 data-mascot，拍号一起改）');
+  assert.match(itemLine({ ...beat, own: false, mascot: false }), /本来没写 data-beat，跟着外层第 1 拍出现/);
+  const notes = { page: 'p02', no: 2, path: 'notes', hint: '第 1 拍讲词', kind: 'notes', beat: 1, before: { text: '旧的讲词' }, after: { text: '新的讲词，整句都写出来' } };
+  assert.equal(itemLine(notes), '第 2 页（p02）第 1 拍的讲词：「旧的讲词」→「新的讲词，整句都写出来」');
+  const out = formatEdits({ items: [style, beat, notes] });
+  assert.match(out, /- 样式：优先换成已有的类名/);
+  assert.match(out, /- 拍号：改这个元素的 data-beat/);
+  assert.match(out, /- 讲词：页面 notes 里对应拍的 say 和 讲稿\.md/);
 });
 
 test('wait：先启动再通知，打印清单、退出码 0；已经合并的不触发；--timeout 到了退出码 3', async () => {
@@ -393,4 +447,85 @@ test('真实浏览器：双击 file:// 打开时按 E 进编辑，修改存进 l
     assert.match(copy, /^【课件修改】/);
     assert.match(copy, /隐藏（删掉这个元素）/);
   } finally { await b.close(); }
+});
+
+test('真实浏览器：样式工具栏（字号、颜色、加粗）、重点词、改拍号、选外层、演讲者视图里改讲词', { skip: !browser && '本机没找到 Edge / Chrome', timeout: 120000 }, async () => {
+  const dir = deck();
+  const s = await startServer(dir, { token: 'tok' });
+  const b = await openBrowser(browser);
+  const ev = async (expr, ms = 15000) => {
+    const start = Date.now();
+    for (;;) {
+      const v = await b.evaluate(expr, 3000).catch(() => null);
+      if (v || Date.now() - start > ms) return v;
+      await sleep(100);
+    }
+  };
+  const mouse = async (type, x, y, extra = {}) => b.call('Input.dispatchMouseEvent', { type, x, y, button: 'left', buttons: type === 'mouseReleased' ? 0 : 1, clickCount: 1, ...extra });
+  const click = async (x, y, n = 1) => { for (let k = 1; k <= n; k++) { await mouse('mousePressed', x, y, { clickCount: k }); await mouse('mouseReleased', x, y, { clickCount: k }); } };
+  const key = (k, code, vk, modifiers = 0) => b.call('Input.dispatchKeyEvent', { type: 'keyDown', key: k, code, windowsVirtualKeyCode: vk, modifiers });
+  const center = sel => b.evaluate(`(() => { const r = document.querySelector(${JSON.stringify(sel)}).getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
+  const tool = sel => b.evaluate(`document.querySelector('.lt-edit-tools ${sel}').click()`);
+  try {
+    await b.goto(`http://127.0.0.1:${s.port}/index.html?edit=tok#2`, { w: 1280, h: 720 });
+    assert.ok(await ev('window.Deck && Deck._.editState && Deck._.editState().on'));
+    await sleep(300);
+    // 选中第二张卡片（点在卡片的内边距上），工具栏浮出来
+    const c2 = await b.evaluate(`(() => { const r = document.querySelector('#slide-g2 .card:nth-of-type(2)').getBoundingClientRect(); return { x: r.left + 8, y: r.bottom - 8 }; })()`);
+    await click(c2.x, c2.y);
+    let st = await b.evaluate('Deck._.editState()');
+    assert.equal(st.sel, 'div.grid>div.card:nth-of-type(2)');
+    assert.equal(st.tools, true, '选中后浮出工具栏');
+    // 选外层、回内层
+    await key('ArrowUp', 'ArrowUp', 38, 1);
+    assert.equal((await b.evaluate('Deck._.editState()')).sel, 'div.grid');
+    await key('ArrowDown', 'ArrowDown', 40, 1);
+    assert.equal((await b.evaluate('Deck._.editState()')).sel, 'div.grid>div.card:nth-of-type(2)');
+    // 改拍号：第 2 拍 → 第 3 拍；角标跟着变
+    assert.match(await b.evaluate(`document.querySelector('.lt-edit-beat').textContent`), /第 2 拍出现/);
+    await tool('[data-act=beat][data-v="1"]');
+    assert.match(await b.evaluate(`document.querySelector('.lt-edit-beat').textContent`), /第 3 拍出现/);
+    assert.ok(await b.evaluate(`[...document.querySelectorAll('.lt-edit-badge')].some(x => x.textContent === '拍 2→3')`));
+    // 样式：字号「标题」、颜色主色、加粗
+    await b.evaluate(`(() => { const s = document.querySelector('.lt-edit-fs'); s.value = 'var(--fs-lg)'; s.dispatchEvent(new Event('change', { bubbles: true })); })()`);
+    await tool('[data-act=color][data-v="--accent"]');
+    await tool('[data-act=bold]');
+    assert.equal(await b.evaluate(`getComputedStyle(document.querySelector('#slide-g2 .card:nth-of-type(2)')).fontSize`), '50px');
+    // 重点词：双击第三张卡片的标题，选中前两个字，点「重点」
+    const h3 = await center('#slide-g2 .card:nth-of-type(3) h3');
+    await sleep(500);
+    await click(h3.x, h3.y, 2);
+    assert.ok(await ev(`!!document.querySelector('.lt-edit-text')`));
+    await b.evaluate(`(() => { const n = document.querySelector('.lt-edit-text').firstChild; const r = document.createRange(); r.setStart(n, 0); r.setEnd(n, 2); getSelection().removeAllRanges(); getSelection().addRange(r); })()`);
+    await tool('[data-act=key]');
+    assert.equal(await b.evaluate(`document.querySelector('.lt-edit-text .key').textContent`), '第三');
+    await key('Enter', 'Enter', 13);
+    // 演讲者视图里改讲词：按 S 打开，点第 1 拍的讲词，改完按回车保存
+    await key('s', 'KeyS', 83);
+    assert.ok(await ev(`!!(Deck._.state.pres && Deck._.state.pres.document.querySelector('.say.editable[data-beat="1"]'))`), '演讲者视图里讲词可以点');
+    await b.evaluate(`(() => { const d = Deck._.state.pres.document, el = d.querySelector('.say[data-beat="1"]'); el.click(); el.textContent = '第一张，先写下要讲的话'; el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); })()`);
+    // 等自动保存
+    let saved;
+    for (let i = 0; i < 50; i++) { saved = readEdits(dir); if (saved.items.length >= 4) break; await sleep(100); }
+    const kinds = Object.fromEntries(saved.items.map(it => [it.kind, it]));
+    assert.deepEqual(Object.keys(kinds).sort(), ['beat', 'notes', 'style', 'text'], JSON.stringify(saved.items));
+    assert.deepEqual([kinds.beat.before, kinds.beat.after, kinds.beat.own, kinds.beat.mascot], [{ beat: 2 }, { beat: 3 }, true, true]);
+    assert.deepEqual(kinds.style.after, { fontSize: 'var(--fs-lg)', color: 'var(--accent)', fontWeight: '700', textAlign: kinds.style.before.textAlign });
+    assert.notEqual(kinds.style.before.fontSize, 'var(--fs-lg)');
+    assert.equal(kinds.text.after.html, '<em class="key">第三</em>张');
+    assert.deepEqual([kinds.notes.page, kinds.notes.beat, kinds.notes.before.text, kinds.notes.after.text], ['g2', 1, '第一张。', '第一张，先写下要讲的话']);
+    assert.ok(saved.items.every(it => it.id && it.at), '每条都有 id 和 at');
+    // 浏览器里的清单和 edits 命令一致
+    const lines = await b.evaluate(`Deck._.editsText(${JSON.stringify(saved.items)}).split('\\n').filter(l => /^  \\d+\\. /.test(l)).join('\\n')`);
+    assert.equal(lines, formatEdits(saved).split('\n').filter(l => /^ {2}\d+\. /.test(l)).join('\n'));
+    // 退出编辑后放映照常：拍号没真的改（第二张卡片还是第 2 拍出现）
+    await key('Escape', 'Escape', 27);
+    await key('e', 'KeyE', 69);
+    assert.equal(await ev('!Deck._.editState().on'), true);
+    await b.evaluate('Deck.go(2, 1)');
+    assert.equal(await b.evaluate(`getComputedStyle(document.querySelector('#slide-g2 .card:nth-of-type(2)')).visibility`), 'hidden');
+  } finally {
+    await b.close();
+    await s.close();
+  }
 });

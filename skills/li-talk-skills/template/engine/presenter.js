@@ -6,7 +6,8 @@
    - 演讲者视图（按 S）：独立窗口，和主窗口同步当前页、当前拍、讲词、重点词和下一拍
      字号为旧稿演讲者视图的 80%（正文 30px → 24px）
    - 演讲者窗口里的脚本通过 window.opener.Deck 的 _key、_attach、_presenter、next、prev 和主窗口通信，
-     彩排的按钮和 H 键走总线 Deck._.rhAct、复制走 Deck._.rhText
+     彩排的按钮和 H 键走总线 Deck._.rhAct、复制走 Deck._.rhText；
+     主窗口开着在线编辑（edit.js 的 I.notesEditable() 为真）时，点一拍的讲词就能改，走 Deck._.noteText 取原文、Deck._.editNote 保存
    - 演讲者窗口被刷新过（document.open 后它的地址是课件地址，刷新会把整份课件或空白页加载进去）：
      主窗口在下一次 tick 里发现里面没有演讲者视图，就重新写进去；主窗口里再按 S 也会重写
    - 彩排（演讲者窗口里按 H 或点「开始彩排」）：
@@ -327,6 +328,9 @@
   .say{margin-top:4px}
   .say mark{background:linear-gradient(transparent 35%,#FFD43B 35%);color:inherit;font-weight:700;padding:0 2px}
   .say i{color:#A39A86}
+  .say.editable{cursor:text;border-radius:6px}
+  .say.editable:hover{box-shadow:0 0 0 2px #C9BFA8}
+  .say.ed{background:#fff;box-shadow:0 0 0 2px #2563EB;outline:none;padding:2px 6px}
   .nx{padding:10px 22px;border-top:2px dashed #C9BFA8;background:#EFE7D3;font-size:19px}
   .nx b{color:#F76707}
   footer{display:flex;align-items:center;gap:12px;padding:8px 22px 10px;font-size:16px;color:#7A6F5A}
@@ -371,7 +375,37 @@
     var lost = false;
     function D(){ try { var d = window.opener && !window.opener.closed && window.opener.Deck; lost = false; return d; } catch (e) { lost = true; return null; } }
     function $(id){ return document.getElementById(id); }
+    /* 在线编辑（主窗口开着编辑模式时）：点一拍的讲词就能改，回车或点外面保存，Esc 取消；交给主窗口的 Deck._.editNote 保存 */
+    var editing = null;
+    function startSay(el){
+      var d = D(); if (!d || !d._ || !d._.noteText) return;
+      var b = +el.getAttribute('data-beat'), pi = +$('ls').getAttribute('data-p');
+      editing = { el: el, b: b, p: pi };
+      el.textContent = d._.noteText(pi, b);
+      el.setAttribute('contenteditable', 'true'); el.classList.add('ed'); el.focus();
+      var r = document.createRange(); r.selectNodeContents(el); r.collapse(false);
+      var sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    }
+    function endSay(save){
+      var e = editing; if (!e) return; editing = null;
+      e.el.removeAttribute('contenteditable'); e.el.classList.remove('ed');
+      var d = D(); if (!d || !d._) return;
+      if (save && d._.editNote) d._.editNote(e.p, e.b, e.el.textContent);
+      if (d._.syncPresenter) d._.syncPresenter();
+    }
+    document.addEventListener('focusout', function(e){ if (editing && e.target === editing.el) endSay(true); });
+    document.addEventListener('paste', function(e){
+      if (!editing || !editing.el.contains(e.target)) return;
+      e.preventDefault();
+      var t = (e.clipboardData && e.clipboardData.getData('text/plain')) || '';
+      document.execCommand('insertText', false, t.replace(/[\\r\\n]+/g, ' '));
+    });
     document.addEventListener('keydown', function(e){
+      if (editing) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); endSay(true); }
+        else if (e.key === 'Escape') { e.preventDefault(); endSay(false); }
+        return;   // 改讲词时键盘归输入，不翻页
+      }
       if (e.target && /^(TEXTAREA|INPUT)$/.test(e.target.tagName)) return;   // 在小结的文字框里选字、复制时不翻页
       var d = D(); if (!d) return;
       if (!e.ctrlKey && !e.metaKey && !e.altKey && d._ && d._.rhAct) {
@@ -397,7 +431,10 @@
       else done(false);
     }
     document.addEventListener('click', function(e){
-      var t = e.target, d = D(); if (!d || !d._ || !d._.rhAct) return;
+      var t = e.target, d = D(); if (!d || !d._) return;
+      var sy = t && t.closest && t.closest('.say.editable');
+      if (sy && !sy.classList.contains('ed')) { startSay(sy); return; }
+      if (!d._.rhAct) return;
       if (t && t.id === 'sum') { d._.rhAct('close'); return; }   // 点小结外面的空白：关掉
       var b = t && t.closest && t.closest('[data-act]'); if (!b) return;
       if (b.tagName === 'BUTTON') b.blur();
@@ -449,6 +486,10 @@
     try {
       const d = S.pres.document, p = PAGES[S.cur.p], np = PAGES[S.cur.p + 1];
       if (!d.getElementById('ls') || !p) return;
+      // 正在演讲者窗口里改讲词：先不重画，免得把正在打的字冲掉（改完会再同步一次）
+      const ae = d.activeElement;
+      if (ae && ae.classList && ae.classList.contains('ed')) return;
+      const editable = !!(I.notesEditable && I.notesEditable());
       d.getElementById('pg').textContent = `${p.i + 1} / ${PAGES.length}`;
       d.getElementById('tt').innerHTML = (p.def.topic ? `<span class="tp">${esc(p.def.chapterShort)} › ${esc(p.def.topic)}</span>` : '')
         + `${esc(p.def.title || p.id)}<small>${esc(p.def.chapter || '')}</small>`;
@@ -463,9 +504,10 @@
         const show = ns.map(x => x.show).filter(Boolean).join(' · ') || (n === 0 ? '标题' : I.autoShow(p, n));
         const say = ns.filter(x => x.say).map(x => hlSay(x.say, keys)).join('<br>');
         const cls = n < p.beat ? 'past' : n === p.beat ? 'now' : 'next';
-        rows += `<li class="${cls}"><div class="bh"><span class="bn">${n === 0 ? '开场' : '第 ' + n + ' 拍'}</span><span>${esc(show)}</span>${keys.map(k => `<span class="bk">${esc(k)}</span>`).join('')}</div><div class="say">${say || '<i>（这一拍没写讲词）</i>'}</div></li>`;
+        rows += `<li class="${cls}"><div class="bh"><span class="bn">${n === 0 ? '开场' : '第 ' + n + ' 拍'}</span><span>${esc(show)}</span>${keys.map(k => `<span class="bk">${esc(k)}</span>`).join('')}</div><div class="say${editable ? ' editable' : ''}" data-beat="${n}"${editable ? ' title="点一下改讲词（回车保存，Esc 取消）"' : ''}>${say || '<i>（这一拍没写讲词）</i>'}</div></li>`;
       }
       d.getElementById('ls').innerHTML = rows;
+      d.getElementById('ls').setAttribute('data-p', String(S.cur.p));
       let nx;
       if (p.beat < p.total) {
         const n = p.beat + 1, ks = I.keysOf(p, n), show = p.notes.filter(x => x.beat === n).map(x => x.show).filter(Boolean).join(' · ') || I.autoShow(p, n);

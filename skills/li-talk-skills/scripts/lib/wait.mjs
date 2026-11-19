@@ -7,7 +7,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { UserError } from './cli.mjs';
-import { deckDir, formatEdits, pendingNotify, readEdits, statusLine } from './edits.mjs';
+import { deckDir, pendingNotify, printBatch, readEdits } from './edits.mjs';
 
 export const POLL = 500;
 
@@ -41,8 +41,7 @@ export async function run(args = {}, opts = {}) {
     }
     const d = readEdits(dir);
     if (pendingNotify(d) && Date.parse(d.notified) > start) {
-      log(statusLine(d));
-      log(formatEdits(d, { dir }));
+      printBatch(dir, log);   // 打印清单并记成一个批次：edits --done 只清这一批
       return 0;
     }
     if (limit && Date.now() - start >= limit * 1000) {
