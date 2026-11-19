@@ -82,10 +82,10 @@
        讲到的站亮起，订单卡 .fg-token（这里补上）沿轨道走到当前站，轨道一段段填成品牌蓝（最多 6 站）
      · .fg-hub > b.fg-plt 平台汇聚：平台胶囊从正上方顺时针排成一圈（data-fg-rx、data-fg-ry 是横竖半径，占宽高的百分比，默认 40），
        中间是方果；胶囊亮起时一条线画向中间、一颗光点沿线流过去（出场 fghub，只流一趟）
-     · .fg-num.fg-odo 按位滚动的数字：每一位像计数器一样从 0 滚到读数；滚动时临时叠一层数字条，页面上的字一直是真的读数
+     · .fg-num.fg-odo 按位滚动的数字：每一位先快速翻动，再从左到右依次停在读数上；只改真数字自己的字，不叠第二层
      · .fg-vs 新旧对比：<s class="fg-old">旧</s><i class="fg-arrow"></i><b class="fg-new" data-beat="n">新</b>，新的到拍时旧的划一道红线（仍读得清）
-     · 版式工具：.fg-bleed 加 fg-slant 是斜切分区、加 fg-deep 是整屏品牌深蓝的金句页（字自动换白）；.fg-quote 金句（.fg-hl 点一个词）；
-       .fg-deco 深色页上的同心细圆环装饰
+     · 版式工具：.fg-bleed 加 fg-slant 是斜切分区、加 fg-wash 是整屏淡蓝晕染的金句页；.fg-quote 金句（上面一道品牌蓝短线，.fg-hl 点一个词，品牌蓝渐变）；
+       .fg-deco 一组淡蓝同心细圆环装饰（不放字）
    - 自己加的出场名：fgrise、fgfade、fgmock、fghub，只在这个风格里认（别的风格会提醒并换成它的默认出场）。页面里不用写，组件按类名自动选
    - 禁区（zones，舞台坐标 1920×1080）：
      · 左上角主题行（x 120 起，宽 1260，y 18–78）
@@ -460,31 +460,30 @@
     return .85;
   }
 
-  /* ---------- 按位滚动的数字（.fg-num.fg-odo）：每一位像计数器一样从 0 滚到读数 ----------
-     页面上的字一直是真的读数；滚动时临时叠一层一位一列的数字条，播完拿掉 */
+  /* ---------- 按位滚动的数字（.fg-num.fg-odo）：像计数器一样，每一位先快速翻动，再从左到右依次停在读数上 ----------
+     只改真数字自己的那段字（第一段文字；单位在 <small> 里不动），不叠第二层：等宽数字（tabular-nums）翻动时宽度不变，
+     千分位逗号、小数点、冒号这些非数字字符原样留着；播完、被打断、跳拍时都换回页面里写的原字 */
   function odoRoll(tl, el, t) {
-    if (!Deck.motion || !el.offsetParent) return 0;
-    const host = el.offsetParent, html = [];
-    el.childNodes.forEach(n => {
-      if (n.nodeType === 3) [...n.nodeValue].forEach(ch => html.push(/\d/.test(ch) ? `<i class="fg-col" style="--d:${ch}"><i>0<br>1<br>2<br>3<br>4<br>5<br>6<br>7<br>8<br>9</i></i>` : `<i class="fg-ch">${esc(ch)}</i>`));
-      else if (n.outerHTML) html.push(n.outerHTML);
-    });
-    const fx = document.createElement('span');
-    fx.className = el.className + ' fg-odo-fx';
-    fx.setAttribute('aria-hidden', 'true');
-    fx.style.cssText = `left:${el.offsetLeft}px;top:${el.offsetTop}px;font-size:${getComputedStyle(el).fontSize}`;
-    fx.innerHTML = html.join('');
-    const cols = [...fx.querySelectorAll('.fg-col > i')];
-    const undo = () => { fx.remove(); el.style.removeProperty('opacity'); };
-    tl.call(() => { host.appendChild(fx); el.style.opacity = '0'; }, null, t);
-    cols.forEach((c, i) => {
-      const d = parseInt(c.parentElement.style.getPropertyValue('--d'), 10) || 0;
-      tl.fromTo(c, { yPercent: 0 }, { yPercent: -d * 10, duration: .7, ease: 'power2.out', immediateRender: false }, t + .02 + i * .06);
-    });
-    const end = t + .02 + cols.length * .06 + .72;
-    tl.call(undo, null, end);
-    return end - t;
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    let n = w.nextNode();
+    while (n && !n.nodeValue.trim()) n = w.nextNode();
+    if (!n || !/\d/.test(n.nodeValue)) return 0;
+    const orig = n.nodeValue, chars = [...orig], idx = chars.map((c, i) => /\d/.test(c) ? i : -1).filter(i => i >= 0);
+    const dur = .7, o = { v: 0 };
+    // 第 k 位在 lock[k] 时停住（从左到右），停之前每一帧翻到下一个数字
+    const lock = idx.map((_, k) => .35 + .65 * (k + 1) / idx.length);
+    const restore = () => { n.nodeValue = orig; };
+    const draw = () => {
+      const out = chars.slice();
+      idx.forEach((ci, k) => { if (o.v < lock[k]) out[ci] = String((Math.floor(o.v * 40) + k * 3 + (+chars[ci])) % 10); });
+      n.nodeValue = out.join('');
+    };
+    draw();   // 一出场就是翻动中的样子，不先闪一下真读数
+    tl.fromTo(o, { v: 0 }, { v: 1, duration: dur, ease: 'none', immediateRender: false, onStart: draw, onUpdate: draw, onComplete: restore, onInterrupt: restore }, t);
+    later(tl, t + dur + .01, restore);
+    return dur;
   }
+
 
   function decorate(s, p) {
     s.querySelectorAll('.fg-ico[data-fg-ico]').forEach(el => {
@@ -514,7 +513,7 @@
     s.dataset.fgBg = want;
     // 出血底板：页面里写了 <i class="fg-bleed" hidden></i>（加 fg-left 在左边），背景层显示对应的那块
     const bleed = s.querySelector('.fg-bleed');
-    if (bleed) s.dataset.fgPanel = ['deep', 'slant', 'left'].find(k => bleed.classList.contains('fg-' + k)) || 'right';
+    if (bleed) s.dataset.fgPanel = ['wash', 'slant', 'left'].find(k => bleed.classList.contains('fg-' + k)) || 'right';
   }
 
   /* =================================================================
@@ -534,7 +533,7 @@
       + `<svg class="fg-wv" viewBox="0 0 3840 1080" preserveAspectRatio="none" aria-hidden="true">${wv}</svg></div>`
       + '<div class="fg-bgb"><i class="fg-gw fg-g1"></i><i class="fg-gw fg-g2"></i><i class="fg-grd"></i><i class="fg-grd fg-lit"></i></div>'
       // 出血底板：页面里有 .fg-bleed 时显示，从舞台里一直铺到窗口边缘
-      + '<i class="fg-sheet fg-sheet-r"></i><i class="fg-sheet fg-sheet-l"></i><i class="fg-sheet fg-sheet-s"></i><i class="fg-sheet fg-sheet-d"></i>');
+      + '<i class="fg-sheet fg-sheet-r"></i><i class="fg-sheet fg-sheet-l"></i><i class="fg-sheet fg-sheet-s"></i><i class="fg-sheet fg-sheet-w"></i>');
   }
 
   Deck.scene('fangguo', {

@@ -1,12 +1,12 @@
 /* =====================================================================
    方果 fangguo 自己的样板页：一份方果 ERP 的客户演讲（完整的 20 页演示在仓库外的 _private/brand/方果演示/，这里挑了最有代表性的 10 页）
-   - t-fangguo-cover 封面、t-fangguo-quote 深色金句页、t-fangguo-hero 大数字、t-fangguo-chart 柱状图加环形图、
+   - t-fangguo-cover 封面、t-fangguo-quote 金句页、t-fangguo-hero 大数字、t-fangguo-chart 柱状图加环形图、
      t-fangguo-demo 界面演示★、t-fangguo-mock 套图★、t-fangguo-pipe 订单流水线★、t-fangguo-lens 聚焦框★、t-fangguo-hub 平台汇聚★、
      t-fangguo-about 关于我们（最后一页）。★ 是方果的招牌交互
    - 动效为内容服务，像一场高级的产品发布会：每拍 0.3–0.8 秒、平滑，同一页里一次只动一处主角——光标点按钮、印花套上商品、
      订单卡走到下一站、聚焦框移过去、光点流向方果、数字按位滚上来。页面里只写结构和 data-beat，不写 onBeat、不写风格专用的 data-in
-   - 版式每页不重复：出血底板、深色整屏、超大数字压版、卡片叠放和倾斜浮窗、圆形汇聚；大页和密页交替
-   - 背景按页型自动换：封面、关于我们是组合 A（柔光 + 波纹），深色金句页是整屏深蓝，其余是组合 B（晕染 + 网格）
+   - 版式每页不重复：出血底板、淡蓝晕染的金句页、超大数字压版、卡片叠放和倾斜浮窗、圆形汇聚；大页和密页交替
+   - 背景按页型自动换：封面、关于我们是组合 A（柔光 + 波纹），金句页是整屏淡蓝晕染，其余是组合 B（晕染 + 网格）
    - 可读性：要点讲完一直留在页上（提示不自己消失、聚焦框四周只压暗一点）；讲过的块只由引擎退到 .8；渐变只给大数字
    - 组件只在方果里有样子（换成别的风格会乱）：这几页只给 scene: 'fangguo' 用
    - 抄过去时：id 换成 p〈讲稿页号〉，samples/fangguo.css 里对应的 [data-id="t-fangguo-…"] 和 t-fangguo-… 的类名一起换；字照讲稿改；
@@ -57,7 +57,8 @@ Deck.add({
   ],
 });
 
-/* 金句页（深色）：整屏品牌深蓝（.fg-bleed.fg-deep，背景层和这一页都铺同一种深蓝），一页只放一个问题，右边一枚很淡的大果子（.fg-deco）。
+/* 金句页（浅色）：整屏一层淡蓝晕染（.fg-bleed.fg-wash，画在背景层里铺满窗口），一页只放一个问题——112px 深墨色大字，
+   上面一道品牌蓝渐变短线，关键词（.fg-hl）是品牌蓝渐变；右边一组淡蓝同心细圆环（.fg-deco），和别的页同一个浅色基调。
    1 拍补一句来由，2 拍亮出三个关键词；方方歪头疑问（ask）。
    为什么这样排：讲痛点前先抛一个问题，大页和密页交替，节奏一下子拉开。
    抄过去改哪里：问题（两行，每行 7 个字以内；.fg-hl 点一个词）、来由、三个关键词 */
@@ -70,10 +71,10 @@ Deck.add({
   title: '订单越多，工厂反而越乱？',
   noTitle: true,
   html: `
-    <i class="fg-bleed fg-deep" hidden></i>
+    <i class="fg-bleed fg-wash" hidden></i>
     <p class="abs fg-quote" data-beat="0" data-mascot="0" data-mascot-side="right" data-mascot-pose="ask" data-mascot-dy="40" style="left:150px;top:270px;white-space:nowrap">订单越多，<br>工厂反而<span class="fg-hl">越乱</span>？</p>
-    <p class="abs fg-quote-by" data-beat="1" style="left:154px;top:620px">这是我们走访 POD 工厂时，听到最多的一句话</p>
-    <p class="abs t-fangguo-quote-tags" data-beat="2" data-stagger=".1" style="left:150px;top:740px"><span>接单乱</span><span>套图慢</span><span>错发漏发</span></p>
+    <p class="abs fg-quote-by" data-beat="1" style="left:154px;top:640px">这是我们走访 POD 工厂时，听到最多的一句话</p>
+    <p class="abs t-fangguo-quote-tags" data-beat="2" data-stagger=".1" style="left:150px;top:770px"><span>接单乱</span><span>套图慢</span><span>错发漏发</span></p>
     <i class="abs fg-deco" style="left:1220px;top:200px;width:620px"></i>
     <div class="mascot guide" style="left:1500px;top:760px"></div>`,
   notes: [
@@ -84,7 +85,7 @@ Deck.add({
 });
 
 /* 大数字（一个主数字 + 三个辅助）：380px 的主数字压在版面上做视觉锚点，右边三张小卡错开成台阶。
-   数字都写成 .fg-num.fg-odo：到拍时每一位像计数器一样从 0 滚到读数（页面上的字一直是真的读数）。
+   数字都写成 .fg-num.fg-odo：到拍时每一位先快速翻动，再从左到右依次停在读数上（只改真数字自己的字）。
    1 拍主数字滚上来、方方惊讶（wow）；2–4 拍三张小卡依次浮上来。
    抄过去改哪里：主数字（单位写在 <small>）、说明；三张小卡的数字、两行说明。这一页的数字取自方果官网 */
 Deck.add({

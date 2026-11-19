@@ -278,9 +278,9 @@
   - 订单流水线：`<div class="fg-pipe"><div class="fg-st"><i class="fg-ico" data-fg-ico="cart"></i><b>接单</b><p data-beat="1"><b class="fg-num" data-to="2318">2,318</b>今日订单</p></div>…</div>`。工位第 0 拍就摆好（灰），讲到哪一站，那一站亮起、计数滚上来，一张订单卡沿轨道走过去（最多 6 站）。
   - 平台汇聚：`<div class="fg-hub" style="width:980px;height:720px"><b class="fg-plt" data-beat="1">TEMU</b>…</div>`。平台胶囊从正上方顺时针排成一圈，中间是方果；胶囊亮起时一条线画向中间、一颗光点沿线流过去（只流一趟）。`data-fg-rx`、`data-fg-ry` 调圈的大小。
   - 聚焦框：在 `.fg-win`（或 `.fg-lensbox`）里给要框的元素写 `data-fg-focus="拍号"`，到那一拍框移过去，四周压暗一点（字仍看得清）。说明写在框外面，一拍一句，讲完留着。
-  - 按位滚动的数字：`<b class="fg-num fg-odo">2,318</b>`，到拍时每一位像计数器一样从 0 滚到读数（页面上的字一直是真的读数，不用写 `data-to`）。
+  - 按位滚动的数字：`<b class="fg-num fg-odo">2,318</b>`，到拍时每一位先快速翻动、再从左到右依次停在读数上（只改这个数字自己的字，不用写 `data-to`；逗号、小数点、单位不动）。
   - 新旧对比：`<p class="fg-vs"><s class="fg-old">20 分钟</s><i class="fg-arrow"></i><b class="fg-num fg-new" data-beat="1">10<small>秒</small></b></p>`，新数字到拍时旧的划一道红线（仍读得清）。新数字也可以写在 `.fg-vs` 后面。
-- **版式工具**：出血底板 `<i class="fg-bleed" hidden></i>` 有四种——默认右边一块浅蓝、`fg-left` 左边、`fg-slant` 右边一块斜切的浅蓝、`fg-deep` 整屏品牌深蓝（金句页，这一页的字自动换成白色和淡蓝）；金句 `<p class="fg-quote">…<span class="fg-hl">词</span>…</p>`（112px，一页一句）；深色页右边的同心细圆环装饰 `<i class="fg-deco"></i>`。
+- **版式工具**：出血底板 `<i class="fg-bleed" hidden></i>` 有四种——默认右边一块浅蓝、`fg-left` 左边、`fg-slant` 右边一块斜切的浅蓝、`fg-wash` 整屏一层淡蓝晕染（金句页用）；金句 `<p class="fg-quote">…<span class="fg-hl">词</span>…</p>`（112px 深墨色大字，上面一道品牌蓝渐变短线，关键词是品牌蓝渐变，一页一句）；一组淡蓝同心细圆环装饰 `<i class="fg-deco"></i>`（不放字）。
   - 指标卡 `.fg-kpi`、渐变圆角图标 `.fg-ico[data-fg-ico="box"]`（`data-fg-tone`：blue、teal、coral、purple、amber、red）、白色界面窗 `.fg-win`（加 `fg-float` 是倾斜 2° 的浮窗）、折角标签 `.fg-fold`、小胶囊 `.fg-chip`、横小卡 `.fg-mini`、功能卡 `.fg-feats > .fg-fc`、平台横栏 `.fg-plat`、流程清单 `.fg-flow > .fg-step`（当前一步点亮）、封面 `.fg-cover`、章节页 `.fg-chapter` 加 `.fg-bigno`、关于我们 `.fg-about` 加二维码卡 `.fg-qr[data-fg-qr="wechat|douyin|business"]` 和联系方式 `.fg-contact`。
 
 ### 像素家

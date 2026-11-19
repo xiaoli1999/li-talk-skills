@@ -439,47 +439,35 @@
 }
 
 /* =====================================================================
-   招牌交互（只有方果有）：界面演示、聚焦框、套图、订单流水线、平台汇聚、按位滚动的数字、新旧对比、深色金句页、斜切分区
+   招牌交互（只有方果有）：界面演示、聚焦框、套图、订单流水线、平台汇聚、按位滚动的数字、新旧对比、浅色金句页、斜切分区
    用法见 fangguo.js 开头的说明；动起来的过渡 0.3–0.8 秒、平滑，减少动态和自检时直接到位（这一段末尾）
    ===================================================================== */
 
-/* ---------- 出血底板的另外两种：斜切（右边一块斜边的浅蓝）、深色（整屏品牌深蓝，金句页用） ---------- */
+/* ---------- 出血底板的另外两种：斜切（右边一块斜边的浅蓝）、淡蓝晕染（整屏，金句页用） ---------- */
 [data-scene="fangguo"] .fg-sheet-s{left:calc(50% - 960px + 1000px);right:0;border-radius:0;background:linear-gradient(160deg,#EAF3FD,#DCEAFB);
   clip-path:polygon(260px 0,100% 0,100% 100%,0 100%)}
-[data-scene="fangguo"] .fg-sheet-d{left:0;right:0;border-radius:0;background:#132B6E}
-[data-scene="fangguo"] .fg-sheet-d::after{content:none}   /* 这一页自己也是同一种纯色深蓝，背景层不加光晕，舞台边上才接得上 */
-#world:has(.slide.active[data-scene="fangguo"][data-fg-panel="slant"]) > .bg[data-scene="fangguo"] .fg-sheet-s,
-#world:has(.slide.active[data-scene="fangguo"][data-fg-panel="deep"]) > .bg[data-scene="fangguo"] .fg-sheet-d{opacity:1}
+[data-scene="fangguo"] .fg-sheet-w{left:0;right:0;border-radius:0;
+  background:radial-gradient(900px 700px at calc(50% + 560px) calc(50% - 40px),rgba(205,224,253,.95),rgba(205,224,253,0) 70%),
+             radial-gradient(800px 600px at calc(50% - 760px) calc(50% + 520px),rgba(226,236,253,.9),rgba(226,236,253,0) 70%),
+             linear-gradient(180deg,#F7FAFF,#EEF4FD)}
+[data-scene="fangguo"] .fg-sheet-w::after{content:none}
+#world:has(.slide.active[data-scene="fangguo"][data-fg-panel="slant"]) > .bg[data-scene="fangguo"] .fg-sheet-s{opacity:1}
 [data-scene="fangguo"].slide[data-fg-panel="slant"]:is(.reading *){background:linear-gradient(104deg,transparent 1130px,#E4EFFC 1130px),#FAFBFD}
+#world:has(.slide.active[data-scene="fangguo"][data-fg-panel="wash"]) > .bg[data-scene="fangguo"] .fg-sheet-w{opacity:1}
+[data-scene="fangguo"].slide[data-fg-panel="wash"]:is(.reading *){background:radial-gradient(900px 700px at 1520px 500px,rgba(205,224,253,.95),rgba(205,224,253,0) 70%),linear-gradient(180deg,#F7FAFF,#EEF4FD)}
 
-/* 深色金句页：这一页自己也铺同一种深蓝（窗口不是 16:9 时和背景层接得上），字换成白色和淡蓝 */
-[data-scene="fangguo"].slide[data-fg-panel="deep"]{background:#132B6E;color:#fff}
-[data-scene="fangguo"][data-fg-panel="deep"] .s-topic .tc{color:#fff;border-left-color:rgba(255,255,255,.3)}
-[data-scene="fangguo"][data-fg-panel="deep"] .s-topic .tt{color:#B9CCF2}
-[data-scene="fangguo"][data-fg-panel="deep"] .s-topic::before{background-image:url("../vendor/brand/fangguo/logo-white.svg")}
-[data-scene="fangguo"][data-fg-panel="deep"] .s-title{color:#fff}
-#stage[data-scene="fangguo"]:has(.slide.active[data-fg-panel="deep"]) :is(.meta,.pageno,.meter .ms,.timer,.chap span){color:#B9CCF2}
-#stage[data-scene="fangguo"]:has(.slide.active[data-fg-panel="deep"]) :is(.pageno b,.meter .ms b){color:#fff}
-#stage[data-scene="fangguo"]:has(.slide.active[data-fg-panel="deep"]) .dots i{background:rgba(255,255,255,.28)}
-#stage[data-scene="fangguo"]:has(.slide.active[data-fg-panel="deep"]) .dots i.now{background:#8DBBFF}
-#stage[data-scene="fangguo"]:has(.slide.active[data-fg-panel="deep"]) .chap::before{background-image:url("../vendor/brand/fangguo/logo-white.svg")}
-[data-scene="fangguo"][data-fg-panel="deep"] .key{color:#8DBBFF}
-[data-scene="fangguo"][data-fg-panel="deep"] .key::before{background:rgba(141,187,255,.22)}
-[data-scene="fangguo"][data-fg-panel="deep"] .mascot{--mascot-shadow:drop-shadow(0 10px 14px rgba(0,0,0,.3))}
-[data-scene="fangguo"][data-fg-panel="deep"] .li-sign{color:rgba(255,255,255,.62)}
-/* 深色页右边的大装饰：<i class="fg-deco"></i>，一组很淡的同心细圆环（像信号一圈圈荡开），不放字、不压字；写 left、top、width */
+/* 金句页（浅色）：整屏一层淡蓝晕染（.fg-bleed.fg-wash，画在背景层里铺满窗口），一句超大的深墨色字，关键词是品牌蓝渐变；
+   字上面一道品牌蓝渐变短线，右边一组淡蓝同心细圆环（.fg-deco）。和别的页同一个浅色基调 */
 [data-scene="fangguo"] .fg-deco{display:block;aspect-ratio:1;border-radius:50%;pointer-events:none;
-  background:radial-gradient(circle,rgba(141,187,255,.5) 0 5%,transparent 5.4%),repeating-radial-gradient(circle,transparent 0 46px,rgba(141,187,255,.22) 46px 48px);
+  background:radial-gradient(circle,rgba(59,116,240,.28) 0 4.6%,transparent 5%),repeating-radial-gradient(circle,transparent 0 46px,rgba(59,116,240,.13) 46px 48px);
   -webkit-mask-image:radial-gradient(circle,#000 30%,transparent 70%);mask-image:radial-gradient(circle,#000 30%,transparent 70%)}
-/* 金句：一页一句话，超大字，一个词点成蓝色 */
 [data-scene="fangguo"] .fg-quote{font:700 112px/1.22 var(--f-hand);letter-spacing:.01em;color:var(--ink)}
-[data-scene="fangguo"][data-fg-panel="deep"] .fg-quote{color:#fff}
+[data-scene="fangguo"] .fg-quote::before{content:"";display:block;width:132px;height:8px;margin:0 0 46px 4px;border-radius:4px;background:linear-gradient(90deg,#3B74F0,#8DBBFF)}
 [data-scene="fangguo"] .fg-quote .fg-hl{color:var(--fg-blue-ink)}
-[data-scene="fangguo"][data-fg-panel="deep"] .fg-quote .fg-hl{color:#8DBBFF}
+@supports ((-webkit-background-clip:text) or (background-clip:text)){
+  [data-scene="fangguo"] .fg-quote .fg-hl{background:linear-gradient(180deg,#2F66E6 10%,#6FA6FF 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+}
 [data-scene="fangguo"] .fg-quote-by{font:400 36px/1.4 var(--f-hand);color:var(--ink-2)}
-[data-scene="fangguo"][data-fg-panel="deep"] .fg-quote-by{color:#C9D8F5}
-[data-scene="fangguo"][data-fg-panel="deep"] .fg-num{color:#fff}
-[data-scene="fangguo"][data-fg-panel="deep"] .fg-num small{color:#B9CCF2;-webkit-text-fill-color:#B9CCF2}
 
 /* ---------- 界面演示 .fg-demo：一扇界面窗里按拍「操作」，光标点按钮、列表一行行填满打勾、右上角弹提示 ---------- */
 [data-scene="fangguo"] .fg-demo{position:relative}
@@ -564,11 +552,6 @@
 [data-scene="fangguo"] .fg-hub-ln path{fill:none;stroke:#BFD3F7;stroke-width:3;stroke-linecap:round}
 [data-scene="fangguo"] .fg-hub-dot{fill:#3B74F0;filter:drop-shadow(0 0 6px rgba(59,116,240,.8))}
 
-/* ---------- 按位滚动的数字 .fg-num.fg-odo：滚动时临时叠的一层（fangguo.js 放、播完拿掉） ---------- */
-[data-scene="fangguo"] .fg-odo-fx{position:absolute;z-index:5;pointer-events:none;display:inline-flex;align-items:baseline}
-[data-scene="fangguo"] .fg-col{display:inline-block;height:1em;overflow:hidden;vertical-align:baseline;line-height:1;font-style:normal}
-[data-scene="fangguo"] .fg-col>i{display:block;font-style:normal}
-[data-scene="fangguo"] .fg-ch{font-style:normal}
 
 /* ---------- 新旧对比 .fg-vs：旧的划一道红线（仍读得清），新的从下面浮上来 ---------- */
 [data-scene="fangguo"] .fg-vs{display:flex;align-items:baseline;gap:30px;white-space:nowrap}

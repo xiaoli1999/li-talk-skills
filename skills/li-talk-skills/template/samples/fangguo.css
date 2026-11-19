@@ -8,7 +8,7 @@
 
 /* quote */
 [data-id="t-fangguo-quote"] .t-fangguo-quote-tags{display:flex;gap:24px}
-[data-id="t-fangguo-quote"] .t-fangguo-quote-tags span{padding:14px 34px 16px;border-radius:999px;background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 2px rgba(255,255,255,.28);color:#fff;font:600 44px/1.2 var(--f-hand)}
+[data-id="t-fangguo-quote"] .t-fangguo-quote-tags span{padding:14px 34px 16px;border-radius:999px;background:#fff;box-shadow:0 10px 26px rgba(30,60,110,.1),inset 0 0 0 2px #D6E4FC;color:var(--fg-blue-ink);font:600 44px/1.2 var(--f-hand)}
 
 /* hero */
 [data-id="t-fangguo-hero"] .t-fangguo-hero-n{font-size:380px}
