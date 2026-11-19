@@ -149,6 +149,10 @@ The hand-drawn family uses LXGW WenKai. The full font (about 8.8 MB) is download
 
 Yes. A deck is a folder; double-click `index.html` to open it, with no network and no external resources. To share, copy the whole folder or zip it, and the other person double-clicks `index.html`. Decks currently include the full font files (about 10 MB); a pack command that keeps only the characters you use isn't done yet.
 
+**Can I get an online link?**
+
+Depends on your AI tool. When the deck is done, if the tool can host web pages (e.g. WorkBuddy, Codex), the AI asks whether to publish it; it only uploads if you say yes, then gives you the link. The whole deck is uploaded, screenshots included, so think twice about internal material. After edits, publish again to update the link. If the tool can't host pages, it won't ask; you can still share the folder.
+
 **Which browsers?**
 
 Everything works in Chrome and Edge. Safari and Firefox display decks fine with a few effects degraded, e.g. Liquid Glass refraction becomes a light blur. The self-check needs Edge or Chrome installed locally.
