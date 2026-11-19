@@ -9,7 +9,7 @@
      点了不进拍的元素 NO_ADVANCE、署名的链接 SIGN_URL、开场时长上限 INTRO_MAX
    - 引入顺序固定：vendor/gsap.min.js → vendor/rough.min.js → engine/core.js → build.js
      → beats.js → mascot.js → pages.js → ui.js → presenter.js → tools.js → selftest.js
-     → scenes/*.js → mascots/*.js → 各章 slides/*.js
+     → edit.js（在线编辑，可以没有；serve 会给老课件补上）→ scenes/*.js → mascots/*.js → 各章 slides/*.js
    - 其余引擎文件都写成 (function () { 'use strict'; const I = Deck._; … })()，
      跨文件调用一律写 I.某函数()；可变状态一律读写 I.state.某项，不在各文件里留副本
    - 启动：DOMContentLoaded 时调用 I.boot()，这时引擎和各章的同步脚本都已执行完
@@ -81,11 +81,12 @@
     mascotWarns: [],          // 选形象时攒下的提醒：页面真的用到形象时才说（mascot.js 的 warnMascotOnce）
     lastAct: 0,               // 最近一次有人操作（按键、点击、触屏、滚轮、移动鼠标、翻拍）的时刻：形象的空闲动作和打盹看它
     signAt: null,             // 署名在最后一页上的位置 { x, y, at: 'right' | 'left' | 'center' }（ui.js 的 placeSign 启动时量一次）
+    editing: false,           // 是否在编辑模式（edit.js）：内容全摆出来、不播动画、点击不进拍
   };
   /* 外壳里的元素：build.js 的 buildShell 填上；bg 是各风格的背景层（键名 → 元素）；sign 是最后一页的署名（build.js 的 addSign） */
   const dom = { bg: {} };
-  /* 要不要播动画：没有 gsap、开了「减少动态」、阅读模式、自检模式时都不播（翻拍、走位直接到位） */
-  const motion = () => !!G && !RMQ.matches && !S.reading && !SELFTEST;
+  /* 要不要播动画：没有 gsap、开了「减少动态」、阅读模式、自检模式、编辑模式时都不播（翻拍、走位直接到位） */
+  const motion = () => !!G && !RMQ.matches && !S.reading && !SELFTEST && !S.editing;
 
   /* =================================================================
      风格注册表：Deck.scene(key, opts)（接口约定 B）

@@ -10,12 +10,13 @@ if (major < 18) {
   process.exit(2);
 }
 
-const BOOLS = ['browser', 'shots', 'open', 'yes', 'force', 'skip'];
+const BOOLS = ['browser', 'shots', 'open', 'yes', 'force', 'skip', 'no-open', 'done'];
 const COMMANDS = {
   guide: './lib/guide.mjs', styles: './lib/styles.mjs', materials: './lib/materials.mjs',
   new: './lib/new.mjs', open: './lib/open.mjs', confirm: './lib/meta.mjs',
   check: './lib/check.mjs', fonts: './lib/fonts.mjs', version: './lib/version.mjs',
   update: './lib/update.mjs', tour: './lib/tour.mjs',
+  serve: './lib/serve.mjs', wait: './lib/wait.mjs', edits: './lib/edits.mjs',
 };
 // 这两个命令自己处理更新，不在命令开始前自动检查
 const NO_AUTO_UPDATE = ['version', 'update'];
@@ -28,6 +29,9 @@ const HELP = `用法：node li-talk.mjs <命令> [参数]
   open <课件目录>                     用浏览器打开课件
   confirm <课件目录> <outline|script|style|trial|review>   记下用户已确认的环节
   check <课件目录> [--browser] [--pages 3-5] [--shots] [--scene 风格]
+  serve <课件目录> [--port N] [--no-open]   在线编辑：开本地服务，浏览器里直接改（一直运行，后台跑）
+  wait <课件目录> [--timeout 秒]      等用户点「通知 AI 修改」，打印修改清单后结束（后台跑，结束时唤醒 AI）
+  edits <课件目录> [--done]           看用户在浏览器里做的修改；合并完加 --done 清掉
   fonts [--into 课件目录]             下载或检查完整字体
   version                             查看版本、安装位置、上次检查更新的结果
   update                              立即检查并更新（平时每天第一次运行命令时自动更新）`;

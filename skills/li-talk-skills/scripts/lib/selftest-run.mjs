@@ -211,7 +211,16 @@ export async function openBrowser(browser, { callTimeout = CALL_TIMEOUT } = {}) 
     return evaluate(expression);
   }
 
-  return { selftest, screenshot, peek, close };
+  // 打开任意地址（比如在线编辑的 http://127.0.0.1:端口/…），等加载完；之后用 evaluate 读页面、call 发协议命令（测试用）
+  async function goto(url, { w = 1920, h = 1080 } = {}) {
+    shown = null;
+    await call('Emulation.setEmulatedMedia', { features: [LIGHT] });
+    await load(url, w, h);
+    const start = Date.now();
+    while (Date.now() - start < CALL_TIMEOUT && !(await evaluate("document.readyState === 'complete'"))) await sleep(POLL);
+  }
+
+  return { selftest, screenshot, peek, close, goto, evaluate, call };
 }
 
 // 单独跑一次自检：起浏览器、跑、关掉

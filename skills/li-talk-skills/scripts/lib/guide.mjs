@@ -13,6 +13,9 @@
 //   ⑧ 过稿     confirmed.review 不为 true
 //   ⑨ 完成
 //
+// 在线编辑（serve）：课件目录里有 .li-talk/edits.json 且 items 不为空时，⑥ 以后各阶段的【下一步做什么】最前面
+// 加一步「先合并修改」（edits 看清单 → 改 slides/ → check --browser → edits --done），用户没点通知的也照样提示。
+//
 // ① 起点：本机还没有新手教程记录（~/.li-talk-skills/tour.json，见 tour.mjs）时，先问要不要过一遍教程，放在问题 1。
 //
 // 输出固定四块：【现在在哪一步】【下一步做什么】【问用户】【可以这样对 AI 说】。
@@ -33,6 +36,7 @@ import { mascotList, sceneIndex } from './new.mjs';
 import { cacheDir, loadManifest } from './fonts.mjs';
 import { describeLastCheck, installKind } from './update.mjs';
 import { readTour } from './tour.mjs';
+import { pendingNotify, readEdits } from './edits.mjs';
 
 /* ------------------------------------------------------------------
    公用的小工具（materials、styles 也用）
@@ -244,6 +248,7 @@ export function inspect(target) {
     s.failures = [{ file: 'index.html', message: (e && (e.userMessage || e.message)) || String(e) }];
     s.st = { kind: 'none', text: '还没跑过后台自检' };
   }
+  s.edits = readEdits(dir);
   if (!c.trial) return { ...s, stage: 6 };
   const want = s.script ? s.script.pages.length : 0;
   if (s.failures.length || s.pages.length < want || s.st.kind !== 'ok') return { ...s, stage: 7 };
@@ -265,9 +270,11 @@ const ASK_HOW = '有选项卡片（比如 Claude Code 的提问卡片）就用�
  */
 function render(stage, body) {
   const out = [...(body.lead || []), `【现在在哪一步】${MARK[stage - 1]} ${STAGES[stage - 1]}（共 9 步）`];
+  const ed = stage >= 6 && editing && editing.edits.items.length ? editing : null;
   for (const l of body.where) out.push('  ' + l);
+  if (ed) out.push(`  浏览器里还有 ${ed.edits.items.length} 处修改没合并（${pendingNotify(ed.edits) ? '用户已经点了「通知 AI 修改」' : '用户还没点通知，可能还在改'}）`);
   out.push('【下一步做什么】');
-  body.steps.forEach((st, i) => {
+  (ed ? [mergeStep(ed.dir), ...body.steps] : body.steps).forEach((st, i) => {
     const [first, ...rest] = Array.isArray(st) ? st : [st];
     out.push(`  ${i + 1}. ${first}`);
     for (const l of rest) out.push('     ' + l);
@@ -281,6 +288,19 @@ function render(stage, body) {
   });
   out.push(`【可以这样对 AI 说】「${body.say}」`);
   return out.join('\n');
+}
+
+// 在线编辑：先合并用户在浏览器里做的修改（render 放在【下一步做什么】的最前面）
+function mergeStep(dir) {
+  return ['先合并修改：用户在浏览器里改过页面（在线编辑）。运行 edits 看清单，照清单末尾的合并规则改 slides/ 里的源码（文字按原文找到替换；位置、大小改行内 style 或在 chN.css 里加 [data-id="页号"] 选择器；隐藏的删掉、拍号顺移），' +
+    '改完跑 check --browser 清零，再运行 edits --done 清掉清单：',
+  cli('edits', quote(dir)), cli('check', quote(dir), '--browser'), cli('edits', quote(dir), '--done')];
+}
+// render 时要不要加「先合并修改」：dispatch 调阶段函数前设好，调完清掉（阶段函数都是同步的）
+let editing = null;
+function dispatch(s, ctx) {
+  editing = s.edits ? { dir: s.dir, edits: s.edits } : null;
+  try { return RENDER[s.stage](s, ctx); } finally { editing = null; }
 }
 
 // 已确认 / 还没确认的环节
@@ -1103,7 +1123,7 @@ const RENDER = [null, stageStart, stageOutline, stageScript, stageStyle, stageBu
  */
 export function guideText(target, ctx = {}) {
   const s = inspect(target);
-  return RENDER[s.stage](s, ctx);
+  return dispatch(s, ctx);
 }
 
 // guide 命令。到了 ④ 风格、这份课件还没自动打开过样册时，先用浏览器打开样册（见文件开头）；
@@ -1114,6 +1134,6 @@ export async function run(args = {}, opts = {}) {
   const s = inspect(target);
   const ctx = {};
   if (s.stage === 4) ctx.gallery = await autoOpenGallery(s, { opener: opts.opener, env: opts.env });
-  log(RENDER[s.stage](s, ctx));
+  log(dispatch(s, ctx));
   return 0;
 }

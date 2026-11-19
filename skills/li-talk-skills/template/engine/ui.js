@@ -5,12 +5,16 @@
    - 署名：placeSign（最后一页依次试右下、左下、正下，取第一个不压字、不压形象、不进风格禁区的位置；阅读模式里挪到最后一页下面）
    - 看大图：openShot、closeShot
    - 输入：键盘 onKey、触屏滑动、点击翻拍（点到 I.NO_ADVANCE 里的元素不进拍）、点击涟漪 ripple、地址 #页/拍（parseHash、hashchange）
+   - 键位：→ ↓ 空格 PageDown Enter 下一拍，← ↑ PageUp Backspace 上一拍，Home / End，F 全屏，S 演讲者视图，T / R 计时，
+     E 编辑模式（edit.js 的 I.toggleEdit）；O、B、L 归 tools.js（I.toolKey）。新加键位先在这里查有没有被占用
+   - 编辑模式（I.state.editing，edit.js）：键盘先问 I.editKey(e)，点击和触屏滑动都不翻拍
    - 屏幕适配：fit（横屏等比缩放铺满、窄的竖屏切阅读模式）、setMode、scrollToPage、pageInView
    - 依赖总线：core 的常量和工具、I.sc（风格注册表）、I.PAGES、I.state（cur、reading、booted、curScene）、
      I.dom（lb、world、stage）、I.toast；
      build.js 的 I.boxIn；beats.js 的 I.clearEl、I.setInstant、I.callOnBeat、I.finishRunning；
      mascot.js 的 I.mascotCheer、I.mascotClick、I.spotFor；pages.js 的 I.next、I.prev、I.go、I.finishPageTl、I.mountScene；
-     presenter.js 的 I.openPresenter、I.toggleTimer、I.resetTimer；tools.js 的 I.toolKey、I.closeTools（没引入 tools.js 时跳过）
+     presenter.js 的 I.openPresenter、I.toggleTimer、I.resetTimer；tools.js 的 I.toolKey、I.closeTools（没引入 tools.js 时跳过）；
+     edit.js 的 I.editKey、I.toggleEdit（没引入 edit.js 时跳过）
    - 挂到总线：copyText、onCopy、textRects、mascotBoxes、copiedTip、placeSign、openShot、closeShot、onKey、bindInput、
      ripple、parseHash、fit、setMode、scrollToPage、pageInView
    ===================================================================== */
@@ -219,6 +223,7 @@
     const k = e.key;
     if (!dom.lb.hidden) { if (k === 'Escape' || NEXT_KEYS.has(k) || PREV_KEYS.has(k)) { e.preventDefault(); closeShot(); } return; }
     if (S.reading) return;
+    if (I.editKey && I.editKey(e)) return;   // 编辑模式（edit.js）：改字时键盘归输入，选中元素时方向键微调，翻页只翻整页
     const ae = document.activeElement;
     if (ae && ae !== document.body && ae.matches && ae.matches('button,[data-copy],.shot')) ae.blur();
     if (I.toolKey && I.toolKey(e)) return;   // 现场工具（tools.js）：O 总览、B 黑屏、L 激光笔；总览、黑屏开着时翻页键归它们管
@@ -230,17 +235,19 @@
     else if (k === 's' || k === 'S') I.openPresenter();
     else if (k === 't' || k === 'T') I.toggleTimer();
     else if (k === 'r' || k === 'R') I.resetTimer();
+    else if (k === 'e' || k === 'E') { if (I.toggleEdit) I.toggleEdit(); }   // 进入 / 退出编辑模式（edit.js；没引入时不管）
   }
   function bindInput() {
     document.addEventListener('keydown', onKey);
     let tx = null, ty = 0, swiped = false;
     document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; swiped = false; }, { passive: true });
     document.addEventListener('touchend', e => {
-      if (tx == null || S.reading) return;
+      if (tx == null || S.reading || S.editing) return;
       const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty; tx = null;
       if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.2) { swiped = true; dx < 0 ? I.next() : I.prev(); }
     });
     document.addEventListener('click', e => {
+      if (S.editing) return;   // 编辑模式下点击是选中、拖动（edit.js 自己处理），不进拍、不复制、不看大图
       const t = e.target;
       if (!dom.lb.hidden) { if (t.tagName === 'IMG') dom.lb.classList.toggle('full'); else closeShot(); return; }
       if (!t || !t.closest) return;

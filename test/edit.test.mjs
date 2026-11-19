@@ -1,0 +1,396 @@
+// 在线编辑：serve（本地服务）、wait（等通知）、edits（修改清单）、guide 的「先合并修改」，
+// 以及真实浏览器里的编辑模式（engine/edit.js）
+import { test, after } from 'node:test';
+import assert from 'node:assert/strict';
+import { request } from 'node:http';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { injectEdit, run as runServe, startServer } from '../skills/li-talk-skills/scripts/lib/serve.mjs';
+import { run as runWait } from '../skills/li-talk-skills/scripts/lib/wait.mjs';
+import { formatEdits, itemLine, readEdits, run as runEdits, writeEdits } from '../skills/li-talk-skills/scripts/lib/edits.mjs';
+import { guideText } from '../skills/li-talk-skills/scripts/lib/guide.mjs';
+import { confirmStep } from '../skills/li-talk-skills/scripts/lib/meta.mjs';
+import { readDeck } from '../skills/li-talk-skills/scripts/lib/deck.mjs';
+import { findBrowser } from '../skills/li-talk-skills/scripts/lib/browser.mjs';
+import { openBrowser } from '../skills/li-talk-skills/scripts/lib/selftest-run.mjs';
+
+process.env.LI_TALK_NO_OPEN = '1';
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+const TPL = join(ROOT, 'skills', 'li-talk-skills', 'template');
+const GOOD = join(ROOT, 'test', 'fixtures', 'decks', 'good');
+
+const made = [];
+const tmp = () => { const d = mkdtempSync(join(tmpdir(), 'li-talk-edit-')); made.push(d); return d; };
+after(() => { for (const d of made) { try { rmSync(d, { recursive: true, force: true }); } catch { /* 删不掉不要紧 */ } } });
+
+// 一份能用 http 打开的课件：引擎、风格、形象、vendor 复制进来，页面用 fixtures 里干净的 3 页（方格纸 + 朵朵）
+function deck({ editJs = true } = {}) {
+  const dir = join(tmp(), '课件');
+  mkdirSync(dir);
+  for (const d of ['engine', 'vendor']) cpSync(join(TPL, d), join(dir, d), { recursive: true });
+  mkdirSync(join(dir, 'scenes')); mkdirSync(join(dir, 'mascots'));
+  for (const f of ['paper.js', 'paper.css']) cpSync(join(TPL, 'scenes', f), join(dir, 'scenes', f));
+  cpSync(join(TPL, 'mascots', 'duoduo.js'), join(dir, 'mascots', 'duoduo.js'));
+  cpSync(join(GOOD, 'slides'), join(dir, 'slides'), { recursive: true });
+  const html = readFileSync(join(GOOD, 'index.html'), 'utf8')
+    .replace(/\.\.\/\.\.\/\.\.\/\.\.\/skills\/li-talk-skills\/template\//g, '')
+    .replace('<script src="engine/selftest.js"></script>', '<script src="engine/selftest.js"></script>' + (editJs ? '\n<script src="engine/edit.js"></script>' : ''));
+  writeFileSync(join(dir, 'index.html'), html);
+  return dir;
+}
+
+// 发一个 HTTP 请求，返回 { status, headers, body }
+function http(port, method, path, { body, type, host } = {}) {
+  return new Promise((ok, fail) => {
+    const headers = { Host: host || `127.0.0.1:${port}` };
+    if (type) headers['Content-Type'] = type;
+    const req = request({ host: '127.0.0.1', port, method, path, headers }, res => {
+      const parts = [];
+      res.on('data', b => parts.push(b));
+      res.on('end', () => ok({ status: res.statusCode, headers: res.headers, body: Buffer.concat(parts).toString('utf8') }));
+    });
+    req.on('error', fail);
+    if (body !== undefined) req.write(body);
+    req.end();
+  });
+}
+const sleep = ms => new Promise(ok => setTimeout(ok, ms));
+
+const ITEMS = [
+  { page: 'g2', no: 2, path: 'div.grid>div.card:nth-of-type(2)>h3', hint: '第二张', kind: 'text', before: { text: '第二张' }, after: { text: '第 2 张' } },
+  { page: 'g1', no: 1, path: 'p.lead', hint: '三页干净的内容', kind: 'box', position: 'absolute',
+    before: { left: 160, top: 300, width: 900, height: 60 }, after: { left: 200, top: 340, width: 900, height: 60 } },
+  { page: 'g3', no: 3, path: 'p.g3-sub', hint: '自检清零，再给别人看', kind: 'hide', before: { hidden: false }, after: { hidden: true } },
+];
+
+/* ------------------------------------------------------------------
+   serve
+   ------------------------------------------------------------------ */
+test('serve：给课件文件、挡住越界和 . 开头的目录、给 index.html 注入 edit.js', async () => {
+  const dir = deck({ editJs: false });
+  mkdirSync(join(dir, '.li-talk'), { recursive: true });
+  writeFileSync(join(dir, '.li-talk', 'secret.json'), '{}');
+  const s = await startServer(dir, { token: 'tok' });
+  try {
+    const css = await http(s.port, 'GET', '/slides/ch1.css');
+    assert.equal(css.status, 200);
+    assert.match(css.headers['content-type'], /text\/css/);
+    assert.equal(css.headers['cache-control'], 'no-store');
+    const idx = await http(s.port, 'GET', '/index.html?edit=tok');
+    assert.equal(idx.status, 200);
+    assert.match(idx.body, /<script src="\/__li-talk\/edit\.js"><\/script>\n<\/body>/);
+    const root = await http(s.port, 'GET', '/');
+    assert.match(root.body, /__li-talk\/edit\.js/);
+    const js = await http(s.port, 'GET', '/__li-talk/edit.js');
+    assert.equal(js.status, 200);
+    assert.match(js.headers['content-type'], /javascript/);
+    assert.match(js.body, /在线编辑/);
+    for (const bad of ['/%2e%2e/%2e%2e/etc/passwd', '/slides/..%2f..%2f..%2fpackage.json', '/slides/..%5c..%5cx', '/.li-talk/secret.json', '/%2Eli-talk/secret.json']) {
+      const r = await http(s.port, 'GET', bad);
+      assert.ok(r.status === 403 || r.status === 404, `${bad} → ${r.status}`);
+    }
+    assert.equal((await http(s.port, 'GET', '/nope.js')).status, 404);
+    assert.equal((await http(s.port, 'GET', '/index.html', { host: 'evil.test:80' })).status, 403, '别的 Host 挡掉');
+  } finally { await s.close(); }
+});
+
+test('serve：页面已经引入 engine/edit.js 时不重复注入', () => {
+  const html = '<body><script src="engine/edit.js"></script></body>';
+  assert.equal(injectEdit(html), html);
+  assert.match(injectEdit('<body>x</BODY>'), /<script src="\/__li-talk\/edit\.js"><\/script>\n<\/BODY>/);
+  assert.match(injectEdit('没有 body'), /__li-talk\/edit\.js/);
+});
+
+test('serve：POST edits 要口令、只收 JSON、限 1MB；带口令写进 edits.json；notify 更新 notified', async () => {
+  const dir = deck();
+  const logs = [];
+  const s = await startServer(dir, { token: 'tok', log: l => logs.push(l) });
+  try {
+    const body = JSON.stringify({ items: ITEMS.concat([{ kind: 'bad' }]) });
+    assert.equal((await http(s.port, 'POST', '/__li-talk/edits', { body, type: 'application/json' })).status, 403);
+    assert.equal((await http(s.port, 'POST', '/__li-talk/edits?token=nope', { body, type: 'application/json' })).status, 403);
+    assert.equal((await http(s.port, 'POST', '/__li-talk/edits?token=tok', { body, type: 'text/plain' })).status, 415);
+    assert.equal((await http(s.port, 'POST', '/__li-talk/edits?token=tok', { body: '{坏', type: 'application/json' })).status, 400);
+    const big = JSON.stringify({ items: [], pad: 'x'.repeat(1024 * 1024) });
+    assert.equal((await http(s.port, 'POST', '/__li-talk/edits?token=tok', { body: big, type: 'application/json' })).status, 413);
+    assert.ok(!existsSync(join(dir, '.li-talk', 'edits.json')));
+
+    const r = await http(s.port, 'POST', '/__li-talk/edits?token=tok', { body, type: 'application/json' });
+    assert.equal(r.status, 200, r.body);
+    const saved = JSON.parse(readFileSync(join(dir, '.li-talk', 'edits.json'), 'utf8'));
+    assert.equal(saved.version, 1);
+    assert.equal(saved.items.length, 3, '认不得的修改丢掉');
+    assert.deepEqual(saved.items[0], ITEMS[0]);
+    assert.equal(saved.notified, null);
+    const got = await http(s.port, 'GET', '/__li-talk/edits?token=tok');
+    assert.equal(JSON.parse(got.body).items.length, 3);
+    assert.equal((await http(s.port, 'GET', '/__li-talk/edits')).status, 403);
+
+    const n = await http(s.port, 'POST', '/__li-talk/notify?token=tok', { body: '{}', type: 'application/json' });
+    assert.equal(n.status, 200);
+    const after1 = readEdits(dir);
+    assert.ok(after1.notified && Date.now() - Date.parse(after1.notified) < 5000);
+    assert.deepEqual(logs, ['用户点了「通知 AI 修改」：3 处']);
+    // 浏览器再存一次：notified 保留
+    await http(s.port, 'POST', '/__li-talk/edits?token=tok', { body, type: 'application/json' });
+    assert.equal(readEdits(dir).notified, after1.notified);
+  } finally { await s.close(); }
+});
+
+test('serve：SSE 要口令；slides/ 改了推 reload，edits --done 推 merged', async () => {
+  const dir = deck();
+  const s = await startServer(dir, { token: 'tok' });
+  try {
+    assert.equal((await http(s.port, 'GET', '/__li-talk/events')).status, 403);
+    const got = [];
+    const req = request({ host: '127.0.0.1', port: s.port, path: '/__li-talk/events?token=tok', headers: { Host: `127.0.0.1:${s.port}` } }, res => {
+      assert.match(res.headers['content-type'], /text\/event-stream/);
+      res.setEncoding('utf8');
+      res.on('data', c => { for (const m of c.matchAll(/event: (\w+)/g)) got.push(m[1]); });
+    });
+    req.end();
+    await sleep(300);
+    writeFileSync(join(dir, 'slides', 'ch1.css'), readFileSync(join(dir, 'slides', 'ch1.css'), 'utf8') + '\n/* 改了 */\n');
+    for (let i = 0; i < 40 && !got.includes('reload'); i++) await sleep(100);
+    assert.ok(got.includes('reload'), JSON.stringify(got));
+    writeEdits(dir, { version: 1, updated: null, notified: null, merged: null, items: ITEMS });
+    await runEdits({ _: [dir], done: true }, { log: () => {} });
+    for (let i = 0; i < 40 && !got.includes('merged'); i++) await sleep(100);
+    assert.ok(got.includes('merged'), JSON.stringify(got));
+    req.destroy();
+  } finally { await s.close(); }
+});
+
+test('serve 命令：写 serve.json（端口、口令、pid），结束时删掉；不打开浏览器', async () => {
+  const dir = deck();
+  const logs = [];
+  const ac = new AbortController();
+  let opened = null;
+  const p = runServe({ _: [dir], 'no-open': true }, { log: l => logs.push(l), signal: ac.signal, opener: async u => { opened = u; return true; } });
+  const info = join(dir, '.li-talk', 'serve.json');
+  for (let i = 0; i < 50 && !existsSync(info); i++) await sleep(50);
+  const rec = JSON.parse(readFileSync(info, 'utf8'));
+  assert.ok(rec.port > 0 && rec.token.length >= 16 && rec.pid === process.pid && rec.startedAt);
+  assert.match(logs[0], new RegExp(`在线编辑已开启：http://127\\.0\\.0\\.1:${rec.port}/index\\.html\\?edit=${rec.token}`));
+  assert.equal((await http(rec.port, 'GET', '/index.html')).status, 200);
+  ac.abort();
+  assert.equal(await p, 0);
+  assert.ok(!existsSync(info), '结束时删掉 serve.json');
+  assert.equal(opened, null, '--no-open 不打开浏览器');
+  await assert.rejects(runServe({ _: [join(dir, '没有')] }, { log: () => {} }), /找不到课件目录/);
+  await assert.rejects(runServe({ _: [dir], port: 'abc' }, { log: () => {} }), /--port/);
+});
+
+/* ------------------------------------------------------------------
+   edits、wait
+   ------------------------------------------------------------------ */
+test('edits：每条一行写清页号、元素、改了什么；末尾是合并规则；--done 清空并记下 merged', async () => {
+  const dir = deck();
+  const logs = [];
+  await runEdits({ _: [dir] }, { log: l => logs.push(l) });
+  assert.deepEqual(logs, ['没有待合并的修改。']);
+
+  writeEdits(dir, { version: 1, updated: null, notified: null, merged: null, items: ITEMS });
+  logs.length = 0;
+  await runEdits({ _: [dir] }, { log: l => logs.push(l) });
+  const out = logs.join('\n');
+  assert.match(out, /用户还没点「通知 AI 修改」/);
+  assert.match(out, /用户在浏览器里改了 3 处（第 2 页 1 处、第 1 页 1 处、第 3 页 1 处）：/);
+  assert.match(out, /  1\. 第 2 页（g2）div\.grid>div\.card:nth-of-type\(2\)>h3「第二张」：文字「第二张」→「第 2 张」\n/);
+  assert.match(out, /  2\. 第 1 页（g1）p\.lead「三页干净的内容」：位置 left 160→200、top 300→340\n/);
+  assert.match(out, /  3\. 第 3 页（g3）p\.g3-sub「自检清零，再给别人看」：隐藏（删掉这个元素）\n/);
+  assert.match(out, /合并规则：/);
+  assert.match(out, /edits ".*" --done/);
+
+  assert.equal(itemLine({ ...ITEMS[1], position: 'flow' }), '第 1 页（g1）p.lead「三页干净的内容」：位置 left 160→200、top 300→340（元素在排版流里，不是 absolute；相对原位右移 40、下移 40）');
+  assert.match(itemLine({ ...ITEMS[1], origin: { left: 100, top: 50 } }), /定位容器在舞台 \(100, 50\)/);
+  assert.match(itemLine({ ...ITEMS[0], before: { text: 'a b', html: 'a <b>b</b>' }, after: { text: 'a b', html: 'a b' } }), /行内标签变了，改后的 HTML：a b$/);
+
+  logs.length = 0;
+  await runEdits({ _: [dir], done: true }, { log: l => logs.push(l) });
+  assert.match(logs.join('\n'), /已清空 3 处修改/);
+  const d = readEdits(dir);
+  assert.deepEqual(d.items, []);
+  assert.ok(d.merged);
+});
+
+test('wait：先启动再通知，打印清单、退出码 0；已经合并的不触发；--timeout 到了退出码 3', async () => {
+  const dir = deck();
+  writeEdits(dir, { version: 1, updated: null, notified: null, merged: null, items: ITEMS });
+  const logs = [];
+  const p = runWait({ _: [dir] }, { log: l => logs.push(l), poll: 50, quiet: true });
+  await sleep(150);
+  assert.equal(logs.length, 0, '没通知就一直等');
+  writeEdits(dir, { ...readEdits(dir), notified: new Date().toISOString() });
+  assert.equal(await p, 0);
+  const out = logs.join('\n');
+  assert.match(out, /点了「通知 AI 修改」/);
+  assert.match(out, /用户在浏览器里改了 3 处/);
+  assert.match(out, /合并规则：/);
+
+  // 通知了但已经合并过（merged 比 notified 新）：不触发，到时间退出码 3
+  const t = Date.now();
+  writeEdits(dir, { ...readEdits(dir), notified: new Date(t + 500).toISOString(), merged: new Date(t + 600).toISOString() });
+  logs.length = 0;
+  assert.equal(await runWait({ _: [dir], timeout: '0.6' }, { log: l => logs.push(l), poll: 50, quiet: true }), 3);
+  assert.match(logs.join('\n'), /等了 0\.6 秒/);
+  await assert.rejects(runWait({ _: [dir], timeout: true }, { log: () => {} }), /--timeout/);
+});
+
+test('wait 开始前就有的通知不算这次的，但会提醒', async () => {
+  const dir = deck();
+  writeEdits(dir, { version: 1, updated: null, notified: new Date().toISOString(), merged: null, items: ITEMS });
+  const logs = [];
+  assert.equal(await runWait({ _: [dir], timeout: '0.3' }, { log: l => logs.push(l), poll: 50 }), 3);
+  assert.match(logs.join('\n'), /wait 开始前发出、没处理的通知（3 处）/);
+});
+
+/* ------------------------------------------------------------------
+   guide
+   ------------------------------------------------------------------ */
+test('guide：有待合并的修改时，⑥ 以后最前面一步是「先合并修改」', async () => {
+  const dir = deck();
+  writeFileSync(join(dir, '讲稿.md'), '# 测试\n\n## 第 1 页 封面\n\n## 第 2 页 内容\n\n## 第 3 页 结尾\n');
+  for (const s of ['outline', 'script', 'style', 'trial']) confirmStep(dir, s);
+  mkdirSync(join(dir, '.li-talk'), { recursive: true });
+  writeFileSync(join(dir, '.li-talk', 'selftest.json'), JSON.stringify({ at: new Date().toISOString(), slidesMtime: readDeck(dir).slidesMtime, errors: 0, warnings: 0 }));
+  const before = guideText(dir);
+  assert.match(before, /⑧ 过稿/);
+  assert.doesNotMatch(before, /先合并修改/);
+
+  writeEdits(dir, { version: 1, updated: null, notified: null, merged: null, items: ITEMS });
+  const t = guideText(dir);
+  assert.match(t, /浏览器里还有 3 处修改没合并（用户还没点通知/);
+  assert.match(t, /【下一步做什么】\n  1\. 先合并修改：/);
+  assert.match(t, /li-talk\.mjs" edits ".*课件"\n/);
+  assert.match(t, /edits ".*课件" --done/);
+  writeEdits(dir, { ...readEdits(dir), notified: new Date().toISOString() });
+  assert.match(guideText(dir), /用户已经点了「通知 AI 修改」/);
+});
+
+/* ------------------------------------------------------------------
+   真实浏览器
+   ------------------------------------------------------------------ */
+const browser = findBrowser();
+
+test('真实浏览器：?edit=口令 自动进入编辑模式，改字、拖动的记录 POST 到服务；退出后正常翻页；自检模式没有编辑条', { skip: !browser && '本机没找到 Edge / Chrome', timeout: 120000 }, async () => {
+  const dir = deck();
+  const s = await startServer(dir, { token: 'tok' });
+  const b = await openBrowser(browser);
+  const ev = async (expr, ms = 15000) => {
+    const start = Date.now();
+    for (;;) {
+      // 页面正在刷新时，这一次的调用可能等不到回应：超时就当没读到，接着试
+      const v = await b.evaluate(expr, 3000).catch(() => null);
+      if (v || Date.now() - start > ms) return v;
+      await sleep(100);
+    }
+  };
+  const mouse = async (type, x, y, extra = {}) => b.call('Input.dispatchMouseEvent', { type, x, y, button: 'left', buttons: type === 'mouseReleased' ? 0 : 1, clickCount: 1, ...extra });
+  try {
+    await b.goto(`http://127.0.0.1:${s.port}/index.html?edit=tok#2`, { w: 1280, h: 720 });
+    assert.ok(await ev('window.Deck && Deck._.editState && Deck._.editState().on'), '自动进入编辑模式');
+    const st0 = await b.evaluate('Deck._.editState()');
+    assert.equal(st0.server, true);
+    assert.match(st0.bar, /编辑中.*通知 AI 修改.*退出编辑/);
+    assert.equal(await b.evaluate('Deck.page.beat === Deck.page.total && Deck.page.no === 2'), true, '当前页摆到最后一拍');
+
+    // 改字：双击第二张卡片的标题，全选后打字，回车
+    const h3 = await b.evaluate(`(() => { const r = document.querySelector('#slide-g2 .card:nth-of-type(2) h3').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
+    for (let k = 0; k < 2; k++) { await mouse('mousePressed', h3.x, h3.y, { clickCount: k + 1 }); await mouse('mouseReleased', h3.x, h3.y, { clickCount: k + 1 }); }
+    assert.ok(await ev(`!!document.querySelector('.lt-edit-text')`), '双击进入改字');
+    await b.evaluate(`(() => { const n = document.querySelector('.lt-edit-text'); const r = document.createRange(); r.selectNodeContents(n); const s = getSelection(); s.removeAllRanges(); s.addRange(r); })()`);
+    await b.call('Input.insertText', { text: '第 2 张' });
+    await b.call('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 });
+    await b.call('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 });
+
+    // 拖动第三张卡片：往右下拖 64×36 屏幕像素（1280 宽时舞台缩放 2/3，合舞台 96×54）
+    const c3 = await b.evaluate(`(() => { const r = document.querySelector('#slide-g2 .card:nth-of-type(3)').getBoundingClientRect(); return { x: r.left + 30, y: r.top + r.height - 20 }; })()`);
+    await sleep(500);   // 和刚才的双击分开
+    await mouse('mousePressed', c3.x, c3.y);
+    for (let i = 1; i <= 4; i++) await mouse('mouseMoved', c3.x + 16 * i, c3.y + 9 * i);
+    await mouse('mouseReleased', c3.x + 64, c3.y + 36);
+
+    const saved = await (async () => {
+      for (let i = 0; i < 50; i++) { const d = readEdits(dir); if (d.items.length >= 2) return d; await sleep(100); }
+      return readEdits(dir);
+    })();
+    assert.equal(saved.items.length, 2, JSON.stringify(saved.items));
+    const text = saved.items.find(it => it.kind === 'text');
+    assert.deepEqual({ page: text.page, path: text.path, after: text.after }, { page: 'g2', path: 'div.grid>div.card:nth-of-type(2)>h3', after: { text: '第 2 张' } });
+    assert.equal(text.before.text, '第二张');
+    const box = saved.items.find(it => it.kind === 'box');
+    assert.equal(box.page, 'g2');
+    assert.equal(box.path, 'div.grid>div.card:nth-of-type(3)');
+    assert.equal(box.after.left - box.before.left, 96);
+    assert.equal(box.after.top - box.before.top, 54);
+    assert.equal(box.after.width, box.before.width);
+    // 浏览器里的清单和 edits 命令的写法一致
+    const lines = await b.evaluate(`Deck._.editsText(${JSON.stringify(saved.items)}).split('\\n').filter(l => /^  \\d+\\. /.test(l)).join('\\n')`);
+    assert.equal(lines, formatEdits(saved).split('\n').filter(l => /^ {2}\d+\. /.test(l)).join('\n'));
+
+    // 通知：服务记下 notified
+    await b.evaluate(`document.querySelector('.lt-edit-go').click()`);
+    for (let i = 0; i < 50 && !readEdits(dir).notified; i++) await sleep(100);
+    assert.ok(readEdits(dir).notified, '点通知以后 notified 有值');
+    assert.match(await ev(`Deck._.editState().bar.includes('已通知') && Deck._.editState().bar`), /已通知，AI 正在改/);
+
+    // 改了源码：页面自动刷新，停在第 2 页、仍在编辑模式；没合并的修改摆回页面上
+    await b.evaluate('window.__before = 1');
+    const ch1 = join(dir, 'slides', 'ch1.js');
+    writeFileSync(ch1, readFileSync(ch1, 'utf8').replace('按页写下要讲的话', '按页写下要讲的每一句话'));
+    assert.ok(await ev(`!window.__before && window.Deck && Deck._.editState && Deck._.editState().on && Deck.page && Deck.page.no === 2`), '刷新后回到第 2 页的编辑模式');
+    assert.ok(await ev(`document.querySelector('#slide-g2 .card:nth-of-type(2) h3').textContent === '第 2 张'`), '没合并的改字摆回来了');
+    assert.ok(await ev(`document.querySelector('#slide-g2 .card:nth-of-type(3)').hasAttribute('data-lt-moved')`), '没合并的挪位置摆回来了');
+
+    // 退出编辑：按 E；之后翻页照常
+    await b.call('Input.dispatchKeyEvent', { type: 'keyDown', key: 'e', code: 'KeyE', windowsVirtualKeyCode: 69 });
+    assert.equal(await ev('!Deck._.editState().on'), true);
+    await b.evaluate('Deck.go(1)');
+    await b.call('Input.dispatchKeyEvent', { type: 'keyDown', key: 'ArrowRight', code: 'ArrowRight', windowsVirtualKeyCode: 39 });
+    assert.equal(await ev('Deck.page.no === 1 && Deck.page.beat === 1'), true, '退出编辑后 → 进一拍');
+
+    // 自检模式：没有编辑条，按 E 也不进
+    // 自检跑的时候页面会一阵阵地忙，不等加载完，直接轮询完成标记
+    await b.call('Page.navigate', { url: `http://127.0.0.1:${s.port}/index.html?selftest=1&edit=tok` });
+    assert.ok(await ev(`document.documentElement.dataset.selftest === 'done'`, 90000), '自检跑完了');
+    assert.equal(await b.evaluate(`!document.querySelector('.lt-edit-bar') && !Deck._.toggleEdit && !Deck._.editState`), true);
+  } finally {
+    await b.close();
+    await s.close();
+  }
+});
+
+test('真实浏览器：双击 file:// 打开时按 E 进编辑，修改存进 localStorage，按钮是「复制修改给 AI」', { skip: !browser && '本机没找到 Edge / Chrome', timeout: 60000 }, async () => {
+  const dir = deck();
+  const b = await openBrowser(browser);
+  try {
+    const url = new URL('file:///' + join(dir, 'index.html').replace(/\\/g, '/'));
+    await b.goto(url.href + '#3', { w: 1280, h: 720 });
+    const ready = async expr => { for (let i = 0; i < 100; i++) { if (await b.evaluate(expr)) return true; await sleep(100); } return false; };
+    assert.ok(await ready(`window.Deck && Deck.page && Deck.page.no === 3 && !document.body.classList.contains('loading')`));
+    assert.equal(await b.evaluate(`!document.querySelector('.lt-edit-bar') && !document.querySelector('style.lt-edit-style')`), true, '没进编辑模式时什么都不加');
+    await b.call('Input.dispatchKeyEvent', { type: 'keyDown', key: 'e', code: 'KeyE', windowsVirtualKeyCode: 69 });
+    assert.ok(await ready('Deck._.editState().on'));
+    const st = await b.evaluate('Deck._.editState()');
+    assert.equal(st.server, false);
+    assert.match(st.bar, /复制修改给 AI/);
+    // 选中第 3 页的副标题，按 Delete 隐藏、方向键挪 10px
+    const p = await b.evaluate(`(() => { const r = document.querySelector('#slide-g3 .g3-quote').getBoundingClientRect(); return { x: r.left + 20, y: r.top + r.height / 2 }; })()`);
+    await b.call('Input.dispatchMouseEvent', { type: 'mousePressed', x: p.x, y: p.y, button: 'left', buttons: 1, clickCount: 1 });
+    await b.call('Input.dispatchMouseEvent', { type: 'mouseReleased', x: p.x, y: p.y, button: 'left', buttons: 0, clickCount: 1 });
+    await b.call('Input.dispatchKeyEvent', { type: 'keyDown', key: 'ArrowLeft', code: 'ArrowLeft', windowsVirtualKeyCode: 37, modifiers: 8 });
+    await b.call('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Delete', code: 'Delete', windowsVirtualKeyCode: 46 });
+    await sleep(700);
+    const saved = await b.evaluate(`JSON.parse(localStorage.getItem('li-talk-edits:' + document.title))`);
+    assert.deepEqual(saved.items.map(i => i.kind).sort(), ['box', 'hide']);
+    const box = saved.items.find(i => i.kind === 'box');
+    assert.equal(box.page, 'g3');
+    assert.equal(box.after.left, box.before.left - 10);
+    const copy = await b.evaluate('Deck._.editsText(null, true)');
+    assert.match(copy, /^【课件修改】/);
+    assert.match(copy, /隐藏（删掉这个元素）/);
+  } finally { await b.close(); }
+});
