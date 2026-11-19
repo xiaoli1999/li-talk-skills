@@ -1,5 +1,5 @@
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "files": {
     "SKILL.md": "2b1411644dea7eb48c63561e793fea58da221c7975f494db9e701dce0194d370",
     "fonts/wenkai.json": "1df3f00d2ef1218f9e4991fedb8925ea97154f581a4bed248ca18c39a8910bb3",
@@ -129,7 +129,7 @@
     "template/starter/ch1.js": "91c92f1eec149b5d03b04651027c458171f03c0b2847d79697f85f0700265803",
     "template/tour/index.html": "c11254146adc7746f5ae38df4ae3d3d9f2c78571e47475e027f6da9039ef64d1",
     "template/tour/slides/ch1.css": "a9b11cefe7d745703fb8a1de92f93cdb185f42671d9a7c1d19ead348c2c25016",
-    "template/tour/slides/ch1.js": "0aaedae74ce233827b145cfd3164b305e06d7e9d6aecbf3bd1a2ba4407726289",
+    "template/tour/slides/ch1.js": "c22f517e090c039fdd824a8a6521d9573b81bf5effaed1e87cccb9a35e4fd8f2",
     "template/tour/slides/ch2.css": "15c920f0c6de1ea9647883f2020635c658a898080a0175daa5d2750ddf8a45a7",
     "template/tour/slides/ch2.js": "9f9937ef3aa88c06477de9c8de4911c9503eddb14dcedbe3e9242c2d4035f26b",
     "template/tour/slides/ch3.css": "5bc74ee1b93b77ff0d3c7f83e5040d4e02228a25ae9b75cf56402bd7f0a2d082",
@@ -169,6 +169,6 @@
     "template/vendor/fonts/wenkai-lite.css": "b15e0d0662543155920c9244fbf3636fa3c6bce7dad6e4f33ad258656c9f5b04",
     "template/vendor/gsap.min.js": "96c01b81f44a3290e2b4532f55e2c9534b2adc43273a19f3756b2cb41f0fd0b6",
     "template/vendor/rough.min.js": "6853af8619532f3939b156cd16824d2e14f31e71d3df306ad5558eeafacab194",
-    "version.txt": "1f930dd1f133c1f97a94fe3acb8db34372cf4c01ffdb2b3ff4ca72f9494121e9"
+    "version.txt": "d915cc95d6ca8f47ae297713ed46d4e5c5d99ddd29fc3c61e263bdf305f2b5b0"
   }
 }

@@ -1,5 +1,5 @@
 /* li-talk-skills 教程 · 第一部分：封面、认识它、装好它、怎么开始（p01–p08）
-   风格是方果 fangguo、形象是方方 fangfang。叙事：你专心讲好内容，版式、风格、动效交给 AI。
+   风格是方果 fangguo、形象是方方 fangfang。叙事：你专心讲好内容，其他（版式、风格、动效）交给 AI。
    有真截图的放「真图」（figure.shot，图在 素材/），讲界面的地方画拟态示意图并贴「示意」；每张图都有一句说明。
    内容以 README.md、SKILL.md 和 li-talk.mjs 的用法说明为准，没有的功能不写 */
 
@@ -14,7 +14,7 @@ Deck.add({
     <i class="fg-bleed" hidden></i>
     <div class="abs fg-cover" data-beat="0" style="left:150px;top:230px;width:840px">
       <span class="fg-chip">li-talk-skills 教程</span>
-      <h1 class="fg-hero p01-h">你专心讲好内容，<br>样子交给 <span class="fg-red">AI</span></h1>
+      <h1 class="fg-hero p01-h">你专心讲好内容，<br>其他交给 <span class="fg-red">AI</span></h1>
       <p class="fg-sub">版式、风格、动效都交给 AI，你只管讲</p>
     </div>
     <figure class="abs shot p01-shot" data-beat="0" data-src="素材/hero.jpg" data-caption="真图：样册首页，16 种风格一屏看完" style="left:1040px;top:250px;width:760px;--ar:2040/1620"></figure>
@@ -22,7 +22,7 @@ Deck.add({
     <p class="abs fg-who" data-beat="1" data-mascot="1" data-mascot-side="right" data-mascot-pose="happy" style="left:150px;top:860px"><span>适合 <b>分享 · 培训 · 汇报 · 演讲</b></span></p>
     <div class="mascot guide" style="left:880px;top:820px"></div>`,
   notes: [
-    { beat: 0, key: 'AI', say: '欢迎使用 li-talk-skills。它想让你做一件事：专心讲好内容，样子交给 AI。' },
+    { beat: 0, key: 'AI', say: '欢迎使用 li-talk-skills。它想让你做一件事：专心讲好内容，其他交给 AI。' },
     { beat: 1, say: '做分享、培训、汇报、演讲都合适。下面带你从安装到讲完走一遍。' },
   ],
 });
@@ -34,7 +34,7 @@ Deck.add({
   chapterShort: '认识它',
   topic: '专注分享本身',
   scene: 'fangguo',
-  title: '专注分享本身，样子交给 AI',
+  title: '专注分享本身，其他交给 AI',
   html: `
     <div class="abs fg-fc p02-c" data-beat="1" data-mascot="1" data-mascot-side="right" data-mascot-pose="think" style="left:120px;top:260px;width:760px"><i class="fg-ico" data-fg-ico="bulb"></i><div><h4>你：想清楚讲什么</h4><p>主题、想法、笔记、截图，或者一份讲稿</p></div></div>
     <div class="abs fg-fc p02-c" data-beat="2" data-mascot="2" data-mascot-side="right" data-mascot-pose="idea" style="left:120px;top:510px;width:760px"><i class="fg-ico" data-fg-ico="layers" data-fg-tone="purple"></i><div><h4>AI：版式、风格、动效</h4><p>一页页排好，一拍一拍地出，还配好讲词</p></div></div>
