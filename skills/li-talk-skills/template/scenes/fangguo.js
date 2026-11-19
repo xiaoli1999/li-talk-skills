@@ -91,6 +91,10 @@
      · .fg-collage > figure.shot 图文拼贴：第一张是主图，其余叠在边上；同一张横幅照片可以用 --pos 裁出几块
      · .fg-values > .fg-val 价值观网格：<i></i>（自动编号）<b>关键词</b><p data-beat="n">一句说明</p>，中间一栏错开；说明到拍出现、顶上细线铺蓝、当前关键词变蓝
      · 叠放、拼贴里截图的「点开看大图」角标平时藏起来，鼠标移上去才出现
+   - 讲软件、讲操作时用的小件（样子在 fangguo.css）：
+     · .fg-chat > .fg-msg.me / .fg-msg.ai 对话：你说的靠右蓝底、AI 说的靠左浅灰底；一拍一条，讲过的留着；.fg-opts 是 AI 消息里的编号选项
+     · .fg-code 行内代码条（写 data-copy 就能点一下复制），.fg-kbd 键帽
+     · .fg-hub 写 data-fg-core="几个字" 时，中间换成这几个字（讲的不是方果自己时）
    - 自己加的出场名：fgrise、fgfade、fgmock、fghub，只在这个风格里认（别的风格会提醒并换成它的默认出场）。页面里不用写，组件按类名自动选
    - 禁区（zones，舞台坐标 1920×1080）：
      · 左上角主题行（x 120 起，宽 1260，y 18–78）
@@ -444,7 +448,9 @@
       wrap.appendChild(c);
       c.insertAdjacentHTML('afterbegin', `<svg class="fg-hub-ln" aria-hidden="true"><path d="M0 0Q${f1(cx)} ${f1(cy)} ${f1(dx)} ${f1(dy)}"/></svg>`);
     });
-    h.insertAdjacentHTML('beforeend', '<i class="fg-hub-core" aria-hidden="true"></i>');
+    // 中间默认是方果 Logo；写了 data-fg-core="几个字" 就换成这几个字（比如讲的不是方果自己时）
+    const core = h.dataset.fgCore;
+    h.insertAdjacentHTML('beforeend', core ? `<span class="fg-hub-core fg-core-t">${esc(core)}</span>` : '<i class="fg-hub-core" aria-hidden="true"></i>');
   }
   /* 汇聚出场：胶囊淡入，连线从胶囊画向中间，一颗光点沿线跑过去（只跑一趟） */
   function hubIn(tl, e, t) {

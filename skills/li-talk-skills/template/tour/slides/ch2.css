@@ -1,83 +1,40 @@
-/* 新手教程 · 第二章的页面样式（和 slides/ch2.js 配套）
-   - 每条选择器都以 [data-id="p…"] 开头，只管那一页；自己的零件类名用 tour- 开头
-   - 颜色一律用扁平插画的变量，照风格的受光规矩画：右下暗部、左上亮边、投影落向右下、不模糊 */
+/* 教程第二部分的页面样式（和 slides/ch2.js 配套）：每条选择器都以 [data-id="p…"] 开头，只管那一页；自己的零件类名用 p〈页号〉- 开头 */
+[data-id="p09"] .p09-road{display:flex;flex-wrap:wrap;gap:12px}
+[data-id="p09"] .p09-road span{padding:8px 18px 10px;border-radius:999px;background:#F1F4F9;color:var(--ink-3);font:500 34px/1.2 var(--f-hand)}
+[data-id="p09"] .p09-road span.on{background:#E3EDFE;color:var(--fg-blue-ink);font-weight:700}
+[data-id="p09"] .fg-st>p{font-size:30px}
 
-/* ---------- 键帽（翻页、演讲者视图、小工具）：明黄浅色的圆角方块，底下一截深一级的厚度，左上一道亮边 ---------- */
-[data-id="p07"] .tour-keys,[data-id="p08"] .tour-keys,[data-id="p09"] .tour-keys{display:flex;flex:none;gap:16px}
-[data-id="p07"] .tour-key,[data-id="p08"] .tour-key,[data-id="p09"] .tour-key{display:inline-grid;place-items:center;box-sizing:border-box;min-width:88px;height:88px;padding:0 24px 8px;
-  border-radius:20px;font:800 40px/1 var(--f-sans);color:var(--ink);background:#FFFFFF;
-  box-shadow:inset 0 0 0 3px var(--fl-line-d),inset -6px -10px 0 var(--fl-paper-d),inset 4px 4px 0 #FFFFFF,6px 8px 0 rgba(31,42,68,.14)}
+[data-id="p10"] .p10-big{font:700 56px/1.3 var(--f-hand);color:var(--ink)}
+[data-id="p10"] .p10-sm{margin-top:28px;font-size:36px;line-height:1.6;color:var(--ink-2)}
+[data-id="p10"] .p10-term p{padding-top:8px;padding-bottom:8px}
 
-/* ---------- 翻页 ---------- */
-/* 横条里的键帽用明黄浅色，和白色横条分开 */
-[data-id="p07"] .fl-row .tour-key{background:var(--fl-sun-t);box-shadow:inset 0 0 0 3px #F2CF7A,inset -6px -10px 0 #F7DB98,inset 4px 4px 0 var(--fl-sun-tl),6px 8px 0 rgba(138,90,0,.14)}
-[data-id="p07"] .fl-row .fl-pill{min-width:380px;padding:16px 38px 20px;font-size:44px;text-align:center}
-[data-id="p07"] .tour-note{font-size:40px}
-[data-id="p07"] .tour-note-dot{width:22px;height:22px;border-radius:50%;background:var(--fl-coral);box-shadow:inset -3px -4px 0 var(--fl-coral-d),inset 2px 2px 0 var(--fl-coral-l)}
+[data-id="p11"] .fg-values>.fg-val:nth-child(3n+2){translate:none}
+[data-id="p11"] .fg-values>.fg-val:nth-child(even){translate:0 48px}
 
-/* ---------- 演讲者视图 ---------- */
-/* 一行：键帽 + 一句话 */
-[data-id="p08"] .tour-krow{display:flex;align-items:center;gap:30px;white-space:nowrap}
-[data-id="p08"] .tour-krow>p{margin:0;font:700 44px/1.25 var(--f-sans);color:var(--ink)}
-/* 演讲者窗口：墨蓝窗体，左边一块当前页（浅色小课件），右边几行讲词（第一行高亮成明黄），右上角计时器，底下一条超时页 */
-[data-id="p08"] .tour-pv{box-sizing:border-box;height:440px;border-radius:30px;background:var(--fl-ink);
-  box-shadow:inset -8px -9px 0 var(--fl-ink-d),inset 3px 3px 0 var(--fl-ink-l),12px 14px 0 rgba(31,42,68,.14)}
-[data-id="p08"] .tour-pv::before{content:"";position:absolute;left:30px;top:26px;width:16px;height:16px;border-radius:50%;
-  background:var(--fl-coral);box-shadow:26px 0 0 var(--fl-sun),52px 0 0 var(--fl-ink-l)}
-[data-id="p08"] .tour-pv-slide{position:absolute;left:36px;top:76px;width:300px;height:190px;border-radius:16px;background:var(--fl-ink-t);box-shadow:inset -4px -5px 0 #CBD3E2}
-[data-id="p08"] .tour-pv-slide i{position:absolute;left:24px;height:16px;border-radius:8px;background:#FFFFFF}
-[data-id="p08"] .tour-pv-slide i:nth-child(1){top:28px;width:56%;height:22px;background:var(--fl-coral)}
-[data-id="p08"] .tour-pv-slide i:nth-child(2){top:76px;width:70%}
-[data-id="p08"] .tour-pv-slide i:nth-child(3){top:108px;width:46%}
-[data-id="p08"] .tour-pv-notes{position:absolute;left:370px;top:96px;right:40px}
-[data-id="p08"] .tour-pv-notes i{display:block;height:18px;margin-bottom:26px;border-radius:9px;background:var(--fl-ink-l)}
-[data-id="p08"] .tour-pv-notes i:nth-child(1){background:var(--fl-sun)}
-[data-id="p08"] .tour-pv-notes i:nth-child(2){width:86%}
-[data-id="p08"] .tour-pv-notes i:nth-child(4){width:62%}
-[data-id="p08"] .tour-pv-time{position:absolute;right:36px;top:18px;margin:0;padding:6px 20px 8px;border-radius:999px;font:700 36px/1.1 var(--f-mono);color:var(--ink);background:var(--fl-sun);
-  box-shadow:inset -3px -4px 0 var(--fl-sun-d),inset 2px 2px 0 var(--fl-sun-l)}
-[data-id="p08"] .tour-pv-over{position:absolute;left:36px;right:40px;bottom:40px;margin:0;padding:16px 26px;border-radius:16px;background:#E5503C;
-  box-shadow:inset -4px -5px 0 #BC3826,inset 3px 3px 0 #FF7B64}
-[data-id="p08"] .tour-pv-over>span{font:700 30px/1.2 var(--f-sans);color:#FFFFFF}
-/* 最后一拍的横条：三枚胶囊用 40px，箭头填满空当 */
-[data-id="p08"] .tour-flow .fl-pill{font-size:40px}
+[data-id="p12"] .p12-grid{padding:20px 26px 6px}
+[data-id="p12"] .p12-grid p{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 0;border-bottom:2px solid #F2F4F7}
+[data-id="p12"] .p12-grid em{width:120px;font-style:normal;font-weight:700;font-size:28px;color:var(--ink)}
+[data-id="p12"] .p12-grid span{padding:8px 16px 10px;border-radius:12px;background:#F3F8FE;box-shadow:inset 0 0 0 2px #E3EDFE;font-size:28px;color:var(--ink-2)}
+[data-id="p12"] .p12-bar{display:flex;align-items:center;gap:14px;margin:18px 26px 26px;padding:12px 14px;border-radius:14px;background:#26303E;font-size:26px;color:#E9EBEE}
+[data-id="p12"] .p12-bar span{padding:6px 14px 8px;border-radius:10px;background:#fff;color:#16233F;font-weight:600}
+[data-id="p12"] .p12-bar i{font-style:normal}
+[data-id="p12"] .p12-notes{display:flex;flex-direction:column;gap:26px}
+[data-id="p12"] .p12-notes p{padding:22px 28px;border-radius:24px;background:#fff;box-shadow:var(--fg-card);font-size:34px;line-height:1.4;color:var(--ink-2)}
+[data-id="p12"] .p12-notes b{display:block;margin-bottom:6px;font-size:38px;color:var(--ink)}
 
-/* ---------- 小工具 ---------- */
-[data-id="p09"] .card{min-height:330px;box-sizing:border-box}
-[data-id="p09"] .card>.tour-keys{margin-bottom:26px}
-[data-id="p09"] .card>h3{margin:0 0 8px}
-/* 进度条横板：白色受光色面，上面一句话，下面一条按章节分段的进度条（前两段走完，第三段走到一半） */
-[data-id="p09"] .tour-bar-board{box-sizing:border-box;padding:32px 44px 40px;border-radius:30px;background:#FFFFFF;
-  box-shadow:inset -7px -8px 0 var(--fl-paper-d),12px 14px 0 rgba(31,42,68,.08)}
-[data-id="p09"] .tour-bar-board>p{margin:0 0 26px;font:700 42px/1.3 var(--f-sans);color:var(--ink)}
-[data-id="p09"] .tour-prog{display:flex;gap:12px}
-[data-id="p09"] .tour-prog>i{flex:var(--g);display:block;height:18px;border-radius:9px;background:var(--fl-ink-t)}
-[data-id="p09"] .tour-prog>i:nth-child(-n+2){background:var(--fl-coral)}
-[data-id="p09"] .tour-prog>i:nth-child(3){background:linear-gradient(90deg,var(--fl-coral) 0 50%,var(--fl-ink-t) 50%)}
+[data-id="p13"] .p13-list{display:flex;flex-direction:column;gap:18px}
+[data-id="p13"] .p13-list p{width:760px;padding:22px 30px;border-radius:24px;background:#fff;box-shadow:var(--fg-card);font-size:34px;line-height:1.35;color:var(--ink-2)}
+[data-id="p13"] .p13-list b{margin-right:20px;font-size:40px;color:var(--ink)}
+[data-id="p13"] .p13-card p{font-size:36px;line-height:1.55}
 
-/* ---------- 分享和更新 ---------- */
-[data-id="p10"] .fl-badge>svg{display:block;width:100%;height:100%;overflow:visible}
-[data-id="p10"] .tour-q{flex:none;margin:0;font:700 46px/1.2 var(--f-sans);color:var(--ink);white-space:nowrap}
-[data-id="p10"] .fl-row .fl-pill{padding:16px 38px 20px;font-size:44px}
+[data-id="p14"] .p14-c{min-height:330px}
+[data-id="p14"] .p14-c p{margin:24px 0 26px;font-size:38px;line-height:1.5;color:var(--ink)}
+[data-id="p14"] .p14-pass{display:flex;align-items:center;gap:26px;font:700 50px/1.3 var(--f-hand);color:var(--ink)}
 
-/* ---------- 结尾 ---------- */
-/* 网页窗口（和第一章封面那扇一样）：白色窗体，顶上三颗点，里面一页小课件 */
-[data-id="p11"] .tour-win{box-sizing:border-box;padding:70px 36px 36px;border-radius:30px;background:#FFFFFF;
-  box-shadow:inset -7px -8px 0 var(--fl-paper-d),12px 14px 0 rgba(31,42,68,.1)}
-[data-id="p11"] .tour-win::before{content:"";position:absolute;left:30px;top:26px;width:16px;height:16px;border-radius:50%;
-  background:var(--fl-coral);box-shadow:26px 0 0 var(--fl-sun),52px 0 0 var(--fl-line-d)}
-[data-id="p11"] .tour-mini{position:relative;height:200px;border-radius:20px;background:var(--fl-ink-t);box-shadow:inset -5px -6px 0 #CBD3E2}
-[data-id="p11"] .tour-bar{position:absolute;left:30px;height:20px;border-radius:10px;background:#FFFFFF}
-[data-id="p11"] .tour-bar.a{top:30px;width:52%;height:28px;border-radius:14px;background:var(--fl-coral);box-shadow:inset -3px -4px 0 var(--fl-coral-d)}
-[data-id="p11"] .tour-bar.b{top:84px;width:70%}
-[data-id="p11"] .tour-bar.c{top:120px;width:44%}
-[data-id="p11"] .tour-dots{position:absolute;right:24px;bottom:22px;display:flex;gap:10px}
-[data-id="p11"] .tour-dots i{display:block;width:28px;height:14px;border-radius:7px;background:var(--fl-coral-l)}
-[data-id="p11"] .tour-dots i:nth-child(2){width:48px;background:var(--fl-coral)}
-[data-id="p11"] .tour-dots i:nth-child(3){background:#FFFFFF}
-[data-id="p11"] .tour-say{margin:0;font:600 40px/1.3 var(--f-sans);color:var(--ink-2);white-space:nowrap}
-[data-id="p11"] .tour-end-next{padding:16px 40px 20px;font-size:44px}
-/* 可以点击复制的那句话：白色受光胶囊，前面一枚墨蓝的复制小图标（两张错开的圆角方块） */
-[data-id="p11"] .tour-copy{padding:16px 36px 20px 28px;font-size:40px;cursor:pointer}
-[data-id="p11"] .tour-copy-ico{position:relative;width:28px;height:32px;margin-left:10px;border-radius:7px;border:5px solid var(--fl-ink-l);box-sizing:border-box}
-[data-id="p11"] .tour-copy-ico::after{content:"";position:absolute;left:-14px;top:6px;width:28px;height:32px;border-radius:7px;border:5px solid var(--fl-ink);box-sizing:border-box;background:#FFFFFF}
+[data-id="p15"] .p15-q{font-size:88px}
+
+[data-id="p16"] .p16-rows{display:flex;flex-direction:column;gap:30px}
+[data-id="p16"] .p16-rows>div{display:flex;align-items:center;justify-content:space-between;gap:40px;padding:26px 36px;border-radius:28px;background:#fff;box-shadow:var(--fg-card)}
+[data-id="p16"] .p16-rows p{display:flex;flex-wrap:wrap;align-items:center;gap:16px}
+[data-id="p16"] .p16-rows p span{margin-left:10px;font-size:34px;color:var(--ink-2)}
+[data-id="p16"] .p16-rows b{font:700 50px/1.2 var(--f-hand);color:var(--fg-blue-ink);white-space:nowrap}

@@ -400,7 +400,7 @@ function stageStart(s, ctx = {}) {
     ? [`${have[1]}（推荐：素材/ 里已经有文件了）`, have[0], have[2]]
     : [`${have[0]}（推荐：拿不准就选这个，一问一答带着做）`, have[1], have[2]];
   const asks = [{ q: '你手上现在有什么？', opts }];
-  if (first) asks.unshift({ q: '第一次用 li-talk-skills，要不要先花 3 分钟过一遍新手教程？我会在浏览器里打开教程课件和全部风格的样册。', opts: ['先过一遍新手教程（推荐：第一次用）', '先不学，直接开始做课件'] });
+  if (first) asks.unshift({ q: '第一次用 li-talk-skills，要不要先花几分钟过一遍新手教程？我会在浏览器里打开教程课件和全部风格的样册。', opts: ['先过一遍新手教程（推荐：第一次用）', '先不学，直接开始做课件'] });
   if (askDir) asks.push({ q: '课件放在哪个目录？', opts: [`${posix(dir)}（推荐）`, '换个位置或名字：直接告诉我'] });
 
   return render(1, {

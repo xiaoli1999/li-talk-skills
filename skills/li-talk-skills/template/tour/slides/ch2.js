@@ -1,183 +1,220 @@
-/* =====================================================================
-   新手教程 · 第二章：讲的时候、讲完以后、结尾（p07–p11）
-   - 按键都画成受光的键帽（.tour-key），键帽旁边直接写这个键做什么；样子在 ch2.css
-   - 可读性：每拍出的一行讲完留在页上，翻到最后一拍整页信息完整，从上往下一条路读下来
-   ===================================================================== */
+/* li-talk-skills 教程 · 第二部分：九步流程、接着做、选风格、样册、形象、质量把关、「关于我」页、翻页（p09–p16） */
 
-/* 圆片徽标里的单色图标（扁平插画内置的图标里没有文件夹、刷新、手机，这里自己画，48×48，颜色跟着 currentColor） */
-const TOUR_ICON = {
-  folder: '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M6 14a4 4 0 0 1 4-4h9l4 5h15a4 4 0 0 1 4 4v17a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4Z" fill="currentColor"/></svg>',
-  refresh: '<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M38 20A15 15 0 0 0 11 15M10 28a15 15 0 0 0 27 5" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/><path d="M40 9v12H28M8 39V27h12" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-  phone: '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="13" y="5" width="22" height="38" rx="5" fill="none" stroke="currentColor" stroke-width="4.5"/><path d="M20 36h8" stroke="currentColor" stroke-width="4.5" stroke-linecap="round"/></svg>',
-};
-
-/* 翻页：三条白色胶囊横条从上往下，每拍出一条：左边几枚键帽，一排明黄箭头指到右边的「下一拍」这类胶囊。
-   最后一拍下面一枚胶囊：讲过的会变淡一点（上面三条正好就是例子） */
-Deck.add({
-  id: 'p07',
-  chapter: '三、讲的时候',
-  topic: '翻页',
-  scene: 'flat',
-  title: '翻页：一拍一拍往下点',
-  html: `
-    <p class="explain" data-beat="0"><b>一拍</b>：点一下出一块内容，一页通常 2 到 4 拍</p>
-    <div class="fl-row abs" data-beat="1" data-mascot="1" data-mascot-side="right" style="left:120px;top:290px;width:1500px">
-      <span class="tour-keys"><kbd class="tour-key">→</kbd><kbd class="tour-key">空格</kbd><kbd class="tour-key">点击</kbd></span>
-      <i class="fl-track"></i>
-      <p class="fl-pill t-yellow"><em class="key">下一拍</em></p>
-    </div>
-    <div class="fl-row abs" data-beat="2" data-mascot="2" data-mascot-side="right" style="left:120px;top:460px;width:1500px">
-      <span class="tour-keys"><kbd class="tour-key">←</kbd></span>
-      <i class="fl-track"></i>
-      <p class="fl-pill t-yellow"><em class="key">上一拍</em></p>
-    </div>
-    <div class="fl-row abs" data-beat="3" data-mascot="3" data-mascot-side="right" style="left:120px;top:630px;width:1500px">
-      <span class="tour-keys"><kbd class="tour-key">Home</kbd><kbd class="tour-key">End</kbd></span>
-      <i class="fl-track"></i>
-      <p class="fl-pill t-yellow">第一页 / 最后一页</p>
-    </div>
-    <p class="fl-pill abs tour-note" data-beat="4" data-mascot="4" data-mascot-side="right" style="left:120px;top:830px"><i class="tour-note-dot"></i>讲过的会<em class="key">变淡</em>一点，但一直留在页上</p>
-    <div class="mascot guide" style="left:1680px;top:860px"></div>`,
-  notes: [
-    { beat: 0, key: '一拍', say: '讲的时候怎么翻？这份课件是一拍一拍走的：点一下出一块内容，一页通常 2 到 4 拍。' },
-    { beat: 1, key: '下一拍', say: '往下走：方向键右、空格，或者点一下鼠标，都是下一拍。这页拍完了，再按就进下一页。' },
-    { beat: 2, key: '上一拍', say: '讲快了想退回去，按方向键左，退一拍。' },
-    { beat: 3, key: 'Home', say: 'Home 跳到第一页，End 跳到最后一页。' },
-    { beat: 4, key: '变淡', say: '你看上面这几行，讲过的会变淡一点，但一直留在页上，翻到最后一拍，整页内容都在。' },
-  ],
-});
-
-/* 演讲者视图：左边三行「键帽 + 一句话」（S、T R、H），右边一扇演讲者窗口：左边当前页、右边几行讲词，
-   第 2 拍角上贴出计时器，第 3 拍底下冒出一条标红的超时页。最后一拍下面一条横条：彩排小结 → 复制给 AI → 删减超时页的讲词 */
-Deck.add({
-  id: 'p08',
-  chapter: '三、讲的时候',
-  topic: '演讲者视图',
-  scene: 'flat',
-  title: '按 S，打开演讲者视图',
-  html: `
-    <p class="explain" data-beat="0"><b>演讲者视图</b>：另开一个窗口，讲词只有你看得到</p>
-    <div class="tour-krow abs" data-beat="1" data-mascot="1" data-mascot-side="right" style="left:120px;top:300px"><span class="tour-keys"><kbd class="tour-key">S</kbd></span><p>打开演讲者视图</p></div>
-    <div class="tour-krow abs" data-beat="2" data-mascot="2" data-mascot-side="right" style="left:120px;top:440px"><span class="tour-keys"><kbd class="tour-key">T</kbd><kbd class="tour-key">R</kbd></span><p><em class="key">计时</em>：开始暂停 / 归零</p></div>
-    <div class="tour-krow abs" data-beat="3" data-mascot="3" data-mascot-side="right" style="left:120px;top:580px"><span class="tour-keys"><kbd class="tour-key">H</kbd></span><p><em class="key">彩排</em>：记下每页用时</p></div>
-    <div class="tour-pv abs" data-beat="1" style="left:1060px;top:290px;width:740px">
-      <div class="tour-pv-slide"><i></i><i></i><i></i></div>
-      <div class="tour-pv-notes"><i></i><i></i><i></i><i></i></div>
-      <p class="tour-pv-time" data-beat="2">03:12</p>
-      <p class="tour-pv-over" data-beat="3"><span data-small>第 5 页超时</span></p>
-    </div>
-    <div class="fl-row abs tour-flow" data-beat="4" data-mascot="4" data-mascot-side="right" style="left:120px;top:800px;width:1500px">
-      <p class="fl-pill">彩排小结</p>
-      <i class="fl-track"></i>
-      <p class="fl-pill">复制给 AI</p>
-      <i class="fl-track"></i>
-      <p class="fl-pill t-yellow">删减<em class="key">超时页</em>的讲词</p>
-    </div>
-    <div class="mascot guide" style="left:1680px;top:860px"></div>`,
-  notes: [
-    { beat: 0, key: '演讲者视图', say: '正式讲的时候，按 S 打开演讲者视图。它是另开的一个窗口，讲词只有你看得到，观众看不到。' },
-    { beat: 1, key: 'S', say: '窗口里有这一页每拍的讲词，当前这一拍高亮，还会预告下一拍出什么。' },
-    { beat: 2, key: '计时', say: '按 T 开始或暂停计时，按 R 归零。' },
-    { beat: 3, key: '彩排', say: '正式讲之前，在演讲者视图里按 H 彩排一遍。它记下每页用了多久，超时的页整条标红。' },
-    { beat: 4, key: '超时页', say: '彩排完再按一次 H，会出一份小结。把小结复制给 AI，它就只删减超时那几页的讲词。' },
-  ],
-});
-
-/* 讲的时候的小工具：四张受光的卡片从左到右，每张顶上是键帽（O、B 和点、L、F），下面名字和一句说明；
-   最后一拍下面一块白色横板，画着舞台底边那条分段的进度条 */
+/* p09 九步流程、五处停下：上面一条九步的小路线，五处停下的地方点成蓝色；下面一条流水线，一拍走到下一处停下 */
 Deck.add({
   id: 'p09',
-  chapter: '三、讲的时候',
-  topic: '讲的时候的小工具',
-  scene: 'flat',
-  title: '讲的时候，还有这些小工具',
+  chapter: '三、做一份课件',
+  chapterShort: '做课件',
+  topic: '九步流程',
+  scene: 'fangguo',
+  title: '九步流程，五处停下来等你点头',
   html: `
-    <div class="abs grid" style="left:120px;top:280px;width:1680px;--cols:4;--gap:40px">
-      <div class="card t-yellow" data-beat="1" data-mascot="1" data-mascot-side="bottom" data-mascot-x=".35">
-        <span class="tour-keys"><kbd class="tour-key">O</kbd></span><h3><em class="key">总览</em>跳页</h3><p>铺开所有页，<br>点一页跳过去</p>
-      </div>
-      <div class="card t-pink" data-beat="2" data-mascot="2" data-mascot-side="bottom" data-mascot-x=".35">
-        <span class="tour-keys"><kbd class="tour-key">B</kbd><kbd class="tour-key">.</kbd></span><h3><em class="key">黑屏</em></h3><p>再按一下恢复，<br>不会翻页</p>
-      </div>
-      <div class="card t-blue" data-beat="3">
-        <span class="tour-keys"><kbd class="tour-key">L</kbd></span><h3>激光笔</h3><p>鼠标变成<br>带拖尾的红点</p>
-      </div>
-      <div class="card" data-beat="3" data-mascot="3" data-mascot-side="bottom" data-mascot-x=".35">
-        <span class="tour-keys"><kbd class="tour-key">F</kbd></span><h3>全屏</h3><p>铺满整个屏幕</p>
-      </div>
+    <p class="abs p09-road" data-beat="0" style="left:120px;top:210px;width:1680px"><span>① 起点</span><span class="on">② 提纲</span><span class="on">③ 讲稿</span><span class="on">④ 风格</span><span>⑤ 搭骨架</span><span class="on">⑥ 先做 3 页</span><span>⑦ 写全稿</span><span class="on">⑧ 过稿</span><span>⑨ 完成</span></p>
+    <div class="abs fg-pipe" style="left:120px;top:360px;width:1680px">
+      <div class="fg-st"><i class="fg-ico" data-fg-ico="doc"></i><b>提纲</b><p data-beat="0" data-small>分几部分</p></div>
+      <div class="fg-st" data-mascot="1" data-mascot-side="bottom" data-mascot-x=".32" data-mascot-pose="point"><i class="fg-ico" data-fg-ico="layers" data-fg-tone="teal"></i><b>讲稿</b><p data-beat="1" data-small>字、拍数、讲词</p></div>
+      <div class="fg-st" data-mascot="2" data-mascot-side="bottom" data-mascot-x=".32"><i class="fg-ico" data-fg-ico="img" data-fg-tone="purple"></i><b>风格</b><p data-beat="2" data-small>看样册，你来选</p></div>
+      <div class="fg-st" data-mascot="3" data-mascot-side="bottom" data-mascot-x=".32"><i class="fg-ico" data-fg-ico="bolt" data-fg-tone="amber"></i><b>先做 3 页</b><p data-beat="3" data-small>封面加两页</p></div>
+      <div class="fg-st" data-mascot="4" data-mascot-side="bottom" data-mascot-x=".32" data-mascot-pose="ok"><i class="fg-ico" data-fg-ico="check" data-fg-tone="coral"></i><b>过稿</b><p data-beat="4" data-small>整份看一遍</p></div>
     </div>
-    <div class="tour-bar-board abs" data-beat="4" data-mascot="4" data-mascot-side="right" style="left:120px;top:730px;width:1500px">
-      <p>底部<em class="key">进度条</em>：按全稿拍数走，自己会动</p>
-      <span class="tour-prog"><i style="--g:3"></i><i style="--g:4"></i><i style="--g:3"></i><i style="--g:2"></i></span>
-    </div>
-    <div class="mascot guide" style="left:1680px;top:860px"></div>`,
+    <p class="abs fg-cap" data-beat="0" style="left:120px;top:800px">每处停下，你说「可以」，AI 才往下走</p>
+    <div class="mascot guide" style="left:1660px;top:820px"></div>`,
   notes: [
-    { beat: 0, key: '小工具', say: '讲的时候还有几个顺手的小工具，都是一个键。' },
-    { beat: 1, key: '总览', say: '按 O 铺开所有页的缩略图，点一页，或者敲页码回车，就跳过去。再按 O 或 Esc 关掉。' },
-    { beat: 2, key: '黑屏', say: '按 B 或者句点黑屏，想让大家看你、不看屏幕的时候用。很多翻页笔的黑屏键发的就是句点。再按一下就恢复，不会顺手翻页。' },
-    { beat: 3, key: ['激光笔', '全屏'], say: '按 L 打开激光笔，鼠标变成带拖尾的红点，指哪儿都清楚。按 F 全屏。' },
-    { beat: 4, key: '进度条', say: '舞台底边还有一条细细的进度条，按全稿拍数走、按章节分段，不用设置，自己会走。' },
+    { beat: 0, key: '五处', say: '接下来 AI 一步步往下走，一共九步，其中五处会停下来等你说可以。第一处是提纲：分几部分、每部分几页。' },
+    { beat: 1, key: '讲稿', say: '第二处是讲稿：每页屏幕上的字、分几拍、照着讲的讲词。' },
+    { beat: 2, key: '风格', say: '第三处是风格：AI 按内容推荐，并打开样册让你看，你说了算。' },
+    { beat: 3, key: '先做 3 页', say: '第四处，先做三页：封面加两页最典型的内容，自检通过后给你看，满意了再写全稿。' },
+    { beat: 4, key: '过稿', say: '最后一处是过稿：整份课件给你看，按你的意见改。' },
   ],
 });
 
-/* 分享和更新：三条白色胶囊横条，左边一枚圆片徽标加一个问题（第 0 拍就在），每拍一排明黄箭头伸出去，答案的胶囊贴上来 */
+/* p10 换对话也能接着做：左边一句话说清楚，右边终端里 AI 先跑 guide，一拍一行 */
 Deck.add({
   id: 'p10',
-  chapter: '四、讲完以后',
-  topic: '分享和更新',
-  scene: 'flat',
-  title: '发给别人、更新、手机上看',
+  chapter: '三、做一份课件',
+  chapterShort: '做课件',
+  topic: '接着做',
+  scene: 'fangguo',
+  title: '换对话、换模型，也能接着做',
   html: `
-    <div class="fl-row abs" data-mascot="1" data-mascot-side="right" style="left:120px;top:290px;width:1500px">
-      <i class="fl-badge t-pink" style="--s:110px">${TOUR_ICON.folder}</i>
-      <p class="tour-q">发给别人</p>
-      <i class="fl-track" data-beat="1"></i>
-      <p class="fl-pill t-yellow" data-beat="1">拷走整个目录，或压成 <em class="key">zip</em></p>
+    <div class="abs p10-l" data-beat="0" style="left:120px;top:300px;width:620px">
+      <p class="p10-big">进度记在课件目录里</p>
+      <p class="p10-sm">确认过哪些环节，都写在课件目录的文件里。AI 每次开工，都先跑一次 <span class="fg-code">guide</span> 看做到哪一步。</p>
     </div>
-    <div class="fl-row abs" data-mascot="2" data-mascot-side="right" style="left:120px;top:490px;width:1500px">
-      <i class="fl-badge t-yellow" style="--s:110px">${TOUR_ICON.refresh}</i>
-      <p class="tour-q">每天自动更新</p>
-      <i class="fl-track" data-beat="2"></i>
-      <p class="fl-pill t-yellow" data-beat="2">做好的课件<em class="key">不会被改</em></p>
+    <div class="abs term p10-term" data-title="终端" data-beat="0" data-recede="off" style="left:820px;top:290px;width:980px">
+      <p class="in" data-beat="1">guide 我的分享</p>
+      <p class="ok" data-beat="2">【现在在哪一步】⑥ 先做 3 页</p>
+      <p class="hi" data-beat="3" data-mascot="3" data-mascot-side="stay" data-mascot-pose="think">【下一步做什么】写封面和两页最典型的内容</p>
     </div>
-    <div class="fl-row abs" data-mascot="3" data-mascot-side="right" style="left:120px;top:690px;width:1500px">
-      <i class="fl-badge" style="--s:110px">${TOUR_ICON.phone}</i>
-      <p class="tour-q">手机竖屏</p>
-      <i class="fl-track" data-beat="3"></i>
-      <p class="fl-pill t-yellow" data-beat="3">自动变成<em class="key">阅读模式</em></p>
-    </div>
-    <div class="mascot guide" style="left:1680px;top:860px"></div>`,
+    <div class="mascot guide" style="left:1660px;top:820px"></div>`,
   notes: [
-    { beat: 0, key: '分享', say: '讲完以后，大家常问三件事：怎么发给别人、更新了会不会出问题、手机上能不能看。' },
-    { beat: 1, key: 'zip', say: '发给别人：把整个课件目录拷走，或者压成 zip。对方解压后双击 index.html 就能看，不用联网。' },
-    { beat: 2, key: '不会被改', say: 'skill 每天第一次用的时候会自动检查更新。更新只换 skill 本身，已经做好的课件不会被改。' },
-    { beat: 3, key: '阅读模式', say: '在手机、平板上竖着看，会自动变成阅读模式：页面上下滑，所有拍直接展开。' },
+    { beat: 0, key: '课件目录', say: '中途换对话、换模型都不怕：进度记在课件目录里，AI 每次开工都先查一遍。' },
+    { beat: 1, key: 'guide', say: '它先跑一次 guide。' },
+    { beat: 2, say: 'guide 会告诉它现在在哪一步。' },
+    { beat: 3, say: '下一步做什么也写得清清楚楚，接着往下做就行。' },
   ],
 });
 
-/* 结尾：左上一个白色大气泡「现在就试试！」，右下明黄圆上立着一扇网页窗口；
-   第 1 拍贴出一行可以点击复制的话，第 2 拍明黄胶囊：接下来 AI 会打开样册，小页高兴一下 */
+/* p11 选风格：四类风格排成四栏，一拍点亮一栏 */
 Deck.add({
   id: 'p11',
-  chapter: '结尾',
-  scene: 'flat',
-  title: '现在就试试',
+  chapter: '三、做一份课件',
+  chapterShort: '做课件',
+  topic: '选风格',
+  scene: 'fangguo',
+  title: '选风格：16 种，分四类',
+  html: `
+    <p class="abs fg-cap" data-beat="0" style="left:120px;top:186px">AI 按内容推荐，你说了算；按章换风格，只能在同一类里换</p>
+    <div class="abs fg-values p11-v" style="left:120px;top:300px;width:1680px;--cols:4;--gap:48px">
+      <div class="fg-val"><i></i><b>企业风</b><p data-beat="1">方果</p></div>
+      <div class="fg-val"><i></i><b>手绘风</b><p data-beat="2">方格纸、黑板、像素手账、工位桌面、水彩田园、水墨国风、蓝图、漫画</p></div>
+      <div class="fg-val"><i></i><b>现代风</b><p data-beat="3">科技暗黑、毛玻璃、液态玻璃、扁平插画、杂志复古、新粗野主义</p></div>
+      <div class="fg-val" data-mascot="4" data-mascot-side="stay" data-mascot-pose="idea"><i></i><b>像素风</b><p data-beat="4">像素游戏</p></div>
+    </div>
+    <div class="mascot guide" style="left:1660px;top:820px"></div>`,
+  notes: [
+    { beat: 0, say: '到了第三处停下，要选风格。一共十六种，分四类。按章换风格的话，只能在同一类里换。' },
+    { beat: 1, key: '企业风', say: '企业风现在有一种，就是你正在看的方果。' },
+    { beat: 2, key: '手绘风', say: '手绘风最多，方格纸、黑板、水彩、水墨、蓝图、漫画这些。' },
+    { beat: 3, key: '现代风', say: '现代风有科技暗黑、毛玻璃、液态玻璃、扁平插画、杂志复古、新粗野主义。' },
+    { beat: 4, key: '像素风', say: '还有一种像素游戏。' },
+  ],
+});
+
+/* p12 样册（聚焦框）：一扇模拟的样册窗口，一拍框一处：一张卡片、左下角的小条、「全部风格」 */
+Deck.add({
+  id: 'p12',
+  chapter: '三、做一份课件',
+  chapterShort: '做课件',
+  topic: '样册',
+  scene: 'fangguo',
+  title: '样册：全部风格一屏看完',
+  html: `
+    <div class="abs fg-win p12-win" data-beat="0" data-recede="off" style="left:120px;top:250px;width:1160px">
+      <div class="fg-win-hd"><i class="fg-ico fg-ico-s" data-fg-ico="img" data-fg-tone="purple"></i>li-talk-skills 样册<span data-small>全部风格</span></div>
+      <div class="p12-grid" data-small>
+        <p><em>企业风</em><span>方果</span></p>
+        <p><em>手绘风</em><span>方格纸</span><span>黑板</span><span data-fg-focus="1">水彩田园</span><span>水墨国风</span><span>蓝图</span><span>漫画</span></p>
+        <p><em>现代风</em><span>科技暗黑</span><span>毛玻璃</span><span>液态玻璃</span><span>扁平插画</span><span>杂志复古</span></p>
+        <p><em>像素风</em><span>像素游戏</span></p>
+      </div>
+      <p class="p12-bar" data-small><span data-fg-focus="3">全部风格</span><i data-fg-focus="2">手绘：方格纸 · 黑板 · 水彩田园 · …</i></p>
+    </div>
+    <div class="abs p12-notes" style="left:1340px;top:280px;width:460px">
+      <p data-beat="1" data-mascot="1" data-mascot-side="stay" data-mascot-pose="point"><b>点一张卡片</b>从第一页看这种风格的样板</p>
+      <p data-beat="2"><b>左下角的小条</b>随时换一种风格看</p>
+      <p data-beat="3"><b>点「全部风格」</b>回到总览；想再看就对 AI 说「打开样册」</p>
+    </div>
+    <div class="mascot guide" style="left:1660px;top:860px"></div>`,
+  notes: [
+    { beat: 0, say: '到选风格这一步，AI 会自动在浏览器里打开样册。首页一屏放下全部风格。' },
+    { beat: 1, key: '卡片', say: '点一张卡片，就从第一页看这种风格的样板。' },
+    { beat: 2, key: '小条', say: '左下角有个小条，随时换一种风格看。' },
+    { beat: 3, key: '全部风格', say: '点全部风格回到总览。关掉了也没关系，对 AI 说打开样册就行。' },
+  ],
+});
+
+/* p13 形象：左边四条，每拍讲一条，方方就走到这一条旁边、换一个动作 */
+Deck.add({
+  id: 'p13',
+  chapter: '三、做一份课件',
+  chapterShort: '做课件',
+  topic: '形象',
+  scene: 'fangguo',
+  title: '每种风格，都有一个小形象',
+  html: `
+    <div class="abs p13-list" style="left:120px;top:280px;width:900px">
+      <p data-beat="1" data-mascot="1" data-mascot-side="right" data-mascot-pose="point"><b>会走过去</b>走到正在讲的内容旁边</p>
+      <p data-beat="2" data-mascot="2" data-mascot-side="right" data-mascot-pose="wow"><b>会换动作</b>指一指、惊讶一下、点个赞</p>
+      <p data-beat="3" data-mascot="3" data-mascot-side="right" data-mascot-pose="happy"><b>会和你玩</b>鼠标移上去会开心，点它会蹦一下</p>
+      <p data-beat="4" data-mascot="4" data-mascot-side="right" data-mascot-pose="rest"><b>会打个盹</b>很久没人操作，它就睡一会儿</p>
+    </div>
+    <div class="abs card p13-card" data-beat="0" style="left:1220px;top:300px;width:580px">
+      <h3>这份教程的形象：方方</h3>
+      <p>每种风格的形象长得不一样，在样册里都能看到；不喜欢也可以换成别的风格的形象</p>
+    </div>
+    <div class="mascot guide" style="left:1500px;top:760px"></div>`,
+  notes: [
+    { beat: 0, say: '每种风格都有一个小形象。这份教程里的是方方。' },
+    { beat: 1, key: '走过去', say: '讲到哪，它就走到哪块内容旁边。' },
+    { beat: 2, key: '换动作', say: '它会换动作，指一指、惊讶一下、点个赞。' },
+    { beat: 3, key: '玩', say: '鼠标移上去它会开心，点它会蹦一下，点它不会翻页。' },
+    { beat: 4, key: '打个盹', say: '很久没人操作，它就打个盹。' },
+  ],
+});
+
+/* p14 质量把关：两张卡讲两种检查，最后一条「错误清零才给你看」 */
+Deck.add({
+  id: 'p14',
+  chapter: '三、做一份课件',
+  chapterShort: '做课件',
+  topic: '质量把关',
+  scene: 'fangguo',
+  title: '写完先检查，错误清零才给你看',
+  html: `
+    <div class="abs card p14-c" data-beat="1" style="left:120px;top:270px;width:810px">
+      <span class="fg-chip">不开浏览器的检查</span>
+      <p>几秒查完：写法错误、越界的用法、讲词和拍数对不上</p>
+      <span class="fg-code">check 我的分享</span>
+    </div>
+    <div class="abs card p14-c" data-beat="2" style="left:990px;top:270px;width:810px">
+      <span class="fg-chip">后台浏览器自检</span>
+      <p>五个尺寸逐页逐拍量：溢出、重叠、形象挡字、字太小</p>
+      <span class="fg-code">check 我的分享 --browser</span>
+    </div>
+    <p class="abs p14-pass" data-beat="3" data-mascot="3" data-mascot-side="right" data-mascot-pose="ok" style="left:120px;top:720px"><i class="fg-ico" data-fg-ico="check" data-fg-tone="teal"></i>两种检查都没有错误，AI 才把课件打开给你看</p>
+    <div class="mascot guide" style="left:1660px;top:96px"></div>`,
+  notes: [
+    { beat: 0, say: '页面是 AI 手写的，写完怎么知道效果对不对？靠两种检查。' },
+    { beat: 1, key: '不开浏览器', say: '第一种不开浏览器，几秒查完写法错误、越界的用法、讲词和拍数对不上。' },
+    { beat: 2, key: '后台浏览器', say: '第二种在后台用浏览器打开课件，按五个尺寸逐页逐拍量一遍，出一份中文报告。' },
+    { beat: 3, key: '错误清零', say: '两种检查都没有错误，AI 才把课件给你看。' },
+  ],
+});
+
+/* p15 「关于我」页（金句页）：过稿前 AI 转告的那句愿景 */
+Deck.add({
+  id: 'p15',
+  chapter: '三、做一份课件',
+  chapterShort: '做课件',
+  topic: '「关于我」页',
+  scene: 'fangguo',
+  title: '分享知识的最后，也分享一下你自己',
   noTitle: true,
   html: `
-    <i class="fl-blob t-yellow abs" data-beat="0" style="left:1240px;top:400px;width:540px"></i>
-    <div class="tour-win abs" data-beat="0" aria-hidden="true" style="left:1290px;top:530px;width:440px">
-      <div class="tour-mini"><i class="tour-bar a"></i><i class="tour-bar b"></i><i class="tour-bar c"></i><span class="tour-dots"><i></i><i></i><i></i></span></div>
-    </div>
-    <i class="fl-art abs" data-fl-art="spark" data-beat="0" style="left:1700px;top:330px;width:44px"></i>
-    <i class="fl-art abs" data-fl-art="ring" data-beat="0" style="left:1250px;top:420px;width:34px"></i>
-    <div class="fl-bubble abs" data-beat="0" style="left:150px;top:200px;--fl-tx:90px"><p>现在就<em class="key">试试</em>！</p></div>
-    <p class="abs tour-say" data-beat="1" style="left:170px;top:590px">对 AI 说（点一下就能复制）：</p>
-    <p class="fl-pill abs tour-copy" data-beat="1" style="left:170px;top:656px" data-copy="用 li-talk-skills 做一份关于「你的主题」的课件"><i class="tour-copy-ico"></i>用 li-talk-skills 做一份关于「你的主题」的课件</p>
-    <p class="fl-pill t-yellow abs tour-end-next" data-beat="2" data-mascot="2" data-mascot-side="right" data-mascot-pose="happy" data-mascot-say="走吧！" style="left:170px;top:820px">接下来，AI 会打开<em class="key">样册</em></p>
-    <div class="mascot guide" data-face="left" style="left:1100px;top:820px"></div>`,
+    <i class="fg-bleed fg-wash" hidden></i>
+    <p class="abs fg-quote p15-q" data-beat="0" style="left:150px;top:260px;white-space:nowrap">在分享知识和经验的最后，<br>也<span class="fg-hl">分享一下你自己</span></p>
+    <p class="abs fg-quote-by" data-beat="1" data-mascot="1" data-mascot-side="right" data-mascot-pose="happy" style="left:154px;top:620px">小黎的愿景 · 过稿前，AI 会问你要不要加一页「关于我」</p>
+    <p class="abs p15-note" data-beat="2" style="left:154px;top:730px"><span class="fg-chip">用方果风格时，问的是「关于我们」</span></p>
+    <i class="abs fg-deco" style="left:1260px;top:220px;width:600px"></i>
+    <div class="mascot guide" style="left:1500px;top:820px"></div>`,
   notes: [
-    { beat: 0, key: '试试', say: '教程就到这里。最好的上手办法，就是现在试一份。' },
-    { beat: 1, show: '一句可复制的话', say: '对 AI 说：用 li-talk-skills 做一份关于你的主题的课件。这句话点一下就能复制。' },
-    { beat: 2, key: '样册', say: '接下来 AI 会打开样册，带你把 16 种风格都过一遍，挑一个你喜欢的。' },
+    { beat: 0, key: '分享一下你自己', say: '过稿之前，AI 会转告一句话：小黎的愿景，希望你在分享知识和经验的最后，也分享一下你自己。' },
+    { beat: 1, key: '关于我', say: '然后问你要不要在结尾前加一页关于我，让听众认识讲这堂课的人。' },
+    { beat: 2, key: '关于我们', say: '用方果风格时，问的是要不要加一页关于我们。' },
+  ],
+});
+
+/* p16 翻页：键帽一行一行出来，右边写这几个键做什么 */
+Deck.add({
+  id: 'p16',
+  chapter: '四、讲的时候',
+  chapterShort: '讲的时候',
+  topic: '翻页',
+  scene: 'fangguo',
+  title: '翻页：这几个键就够',
+  html: `
+    <div class="abs p16-rows" style="left:120px;top:280px;width:1680px">
+      <div data-beat="1" data-mascot="1" data-mascot-side="stay" data-mascot-pose="point"><p><i class="fg-kbd">→</i><i class="fg-kbd">↓</i><i class="fg-kbd">空格</i><i class="fg-kbd">PageDown</i><i class="fg-kbd">Enter</i><span>或点一下</span></p><b>下一拍</b></div>
+      <div data-beat="2"><p><i class="fg-kbd">←</i><i class="fg-kbd">↑</i><i class="fg-kbd">PageUp</i><i class="fg-kbd">Backspace</i></p><b>上一拍</b></div>
+      <div data-beat="3"><p><i class="fg-kbd">Home</i><i class="fg-kbd">End</i></p><b>第一页 / 最后一页</b></div>
+    </div>
+    <p class="abs fg-cap" data-beat="3" style="left:120px;top:800px">平板、手机上左右滑动翻页；刷新页面不丢位置</p>
+    <div class="mascot guide" style="left:1660px;top:820px"></div>`,
+  notes: [
+    { beat: 0, say: '课件做好了，讲的时候怎么翻？' },
+    { beat: 1, key: '下一拍', say: '往后：方向键右或下、空格、PageDown、Enter，或者直接点一下，都是下一拍，本页拍完就进下一页。' },
+    { beat: 2, key: '上一拍', say: '往回：方向键左或上、PageUp、Backspace。' },
+    { beat: 3, key: '第一页', say: 'Home 和 End 跳到第一页和最后一页。平板手机上左右滑；刷新页面不会丢位置。' },
   ],
 });

@@ -824,7 +824,7 @@ test('起点：第一次用先问新手教程，放在问题 1；看过或跳过
   const dir = join(tmpdir(), 'li-talk-not-exist-' + Date.now());
   const t = guideText(dir, { tour: null });
   assert.match(t, /^第一次用 li-talk-skills：先问用户要不要过一遍新手教程/);
-  assert.match(t, /问题 1：第一次用 li-talk-skills，要不要先花 3 分钟过一遍新手教程？/);
+  assert.match(t, /问题 1：第一次用 li-talk-skills，要不要先花几分钟过一遍新手教程？/);
   assert.match(t, /1\. 先过一遍新手教程（推荐：第一次用）\n {4}2\. 先不学，直接开始做课件/);
   assert.match(t, /问题 2：你手上现在有什么？/);
   assert.match(t, /教程看完或跳过后，问用户手上有什么（问题 2）。/);

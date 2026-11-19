@@ -34,7 +34,7 @@ For Codex, replace `claude-code` with `codex`; for Cursor, with `cursor`.
 
 Install globally only, not into a project. Start a new conversation afterwards so the skill gets loaded.
 
-**Tutorial**: the first time you use it, the AI asks whether you want a 3-minute tutorial. If you do, it opens a short deck about how the tool works in your browser, then the gallery to show you every style. You can skip it and come back any time by asking the AI to "open the li-talk-skills tutorial".
+**Tutorial**: you can also read it online first: [https://xiaoli1999.github.io/li-talk-skills/](https://xiaoli1999.github.io/li-talk-skills/) (in Chinese). The first time you use it, the AI asks whether you want a few-minute tutorial. If you do, it opens a short deck about how the tool works in your browser, then the gallery to show you every style. You can skip it and come back any time by asking the AI to "open the li-talk-skills tutorial".
 
 ## Use
 

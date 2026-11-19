@@ -1,199 +1,216 @@
-/* =====================================================================
-   新手教程 · 第一章：认识它、怎么做（p01–p06）
-   - 刚装好 skill 时，AI 用浏览器打开这份课件，带用户了解这个工具怎么用
-   - 风格只用扁平插画 flat，版式照 template/samples/flat.js：插画封面、标签牌、数字大卡、竖排清单这些 .fl-* 组件；
-     这份课件自己的零件（网页窗口、站点横条、屏幕尺寸）类名都用 tour- 开头，样子在 ch1.css
-   - 可读性：插画只是包装，真话写在胶囊、标签牌、清单、大卡里；讲过的都留着，翻到每页最后一拍整页信息完整
-   ===================================================================== */
+/* li-talk-skills 教程 · 第一部分：封面、认识它、装好它、怎么开始（p01–p08）
+   风格是方果 fangguo、形象是方方 fangfang。内容以 README.md、SKILL.md 和 li-talk.mjs 的用法说明为准，没有的功能不写 */
 
-/* 封面：左边「新手教程 / 3 分钟上手」逐字弹起，右边一块明黄大圆上立着一扇网页窗口（里面是一页小课件），
-   三枚圆片徽标（箭头、勾、计时器）转着弹出。1 拍：胶囊贴上来，小页跑到胶囊右边 */
+/* p01 封面：右边出血的浅蓝底板上一扇「课件」窗口和一扇倾斜的浮窗，左边两行大字 */
 Deck.add({
   id: 'p01',
   chapter: '开场',
-  scene: 'flat',
-  title: 'li-talk-skills 新手教程',
+  scene: 'fangguo',
+  title: 'li-talk-skills 教程',
   noTitle: true,
   html: `
-    <i class="fl-blob t-yellow abs" data-beat="0" style="left:1060px;top:196px;width:700px"></i>
-    <div class="tour-win abs" data-beat="0" aria-hidden="true" style="left:1150px;top:380px;width:520px">
-      <div class="tour-mini"><i class="tour-bar a"></i><i class="tour-bar b"></i><i class="tour-bar c"></i><span class="tour-dots"><i></i><i></i><i></i></span></div>
+    <i class="fg-bleed" hidden></i>
+    <div class="abs fg-cover" data-beat="0" style="left:150px;top:220px;width:860px">
+      <span class="fg-chip">li-talk-skills 教程</span>
+      <h1 class="fg-hero p01-h">把想法交给 AI，<br>换回一份<span class="fg-red">网页课件</span></h1>
+      <p class="fg-sub">像幻灯片一样一拍一拍地翻，双击就能离线打开</p>
     </div>
-    <i class="fl-badge t-pink abs" data-fl-icon="arrow" data-beat="0" style="left:1086px;top:266px;--s:124px"></i>
-    <i class="fl-badge abs" data-fl-icon="check" data-beat="0" style="left:1600px;top:250px;--s:112px"></i>
-    <i class="fl-badge t-yellow abs" data-fl-icon="timer" data-beat="0" style="left:1640px;top:700px;--s:104px"></i>
-    <i class="fl-art abs" data-fl-art="spark" data-beat="0" style="left:1420px;top:250px;width:46px"></i>
-    <i class="fl-art abs" data-fl-art="plus" data-beat="0" style="left:1120px;top:780px;width:34px"></i>
-    <p class="abs tour-cover-name" data-beat="0" style="left:154px;top:230px">li-talk-skills</p>
-    <p class="fl-hero abs" data-beat="0" style="left:150px;top:320px">新手教程<br><em class="key">3 分钟</em>上手</p>
-    <p class="abs tour-cover-sub" data-beat="0" style="left:154px;top:690px">把想法交给 AI，换回一份网页课件</p>
-    <p class="fl-pill abs" data-beat="1" data-mascot="1" data-mascot-side="right" data-mascot-pose="happy" style="left:150px;top:800px"><i class="tour-cover-dot"></i>跟着小页，一页一页往下翻</p>
-    <div class="mascot guide" data-face="left" style="left:900px;top:820px"></div>`,
+    <div class="abs fg-win" data-beat="0" data-recede="off" style="left:1100px;top:200px;width:700px">
+      <div class="fg-win-hd"><i class="fg-ico fg-ico-s" data-fg-ico="doc"></i>我的分享 · index.html<span data-small>双击打开</span></div>
+      <div class="fg-phs"><i class="fg-ph on"></i><i class="fg-ph"></i><i class="fg-ph"></i></div>
+      <i class="fg-sk" style="width:78%;margin-top:18px"></i><i class="fg-sk" style="width:56%"></i>
+      <div class="fg-phs"><i class="fg-ph"></i><i class="fg-ph"></i><i class="fg-ph"></i></div>
+      <i class="fg-sk" style="width:38%;margin-bottom:30px"></i>
+    </div>
+    <div class="abs fg-win fg-float" data-beat="0" data-recede="off" style="left:1000px;top:640px;width:470px">
+      <div class="fg-float-b"><i class="fg-ico" data-fg-ico="users" data-fg-tone="teal"></i><p data-small><b>演讲者视图</b>讲词、计时、彩排</p></div>
+    </div>
+    <p class="abs fg-who" data-beat="1" style="left:150px;top:880px"><span>适合 <b>分享 · 培训 · 汇报 · 演讲</b></span></p>
+    <div class="abs fg-fold" data-beat="1" data-recede="off" data-mascot="1" data-mascot-side="stay" data-mascot-pose="happy" style="left:1500px;top:140px">每种风格一个形象</div>
+    <div class="mascot guide" style="left:1580px;top:840px"></div>`,
   notes: [
-    { beat: 0, key: '3 分钟', say: '你好！这是 li-talk-skills 的新手教程，三分钟带你上手。它做的事很简单：把你的想法交给 AI，换回一份网页课件。' },
-    { beat: 1, show: '跟着小页往下翻', say: '我是小页，接下来陪你一页一页往下翻。按方向键右、空格，或者点一下鼠标，就能往下走。' },
+    { beat: 0, key: '网页课件', say: '欢迎使用 li-talk-skills。它做的事很简单：你把想法交给 AI，换回一份网页课件。' },
+    { beat: 1, say: '做技术分享、培训、汇报、演讲都合适。下面花几分钟，带你从安装到讲完走一遍。' },
   ],
 });
 
-/* 它能做什么：左边一堆材料胶囊（主题、想法、笔记、截图、讲稿）垫在一块珊瑚圆上，中间一条箭头轨道，
-   右边一扇网页窗口：一页小课件加上「一拍一拍翻的网页课件」。最后一拍补一句不适合什么 */
+/* p02 它能做什么、不适合什么：三张功能卡依次出现，最后一条「不适合」 */
 Deck.add({
   id: 'p02',
   chapter: '一、认识它',
-  topic: '它能做什么',
-  scene: 'flat',
-  title: '你给材料，AI 还你一份课件',
+  chapterShort: '认识它',
+  topic: '能做什么',
+  scene: 'fangguo',
+  title: '它能做什么，不适合什么',
   html: `
-    <i class="fl-blob t-pink abs" data-beat="1" style="left:110px;top:300px;width:480px"></i>
-    <p class="fl-pill abs" data-beat="1" style="left:150px;top:350px">主题</p>
-    <p class="fl-pill t-yellow abs" data-beat="1" style="left:350px;top:430px">想法</p>
-    <p class="fl-pill t-blue abs" data-beat="1" style="left:170px;top:520px">笔记</p>
-    <p class="fl-pill abs" data-beat="1" style="left:370px;top:600px">截图</p>
-    <p class="fl-pill t-yellow abs" data-beat="1" data-mascot="1" data-mascot-side="right" style="left:200px;top:690px">讲稿</p>
-    <p class="fl-pill t-blue abs" data-beat="2" style="left:650px;top:440px">AI 来做</p>
-    <i class="fl-track abs" data-beat="2" style="left:650px;top:556px;width:200px"></i>
-    <div class="tour-win abs" data-beat="2" data-mascot="2" data-mascot-side="bottom" data-mascot-x=".8" style="left:960px;top:300px;width:840px">
-      <div class="tour-mini"><i class="tour-bar a"></i><i class="tour-bar b"></i><i class="tour-bar c"></i><span class="tour-dots"><i></i><i></i><i></i></span></div>
-      <h3>一拍一拍翻的<em class="key">网页课件</em></h3>
-      <p>双击 index.html，离线就能打开</p>
+    <div class="abs fg-feats" style="left:120px;top:270px;width:1680px">
+      <div class="fg-fc" data-beat="1"><i class="fg-ico" data-fg-ico="layers"></i><h4>一拍一拍地翻</h4><p>按一下出一块，讲过的变淡</p></div>
+      <div class="fg-fc" data-beat="2"><i class="fg-ico" data-fg-ico="doc" data-fg-tone="teal"></i><h4>双击就能打开</h4><p>一个文件夹，离线也能放</p></div>
+      <div class="fg-fc" data-beat="3"><i class="fg-ico" data-fg-ico="users" data-fg-tone="purple"></i><h4>演讲者视图</h4><p>另开窗口看讲词和计时</p></div>
     </div>
-    <p class="fl-bad abs" data-beat="3" data-mascot="3" data-mascot-side="right" style="left:960px;top:850px">不适合：导出 pptx 或 pdf</p>
-    <div class="mascot guide" style="left:620px;top:780px"></div>`,
+    <div class="abs fg-plat p02-no" data-beat="4" data-mascot="4" data-mascot-side="right" data-mascot-pose="ok" style="left:120px;top:690px"><span data-small>不适合</span><b>导出 pptx</b><b>导出 pdf</b><b>纯文档</b><b>数据看板</b></div>
+    <div class="mascot guide" data-pose="point" style="left:1660px;top:96px"></div>`,
   notes: [
-    { beat: 0, key: '课件', say: '先说它能做什么。一句话：你给材料，AI 还你一份课件。' },
-    { beat: 1, show: '五种材料', say: '材料可以是一个主题、一些零散的想法、笔记、截图，或者一份写好的讲稿。手上有什么就给什么。' },
-    { beat: 2, key: '网页课件', say: 'AI 会把它做成一份网页课件，像幻灯片一样一拍一拍地翻。它就是一个文件夹，双击 index.html 就能打开，不用联网。' },
-    { beat: 3, show: '不适合什么', say: '要提前说一句：它只做网页课件。要导出 pptx 或 pdf 的话，就不适合用它。' },
+    { beat: 0, say: '先说它能做什么。' },
+    { beat: 1, key: '一拍一拍', say: '课件像幻灯片一样，一拍一拍地翻：按一下出一块，讲过的自动变淡，听众的注意力跟着你走。' },
+    { beat: 2, key: '双击', say: '课件就是一个文件夹，双击 index.html 就能打开，断网也能放。' },
+    { beat: 3, key: '演讲者视图', say: '讲的时候可以另开一个演讲者视图，看讲词、计时，正式讲之前还能彩排。' },
+    { beat: 4, key: '不适合', say: '它不做的事也说清楚：不导出 pptx 和 pdf，也不适合做纯文档和数据看板。' },
   ],
 });
 
-/* 怎么开始：上面一个大气泡写着要对 AI 说的那句话；下面一块明黄台面当横梁，三块标签牌挂下来，就是三个起点 */
+/* p03 能用在哪：平台汇聚，中间是 li-talk-skills，三个 AI 编程工具一拍连上一个 */
 Deck.add({
   id: 'p03',
-  chapter: '二、怎么做',
-  topic: '怎么开始',
-  scene: 'flat',
-  title: '开口说一句，就开始了',
+  chapter: '一、认识它',
+  chapterShort: '认识它',
+  topic: '用在哪',
+  scene: 'fangguo',
+  title: 'Claude Code、Codex、Cursor 都能用',
   html: `
-    <div class="fl-bubble abs" data-beat="0" data-mascot="0" data-mascot-side="right" style="left:150px;top:240px;--fl-tx:120px"><p>用 li-talk-skills 做一份关于……的课件</p></div>
-    <i class="fl-shelf abs" data-beat="0" style="left:120px;top:540px;width:1680px"></i>
-    <div class="fl-tag t-pink abs" data-beat="1" data-mascot="1" data-mascot-side="right" style="left:120px;top:690px;width:460px;--fl-str:110px">
-      <b class="fl-no">1</b><h3>只有<em class="key">主题</em></h3><p>AI 问你几句，<br>帮你起一份提纲</p>
+    <div class="abs p03-l" data-beat="0" style="left:120px;top:320px;width:640px">
+      <p class="p03-big">能跑命令、能读写本地文件的 AI 编程工具，都能用</p>
+      <p class="p03-sm">网页版的聊天框用不了：它没法在你的电脑上建文件、开浏览器</p>
     </div>
-    <div class="fl-tag t-yellow abs" data-beat="2" data-mascot="2" data-mascot-side="right" style="left:730px;top:690px;width:460px;--fl-str:110px">
-      <b class="fl-no">2</b><h3>有想法和材料</h3><p>想法、笔记、截图，<br>放进 <em class="key">素材/</em></p>
+    <div class="abs fg-hub" data-fg-core="li-talk-skills" data-fg-rx="34" data-fg-ry="36" style="left:860px;top:240px;width:940px;height:720px">
+      <b class="fg-plt" data-beat="1" data-mascot="1" data-mascot-side="stay" data-mascot-pose="point">Claude Code</b>
+      <b class="fg-plt" data-beat="2">Codex</b>
+      <b class="fg-plt" data-beat="3">Cursor</b>
     </div>
-    <div class="fl-tag t-blue abs" data-beat="3" data-mascot="3" data-mascot-side="left" style="left:1340px;top:690px;width:460px;--fl-str:110px">
-      <b class="fl-no">3</b><h3>已经有<em class="key">讲稿</em></h3><p>AI 整理成标准格式，<br>补上缺的段落</p>
-    </div>
-    <div class="mascot guide" data-face="left" style="left:1600px;top:300px"></div>`,
+    <div class="mascot guide" style="left:460px;top:780px"></div>`,
   notes: [
-    { beat: 0, key: '一句话', say: '开始只要一句话。在任意目录对 AI 说：用 li-talk-skills 做一份关于什么什么的课件。AI 会先问你手上有什么，从三种起点出发。' },
-    { beat: 1, key: '主题', say: '第一种，你只有一个主题。AI 会一问一答：讲给谁、讲多久、在什么场合讲、最想让听众带走什么，然后起一份提纲给你改。' },
-    { beat: 2, key: '素材/', say: '第二种，你有想法、笔记或者截图。把它们放进课件目录的「素材」文件夹，AI 会列出清单、整理成提纲，只问你缺的部分。' },
-    { beat: 3, key: '讲稿', say: '第三种，你已经写好了讲稿。AI 把它整理成标准格式，补上缺的段落，再给你确认。' },
+    { beat: 0, say: '它是一个给 AI 编程工具用的 skill，能跑命令、能读写本地文件的都能用；网页版的聊天框用不了。' },
+    { beat: 1, key: 'Claude Code', say: '比如 Claude Code。' },
+    { beat: 2, key: 'Codex', say: 'Codex。' },
+    { beat: 3, key: 'Cursor', say: '还有 Cursor，都可以。' },
   ],
 });
 
-/* 五处停下：一条横轨上五个站点，每站一枚受光的序号圆片、站名和一句说明；
-   两站一拍往右走，最后一拍下面贴一枚胶囊：中途换对话、换模型也能接着做 */
+/* p04 安装：三步流程，第二步是一行可以点击复制的安装命令 */
 Deck.add({
   id: 'p04',
-  chapter: '二、怎么做',
-  topic: '五处停下',
-  scene: 'flat',
-  title: '五处停下来，等你点头',
+  chapter: '二、装好它',
+  chapterShort: '安装',
+  topic: '一行命令',
+  scene: 'fangguo',
+  title: '装好它：一行命令',
   html: `
-    <p class="explain" data-beat="0"><b>点头</b>：你说「可以」，AI 才接着往下做</p>
-    <i class="tour-rail abs" data-beat="0" style="left:288px;top:416px;width:1344px"></i>
-    <ol class="tour-stops abs" style="left:120px;top:374px;width:1680px">
-      <li data-beat="1"><b><em class="key">提纲</em></b><span>分几部分<br>每部分几页</span></li>
-      <li data-beat="1" data-mascot="1" data-mascot-side="bottom" data-mascot-x=".3"><b>讲稿</b><span>屏幕上的字<br>分拍和讲词</span></li>
-      <li data-beat="2"><b><em class="key">风格</em></b><span>打开样册<br>你来挑</span></li>
-      <li data-beat="2" data-mascot="2" data-mascot-side="bottom" data-mascot-x=".3"><b>先做 3 页</b><span>封面加两页<br>满意再写全稿</span></li>
-      <li data-beat="3" data-mascot="3" data-mascot-side="bottom" data-mascot-x=".3"><b><em class="key">过稿</em></b><span>整份看一遍<br>按意见改</span></li>
-    </ol>
-    <p class="fl-pill abs tour-save" data-beat="4" data-mascot="4" data-mascot-side="right" style="left:120px;top:810px"><i class="tour-save-dot"></i>换对话、换模型也能接着做：进度记在课件目录的文件里</p>
-    <div class="mascot guide" style="left:1680px;top:240px"></div>`,
+    <div class="abs fg-flow p04-flow" style="left:120px;top:260px;width:1680px">
+      <div class="fg-step"><div><h4>准备 Node 18 以上</h4><p data-beat="1">在终端里运行 <span class="fg-code">node -v</span> 看一眼版本</p></div></div>
+      <div class="fg-step" data-mascot="2" data-mascot-side="stay" data-mascot-pose="idea"><div><h4>运行安装命令</h4><div class="p04-cmd" data-beat="2">
+        <button class="copy" type="button" data-copy="npx skills add xiaoli1999/li-talk-skills -g -a claude-code -y">npx skills add xiaoli1999/li-talk-skills -g -a claude-code -y</button>
+        <p>用 Codex 就把 claude-code 换成 codex，用 Cursor 换成 cursor</p></div></div></div>
+      <div class="fg-step"><div><h4>新开一个对话</h4><p data-beat="3">新装的 skill 要在新对话里才会加载</p></div></div>
+    </div>
+    <div class="mascot guide" style="left:1660px;top:96px"></div>`,
   notes: [
-    { beat: 0, key: '点头', say: '开始以后，AI 一步步往下做，但有五个地方会停下来等你点头。你说了「可以」，它才继续。' },
-    { beat: 1, key: '提纲', say: '前两处管内容：先是提纲，分几部分、每部分几页；再是讲稿，每页屏幕上写什么、分几拍、照着讲的讲词。' },
-    { beat: 2, key: '风格', say: '接着管样子：AI 推荐风格，打开样册让你挑，你说了算。然后先做 3 页，封面加两页最典型的，你满意了再写全稿。' },
-    { beat: 3, key: '过稿', say: '最后一处是过稿：整份课件给你看，按你的意见改。' },
-    { beat: 4, key: '接着做', say: '中途换个对话、换个模型也不怕。进度记在课件目录的文件里，AI 每一步都会先查一遍，从停下的地方接着做。' },
+    { beat: 0, say: '安装只要三步。' },
+    { beat: 1, key: 'Node 18', say: '第一步，确认电脑上有 Node 18 以上，在终端里运行 node -v 看一眼。' },
+    { beat: 2, key: '安装命令', say: '第二步，运行这行安装命令，点一下就能复制。用 Codex 或 Cursor 的话，把 claude-code 换成 codex 或 cursor。' },
+    { beat: 3, key: '新开', say: '第三步，新开一个对话，新装的 skill 才会加载。' },
   ],
 });
 
-/* 16 种风格：四张数字大卡从左到右（企业 1、手绘 8、现代 6、像素 1），每拍一张弹起来、数字滚上去；
-   最后一拍和像素那张一起出两枚胶囊：只在同一类里换，看完教程去逛样册 */
+/* p05 一句话安装：一扇聊天窗，你说一句，AI 回一句；你说的那句点一下就能复制 */
 Deck.add({
   id: 'p05',
-  chapter: '二、怎么做',
-  topic: '16 种风格',
-  scene: 'flat',
-  title: '16 种风格，分成四类',
+  chapter: '二、装好它',
+  chapterShort: '安装',
+  topic: '一句话',
+  scene: 'fangguo',
+  title: '不想敲命令？对 AI 说一句话',
   html: `
-    <p class="explain" data-beat="0"><b>风格</b>：每种都有自己的形象和版式，不只是换颜色</p>
-    <div class="fl-num t-blue abs" data-beat="1" data-mascot="1" data-mascot-side="bottom" data-mascot-x=".39" style="left:120px;top:280px;width:390px">
-      <p class="fl-big"><b class="fl-n">1</b><small>种</small></p>
-      <h3>企业风</h3>
-      <p>公司品牌专属</p>
+    <div class="abs fg-win" data-beat="0" data-recede="off" style="left:120px;top:250px;width:1160px">
+      <div class="fg-win-hd"><i class="fg-ico fg-ico-s" data-fg-ico="bulb"></i>和 AI 的对话<span data-small>点一下你说的那句，复制</span></div>
+      <div class="fg-chat">
+        <p class="fg-msg me" data-beat="1" data-copy="从 GitHub 仓库 xiaoli1999/li-talk-skills 安装到全局，装好后打开新手教程带我过一遍">从 GitHub 仓库 xiaoli1999/li-talk-skills 安装到全局，装好后打开新手教程带我过一遍</p>
+        <p class="fg-msg ai" data-beat="2" data-mascot="2" data-mascot-side="stay" data-mascot-pose="ok">好的，已经装到全局。新开一个对话后就能用，到时我打开新手教程带你过一遍。</p>
+      </div>
     </div>
-    <div class="fl-num t-pink abs" data-beat="2" data-mascot="2" data-mascot-side="bottom" data-mascot-x=".39" style="left:550px;top:280px;width:390px">
-      <p class="fl-big"><b class="fl-n">8</b><small>种</small></p>
-      <h3>手绘风</h3>
-      <p>楷书，方格纸、水墨等</p>
+    <div class="abs p05-notes" data-beat="0" style="left:1340px;top:280px;width:460px">
+      <p><b>只装到全局</b>不装进某个项目，在哪个目录都能用</p>
+      <p><b>装好后新开对话</b>新装的 skill 才会加载</p>
     </div>
-    <div class="fl-num t-yellow abs" data-beat="3" data-mascot="3" data-mascot-side="bottom" data-mascot-x=".39" style="left:980px;top:280px;width:390px">
-      <p class="fl-big"><b class="fl-n">6</b><small>种</small></p>
-      <h3>现代风</h3>
-      <p>黑体，扁平、暗黑等</p>
-    </div>
-    <div class="fl-num t-blue abs" data-beat="4" style="left:1410px;top:280px;width:390px">
-      <p class="fl-big"><b class="fl-n">1</b><small>种</small></p>
-      <h3>像素风</h3>
-      <p>像素字体，像素游戏</p>
-    </div>
-    <p class="fl-pill abs tour-rule" data-beat="4" style="left:120px;top:880px">按章换风格，只在<em class="key">同一类</em>里换</p>
-    <p class="fl-pill t-yellow abs tour-rule" data-beat="4" data-mascot="4" data-mascot-side="right" data-mascot-pose="happy" style="left:820px;top:880px">看完教程，AI 带你逛样册</p>
-    <div class="mascot guide" style="left:1680px;top:860px"></div>`,
+    <div class="mascot guide" style="left:1660px;top:820px"></div>`,
   notes: [
-    { beat: 0, key: '风格', say: '再说风格。一共 16 种，每种都有自己的小形象和版式，不只是换个颜色。它们分成四类。' },
-    { beat: 1, key: '企业风', say: '企业风是公司品牌专属的风格，给对外演讲、给领导汇报用。' },
-    { beat: 2, key: '手绘风', say: '手绘风 8 种，用楷书，有方格纸、黑板、水彩、水墨、蓝图、漫画这些。' },
-    { beat: 3, key: '现代风', say: '现代风 6 种，用黑体，比如现在你看到的扁平插画，还有科技暗黑、毛玻璃这些。' },
-    { beat: 4, key: '同一类', say: '像素风只有 1 种，像素游戏，适合闯关式的上手教程。一份课件可以按章换风格，但只在同一类里换。看完这份教程，AI 会打开样册，带你把全部风格过一遍。' },
+    { beat: 0, say: '不想敲命令也行，直接对 AI 说一句话。' },
+    { beat: 1, key: '安装到全局', say: '就说：从 GitHub 仓库 xiaoli1999/li-talk-skills 安装到全局，装好后打开新手教程带我过一遍。' },
+    { beat: 2, key: '新开一个对话', say: 'AI 会帮你装好。同样记得新开一个对话。' },
   ],
 });
 
-/* 质量怎么把关：左边一列竖排清单（先查写法、再量版面、错误清零），右边一块墨蓝浅色墙上排着五个屏幕尺寸，
-   第 2 拍一个个弹出来，第 3 拍角上弹出一枚明黄的勾 */
+/* p06 第一次用：AI 先问要不要看新手教程（编号选项），你回一个数字，AI 打开教程 */
 Deck.add({
   id: 'p06',
-  chapter: '二、怎么做',
-  topic: '质量怎么把关',
-  scene: 'flat',
-  title: '写完先自检，清零才给你看',
+  chapter: '二、装好它',
+  chapterShort: '第一次用',
+  topic: '新手教程',
+  scene: 'fangguo',
+  title: '第一次用：先过一遍教程',
   html: `
-    <div class="fl-wall t-blue abs" data-beat="0" style="left:1020px;top:280px;width:780px;height:540px"></div>
-    <ol class="fl-check abs" style="left:130px;top:300px;width:760px">
-      <li data-beat="1" data-mascot="1" data-mascot-side="right"><b><em class="key">先查写法</em></b><span>不开浏览器，几秒查完</span></li>
-      <li data-beat="2" data-mascot="2" data-mascot-side="right"><b><em class="key">再量版面</em></b><span>后台浏览器，5 个尺寸逐页逐拍量</span></li>
-      <li data-beat="3" data-mascot="3" data-mascot-side="right"><b><em class="key">错误清零</em></b><span>清零了，才拿给你看</span></li>
-    </ol>
-    <div class="tour-devs abs" data-beat="2" data-stagger=".1" style="left:1070px;top:330px;width:680px">
-      <div class="tour-dev" style="--w:288px;--h:162px"><i></i><span data-small>1920×1080</span></div>
-      <div class="tour-dev" style="--w:216px;--h:135px"><i></i><span data-small>1440×900</span></div>
-      <div class="tour-dev" style="--w:192px;--h:108px"><i></i><span data-small>1280×720</span></div>
-      <div class="tour-dev" style="--w:154px;--h:115px"><i></i><span data-small>1024×768</span></div>
-      <div class="tour-dev" style="--w:59px;--h:127px"><i></i><span data-small>390×844</span></div>
+    <div class="abs fg-win" data-beat="0" data-recede="off" style="left:120px;top:250px;width:1120px">
+      <div class="fg-win-hd"><i class="fg-ico fg-ico-s" data-fg-ico="bulb"></i>和 AI 的对话<span data-small>第一次用</span></div>
+      <div class="fg-chat">
+        <div class="fg-msg ai" data-beat="1" data-mascot="1" data-mascot-side="stay" data-mascot-pose="ask">第一次用 li-talk-skills，要不要先过一遍新手教程？<p class="fg-opts"><span>1 先过一遍</span><span>2 先不学</span></p></div>
+        <p class="fg-msg me" data-beat="2">1</p>
+        <p class="fg-msg ai" data-beat="3">已经在浏览器里打开了教程，看完我再打开样册，带你看全部风格。</p>
+      </div>
     </div>
-    <i class="fl-badge t-yellow abs" data-fl-icon="check" data-beat="3" style="left:1680px;top:230px;--s:110px"></i>
-    <div class="mascot guide" style="left:1680px;top:860px"></div>`,
+    <div class="abs card p06-card" data-beat="0" style="left:1300px;top:290px;width:500px">
+      <h3>以后想再看</h3>
+      <p>对 AI 说「打开 li-talk-skills 新手教程」，就是你现在看的这一份</p>
+    </div>
+    <div class="mascot guide" style="left:1660px;top:820px"></div>`,
   notes: [
-    { beat: 0, key: '自检', say: '页面是 AI 手写的，难的是写完不知道效果对不对。所以每写完一批，它都要自己检查两遍。' },
-    { beat: 1, key: '先查写法', say: '第一遍不开浏览器，几秒钟查完写法错误、讲词拍数和页面对不上这类问题。' },
-    { beat: 2, key: '再量版面', say: '第二遍用后台浏览器，在 1920、1440、1280、1024 四种屏幕和手机竖屏这 5 个尺寸下，逐页逐拍量一遍：有没有溢出、重叠、字太小、形象挡字。' },
-    { beat: 3, key: '错误清零', say: '错误全部清零，AI 才把课件拿给你看。' },
+    { beat: 0, say: '装好以后第一次用，AI 会先问你一个问题。' },
+    { beat: 1, key: '新手教程', say: '要不要先过一遍新手教程。它会给你编号的选项。' },
+    { beat: 2, say: '回一个数字就行。' },
+    { beat: 3, key: '样册', say: 'AI 会在浏览器里打开教程，看完再打开样册带你看全部风格。不想看可以跳过，以后随时能回来。' },
+  ],
+});
+
+/* p07 怎么开始（金句页）：一句话就能开始，点一下复制 */
+Deck.add({
+  id: 'p07',
+  chapter: '三、做一份课件',
+  chapterShort: '做课件',
+  topic: '怎么开始',
+  scene: 'fangguo',
+  title: '怎么开始',
+  noTitle: true,
+  html: `
+    <i class="fg-bleed fg-wash" hidden></i>
+    <p class="abs fg-quote p07-q" data-beat="0" data-mascot="0" data-mascot-side="right" data-mascot-pose="idle" data-mascot-dy="60" style="left:150px;top:260px;white-space:nowrap">用 li-talk-skills<br>帮我做一个关于<span class="fg-hl">「……」</span>的课件</p>
+    <p class="abs fg-quote-by" data-beat="1" style="left:154px;top:620px">在任意目录，对 AI 说这一句就能开始</p>
+    <p class="abs p07-copy" data-beat="2" style="left:154px;top:720px"><span data-small>点一下复制，把省略号换成你的主题：</span><span class="fg-code" data-copy="用 li-talk-skills 帮我做一个关于「」的课件">用 li-talk-skills 帮我做一个关于「」的课件</span></p>
+    <i class="abs fg-deco" style="left:1260px;top:220px;width:600px"></i>
+    <div class="mascot guide" style="left:1500px;top:760px"></div>`,
+  notes: [
+    { beat: 0, key: '课件', say: '怎么开始？就一句话：用 li-talk-skills 帮我做一个关于什么什么的课件。' },
+    { beat: 1, say: '在任意目录对 AI 说就行。' },
+    { beat: 2, say: '这句话点一下就能复制，把省略号换成你的主题。' },
+  ],
+});
+
+/* p08 三种起点：编辑式网格，一拍点亮一种 */
+Deck.add({
+  id: 'p08',
+  chapter: '三、做一份课件',
+  chapterShort: '做课件',
+  topic: '三种起点',
+  scene: 'fangguo',
+  title: 'AI 会先问：你手上有什么',
+  html: `
+    <div class="abs fg-values p08-v" style="left:120px;top:300px;width:1680px">
+      <div class="fg-val"><i></i><b>只有一个主题</b><p data-beat="1">一问一答：讲给谁、讲多久、在哪讲，再起一份提纲</p></div>
+      <div class="fg-val"><i></i><b>有笔记、截图</b><p data-beat="2">放进课件目录的 <span class="fg-code">素材/</span>，AI 整理成提纲</p></div>
+      <div class="fg-val" data-mascot="3" data-mascot-side="stay" data-mascot-pose="think"><i></i><b>已经有讲稿</b><p data-beat="3">AI 整理成标准格式，补上缺的段落</p></div>
+    </div>
+    <div class="mascot guide" style="left:1660px;top:96px"></div>`,
+  notes: [
+    { beat: 0, say: '说完这句话，AI 会先问你手上有什么，从三种起点出发。' },
+    { beat: 1, key: '只有一个主题', say: '只有一个主题：AI 一问一答，问清楚讲给谁、讲多久、在什么场合讲，再起一份提纲给你改。' },
+    { beat: 2, key: '素材', say: '有想法、笔记、截图：放进课件目录的素材文件夹，AI 列出清单、整理成提纲，只问缺的部分。' },
+    { beat: 3, key: '讲稿', say: '已经有讲稿：AI 把它整理成标准格式，补上缺的段落，给你确认。' },
   ],
 });

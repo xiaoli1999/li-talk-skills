@@ -285,6 +285,11 @@
   - 图文拼贴：`<div class="fg-collage" style="width;height"><figure class="shot" …></figure>…</div>`。第一张是主图（投影更深），其余叠在边上；同一张横幅照片可以用不同的 `--pos` 裁出几块（点开大图时看到的是整张原图）。
   - 价值观网格：`<div class="fg-values"><div class="fg-val"><i></i><b>长期主义</b><p data-beat="1">长期价值和短期利益，选长期</p></div>…</div>`。编辑式排版、不做卡片：自动编号、大字关键词、一句小字说明，中间一栏往下错开；关键词第 0 拍就在，说明到拍出现，顶上的细线铺成品牌蓝，当前一拍的关键词变蓝。一行三条（`--cols` 可改），说明 14 个字以内。
   - 叠放、拼贴里的截图，「点开看大图」的角标平时藏起来，鼠标移上去才出现，照样点一下就能看大图。
+- **讲软件、讲操作时用的小件**：
+  - 对话：`<div class="fg-win"><div class="fg-win-hd">…</div><div class="fg-chat"><p class="fg-msg me" data-beat="1">你说的话</p><p class="fg-msg ai" data-beat="2">AI 的回复</p></div></div>`。你说的靠右、品牌蓝底；AI 说的靠左、浅灰底、前面一个「AI」小标签；一拍一条，讲过的留着。AI 消息里可以放 `<p class="fg-opts"><span>1 先过一遍</span><span>2 先不学</span></p>`（编号选项）；写了 `data-copy` 的消息点一下就复制。
+  - 代码条：`<span class="fg-code" data-copy="要复制的字">node -v</span>`，行内的一小段命令或网址，等宽字、浅蓝底。
+  - 按键：`<i class="fg-kbd">S</i>`，一枚白色键帽，讲快捷键时用。
+  - 平台汇聚中间不放方果 Logo 时，在 `.fg-hub` 上写 `data-fg-core="几个字"`。
 - **版式工具**：出血底板 `<i class="fg-bleed" hidden></i>` 有四种——默认右边一块浅蓝、`fg-left` 左边、`fg-slant` 右边一块斜切的浅蓝、`fg-wash` 整屏一层淡蓝晕染（金句页用）；金句 `<p class="fg-quote">…<span class="fg-hl">词</span>…</p>`（112px 深墨色大字，上面一道品牌蓝渐变短线，关键词是品牌蓝渐变，一页一句）；一组淡蓝同心细圆环装饰 `<i class="fg-deco"></i>`（不放字）。
   - 指标卡 `.fg-kpi`、渐变圆角图标 `.fg-ico[data-fg-ico="box"]`（`data-fg-tone`：blue、teal、coral、purple、amber、red）、白色界面窗 `.fg-win`（加 `fg-float` 是倾斜 2° 的浮窗）、折角标签 `.fg-fold`、小胶囊 `.fg-chip`、横小卡 `.fg-mini`、功能卡 `.fg-feats > .fg-fc`、平台横栏 `.fg-plat`、流程清单 `.fg-flow > .fg-step`（当前一步点亮）、封面 `.fg-cover`、章节页 `.fg-chapter` 加 `.fg-bigno`、关于我们 `.fg-about` 加二维码卡 `.fg-qr[data-fg-qr="wechat|douyin|business"]` 和联系方式 `.fg-contact`。
 

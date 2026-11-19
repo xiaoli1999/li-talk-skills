@@ -31,7 +31,7 @@ function copyDir(from, to) {
 
 // CSS 里 url(...) 引用的本地文件（相对这个 CSS 文件）
 const cssUrls = text => [...text.matchAll(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g)].map(m => m[2])
-  .filter(u => !/^(data:|https?:|#)/i.test(u)).map(u => u.split(/[?#]/)[0]);
+  .filter(u => !/^(data:|https?:|#|%23)/i.test(u)).map(u => u.split(/[?#]/)[0]);
 
 /** 打包到 out，返回复制的模板文件清单（相对模板目录） */
 export function buildPages(out = join(ROOT, '.pages')) {

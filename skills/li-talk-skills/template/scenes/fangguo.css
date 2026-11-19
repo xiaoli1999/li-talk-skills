@@ -288,7 +288,7 @@
 [data-scene="fangguo"] .fg-fold::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:20px;background:linear-gradient(135deg,var(--fg-f1),var(--fg-f2));
   clip-path:polygon(0 0,100% 0,100% calc(100% - var(--fg-cut)),calc(100% - var(--fg-cut)) 100%,0 100%)}
 [data-scene="fangguo"] .fg-fold::after{content:"";position:absolute;right:0;bottom:0;width:var(--fg-cut);height:var(--fg-cut);
-  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23EEF4FF'/%3E%3Cstop offset='1' stop-color='%23B9D1FB'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 7a7 7 0 0 1 7-7h29L0 36Z' fill='url(%23g)'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cpath d='M0 7a7 7 0 0 1 7-7h29L0 36Z' fill='%23D6E4FD'/%3E%3Cpath d='M0 7a7 7 0 0 1 7-7h13L0 20Z' fill='%23EEF4FF'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat;
   filter:drop-shadow(-3px -3px 4px rgba(20,50,120,.22))}
 [data-scene="fangguo"] .fg-fold[data-fg-tone="teal"]{--fg-f1:#3FCFB4;--fg-f2:#1E9C85}
 [data-scene="fangguo"] .fg-fold[data-fg-tone="coral"]{--fg-f1:#FF9479;--fg-f2:#E0603F}
@@ -609,3 +609,27 @@
 @media (prefers-reduced-motion:reduce){
   [data-scene="fangguo"] :is(.fg-stack>.shot,.fg-val>b),[data-scene="fangguo"] .fg-val::after{transition:none}
 }
+
+/* ---------- 对话 .fg-chat > .fg-msg：模拟对 AI 说话、AI 回复（放在 .fg-win 里像一扇聊天窗）。
+   .fg-msg.me 是你说的（靠右、品牌蓝底白字），.fg-msg.ai 是 AI 说的（靠左、浅灰底深字，前面一个小标签）；
+   每条带 data-beat，一拍出一条，讲过的留着。AI 消息里可以放 .fg-opts（编号选项） ---------- */
+[data-scene="fangguo"] .fg-chat{display:flex;flex-direction:column;gap:22px;padding:28px 28px 30px}
+[data-scene="fangguo"] .fg-msg{position:relative;max-width:86%;padding:18px 26px 20px;border-radius:24px;font:400 34px/1.45 var(--f-hand)}
+[data-scene="fangguo"] .fg-msg.me{align-self:flex-end;border-bottom-right-radius:8px;background:#2557D6;color:#fff}
+[data-scene="fangguo"] .fg-msg.ai{align-self:flex-start;border-bottom-left-radius:8px;background:#F1F5FB;color:var(--ink)}
+[data-scene="fangguo"] .fg-msg.ai::before{content:"AI";display:inline-block;margin-right:14px;padding:2px 12px 3px;border-radius:8px;background:#DCE8FB;color:var(--fg-blue-ink);font:600 26px/1.3 var(--f-num);vertical-align:.12em}
+[data-scene="fangguo"] .fg-msg[data-copy]{cursor:copy}
+[data-scene="fangguo"] .fg-opts{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px}
+[data-scene="fangguo"] .fg-opts>span{padding:6px 18px 8px;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 2px #D6E4FC;color:var(--fg-blue-ink);font:600 34px/1.3 var(--f-hand)}
+
+/* ---------- 代码条 .fg-code：一小段命令或网址，等宽字、浅蓝底；写了 data-copy 就能点一下复制 ---------- */
+[data-scene="fangguo"] .fg-code{display:inline-block;padding:4px 14px 6px;border-radius:12px;background:#EAF1FD;color:#1F4FBF;font:500 34px/1.35 var(--f-mono);white-space:nowrap}
+[data-scene="fangguo"] .fg-code[data-copy]{box-shadow:inset 0 0 0 2px #C9DBFD}
+@media (hover:hover){ [data-scene="fangguo"] .fg-code[data-copy]:hover{background:#DDE9FD} }
+
+/* ---------- 按键 .fg-kbd：一枚白色键帽（讲快捷键时用） ---------- */
+[data-scene="fangguo"] .fg-kbd{display:inline-flex;align-items:center;justify-content:center;min-width:64px;height:64px;padding:0 18px;border-radius:14px;background:#fff;
+  box-shadow:inset 0 -4px 0 #DCE4EF,0 0 0 2px #E3E9F2,0 10px 20px -10px rgba(30,60,110,.3);font:600 34px/1 var(--f-num),var(--f-hand);color:var(--ink);white-space:nowrap}
+
+/* 平台汇聚中间换成文字（data-fg-core） */
+[data-scene="fangguo"] .fg-hub-core.fg-core-t{display:grid;place-items:center;padding:0 24px;background-image:none;text-align:center;font:700 34px/1.2 var(--f-num),var(--f-hand);color:var(--ink);word-break:break-word}
