@@ -12,3 +12,7 @@
 
 /* 步骤的标题大一号（42px → 50px），一排三步才撑得起一页 */
 [data-id="t-steps"] .steps>li>b{font-size:var(--fs-lg)}
+
+/* 关于我：名字比普通大字大一号；三张卡片内容只有一两行，给个最小高度，排起来像一排名片 */
+[data-id="t-about"] .cover-title{font-size:96px;line-height:1.15}
+[data-id="t-about"] .card{min-height:200px}

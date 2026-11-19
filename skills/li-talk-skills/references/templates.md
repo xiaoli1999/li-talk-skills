@@ -3,7 +3,7 @@
 写页面时先找最接近的样板，整段抄过去再改，不要从零写。样板有两套，**先看第一套**：
 
 1. **你选的风格自己的样板页**：`template/samples/<风格键名>.js` 和同名的 `.css`（在本 skill 的目录里）。同一个虚构主题「怎么泡好一杯茶」，按这种风格自己的版式、结构和每拍的动作做了 5–6 页，用了风格的专用组件（类名带风格前缀，比如 `.ink-*`、`.px-*`，用法写在 `template/scenes/<键名>.js` 开头）。每页开头的注释写了：这页是什么版式、为什么适合这种风格、抄过去改哪里。每种风格有哪几页，见下一节的表。
-2. **通用样板页**：本文后面贴出的 4 页（封面、清单、步骤、结尾），只用通用组件，哪种风格都能用。风格样板里找不到合适的版式时用它。
+2. **通用样板页**：本文后面贴出的 5 页（封面、清单、步骤、关于我、结尾），只用通用组件，哪种风格都能用。风格样板里找不到合适的版式时用它。
 
 两套样板都在 5 个尺寸下自检过，0 个错误、0 个提醒：位置、字号、形象每一拍的落点都调好了，照着改最不容易出错。
 
@@ -50,6 +50,7 @@
 | 封面 | `t-cover` | 第一页 | 1 |
 | 清单 | `t-list` | 并列的三样东西、三个要点，一拍出一张卡片 | 3 |
 | 步骤（图示） | `t-steps` | 有先后的三步、一个流程；最后一步可以带一行命令 | 3 |
+| 关于我 | `t-about` | 结尾页前面：介绍讲者自己（名字、身份、在做的事、擅长、想聊的、联系方式）。guide 过稿前会问用户要不要加 | 3 |
 | 结尾 | `t-end` | 最后一页：一句收尾金句加致谢 | 1 |
 
 通用样板的源码在本 skill 的 `template/samples/samples.js`（页面）和 `template/samples/samples.css`（页面样式），下面每一节都原样贴出来了，直接从这里抄。样册里有自己样板的风格只放它自己的页；想看通用样板，打开 `gallery.html#1`（地址不带 `?scene=`，就是通用样板的方格纸样子），要看它在别的风格下的样子，在自己的课件地址后面加 `?scene=<键名>`。
@@ -275,7 +276,63 @@ Deck.add({
 
 ---
 
-## 4. 结尾 `t-end`
+## 4. 关于我 `t-about`
+
+**什么时候用**：结尾页前面，介绍讲这堂课的人。过稿前 guide 会问用户要不要加（方果风格问的是「关于我们」，用方果自己的样板）；用户说加，再一问一答问清名字、一句话身份、在做的事、拿手的领域、想聊的话题、联系方式，有照片放进 `素材/`。左边一张照片，右边名字和身份，三张卡片一拍出一张，最后一拍在照片下面出联系方式，形象打个招呼。
+
+**页面**（写进最后一章的 `slides/chN.js`，放在结尾页前面）：
+
+```js
+Deck.add({
+  id: 't-about',
+  chapter: '关于我',
+  topic: '认识一下讲者',
+  scene: 'paper',
+  title: '关于我',
+  noTitle: true,
+  html: `
+    <figure class="abs shot" data-beat="0" data-src="samples/placeholder.svg" data-caption="〈一张你的照片〉" style="left:150px;top:300px;width:460px;--r:-2deg"></figure>
+    <div class="abs col" style="left:720px;top:230px;width:1080px;align-items:flex-start;--gap:24px">
+      <span class="tag" data-beat="0" style="--r:-2deg">关于我</span>
+      <p class="cover-title b" data-beat="0">〈你的名字〉</p>
+      <p class="lead muted" data-beat="0">〈一句话身份：做什么的、在哪里〉</p>
+    </div>
+    <div class="abs grid" style="left:720px;top:600px;width:1080px;--cols:3;--gap:36px">
+      <div class="card t-yellow" data-beat="1" data-mascot="1" data-mascot-side="bottom"><span class="lab">在做</span><p>〈最近在做的事〉</p></div>
+      <div class="card t-mint" data-beat="2" data-mascot="2" data-mascot-side="bottom"><span class="lab">擅长</span><p>〈拿手的领域〉</p></div>
+      <div class="card t-blue" data-beat="3" data-mascot="3" data-mascot-side="bottom" data-mascot-pose="happy" data-mascot-say="认识一下！"><span class="lab">想聊</span><p>〈想和大家交流的话题〉</p></div>
+    </div>
+    <p class="abs muted" data-beat="3" style="left:150px;top:720px;width:500px">联系我：〈微信 / 邮箱〉</p>
+    <div class="mascot guide" style="left:1660px;top:250px"></div>`,
+  notes: [
+    { beat: 0, say: '最后，介绍一下我自己。我是〈你的名字〉，〈一句话身份〉。' },
+    { beat: 1, say: '最近我在做〈最近在做的事〉。' },
+    { beat: 2, say: '比较拿手的是〈拿手的领域〉。' },
+    { beat: 3, say: '如果你也关心〈想聊的话题〉，欢迎会后找我聊。' },
+  ],
+});
+```
+
+**页面 CSS**（写进同一章的 `slides/chN.css`）：
+
+```css
+[data-id="t-about"] .cover-title{font-size:96px;line-height:1.15}
+[data-id="t-about"] .card{min-height:200px}
+```
+
+**可以改**：
+
+- 〈〉里的字全部换成用户给的。用户没给的那一项（比如没说擅长什么）整张卡片删掉，后面卡片的 `data-beat`、`data-mascot` 往前挪；**不要替用户编经历**。
+- 没有照片：删掉 `figure`，右边两组的 `left:720px` 改成 `left:150px`，卡片区宽度 `width:1080px` 可以放宽到 1680px。
+- 没有联系方式：删掉「联系我」那一行。有二维码时，可以把照片换成二维码（`data-src` 换成 `素材/二维码.png`，`data-caption` 写「扫码加我」）。
+
+**别碰**：
+
+- 「联系我」放在照片下面、宽度 500px：第 3 拍形象站到第三张卡片下面，联系方式放右边会被它挡住。
+
+---
+
+## 5. 结尾 `t-end`
 
 **什么时候用**：最后一页。居中一句收尾金句，第 1 拍出致谢；形象先站在金句右边，第 1 拍跳到致谢旁边，开心地说一句话。引擎会在最后一页底部自动加一行署名，不用写。
 

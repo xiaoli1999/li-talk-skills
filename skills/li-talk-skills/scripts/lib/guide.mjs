@@ -999,8 +999,9 @@ function stageFull(s) {
   return render(7, { where, steps: checkSteps(s, lead), noAsk, say });
 }
 
-// ⑧ 过稿。用了方果风格（fangguo）、还没问过「关于我们」页（.li-talk.json 里没有 aboutUs）时，
-// 先问要不要在最后加一页（问题 1），记下以后再过稿
+// ⑧ 过稿。还没问过「关于」页（.li-talk.json 里没有 aboutUs）时，先问要不要加（问题 1），记下以后再过稿：
+// 方果风格（给公司对外用）问「关于我们」，放在最后一页；别的风格（给个人分享用）问「关于我」，放在结尾页前面，
+// 问的时候带上作者的愿景：分享知识的最后，也分享自己
 function stageReview(s) {
   const where = [`课件目录：${posix(s.dir)}`, progress(s.meta), `课件 ${s.pages.length} 页`, `自检：${s.st.text}`];
   if (s.meta.scenes.includes('fangguo') && !s.meta.aboutUs) {
@@ -1017,6 +1018,28 @@ function stageReview(s) {
       ],
       asks: [{ q: '要不要在课件最后加一页「关于我们」？（放公司简介、二维码、电话和地址）', opts: ['加（推荐：对外讲的时候留个联系方式）', '不加'] }],
       say: '加吧，放在最后一页',
+    });
+  }
+  // 别的风格（给个人分享用）：问要不要在结尾页前加一页「关于我」，介绍讲者自己
+  if (!s.meta.aboutUs) {
+    const sample = posix(join(TPL_DIR, 'samples', 'samples.js'));
+    return render(8, {
+      where,
+      steps: [
+        ['过稿之前，先问用户要不要在结尾页前加一页「关于我」（问题 1）。问的时候把问题上面那句愿景原样转给用户，照用户选的做：',
+          '选「加」：一问一答问清楚这几样（一次问一个，没有的可以不填）：名字或称呼、一句话身份（做什么的、在哪里）、最近在做的事、拿手的领域、想和大家聊的话题、联系方式；有照片或二维码的话，请用户放进 素材/。',
+          `  然后照 ${sample} 里「关于我」那页（id 是 t-about）抄到结尾页前面，scene 换成这份课件的风格，〈〉里的字换成用户给的；用户没给的那一项整块删掉、拍号往前挪，不要编；没照片就删掉 figure，右边一组往左挪。id 接着讲稿的页号排，讲稿.md 里也补上这一页。写完跑 check --browser 清零，再运行：`,
+          '  ' + cli('confirm', quote(s.dir), 'about'),
+          '选「不加」：运行下面这条记下，之后不再问：',
+          '  ' + cli('confirm', quote(s.dir), 'about', '--skip')],
+        guideStep(s.dir),
+      ],
+      asks: [{
+        when: '先把这句愿景原样告诉用户：「小黎的愿景：希望你在分享知识和经验的最后，也分享一下你自己——让听众认识讲这堂课的人。」',
+        q: '要不要在结尾页前加一页「关于我」，介绍一下你自己？（名字、在做的事、擅长什么、联系方式）',
+        opts: ['加（推荐：让大家认识你，会后也好找你交流）', '不加'],
+      }],
+      say: '加吧，我叫……，平时在做……',
     });
   }
   const steps = [

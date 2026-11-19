@@ -65,9 +65,9 @@ test('课件地址可以换入口文件，默认还是 index.html', () => {
   assert.match(deckUrl(dir, '?selftest=1'), /\/index\.html\?selftest=1$/);
 });
 
-test('不开浏览器的检查：模板目录查的是样板页，4 页，没有错误和提醒', async () => {
+test('不开浏览器的检查：模板目录查的是样板页，5 页，没有错误和提醒', async () => {
   const st = await checkStatic(TPL);
-  assert.equal(st.pages, 4, st.text);
+  assert.equal(st.pages, 5, st.text);
   assert.equal(st.errors, 0, st.text);
   assert.equal(st.warnings, 0, st.text);
 });
@@ -118,7 +118,7 @@ test('templates.md 里贴的代码和 samples.js、samples.css 一字不差', ()
   const js = readFileSync(join(TPL, 'samples', 'samples.js'), 'utf8').replace(/\r\n/g, '\n');
   const css = readFileSync(join(TPL, 'samples', 'samples.css'), 'utf8').replace(/\r\n/g, '\n');
   const blocks = js.match(/^Deck\.add\(\{[\s\S]*?^\}\);$/gm) || [];
-  assert.equal(blocks.length, 4);
+  assert.equal(blocks.length, 5);
   for (const b of blocks) {
     const id = /id: '([^']+)'/.exec(b)[1];
     assert.ok(doc.includes('```js\n' + b + '\n```'), `templates.md 里 ${id} 的代码和 samples.js 不一样，从 samples.js 重新复制`);
@@ -204,7 +204,7 @@ test('真实浏览器：样板页在 16 种风格下自检清零', { skip: !brow
     for (const scene of SCENES) {
       const r = await b.selftest(TPL, { w: 1920, h: 1080, scene, entry: 'gallery.html' });
       if (NATIVE.includes(scene)) assert.deepEqual(r.list.map(p => p.id), nativeIds(scene), scene + ' 要放它自己的样板页');
-      else assert.equal(r.pages, 4, scene);
+      else assert.equal(r.pages, 5, scene);
       assert.ok(r.list.every(p => p.scene === scene), `${scene}：${JSON.stringify(r.list)}`);
       assert.deepEqual(r.issues, [], `${scene}：${JSON.stringify(r.issues, null, 2)}`);
     }

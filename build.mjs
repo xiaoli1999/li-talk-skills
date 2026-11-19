@@ -38,9 +38,9 @@ const PATH_RULES = [
   [/\/Users\/[A-Za-z0-9_.\-\u4e00-\u9fff]+/, '像是 macOS 本机绝对路径'],
   [/\/home\/[A-Za-z0-9_.\-]+\//, '像是 Linux 本机绝对路径'],
 ];
-// 内部词。作者指定的署名是唯一允许出现「小黎」的写法（template/engine/build.js 里那句，设计文档里引用的也是这一句）
+// 内部词。作者指定的署名和「小黎的愿景」（guide 问要不要加「关于我」页时转告用户的那句）是仅有的允许出现「小黎」的写法（template/engine/build.js 里那句，设计文档里引用的也是这一句）
 const INTERNAL_WORDS = [/TAPD/i, /小克/, /小黎/];
-const ALLOWED_PHRASES = ['由 小黎 · li-talk-skills 提供支持'];
+const ALLOWED_PHRASES = ['由 小黎 · li-talk-skills 提供支持', '小黎的愿景'];
 
 // 要扫的文件：skill 目录、docs/、根目录的 README*.md 和 CHANGELOG.md、.claude-plugin/（有的话）
 function scanTargets(root) {

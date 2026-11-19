@@ -1,5 +1,5 @@
 /* =====================================================================
-   样板页：封面 t-cover、清单 t-list、步骤（图示）t-steps、结尾 t-end
+   样板页：封面 t-cover、清单 t-list、步骤（图示）t-steps、关于我 t-about、结尾 t-end
    - 写页面时先找最接近的样板，整段抄过去再改（说明见 references/templates.md）：
      id 换成 p〈讲稿页号〉，samples.css 里对应的 [data-id="t-…"] 一起换成新 id；scene 换成选定的风格；字照讲稿改
    - 只用通用组件和 CSS 变量，不写死颜色，所以每种风格下都成立；样册 gallery.html 加 ?scene=<键名> 换风格看
@@ -82,6 +82,39 @@ Deck.add({
     { beat: 1, key: '温杯', say: '第一步温杯：热水把盖碗里外烫一遍，倒掉。' },
     { beat: 2, key: '投茶', say: '第二步投茶：三克茶叶放进去，铺满碗底就行。' },
     { beat: 3, key: '注水', say: '第三步注水：八十度的水沿着碗边慢慢倒。懒得记的话，下面这行命令点一下就能复制。' },
+  ],
+});
+
+/* 关于我：放在结尾页前面，介绍讲这堂课的人（guide 在过稿前会问用户要不要加）。
+   左边一张照片（没有照片就整行删掉 figure，右边一组往左挪到 left:150px），右边名字、一句话身份，
+   三张卡片一拍出一张：在做什么、擅长什么、想和大家聊什么；最后一拍在照片下面出联系方式（没有就删掉那一行），形象打个招呼。
+   〈〉里的字都换成用户给的；用户没给的那张卡片整张删掉，拍号跟着往前挪，不要编 */
+Deck.add({
+  id: 't-about',
+  chapter: '关于我',
+  topic: '认识一下讲者',
+  scene: 'paper',
+  title: '关于我',
+  noTitle: true,
+  html: `
+    <figure class="abs shot" data-beat="0" data-src="samples/placeholder.svg" data-caption="〈一张你的照片〉" style="left:150px;top:300px;width:460px;--r:-2deg"></figure>
+    <div class="abs col" style="left:720px;top:230px;width:1080px;align-items:flex-start;--gap:24px">
+      <span class="tag" data-beat="0" style="--r:-2deg">关于我</span>
+      <p class="cover-title b" data-beat="0">〈你的名字〉</p>
+      <p class="lead muted" data-beat="0">〈一句话身份：做什么的、在哪里〉</p>
+    </div>
+    <div class="abs grid" style="left:720px;top:600px;width:1080px;--cols:3;--gap:36px">
+      <div class="card t-yellow" data-beat="1" data-mascot="1" data-mascot-side="bottom"><span class="lab">在做</span><p>〈最近在做的事〉</p></div>
+      <div class="card t-mint" data-beat="2" data-mascot="2" data-mascot-side="bottom"><span class="lab">擅长</span><p>〈拿手的领域〉</p></div>
+      <div class="card t-blue" data-beat="3" data-mascot="3" data-mascot-side="bottom" data-mascot-pose="happy" data-mascot-say="认识一下！"><span class="lab">想聊</span><p>〈想和大家交流的话题〉</p></div>
+    </div>
+    <p class="abs muted" data-beat="3" style="left:150px;top:720px;width:500px">联系我：〈微信 / 邮箱〉</p>
+    <div class="mascot guide" style="left:1660px;top:250px"></div>`,
+  notes: [
+    { beat: 0, say: '最后，介绍一下我自己。我是〈你的名字〉，〈一句话身份〉。' },
+    { beat: 1, say: '最近我在做〈最近在做的事〉。' },
+    { beat: 2, say: '比较拿手的是〈拿手的领域〉。' },
+    { beat: 3, say: '如果你也关心〈想聊的话题〉，欢迎会后找我聊。' },
   ],
 });
 

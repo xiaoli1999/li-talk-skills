@@ -713,6 +713,7 @@ test('过稿：写完、自检清零后给用户过稿，认可后运行 confirm
   const dir = await builtDeck({ scriptPages: 3, confirm: ['trial'] });
   writeFileSync(join(dir, 'slides', 'ch1.js'), chapter(['p01', 'p02', 'p03']));
   selftest(dir);
+  writeMeta(dir, { aboutUs: 'skipped' });   // 「关于我」页另有测试
   const t = guideText(dir);
   assert.match(t, /【现在在哪一步】⑧ 过稿/);
   assert.ok(t.includes(cmd('open', q(dir))));
@@ -900,7 +901,17 @@ test('过稿：用了方果风格，先问要不要加「关于我们」页，�
     assert.ok(t.includes(cmd('confirm', q(dir), 'review')));
   }
 
-  // 别的风格不问
+  // 别的风格不问「关于我们」，改问「关于我」，并带上作者的愿景
   writeMeta(dir, { scenes: ['paper'], aboutUs: null });
-  assert.doesNotMatch(guideText(dir), /关于我们/);
+  t = guideText(dir);
+  assert.doesNotMatch(t, /关于我们/);
+  assert.match(t, /小黎的愿景：希望你在分享知识和经验的最后，也分享一下你自己/);
+  assert.match(t, /问题 1：要不要在结尾页前加一页「关于我」/);
+  assert.ok(t.includes("samples/samples.js 里「关于我」那页（id 是 t-about）"), t);
+  assert.match(t, /不要编/);
+  assert.ok(t.includes(cmd('confirm', q(dir), 'about', '--skip')), t);
+  assert.ok(!t.includes(cmd('confirm', q(dir), 'review')), '没问完关于我之前不过稿');
+  checkShape(t);
+  writeMeta(dir, { aboutUs: 'added' });
+  assert.doesNotMatch(guideText(dir), /关于我/);
 });
