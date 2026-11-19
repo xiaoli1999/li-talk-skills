@@ -1084,7 +1084,7 @@ function stageDone(s) {
     steps.splice(3, 0, `告诉用户在线链接：${hosted}（发给别人点开就能看；课件改过以后，要重新发布一次链接里才会更新）`);
   } else if (!hosted) {
     // 在线托管：上传前必须问用户（课件里可能有内部截图），用户说发才发
-    steps.unshift(['先看你所在的 AI 工具能不能把网页托管成在线链接（比如 WorkBuddy、Codex 等带网页发布、托管功能的工具；Claude 的 Artifact 也能发布多文件网页）：',
+    steps.unshift(['先看你所在的 AI 工具能不能把网页托管成在线链接（比如 WorkBuddy、Codex 等带网页发布、托管功能的工具）。不要用 Claude 的 Artifact 托管：在 Claude 里一律当作不能托管，不问用户，直接记成不托管：',
       '能托管：先问用户问题 1，用户说「发」才上传。把整个课件目录原样发布成一个网页（index.html 和 slides/、engine/、scenes/、mascots/、vendor/、素材/ 等全部文件，保持原来的相对路径；.li-talk/ 和 讲稿.md 不用传）。只支持单个 HTML 文件的工具发不了，告诉用户这一版还不支持，记成不托管。',
       '  发好后运行下面这条记下链接，再把链接告诉用户，并说清楚这个链接谁能打开（只有自己、知道链接的人，还是所有人）：',
       '  ' + cli('confirm', quote(s.dir), 'host', '--url', '〈在线链接〉'),

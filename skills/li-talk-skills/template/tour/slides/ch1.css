@@ -1,18 +1,15 @@
 /* 教程第一部分的页面样式（和 slides/ch1.js 配套）：每条选择器都以 [data-id="p…"] 开头，只管那一页；自己的零件类名用 p〈页号〉- 开头 */
 [data-id="p01"] .p01-h{font-size:100px;line-height:1.16}
 
-[data-id="p02"] .fg-fc{min-height:330px}
+[data-id="p02"] .p02-c{display:flex;align-items:center;gap:30px;padding:32px 36px}
+[data-id="p02"] .p02-c h4{margin:0 0 8px}
 
 [data-id="p03"] .p03-big{font:700 50px/1.35 var(--f-hand);color:var(--ink)}
 [data-id="p03"] .p03-sm{margin-top:30px;font-size:36px;line-height:1.55;color:var(--ink-2)}
 
-[data-id="p04"] .p04-cmd{margin-top:6px}
-[data-id="p04"] .p04-cmd .copy{margin:6px 0 14px}
-[data-id="p04"] .p04-cmd p{font-size:34px;line-height:1.4;color:var(--ink-2)}
+[data-id="p04"] .p04-card p{font-size:36px;line-height:1.5}
 
-[data-id="p05"] .p05-notes{display:flex;flex-direction:column;gap:26px}
-[data-id="p05"] .p05-notes p{padding:24px 28px;border-radius:24px;background:#fff;box-shadow:var(--fg-card);font-size:34px;line-height:1.45;color:var(--ink-2)}
-[data-id="p05"] .p05-notes b{display:block;margin-bottom:6px;font-size:40px;color:var(--ink)}
+[data-id="p05"] .p05-flow .fg-step p{font-size:34px}
 
 [data-id="p06"] .p06-card p{font-size:36px;line-height:1.5}
 
@@ -20,4 +17,5 @@
 [data-id="p07"] .p07-copy{display:flex;flex-direction:column;align-items:flex-start;gap:14px}
 [data-id="p07"] .p07-copy>span:first-child{font-size:30px;color:var(--ink-3)}
 
+[data-id="p08"] .fg-val>.fg-ico{margin:18px 0 0}
 [data-id="p08"] .fg-val>b{font-size:56px}

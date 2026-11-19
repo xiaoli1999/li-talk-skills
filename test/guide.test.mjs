@@ -943,3 +943,11 @@ test('完成：先问要不要托管成在线链接，记下链接以后告诉�
   t = guideText(dir);
   assert.doesNotMatch(t, /在线链接/);
 });
+
+test('完成：托管说明里不让用 Claude 的 Artifact', async () => {
+  const dir = await builtDeck({ scriptPages: 3, confirm: ['trial', 'review'] });
+  writeFileSync(join(dir, 'slides', 'ch1.js'), chapter(['p01', 'p02', 'p03']));
+  selftest(dir);
+  writeMeta(dir, { aboutUs: 'skipped' });
+  assert.match(guideText(dir), /不要用 Claude 的 Artifact 托管/);
+});

@@ -194,16 +194,76 @@
     const charts = (e.matches(CHARTS) ? [e] : []).concat(ownKids(e, CHARTS));
     charts.forEach(c => { end = Math.max(end, .08 + grow(tl, c, t + .08)); });
     const nums = (e.matches('.fg-num[data-to], .fg-odo') ? [e] : []).concat(ownKids(e, '.fg-num[data-to], .fg-odo'));
-    nums.forEach(n => { end = Math.max(end, .1 + (n.classList.contains('fg-odo') ? odoRoll(tl, n, t + .1) : countUp(tl, n, t + .1, .5))); });
+    nums.forEach(n => { const d = n.classList.contains('fg-odo') ? odoRoll(tl, n, t + .1) : countUp(tl, n, t + .1, .5); if (n.matches('.fg-g')) glint(tl, n, t + d); end = Math.max(end, .1 + d); });
     return end;
   }
 
-  /* 默认出场：淡入、上浮 18px（0.45 秒，平滑，不过冲），里面的数字滚动、图表生长 */
+  /* =================================================================
+     方果的动效语言：景深、光、展开。像一场高级的产品发布会——灵动，但不弹跳、不花哨
+     · 卡片类从景深里浮上来：略小、略低、带一点模糊 → 清楚落位（0.55 秒，平滑减速，不过冲）
+     · 界面窗像 App 打开一样从一个点展开，里面的内容随后依次显出
+     · 落位时一道品牌蓝的光从卡片上扫过（--fg-sh，fangguo.css 的背景层按它画），只扫这一拍的主角
+     · 数字滚完、大数字出现时带一道光泽（--fg-gl）
+     · 一排并列的块（.grid、.fg-feats 这类外层）整拍出场时，里面的块错落浮上来
+     ================================================================= */
+  const CARDS = '.card, .cell, .fg-fc, .fg-kpi, .fg-mini, .fg-qr, .fg-contact, .fg-plat, .fg-tile, .steps.h > li, .fg-val';
+  const GROUPS = '.grid, .row, .col, .cells, .fg-feats, .fg-qrs, .fg-facts, .fg-tiles';
+  const blurOk = e => (e.offsetWidth || 0) * (e.offsetHeight || 0) < 420000;
+  /* 一道品牌蓝的光扫过（不用 transform，不碰版面） */
+  function sheen(tl, e, t) {
+    const off = () => e.style.removeProperty('--fg-sh');
+    tl.fromTo(e, { '--fg-sh': '130%' }, { '--fg-sh': '-30%', duration: .7, ease: 'power1.inOut', immediateRender: false, onComplete: off, onInterrupt: off }, t);
+  }
+  /* 大数字的光泽 */
+  function glint(tl, e, t) {
+    const off = () => e.style.removeProperty('--fg-gl');
+    tl.fromTo(e, { '--fg-gl': '130%' }, { '--fg-gl': '-30%', duration: .6, ease: 'power1.inOut', immediateRender: false, onComplete: off, onInterrupt: off }, t);
+  }
+  /* 从景深里浮上来 */
+  function depth(tl, e, t, o = {}) {
+    const off = () => clean(e);
+    const from = { autoAlpha: 0, y: o.y == null ? 26 : o.y, scale: o.s || .965 }, to = { autoAlpha: 1, y: 0, scale: 1, duration: o.dur || .55, ease: 'power3.out', immediateRender: true, onComplete: off, onInterrupt: off };
+    if (blurOk(e)) { from.filter = 'blur(8px)'; to.filter = 'blur(0px)'; }
+    tl.fromTo(e, from, to, t);
+    return o.dur || .55;
+  }
+  /* 界面窗：从一个点（偏左上）展开，里面的子元素随后依次显出 */
+  function openWin(tl, e, t) {
+    const off = () => clean(e);
+    tl.fromTo(e, { autoAlpha: 0, scale: .55, transformOrigin: '20% 12%' }, { autoAlpha: 1, scale: 1, duration: .6, ease: 'expo.out', immediateRender: true, onComplete: off, onInterrupt: off }, t);
+    const kids = [...e.children].filter(c => !c.hasAttribute('data-beat') && !c.matches('.fg-cursor, .fg-lens, .fg-toast'));
+    kids.forEach((c, i) => {
+      const done = () => clean(c);
+      tl.fromTo(c, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: .35, ease: 'power2.out', immediateRender: true, onComplete: done, onInterrupt: done }, t + .22 + i * .05);
+    });
+    return Math.min(.95, .6 + kids.length * .05);
+  }
+
+  /* 默认出场：卡片类从景深里浮上来、一道光扫过；界面窗展开；一排并列的块错落浮上来；其余文字淡入上浮。
+     里面的数字滚动、图表生长照旧 */
   function rise(tl, e, t, ctx) {
     const svg = e instanceof SVGElement;
-    const off = () => clean(e);
-    tl.fromTo(e, { autoAlpha: 0, y: svg ? 0 : 18 }, { autoAlpha: 1, y: 0, duration: .45, ease: EASE, immediateRender: true, onComplete: off, onInterrupt: off }, t);
-    return Math.max(.45, svg ? 0 : inner(tl, e, t));
+    if (svg) { const off = () => clean(e); tl.fromTo(e, { autoAlpha: 0 }, { autoAlpha: 1, duration: .45, ease: EASE, immediateRender: true, onComplete: off, onInterrupt: off }, t); return .45; }
+    let d;
+    if (e.matches('.fg-win')) d = openWin(tl, e, t);
+    else if (e.matches(CARDS)) { d = depth(tl, e, t); sheen(tl, e, t + .18); d = Math.max(d, .88); }
+    else if (e.matches(GROUPS) && [...e.children].some(c => c.matches(CARDS))) {
+      const off = () => clean(e);
+      tl.fromTo(e, { autoAlpha: 0 }, { autoAlpha: 1, duration: .15, ease: 'power1.out', immediateRender: true, onComplete: off, onInterrupt: off }, t);
+      const kids = [...e.children].filter(c => !c.hasAttribute('data-beat'));
+      d = .15;
+      kids.forEach((c, i) => { const s = .05 + i * .1; depth(tl, c, t + s); if (c.matches(CARDS)) sheen(tl, c, t + s + .18); d = Math.max(d, s + .6); });
+      d = Math.min(d, 1.1);
+    } else {
+      const off = () => clean(e);
+      const from = { autoAlpha: 0, y: 18 }, to = { autoAlpha: 1, y: 0, duration: .5, ease: 'power3.out', immediateRender: true, onComplete: off, onInterrupt: off };
+      if (blurOk(e)) { from.filter = 'blur(6px)'; to.filter = 'blur(0px)'; }
+      tl.fromTo(e, from, to, t);
+      d = .5;
+    }
+    const big = (e.matches('.fg-num.fg-g') ? [e] : []).concat(ownKids(e, '.fg-num.fg-g'));
+    big.forEach(n => glint(tl, n, t + .55));
+    return Math.max(d, inner(tl, e, t));
   }
   /* 只淡入（大块底板、背景装饰） */
   function fade(tl, e, t) {
@@ -211,6 +271,8 @@
     tl.fromTo(e, { autoAlpha: 0 }, { autoAlpha: 1, duration: .45, ease: 'power1.out', immediateRender: true, onComplete: off, onInterrupt: off }, t);
     return Math.max(.45, inner(tl, e, t));
   }
+  const HOVER = CARDS + ', .fg-win';
+  let hoverFn = null;
   const FX = { fgrise: rise, fgfade: fade, fgmock: (tl, e, t) => mockIn(tl, e, t), fghub: (tl, e, t) => hubIn(tl, e, t) };
   /* 默认出场按类名分：底板、超大编号只淡入，其余都是 fgrise */
   const BY = { 'fg-panel': 'fgfade', 'fg-bigno': 'fgfade', 'fg-prod': 'fgmock', 'fg-plt': 'fghub' };
@@ -503,7 +565,8 @@
       el.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICON[name]}</svg>`;
       el.setAttribute('aria-hidden', 'true');
     });
-    s.querySelectorAll('.fg-num small').forEach(u => u.setAttribute('data-small', ''));   // 单位是注释类小字（0.36 倍，最小 26px）
+    s.querySelectorAll('.fg-num small').forEach(u => u.setAttribute('data-small', ''));
+    s.querySelectorAll('.fg-stamp, .fg-capt').forEach(u => u.setAttribute('data-small', ''));   // 示意标签、图注是注释类小字   // 单位是注释类小字（0.36 倍，最小 26px）
     s.querySelectorAll('.fg-bars').forEach(buildBars);
     s.querySelectorAll('.fg-donut').forEach(buildDonut);
     s.querySelectorAll('.fg-line').forEach(buildLine);
@@ -562,12 +625,15 @@
     backdrop,
     // 退一拍：平滑收回（略下沉、淡出），不加别的动作
     onBack() { return { at: 0, gap: .03, y: 10, dur: .26, childAt: .3 }; },
-    // 翻页：旧页上收淡出，新页从下面淡入浮上来（后退时方向反过来）
+    // 翻页有层次：旧页往后退（缩小、变淡、微微模糊），新页从前景推进来（略大 → 原大）；后退时反过来
     pageTurn({ tl, from, to, dir, retire, clear }) {
-      const G = gs();
-      tl.to(from.el, { autoAlpha: 0, y: -12 * dir, duration: .3, ease: 'power2.in', onComplete: () => { retire(); G.set(from.el, { clearProps: 'transform' }); } }, 0);
-      tl.fromTo(to.el, { autoAlpha: 0, y: 16 * dir }, { autoAlpha: 1, y: 0, duration: .45, ease: EASE, immediateRender: true, onComplete: () => { clear(to.el); G.set(to.el, { clearProps: 'transform' }); } }, .2);
-      return .24;
+      const G = gs(), fwd = dir > 0;
+      const o = { autoAlpha: 0, scale: fwd ? .94 : 1.04, duration: .42, ease: 'power2.in', onComplete: () => { retire(); G.set(from.el, { clearProps: 'transform,filter' }); } };
+      if (blurOk(from.el)) o.filter = 'blur(6px)';
+      tl.to(from.el, o, 0);
+      const fr = { autoAlpha: 0, scale: fwd ? 1.05 : .95 }, too = { autoAlpha: 1, scale: 1, duration: .55, ease: 'power3.out', immediateRender: true, onComplete: () => { clear(to.el); G.set(to.el, { clearProps: 'transform,filter' }); } };
+      tl.fromTo(to.el, fr, too, .2);
+      return .3;
     },
     // 「已复制」：白色小胶囊从上面淡入落下，对勾描出来
     copied({ tl, tip, ok }) {
@@ -578,24 +644,29 @@
         tl.fromTo(path, { strokeDasharray: L, strokeDashoffset: L }, { strokeDashoffset: 0, duration: .3, ease: 'power1.out' }, .12);
       }
     },
-    // 开场（约 1.1 秒）：背景淡入 → 主题行、大标题、第 0 拍依次淡入上浮 → 重点词
+    // 开场（约 1.1 秒）：背景光晕亮起 → 网格线从中间往外画开 → Logo（外框）落位 → 主题行、大标题、第 0 拍依次从景深里浮上来 → 重点词
     intro(ctx) {
       const tl = ctx && ctx.tl, page = ctx && ctx.page;
       const root = page && (page.el || page);
       if (!tl || !root || !root.querySelector) return 0;
-      const groups = [...document.querySelectorAll('.bg[data-scene="fangguo"] > div')];
-      if (groups.length) tl.fromTo(groups, { autoAlpha: 0 }, { autoAlpha: 1, duration: .8, ease: 'power1.out', immediateRender: true, onComplete: () => groups.forEach(clean) }, 0);
+      const bg = document.querySelector('.bg[data-scene="fangguo"]');
+      const glow = bg ? [...bg.querySelectorAll('.fg-sf, .fg-gw')] : [];
+      const groups = bg ? [...bg.querySelectorAll(':scope > div')] : [];
+      if (groups.length) tl.fromTo(groups, { autoAlpha: 0 }, { autoAlpha: 1, duration: .5, ease: 'power1.out', immediateRender: true, onComplete: () => groups.forEach(clean) }, 0);
+      if (glow.length) tl.fromTo(glow, { scale: .7 }, { scale: 1, duration: 1, ease: 'power2.out', immediateRender: true, onComplete: () => glow.forEach(g => g.style.removeProperty('transform')) }, 0);
+      const grids = bg ? [...bg.querySelectorAll('.fg-grd:not(.fg-lit)')] : [];
+      grids.forEach(g => { const off = () => g.style.removeProperty('clip-path'); tl.fromTo(g, { clipPath: 'circle(0% at 50% 46%)' }, { clipPath: 'circle(75% at 50% 46%)', duration: .9, ease: 'power2.out', immediateRender: true, onComplete: off, onInterrupt: off }, .1); });
       const stage = root.closest('#stage');
       const chrome = stage && stage.querySelector(':scope > .chrome');
-      if (chrome) tl.fromTo(chrome, { autoAlpha: 0 }, { autoAlpha: 1, duration: .45, ease: 'power1.out', immediateRender: true, onComplete: () => clean(chrome) }, .2);
-      let t = .1;
-      [root.querySelector(':scope > .s-topic'), root.querySelector(':scope > .s-title')].filter(Boolean).forEach(e => { rise(tl, e, t); t += .08; });
+      if (chrome) tl.fromTo(chrome, { autoAlpha: 0, y: -14 }, { autoAlpha: 1, y: 0, duration: .5, ease: 'power3.out', immediateRender: true, onComplete: () => clean(chrome) }, .25);
+      let t = .3;
+      [root.querySelector(':scope > .s-topic'), root.querySelector(':scope > .s-title')].filter(Boolean).forEach(e => { depth(tl, e, t, { y: 20 }); t += .08; });
       const zero = [...root.querySelectorAll('[data-beat="0"]')].filter(e => !e.matches(SKIP) && !(e.parentElement && e.parentElement.closest('[data-beat]')));
       let end = t + .45;
-      zero.forEach((e, i) => { const s = t + i * .07; end = Math.max(end, s + runFx(tl, e, s)); });
+      zero.forEach((e, i) => { const s = t + i * .08; end = Math.max(end, s + runFx(tl, e, s)); });
       const keys = [...root.querySelectorAll('.key')].filter(k => { const b = k.closest('[data-beat]'); return !b || b.dataset.beat === '0'; });
       if (keys.length) tl.fromTo(keys, { '--k': 0 }, { '--k': 1, duration: .4, ease: EASE, immediateRender: true }, Math.min(end, .9));
-      return Math.min(Math.max(end, 1), 1.3);
+      return Math.min(Math.max(end, 1), 1.4);
     },
     // 点击处漾开一圈很淡的品牌蓝（舞台坐标，layer 在内容下面）
     ripple(x, y, layer) {
@@ -608,6 +679,22 @@
       layer.appendChild(r);
       G.fromTo(r, { scale: .2, opacity: .8 }, { scale: 1, opacity: 0, duration: .5, ease: EASE, onComplete: () => r.remove() });
     },
+    // 悬停：卡片抬起（CSS 的 :hover），柔光跟着鼠标走（这里写 --mx --my）
+    mount(stage) {
+      if (hoverFn) return;
+      let raf = 0, last = null;
+      const run = () => {
+        raf = 0; const ev = last; last = null;
+        const n = ev && ev.target && ev.target.closest ? ev.target.closest(HOVER) : null;
+        if (!n || !n.closest('.slide.active[data-scene="fangguo"]')) return;
+        const r = n.getBoundingClientRect(), k = (r.width / (n.offsetWidth || r.width)) || 1;
+        n.style.setProperty('--mx', ((ev.clientX - r.left) / k).toFixed(0) + 'px');
+        n.style.setProperty('--my', ((ev.clientY - r.top) / k).toFixed(0) + 'px');
+      };
+      hoverFn = e => { if (e.pointerType === 'touch') return; last = e; if (!raf) raf = requestAnimationFrame(run); };
+      stage.addEventListener('pointermove', hoverFn, { passive: true });
+    },
+    unmount(stage) { if (hoverFn) stage.removeEventListener('pointermove', hoverFn); hoverFn = null; },
     zones: [
       { x: 120, y: 18, w: 1260, h: 60, name: '主题行' },
       { x: 1400, y: 14, w: 420, h: 68, name: '页码和节拍点' },

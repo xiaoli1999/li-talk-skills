@@ -582,17 +582,18 @@
 /* ---------- 价值观网格 .fg-values > .fg-val：编辑式排版，不做卡片。每条一个编号、一个大字关键词、一句小字说明，
    中间一栏往下错开；关键词第 0 拍就在（深墨色），说明到拍出现，顶上一道细线铺成品牌蓝，当前这一拍的关键词变成品牌蓝 ---------- */
 [data-scene="fangguo"] .fg-values{display:grid;grid-template-columns:repeat(var(--cols,3),minmax(0,1fr));column-gap:var(--gap,64px);row-gap:56px;counter-reset:fgv}
-[data-scene="fangguo"] .fg-values>.fg-val:nth-child(3n+2){translate:0 56px}
+[data-scene="fangguo"] .fg-values>.fg-val:nth-child(3n+2){margin-top:56px}
 [data-scene="fangguo"] .fg-val{position:relative;counter-increment:fgv;padding-top:26px}
 [data-scene="fangguo"] .fg-val::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;border-radius:2px;background:#E1E8F2}
 [data-scene="fangguo"] .fg-val::after{content:"";position:absolute;left:0;right:0;top:0;height:3px;border-radius:2px;background:linear-gradient(90deg,#3B74F0,#8DBBFF);transform-origin:0 50%;transform:scaleX(0);transition:transform .6s var(--fg-ease)}
-[data-scene="fangguo"] .fg-val:has(> p.on)::after{transform:scaleX(1)}
+[data-scene="fangguo"] .fg-val:has(> p.on)::after,[data-scene="fangguo"] .fg-val.on::after{transform:scaleX(1)}
 [data-scene="fangguo"] .fg-val>i{display:block;font:600 28px/1 var(--f-num);font-style:normal;letter-spacing:.12em;color:#7F9CCB}
 [data-scene="fangguo"] .fg-val>i::before{content:counter(fgv,decimal-leading-zero)}
 [data-scene="fangguo"] .fg-val>b{display:block;margin:16px 0 14px;font:700 60px/1.15 var(--f-hand);letter-spacing:.02em;color:var(--ink);transition:color .4s ease}
 [data-scene="fangguo"] .fg-val>p{font:400 34px/1.5 var(--f-hand);color:var(--ink-2)}
 [data-scene="fangguo"][data-now="1"] .fg-val:has(> p[data-beat="1"])>b,[data-scene="fangguo"][data-now="2"] .fg-val:has(> p[data-beat="2"])>b,
-[data-scene="fangguo"][data-now="3"] .fg-val:has(> p[data-beat="3"])>b,[data-scene="fangguo"][data-now="4"] .fg-val:has(> p[data-beat="4"])>b{color:var(--fg-blue-ink)}
+[data-scene="fangguo"][data-now="3"] .fg-val:has(> p[data-beat="3"])>b,[data-scene="fangguo"][data-now="4"] .fg-val:has(> p[data-beat="4"])>b,
+[data-scene="fangguo"][data-now="1"] .fg-val[data-beat="1"]>b,[data-scene="fangguo"][data-now="2"] .fg-val[data-beat="2"]>b,[data-scene="fangguo"][data-now="3"] .fg-val[data-beat="3"]>b,[data-scene="fangguo"][data-now="4"] .fg-val[data-beat="4"]>b{color:var(--fg-blue-ink)}
 
 /* ---------- 图文拼贴 .fg-collage > figure.shot：照片大小错落拼在一起，第一张最大（主图），其余叠在边上；
    同一张横幅照片可以用不同的 --pos 裁出几块。照片之间只叠图、不叠图注 ---------- */
@@ -633,3 +634,41 @@
 
 /* 平台汇聚中间换成文字（data-fg-core） */
 [data-scene="fangguo"] .fg-hub-core.fg-core-t{display:grid;place-items:center;padding:0 24px;background-image:none;text-align:center;font:700 34px/1.2 var(--f-num),var(--f-hand);color:var(--ink);word-break:break-word}
+
+/* =====================================================================
+   动效语言的样子（行为在 fangguo.js 的 rise、pageTurn、intro、mount）
+   - 卡片类：背景上叠两层光——跟着鼠标的一团柔光（--mx --my，悬停时亮起），出场时扫过的一道品牌蓝光（--fg-sh）；
+     悬停时抬起一点、投影变深；不歪、不弹
+   - 大数字的光泽（--fg-gl）叠在淡蓝渐变上
+   - 浮窗空闲时轻轻上下呼吸（6 秒一次、3px 以内）；减少动态、自检、阅读模式时都不动
+   ===================================================================== */
+@property --fg-h{syntax:"<number>";inherits:false;initial-value:0}
+[data-scene="fangguo"] :is(.card,.cell,.fg-fc,.fg-kpi,.fg-mini,.fg-qr,.fg-contact,.fg-plat,.steps.h>li,.fg-win){--fg-h:0;
+  background-image:
+    radial-gradient(420px circle at var(--mx,50%) var(--my,0%),rgba(107,166,255,calc(.16 * var(--fg-h))),rgba(107,166,255,0) 62%),
+    linear-gradient(100deg,rgba(107,166,255,0) 38%,rgba(107,166,255,.22) 50%,rgba(107,166,255,0) 62%);
+  background-size:100% 100%,260% 100%;background-position:0 0,var(--fg-sh,130%) 0;background-repeat:no-repeat;
+  transition:opacity .45s ease,translate .35s var(--fg-ease),box-shadow .35s ease,border-color .35s ease,--fg-h .35s ease}
+[data-scene="fangguo"] .fg-val{background-image:linear-gradient(100deg,rgba(107,166,255,0) 38%,rgba(107,166,255,.16) 50%,rgba(107,166,255,0) 62%);
+  background-size:260% 100%;background-position:var(--fg-sh,130%) 0;background-repeat:no-repeat}
+@media (hover:hover){
+  [data-scene="fangguo"] :is(.card,.cell,.fg-fc,.fg-kpi,.fg-mini,.fg-qr,.fg-contact,.fg-plat,.steps.h>li):hover{--fg-h:1;translate:0 -6px;
+    box-shadow:0 2px 4px rgba(22,35,63,.05),0 30px 64px rgba(30,60,110,.14)}
+  [data-scene="fangguo"] .fg-win:hover{--fg-h:1}
+}
+@supports ((-webkit-background-clip:text) or (background-clip:text)){
+  [data-scene="fangguo"] .fg-num.fg-g{background-image:linear-gradient(100deg,rgba(255,255,255,0) 40%,rgba(255,255,255,.85) 50%,rgba(255,255,255,0) 60%),linear-gradient(180deg,#2F66E6 10%,#6FA6FF 100%);
+    background-size:260% 100%,100% 100%;background-position:var(--fg-gl,130%) 0,0 0;background-repeat:no-repeat}
+}
+[data-scene="fangguo"] .fg-win.fg-float{animation:fg-breathe 6s ease-in-out infinite}
+@keyframes fg-breathe{0%,100%{translate:0 0}50%{translate:0 -3px}}
+@media (prefers-reduced-motion:reduce){ [data-scene="fangguo"] .fg-win.fg-float{animation:none} }
+[data-scene="fangguo"] .fg-win.fg-float:is(.fg-still *),[data-scene="fangguo"].slide:is(.reading *) .fg-win.fg-float{animation:none}
+
+/* ---------- 示意标签 .fg-stamp：画出来的界面（不是真截图）角上贴一枚「示意」；真截图用 figure.shot，图注写「真图：……」
+   写成单独一块：<span class="abs fg-stamp" style="left:…;top:…">示意</span>，贴在界面窗的右上角外沿 ---------- */
+[data-scene="fangguo"] .fg-stamp{z-index:12;padding:6px 16px 7px;border-radius:12px;background:#FFF1DA;box-shadow:0 8px 18px -8px rgba(154,91,0,.35),inset 0 0 0 2px #F7D9A3;
+  color:#8A5200;font:700 26px/1.2 var(--f-hand);letter-spacing:.08em;white-space:nowrap;rotate:3deg}
+/* 图的一句说明（拟态示意图下面用）：.fg-capt */
+[data-scene="fangguo"] .fg-capt{font:400 28px/1.35 var(--f-hand);color:var(--ink-3);white-space:nowrap}
+[data-scene="fangguo"] .fg-capt b{margin-right:10px;color:#8A5200;font-weight:700}
