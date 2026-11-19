@@ -70,7 +70,7 @@ A style is more than a color scheme: its layouts, structure and what happens on 
 
 | Look | Style | Default mascot | Good for |
 |---|---|---|---|
-| <img src="docs/images/styles/fangguo.jpg" width="240" alt="Fangguo"> | **Fangguo** `fangguo` | Fangfang: a little red square fruit drawn from the Fangguo logo | Client pitches, reports to management, product intros, business numbers |
+| <img src="docs/images/styles/fangguo.jpg" width="240" alt="Fangguo"> | **Fangguo** `fangguo` | Fang Xiaoguo: the company IP, a little fruit with a rounded square head | Client pitches, reports to management, product intros, business numbers |
 
 ### Hand-drawn (Kai script)
 

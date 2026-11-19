@@ -11,7 +11,7 @@
      没有主题行的页（封面、结尾）放在章节标记前面。Logo 文件在 vendor/brand/fangguo/，fangguo.css 用相对路径引用，
      双击离线打开也显示；new 选了这个风格时把 vendor/brand/fangguo/ 一起带进课件
    - 适合讲：给客户演讲、领导汇报、产品介绍、经营数据。不适合：手绘感、童趣的内容，大段代码
-   - 默认形象：方方 fangfang（方果 Logo 化来的红色圆角方块小果子，mascots/fangfang.js）。
+   - 默认形象：方小果 fangfang（公司 IP「方小果」：红色圆角方脑袋、浅粉屏幕脸的小果子，mascots/fangfang.js）。
      除了 idle、point、happy、rest，还有 ask 疑问、think 思考、idea 灵感、wow 惊讶、ok 点赞、thanks 致谢，
      页面上写 data-mascot-pose="ask" 这样用（讲「为什么」用 ask，结尾用 thanks）
    - 背景（backdrop 放进铺满窗口的背景层，两组按页型自动换）：

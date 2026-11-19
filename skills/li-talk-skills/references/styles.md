@@ -263,7 +263,7 @@
   - 浅色底，投到幕布上也看得清。
   - 字体是黑体，比楷书略宽：从手绘风换过来后一定重跑自检。
   - 页码和节拍点挪到 right 120、top 18，和主题行同一条中线，禁区是 x 1400–1820、y 14–82。
-- **默认形象**：方方 `fangfang`（方果 Logo 化来的红色圆角方块小果子，头顶 T 形果柄和一片叶子）。除了 `idle`、`point`、`happy`、`rest`，还有 `ask` 疑问、`think` 思考、`idea` 灵感、`wow` 惊讶、`ok` 点赞、`thanks` 致谢，写在 `data-mascot-pose` 里（讲「为什么」用 `ask`，讲关键数字用 `wow`，结尾用 `thanks`）。
+- **默认形象**：方小果 `fangfang`（公司 IP「方小果」：红色圆角方脑袋、浅粉屏幕脸的小果子，头顶 T 形果柄和一片叶子）。除了 `idle`、`point`、`happy`、`rest`，还有 `ask` 疑问、`think` 思考、`idea` 灵感、`wow` 惊讶、`ok` 点赞、`thanks` 致谢，写在 `data-mascot-pose` 里（讲「为什么」用 `ask`，讲关键数字用 `wow`，结尾用 `thanks`）。
 - **动效**：景深、光、展开，像一场高级的产品发布会，灵动但不弹跳。第一次打开有约 1 秒的开场（背景光晕亮起、网格线从中间往外画开、Logo 和标题依次落位）；卡片从景深里浮上来（略小、带一点模糊 → 清楚落位），落位时一道品牌蓝的光从卡片上扫过；界面窗像 App 打开一样从一个点展开；一排并列的块错落浮上来；数字从 0 滚到读数，大数字出现时带一道光泽；柱子和环按拍生长；当前一步用品牌蓝点亮；翻页时旧页往后退、变淡，新页从前景推进来；悬停时卡片抬起、柔光跟着鼠标走；浮窗空闲时轻轻上下呼吸。每拍 0.3–0.8 秒，减少动态、自检、阅读模式时直接到位。
 - **自带出场名**：`fgrise`、`fgfade`、`fgmock`、`fghub`。只在这种风格里认，页面里别写（换风格会报提醒），风格会自己默认用。
 - **专用组件**（类名 `fg-` 开头，只在方果里有样子；样板页 `samples/fangguo.js` 每个都用了一遍，完整说明在 `scenes/fangguo.js` 开头）。图表都是「填数字就能用」：
@@ -380,4 +380,4 @@ node "〈本 skill 目录〉/scripts/li-talk.mjs" check "〈课件目录〉" --b
 补充两种情况（同样属于换风格，同样只动风格、形象的引入行）：
 
 - **在原来的风格之外再加一种**（按章分配，只在同一类里加）：a 写上全部风格（`--scenes 旧风格,新风格`）；b 照做；c 改成在原来那两行下面各加一行新风格，原来的两行保留；d 只改要换的那几章。
-- **用户也想换形象**（比如换成科技暗黑后想用微光）：把 `〈本 skill 目录〉/template/mascots/〈新形象〉.js` 复制到 `〈课件目录〉/mascots/`；`index.html` 里 `<script src="mascots/〈旧形象〉.js">` 这一行换成新形象，`<meta name="li-talk-mascot" content="〈旧形象〉">` 的 content 也换成新形象；第 a 步的 `--mascot` 写新形象。这一版有 16 个形象：尖尖 `jianjian`、沙沙 `shasha`、点点 `diandian`、卷卷 `juanjuan`、朵朵 `duoduo`、墨丸 `mowan`、圈圈 `quanquan`、叨叨 `daodao`、微光 `weiguang`、小雾 `xiaowu`、透透 `toutou`、小页 `xiaoye`、小铅 `xiaoqian`、砰砰 `pengpeng`、小旗 `xiaoqi`、方方 `fangfang`；`styles` 列出每种风格默认用哪个。
+- **用户也想换形象**（比如换成科技暗黑后想用微光）：把 `〈本 skill 目录〉/template/mascots/〈新形象〉.js` 复制到 `〈课件目录〉/mascots/`；`index.html` 里 `<script src="mascots/〈旧形象〉.js">` 这一行换成新形象，`<meta name="li-talk-mascot" content="〈旧形象〉">` 的 content 也换成新形象；第 a 步的 `--mascot` 写新形象。这一版有 16 个形象：尖尖 `jianjian`、沙沙 `shasha`、点点 `diandian`、卷卷 `juanjuan`、朵朵 `duoduo`、墨丸 `mowan`、圈圈 `quanquan`、叨叨 `daodao`、微光 `weiguang`、小雾 `xiaowu`、透透 `toutou`、小页 `xiaoye`、小铅 `xiaoqian`、砰砰 `pengpeng`、小旗 `xiaoqi`、方小果 `fangfang`；`styles` 列出每种风格默认用哪个。
