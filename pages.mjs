@@ -54,6 +54,22 @@ export function buildPages(out = join(ROOT, '.pages')) {
   };
   refs.forEach(take);
   writeFileSync(join(out, 'index.html'), html.replace(/(href|src)="\.\.\//g, '$1="./'));
+
+  // 样册：教程里点风格小图会跳到 ../gallery.html?scene=键名。网页版把样册放在根目录，
+  // 带上它引入的文件，加上它用 document.write 按风格引入的 samples/ 整个目录
+  const gallery = readFileSync(join(TPL, 'gallery.html'), 'utf8');
+  for (const m of gallery.matchAll(/(?:href|src)="([\w./-]+\.(?:css|js|svg|png|jpe?g|webp|woff2?))"/g)) take(m[1]);
+  copyDir(join(TPL, 'samples'), join(out, 'samples'));
+  writeFileSync(join(out, 'gallery.html'), gallery);
+  // 教程章节里指向样册的链接：../gallery.html 改成 ./gallery.html
+  const slides = join(out, 'slides');
+  if (existsSync(slides)) {
+    for (const n of readdirSync(slides)) {
+      if (!/\.(js|css)$/.test(n)) continue;
+      const p = join(slides, n), s = readFileSync(p, 'utf8');
+      if (s.includes('../gallery.html')) writeFileSync(p, s.split('../gallery.html').join('./gallery.html'));
+    }
+  }
   writeFileSync(join(out, '.nojekyll'), '');
   return [...done].sort();
 }
