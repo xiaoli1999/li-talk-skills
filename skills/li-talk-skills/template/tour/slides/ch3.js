@@ -1,4 +1,4 @@
-/* li-talk-skills 教程 · 第三部分：翻页、演讲者视图、小工具（两页）、常用命令、分享、更新、常见问题、结尾（p17–p25） */
+/* li-talk-skills 教程 · 第三部分：翻页、演讲者视图、小工具（两页）、常用命令、分享、更新、常见问题、结尾（p17–p26） */
 
 /* p17 翻页：键帽一行一行出来，右边写这几个键做什么 */
 Deck.add({
@@ -180,9 +180,42 @@ Deck.add({
   ],
 });
 
-/* p23 自动更新：一扇对话窗（拟态示意），AI 转告已经更新；你问版本，AI 回答 */
+/* p23 在线托管（拟态示意：对话窗）：AI 工具能把网页托管成在线链接时，做完课件 AI 会问要不要发；右边要点一拍一条 */
 Deck.add({
   id: 'p23',
+  chapter: '五、更多',
+  chapterShort: '更多',
+  topic: '在线链接',
+  scene: 'fangguo',
+  title: '发成在线链接，点开就能看',
+  html: `
+    <div class="abs fg-win" data-beat="0" data-recede="off" style="left:120px;top:240px;width:1140px">
+      <div class="fg-win-hd"><i class="fg-ico fg-ico-s" data-fg-ico="globe" data-fg-tone="teal"></i>和 AI 的对话<span data-small>课件做完时</span></div>
+      <div class="fg-chat">
+        <div class="fg-msg ai" data-beat="1" data-mascot="1" data-mascot-side="stay" data-mascot-pose="ask">要不要把课件发成一个在线链接？发给别人点开就能看，不用拷文件。<span class="p23-warn" data-small>会把整个课件上传到当前 AI 工具的服务器，包括里面的截图</span><p class="fg-opts"><span>1 发（推荐）</span><span>2 不发：只留在本机</span></p></div>
+        <div class="p23-ex" data-beat="2" data-mascot="2" data-mascot-side="stay" data-mascot-pose="ok"><p class="fg-msg me">1</p><p class="fg-msg ai">发好了：<span class="fg-code" data-small>https://example.com/你的课件</span> 拿到链接的人都能打开</p></div>
+      </div>
+    </div>
+    <span class="abs fg-stamp" data-beat="0" style="left:1200px;top:216px">示意</span>
+    <p class="abs fg-capt" data-beat="0" style="left:120px;top:990px"><b>示意</b>AI 工具能托管网页时，课件做完会问这一句</p>
+    <div class="abs p23-pts" style="left:1320px;top:250px;width:480px">
+      <p data-beat="0"><b>工具不支持就不问</b>照样可以拷目录分享</p>
+      <p data-beat="3" data-mascot="3" data-mascot-side="left" data-mascot-pose="idea"><b>改过要重新发</b>重新发布一次，链接里才会更新</p>
+      <p data-beat="4" data-mascot="4" data-mascot-side="bottom" data-mascot-x=".3" data-mascot-pose="think"><b>有内部截图？</b>发之前想一想，截图会一起上传</p>
+    </div>
+    <div class="mascot guide" style="left:1660px;top:900px"></div>`,
+  notes: [
+    { beat: 0, say: '除了拷文件，还可以发成一个在线链接。有的 AI 工具能把网页托管成在线链接，比如 WorkBuddy、Codex；工具不支持的话就不问，照样拷目录分享。' },
+    { beat: 1, key: '在线链接', say: '课件做完时，AI 会问你要不要发成在线链接，并提醒你：整个课件会上传到当前 AI 工具的服务器，包括里面的截图。' },
+    { beat: 2, key: '发', say: '你说发它才上传。发好以后告诉你链接，也说清楚这个链接谁能打开。' },
+    { beat: 3, key: '重新发', say: '课件改过以后，要重新发布一次，链接里才会更新。' },
+    { beat: 4, key: '截图', say: '课件里有内部截图的，发之前想一想。' },
+  ],
+});
+
+/* p24 自动更新：一扇对话窗（拟态示意），AI 转告已经更新；你问版本，AI 回答 */
+Deck.add({
+  id: 'p24',
   chapter: '五、更多',
   chapterShort: '更多',
   topic: '更新',
@@ -199,7 +232,7 @@ Deck.add({
     </div>
     <span class="abs fg-stamp" data-beat="0" style="left:1180px;top:226px">示意</span>
     <p class="abs fg-capt" data-beat="0" style="left:120px;top:940px"><b>示意</b>更新的事 AI 会转告你</p>
-    <div class="abs card p23-card" data-beat="0" style="left:1300px;top:290px;width:500px">
+    <div class="abs card p24-card" data-beat="0" style="left:1300px;top:290px;width:500px">
       <h3>怎么更新</h3>
       <p>每天第一次用时自动检查，只下载变了的文件，全部校验通过才替换</p>
     </div>
@@ -212,16 +245,16 @@ Deck.add({
   ],
 });
 
-/* p24 常见问题：编辑式网格，一拍出一整块（问题、回答），当前那块变蓝 */
+/* p25 常见问题：编辑式网格，一拍出一整块（问题、回答），当前那块变蓝 */
 Deck.add({
-  id: 'p24',
+  id: 'p25',
   chapter: '五、更多',
   chapterShort: '更多',
   topic: '常见问题',
   scene: 'fangguo',
   title: '常见问题',
   html: `
-    <div class="abs fg-values p24-v" style="left:120px;top:280px;width:1680px">
+    <div class="abs fg-values p25-v" style="left:120px;top:280px;width:1680px">
       <div class="fg-val" data-beat="1" data-mascot="1" data-mascot-side="stay" data-mascot-pose="ask"><i></i><span class="fg-ico" data-fg-ico="doc"></span><b>字体要联网吗？</b><p>第一次会下载字体；下载不了先用自带的小字库</p></div>
       <div class="fg-val" data-beat="2"><i></i><span class="fg-ico" data-fg-ico="globe" data-fg-tone="teal"></span><b>支持哪些浏览器？</b><p>Chrome、Edge 功能全；Safari、Firefox 能看，少数效果会降级</p></div>
       <div class="fg-val" data-beat="3" data-mascot="3" data-mascot-side="stay" data-mascot-pose="think"><i></i><span class="fg-ico" data-fg-ico="shield" data-fg-tone="coral"></span><b>截图要注意什么？</b><p>点开显示的是原图，放进去之前先处理掉敏感信息</p></div>
@@ -235,17 +268,17 @@ Deck.add({
   ],
 });
 
-/* p25 结尾（金句页）：现在就对 AI 说一句；项目地址点一下复制 */
+/* p26 结尾（金句页）：现在就对 AI 说一句；项目地址点一下复制 */
 Deck.add({
-  id: 'p25',
+  id: 'p26',
   chapter: '结尾',
   scene: 'fangguo',
   title: '想好要讲什么，剩下的交给 AI',
   noTitle: true,
   html: `
     <i class="fg-bleed fg-wash" hidden></i>
-    <p class="abs fg-quote p25-q" data-beat="0" style="left:150px;top:250px;white-space:nowrap">想好要讲什么，<br>剩下的<span class="fg-hl">交给 AI</span></p>
-    <p class="abs p25-link" data-beat="1" data-mascot="1" data-mascot-side="right" data-mascot-pose="thanks" style="left:154px;top:640px"><span data-small>现在就对 AI 说「用 li-talk-skills 做一份课件」。项目地址，点一下复制：</span><span class="fg-code" data-copy="https://github.com/xiaoli1999/li-talk-skills">github.com/xiaoli1999/li-talk-skills</span></p>
+    <p class="abs fg-quote p26-q" data-beat="0" style="left:150px;top:250px;white-space:nowrap">想好要讲什么，<br>剩下的<span class="fg-hl">交给 AI</span></p>
+    <p class="abs p26-link" data-beat="1" data-mascot="1" data-mascot-side="right" data-mascot-pose="thanks" style="left:154px;top:640px"><span data-small>现在就对 AI 说「用 li-talk-skills 做一份课件」。项目地址，点一下复制：</span><span class="fg-code" data-copy="https://github.com/xiaoli1999/li-talk-skills">github.com/xiaoli1999/li-talk-skills</span></p>
     <i class="abs fg-deco" style="left:1260px;top:200px;width:600px"></i>
     <div class="mascot guide" style="left:1500px;top:760px"></div>`,
   notes: [
