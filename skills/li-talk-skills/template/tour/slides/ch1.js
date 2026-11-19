@@ -15,7 +15,7 @@ Deck.add({
     <div class="abs fg-cover" data-beat="0" style="left:150px;top:230px;width:840px">
       <span class="fg-chip">li-talk-skills 教程</span>
       <h1 class="fg-hero p01-h">你专心讲好内容，<br>样子交给 <span class="fg-red">AI</span></h1>
-      <p class="fg-sub">版式、风格、动效都交给 AI，讲的时候一拍一拍地翻</p>
+      <p class="fg-sub">版式、风格、动效都交给 AI，你只管讲</p>
     </div>
     <figure class="abs shot p01-shot" data-beat="0" data-src="素材/hero.jpg" data-caption="真图：样册首页，16 种风格一屏看完" style="left:1040px;top:250px;width:760px;--ar:2040/1620"></figure>
     <div class="abs fg-fold" data-beat="0" data-recede="off" style="left:1560px;top:190px">专注分享本身</div>

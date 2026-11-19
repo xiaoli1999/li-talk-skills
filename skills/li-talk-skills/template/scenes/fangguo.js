@@ -22,8 +22,8 @@
      · 怎么分页型：decorate 给每页写 data-fg-bg="a" 或 "b"。页面里有 .fg-cover、.fg-chapter、.fg-about，或者 noTitle: true 的页用 A，
        其余用 B；要改就在页面 html 里放一个 <i data-fg-bg="a" hidden></i>（或 "b"）。当前页是哪一型，背景层就显示哪一组（fangguo.css 用 :has 选）
      · 动画只动 transform 和 mask，20–100 秒一圈；系统设置了「减少动态效果」、自检（?selftest）、截图时都停住
-   - 每拍的动作克制：0.3–0.5 秒、平滑缓动，不弹跳、不砸、不过冲。
-     · 默认出场 fgrise：淡入、上浮 18px（0.45 秒）
+   - 动效语言：景深、光、展开（见下面 rise、pageTurn、intro、mount 的说明），0.3–0.8 秒、平滑，不弹跳、不砸、不过冲。
+     · 默认出场 fgrise：卡片从景深里浮上来、一道品牌蓝光扫过；界面窗从一个点展开；一排并列的块错落浮上来；文字淡入上浮
      · 数字按拍从 0 滚到读数（.fg-num 写 data-to）；柱子、环形图、进度环按拍生长，趋势线从左往右画出来
      · 当前一步用品牌蓝点亮（流程清单的序号、功能卡的描边、柱状图里那根柱子），讲过的照引擎规则只淡到 recede .8
      · 重点词：字从墨色变成品牌蓝，底下铺开一道淡蓝；引擎给重点词的放大一下在这里压掉（不弹跳）
@@ -84,6 +84,7 @@
        中间是方果；胶囊亮起时一条线画向中间、一颗光点沿线流过去（出场 fghub，只流一趟）
      · .fg-num.fg-odo 按位滚动的数字：每一位先快速翻动，再从左到右依次停在读数上；只改真数字自己的字，不叠第二层
      · .fg-vs 新旧对比：<s class="fg-old">旧</s><i class="fg-arrow"></i><b class="fg-new" data-beat="n">新</b>，新的到拍时旧的划一道红线（仍读得清）
+     · 示意图：.fg-stamp（「示意」标签）、.fg-capt（图下一句说明）
      · 版式工具：.fg-bleed 加 fg-slant 是斜切分区、加 fg-wash 是整屏淡蓝晕染的金句页；.fg-quote 金句（上面一道品牌蓝短线，.fg-hl 点一个词，品牌蓝渐变）；
        .fg-deco 一组淡蓝同心细圆环装饰（不放字）
    - 配图和文字为主的页（版式在 fangguo.css，不用写脚本）：
@@ -112,7 +113,7 @@
   const EASE = 'power2.out';
   const SKIP = 'svg.marks, .mascot, .kid, .ripple-layer, .copied-tip, script, style';
   const CHARTS = '.fg-bars, .fg-donut, .fg-line, .fg-ring';
-  const PROPS = ['opacity', 'visibility', 'transform', 'translate', 'rotate', 'scale', 'clip-path'];
+  const PROPS = ['opacity', 'visibility', 'transform', 'translate', 'rotate', 'scale', 'clip-path', 'filter'];
   const clean = e => PROPS.forEach(k => e.style.removeProperty(k));
   const later = (tl, t, fn) => tl.call(fn, null, Math.max(0, t));
   /* 子孙里没有自己的 data-beat 的（它们跟着这一块一起出场；自己有拍号的到自己那一拍再动） */
