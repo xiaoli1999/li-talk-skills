@@ -146,7 +146,7 @@
     const ks = Object.keys(SCENES).filter(k => k !== 'plain');
     return ks.length ? '已注册的风格：' + ks.map(k => `${SCENES[k].label} ${k}`).join('、') : '还没有注册任何风格（index.html 里要引入 scenes/<键名>.js）';
   }
-  /* 所有页面建好后：用到的风格不属于同一家时给提醒（退回朴素样子的页不算） */
+  /* 所有页面建好后：用到的风格不属于同一类时给提醒（退回朴素样子的页不算） */
   function checkFamilies() {
     const used = [];
     PAGES.forEach(p => { if (!p.fallback && !used.includes(p.scene)) used.push(p.scene); });
@@ -157,7 +157,7 @@
       const f = sc(k).family;
       if (seen.has(f)) return;
       seen.add(f);
-      warn(`风格混用了不同的家：${sc(base).label}（${FAMILY[sc(base).family]}）和 ${sc(k).label}（${FAMILY[f]}）。同一份课件里最好只用同一家的风格`);
+      warn(`风格混用了不同的类：${sc(base).label}（${FAMILY[sc(base).family]}）和 ${sc(k).label}（${FAMILY[f]}）。同一份课件里最好只用同一类的风格`);
     });
   }
 

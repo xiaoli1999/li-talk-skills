@@ -760,17 +760,17 @@ test('目录是个文件时报中文错误；run 打印说明并返回 0', async
    styles
    ------------------------------------------------------------------ */
 
-test('styles：按家分组列出所有风格，末尾写推荐规则', async () => {
+test('styles：按类分组列出所有风格，末尾写推荐规则', async () => {
   const lines = [];
   const code = await runStyles({ _: [] }, { log: s => lines.push(s) });
   const t = lines.join('\n');
   assert.equal(code, 0);
   assert.match(t, /内置风格：16 种能用/);
-  // 按家分组：每种风格都列在自己那一家的标题下面
-  const groups = [['企业家', ['fangguo']], ['手绘家', ['paper', 'board', 'journal', 'desk', 'watercolor', 'ink', 'blueprint', 'comic']],
-    ['现代家', ['dark', 'frost', 'glass', 'flat', 'magazine', 'brutal']], ['像素家', ['pixel']]];
+  // 按类分组：每种风格都列在自己那一类的标题下面
+  const groups = [['企业风', ['fangguo']], ['手绘风', ['paper', 'board', 'journal', 'desk', 'watercolor', 'ink', 'blueprint', 'comic']],
+    ['现代风', ['dark', 'frost', 'glass', 'flat', 'magazine', 'brutal']], ['像素风', ['pixel']]];
   const heads = groups.map(([name]) => t.indexOf('\n' + name));
-  assert.ok(heads.every((h, i) => h > 0 && (i === 0 || h > heads[i - 1])), '四家按顺序都在');
+  assert.ok(heads.every((h, i) => h > 0 && (i === 0 || h > heads[i - 1])), '四类按顺序都在');
   groups.forEach(([name, ks], i) => {
     for (const k of ks) {
       const at = t.indexOf(`\n  ${k}  `);
@@ -781,7 +781,7 @@ test('styles：按家分组列出所有风格，末尾写推荐规则', async ()
   assert.match(t, /适合/);
   assert.match(t, /不适合/);
   assert.match(t, /最多 3 种/);
-  assert.match(t, /同一家/);
+  assert.match(t, /同一类/);
   assert.match(t, /微光/, '写出各风格默认的形象');
 });
 

@@ -4,7 +4,7 @@ import { existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { readDeck, collectPages, readText, htmlTags, localRef, blankHtmlComments, scriptPageCount } from './deck.mjs';
 
-const FAMILY = { corp: '企业家', hand: '手绘家', modern: '现代家', pixel: '像素家' };
+const FAMILY = { corp: '企业风', hand: '手绘风', modern: '现代风', pixel: '像素风' };
 // 引擎内置的朴素风格：页面写了也不算没引入
 const BUILTIN_SCENES = { plain: { label: '朴素', family: 'modern' } };
 // 计算拍数时看的属性
@@ -399,7 +399,7 @@ export async function checkStatic(dir) {
     else if (typeof d.notes === 'string') sayChars += countWords(d.notes);
   });
 
-  // 5. 跨家混用
+  // 5. 跨类混用
   const fam = k => known[k].family;
   const famName = f => FAMILY[f] || f || '没写家';
   const name = k => known[k].label || k;
@@ -410,7 +410,7 @@ export async function checkStatic(dir) {
       const f = fam(k);
       if (!f || seen.has(f)) continue;
       seen.add(f);
-      warn(`风格混用了不同的家：${name(base)}（${famName(fam(base))}）和 ${name(k)}（${famName(f)}）`, '同一份课件里只用同一家的风格');
+      warn(`风格混用了不同的类：${name(base)}（${famName(fam(base))}）和 ${name(k)}（${famName(f)}）`, '同一份课件里只用同一类的风格');
     }
   }
 

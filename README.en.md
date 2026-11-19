@@ -4,9 +4,9 @@
 
 A skill for AI coding tools: hand your topic, ideas, screenshots or script to the AI and get an **HTML talk deck** back. It steps through beat by beat like slides, opens offline with a double-click, and comes with a presenter view, timer, rehearsal mode and animations. Every style has its own little mascot.
 
-![One topic, a signature slide in each of 9 styles](docs/images/hero.jpg)
+![The gallery home page: all 16 styles on one screen](docs/images/hero.jpg)
 
-<sub>The same made-up topic ("how to brew a good cup of tea") in the gallery, one signature slide from each of 9 styles, at its last beat: every style has its own layout, and the points already covered stay on the slide.</sub>
+<sub>The gallery home page: 16 styles in four groups (corporate, hand-drawn, modern, pixel) on one screen, each with its own mascot. Click a card to step through that style's sample slides.</sub>
 
 **Good for**: tech talks, training sessions, reports and presentations, when you want web slides you click through beat by beat, with a presenter view for your notes.
 

@@ -13,7 +13,7 @@ import { TPL_DIR, VERSION } from './paths.mjs';
 import { readMeta, writeMeta } from './meta.mjs';
 import { ensureCache, installFonts, liteNotice } from './fonts.mjs';
 
-const FAMILY = { corp: '企业家', hand: '手绘家', modern: '现代家', pixel: '像素家' };
+const FAMILY = { corp: '企业风', hand: '手绘风', modern: '现代风', pixel: '像素风' };
 // 搭骨架前目录里允许已有的东西（. 开头的另算，一律放过）
 const ALLOWED = new Set(['讲稿.md', '素材', '.li-talk.json', '.li-talk']);
 const OS_JUNK = new Set(['thumbs.db', 'desktop.ini']);
@@ -194,7 +194,7 @@ export async function createDeck(dir, choice = {}, opts = {}) {
   if (scenes.length > 3) log(`提醒：选了 ${scenes.length} 种风格，一份课件建议最多 3 种。`);
   const fams = [...new Set(scenes.map(s => s.family))];
   if (fams.length > 1) {
-    log(`提醒：${scenes.map(s => `${s.label}（${FAMILY[s.family] || s.family}）`).join('、')} 不是同一家，同一份课件里建议只用同一家的风格。`);
+    log(`提醒：${scenes.map(s => `${s.label}（${FAMILY[s.family] || s.family}）`).join('、')} 不是同一类，同一份课件里建议只用同一类的风格。`);
   }
 
   // 2. 字体：先补本机缓存（缓存完整时不联网）。放在复制文件之前，下载中途被打断也不会留下半份课件

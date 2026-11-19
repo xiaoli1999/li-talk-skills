@@ -44,7 +44,7 @@ node "<本 skill 目录>/scripts/li-talk.mjs" guide "<课件目录>"
 
 这是最小可用版，只承诺下面这些：
 
-- **16 种风格**，分四家：企业家 1 种（方果 `fangguo`，公司品牌专属），手绘家 8 种（方格纸 `paper`、黑板 `board`、像素手账 `journal`、工位桌面 `desk`、水彩田园 `watercolor`、水墨国风 `ink`、蓝图 `blueprint`、漫画 `comic`），现代家 6 种（科技暗黑 `dark`、毛玻璃 `frost`、液态玻璃 `glass`、扁平插画 `flat`、杂志复古 `magazine`、新粗野主义 `brutal`），像素家 1 种（像素游戏 `pixel`）。
+- **16 种风格**，分四类：企业风 1 种（方果 `fangguo`，公司品牌专属），手绘风 8 种（方格纸 `paper`、黑板 `board`、像素手账 `journal`、工位桌面 `desk`、水彩田园 `watercolor`、水墨国风 `ink`、蓝图 `blueprint`、漫画 `comic`），现代风 6 种（科技暗黑 `dark`、毛玻璃 `frost`、液态玻璃 `glass`、扁平插画 `flat`、杂志复古 `magazine`、新粗野主义 `brutal`），像素风 1 种（像素游戏 `pixel`）。
 - **16 个形象**：尖尖 `jianjian`（方格纸）、沙沙 `shasha`（黑板）、点点 `diandian`（像素手账）、卷卷 `juanjuan`（工位桌面）、朵朵 `duoduo`（水彩田园）、墨丸 `mowan`、圈圈 `quanquan`、叨叨 `daodao`、微光 `weiguang`、小雾 `xiaowu`、透透 `toutou`、小页 `xiaoye`、小铅 `xiaoqian`、砰砰 `pengpeng`、小旗 `xiaoqi`、方方 `fangfang`（方果）；其余每种风格有自己的默认形象，`styles` 会列出来。
 - **样板页两套**：每种风格自己的样板页（`template/samples/<键名>.js`，同一个主题按这种风格的版式和每拍动作做 5–6 页（方果 10 页），用风格的专用组件），加 5 页通用样板（封面、清单、步骤、关于我、结尾）。说明和对照表在 `references/templates.md`。
 - **课件本身**：按拍出现、讲过的拍变淡、主题行、重点词、圈注、手绘线和箭头、卡片、步骤、对比、终端窗口、点击复制、截图位（点开看大图）、形象每拍走到内容旁、演讲者视图（S）、计时（T / R）、彩排（演讲者视图里按 H，记每页用时、标出超时的页）、总览跳页（O）、黑屏（B）、激光笔（L）、底部进度条、全屏（F）、竖屏阅读模式、刷新不丢位置、最后一页自动署名。双击 `index.html` 离线打开。
@@ -96,7 +96,7 @@ node "<本 skill 目录>/scripts/li-talk.mjs" guide "<课件目录>"
 | `tour --skip` | 用户选「先不学」时记下，以后 `guide` 不再问 |
 | `guide [课件目录]` | 看做到哪一步、下一步做什么、该问用户什么。不写目录就看当前目录。到 ④ 风格时自动打开一次样册（环境变量 `LI_TALK_NO_OPEN=1` 时不打开） |
 | `materials <素材目录>` | 列素材清单：文字（字数）、图片（尺寸）、视频（大小）；有图片时生成 `截图说明.md` |
-| `styles` | 列出所有风格：样子、适合、不适合、要注意的、默认形象，按家分组 |
+| `styles` | 列出所有风格：样子、适合、不适合、要注意的、默认形象，按类分组 |
 | `styles --open` | 用浏览器打开样册：首页是全部风格的总览，点一张卡片看样板页在这种风格下的样子；用户想再看样册时运行 |
 | `confirm <课件目录> <环节>` | 记下用户已确认的环节：`outline` 提纲、`script` 讲稿、`style` 风格、`trial` 3 页试做、`review` 过稿 |
 | `confirm <课件目录> style --scenes a,b [--mascot 形象]` | 确认风格时顺带记下风格和形象 |

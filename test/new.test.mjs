@@ -285,9 +285,9 @@ test('open：按系统选打开方式；没有 index.html 时说明', async () =
   assert.match(out.join('\n'), /手动/);
 });
 
-test('风格说明 index.json：16 种按家排好，字段齐全，和风格文件一致', () => {
+test('风格说明 index.json：16 种按类排好，字段齐全，和风格文件一致', () => {
   const list = JSON.parse(readFileSync(join(TPL, 'scenes', 'index.json'), 'utf8'));
-  // 顺序按家：企业家、手绘家、现代家、像素家，同一家的排在一起
+  // 顺序按类：企业风、手绘风、现代风、像素风，同一类的排在一起
   assert.deepEqual(list.map(s => s.key), ['fangguo', 'paper', 'board', 'journal', 'desk', 'watercolor', 'ink', 'blueprint', 'comic',
     'dark', 'frost', 'glass', 'flat', 'magazine', 'brutal', 'pixel']);
   assert.deepEqual(list.map(s => s.family), ['corp', ...Array(8).fill('hand'), ...Array(6).fill('modern'), 'pixel']);

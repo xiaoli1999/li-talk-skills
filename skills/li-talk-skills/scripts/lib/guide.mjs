@@ -303,7 +303,7 @@ function minutes(chars) {
 }
 
 // 深色底的风格：风格说明 index.json 里写了 dark: true，或风格文件 Deck.scene 里写了 dark: true；
-// 黑板（board）、蓝图（blueprint）、现代家的科技暗黑（dark）、像素家的像素游戏（pixel）就算文件读不到也当深色
+// 黑板（board）、蓝图（blueprint）、现代风的科技暗黑（dark）、像素风的像素游戏（pixel）就算文件读不到也当深色
 function isDarkScene(s) {
   if (s.dark === true || s.key === 'board' || s.key === 'blueprint' || (s.key === 'dark' && s.family === 'modern') || (s.key === 'pixel' && s.family === 'pixel')) return true;
   try { return /\bdark\s*:\s*true\b/.test(readFileSync(join(TPL_DIR, 'scenes', s.key + '.js'), 'utf8')); } catch (e) { return false; }
@@ -614,7 +614,7 @@ function stageScript(s) {
 // 每种风格 5–10 个最能代表它的词；同一个词只归一种风格，也不让一个词是另一种风格的词的一部分
 // （「技术」不数「非技术」里的，「命令」不数「命令行」里的），免得一句话同时给两种风格加分
 export const HINTS = {
-  // 手绘家
+  // 手绘风
   paper: /总览|愿景|规划|展望|全景|路线图/g,
   board: /安装|命令(?!行)|教程|教学|培训|步骤|配置|课程/g,
   journal: /原理|角色|示意图|机制|主线/g,
@@ -623,7 +623,7 @@ export const HINTS = {
   ink: /人文|方法论|传统|文化|历史|哲学|修身|东方|国风/g,
   blueprint: /搭建|组成|结构|模块|零件|部件|组件|系统|框架|蓝图/g,
   comic: /漫画|吐槽|反转|转折|对比|情绪|剧情|搞笑|段子|笑点/g,
-  // 现代家
+  // 现代风
   dark: /代码|(?<!非)技术|架构|接口|API|部署|性能|开发者|命令行|工程师/g,
   frost: /产品|功能|发布|上线|工具|版本|演示/g,
   glass: /界面|设计|交互|体验|视觉|UI|原型|App|科技/g,
@@ -631,7 +631,7 @@ export const HINTS = {
   magazine: /观点|读书|书单|复盘|思考|心得|反思|拆解/g,
   brutal: /实操|动手|清单|攻略|玩法|速成|内部分享|周会/g,
   fangguo: /方果|ERP|POD|SaaS|客户|汇报|经营|季度|增长|数据/g,
-  // 像素家
+  // 像素风
   pixel: /新人|新同事|入职|引导|闯关|通关|关卡|游戏|轻松/g,
 };
 // 命中次数一样时的先后：最早的 6 种在前，后加的按「通用程度」排在后面
@@ -830,11 +830,11 @@ function stageStyle(s, ctx = {}) {
     failed: ['没能自动打开浏览器：把样册的路径发给用户，请用户手动双击打开（还是打不开，就把 styles 的文字说明讲给用户听）：', gpath, `样册怎么看：${GALLERY_HOW}。`],
     missing: '样册还没做好：把下面 styles 列出的文字说明讲给用户听。',
   }[g.state]);
-  steps.push(['运行 styles，看所有风格的样子、适合讲什么、不适合什么、属于哪一家：', cli('styles')]);
+  steps.push(['运行 styles，看所有风格的样子、适合讲什么、不适合什么、属于哪一类：', cli('styles')]);
   steps.push('对照讲稿每部分讲什么，从「适合」里挑一个主推，跟用户说一句理由。下面问题 1 的推荐是按讲稿里的词粗估的；' +
     '你读过讲稿，觉得别的更合适，就把它换到第一个，照「按推荐的：风格名（键名），适合……（推荐：理由）」的样子写，原来的推荐挪成备选。' +
     (projector && anyDark ? `讲稿里写了在投影上讲：优先推浅色底；用户想要深色底（${info.ready.filter(x => x.dark).map(x => x.label).join('、')}），先跟他说一声投到幕布上容易发灰。` : ''));
-  steps.push('内容跨度大时，可以按章用不同风格：最多 3 种，只在同一家里混（企业家、手绘家、现代家、像素家互不混用）；一份课件只用一个形象。');
+  steps.push('内容跨度大时，可以按章用不同风格：最多 3 种，只在同一类里混（企业风、手绘风、现代风、像素风互不混用）；一份课件只用一个形象。');
   steps.push(`把下面的问题 1 原样问用户，${opts.length} 个选项照抄（有提问卡片就用卡片）；不要改成「你想要什么风格」这样的开放式提问，也不要等用户开口要看风格。`);
   const confirmCmd = keys => cli('confirm', quote(s.dir), 'style', '--scenes', keys);
   const pick = ['用户选了哪个就照着做。必须等用户明确选了才运行 confirm；--scenes 后面写风格的键名，多种用逗号隔开：',

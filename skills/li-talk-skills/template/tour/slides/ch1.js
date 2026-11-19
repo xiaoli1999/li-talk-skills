@@ -124,40 +124,45 @@ Deck.add({
   ],
 });
 
-/* 15 种风格：三张数字大卡从左到右（手绘 8、现代 6、像素 1），每拍一张弹起来、数字滚上去；
-   最后一拍下面两枚胶囊：只在同一家里换，看完教程去逛样册 */
+/* 16 种风格：四张数字大卡从左到右（企业 1、手绘 8、现代 6、像素 1），每拍一张弹起来、数字滚上去；
+   最后一拍和像素那张一起出两枚胶囊：只在同一类里换，看完教程去逛样册 */
 Deck.add({
   id: 'p05',
   chapter: '二、怎么做',
-  topic: '15 种风格',
+  topic: '16 种风格',
   scene: 'flat',
-  title: '15 种风格，分成三家',
+  title: '16 种风格，分成四类',
   html: `
     <p class="explain" data-beat="0"><b>风格</b>：每种都有自己的形象和版式，不只是换颜色</p>
-    <div class="fl-num t-pink abs" data-beat="1" data-mascot="1" data-mascot-side="bottom" data-mascot-x=".39" style="left:120px;top:280px;width:520px">
+    <div class="fl-num t-blue abs" data-beat="1" data-mascot="1" data-mascot-side="bottom" data-mascot-x=".39" style="left:120px;top:280px;width:390px">
+      <p class="fl-big"><b class="fl-n">1</b><small>种</small></p>
+      <h3>企业风</h3>
+      <p>公司品牌专属</p>
+    </div>
+    <div class="fl-num t-pink abs" data-beat="2" data-mascot="2" data-mascot-side="bottom" data-mascot-x=".39" style="left:550px;top:280px;width:390px">
       <p class="fl-big"><b class="fl-n">8</b><small>种</small></p>
-      <h3>手绘家</h3>
+      <h3>手绘风</h3>
       <p>楷书，方格纸、水墨等</p>
     </div>
-    <div class="fl-num t-yellow abs" data-beat="2" data-mascot="2" data-mascot-side="bottom" data-mascot-x=".39" style="left:700px;top:280px;width:520px">
+    <div class="fl-num t-yellow abs" data-beat="3" data-mascot="3" data-mascot-side="bottom" data-mascot-x=".39" style="left:980px;top:280px;width:390px">
       <p class="fl-big"><b class="fl-n">6</b><small>种</small></p>
-      <h3>现代家</h3>
+      <h3>现代风</h3>
       <p>黑体，扁平、暗黑等</p>
     </div>
-    <div class="fl-num t-blue abs" data-beat="3" data-mascot="3" data-mascot-side="bottom" data-mascot-x=".39" style="left:1280px;top:280px;width:520px">
+    <div class="fl-num t-blue abs" data-beat="4" style="left:1410px;top:280px;width:390px">
       <p class="fl-big"><b class="fl-n">1</b><small>种</small></p>
-      <h3>像素家</h3>
+      <h3>像素风</h3>
       <p>像素字体，像素游戏</p>
     </div>
-    <p class="fl-pill abs tour-rule" data-beat="4" style="left:120px;top:880px">按章换风格，只在<em class="key">同一家</em>里换</p>
+    <p class="fl-pill abs tour-rule" data-beat="4" style="left:120px;top:880px">按章换风格，只在<em class="key">同一类</em>里换</p>
     <p class="fl-pill t-yellow abs tour-rule" data-beat="4" data-mascot="4" data-mascot-side="right" data-mascot-pose="happy" style="left:820px;top:880px">看完教程，AI 带你逛样册</p>
     <div class="mascot guide" style="left:1680px;top:860px"></div>`,
   notes: [
-    { beat: 0, key: '风格', say: '再说风格。一共 15 种，每种都有自己的小形象和版式，不只是换个颜色。它们分成三家。' },
-    { beat: 1, key: '手绘家', say: '手绘家 8 种，用楷书，有方格纸、黑板、水彩、水墨、蓝图、漫画这些。' },
-    { beat: 2, key: '现代家', say: '现代家 6 种，用黑体，比如现在你看到的扁平插画，还有科技暗黑、毛玻璃这些。' },
-    { beat: 3, key: '像素家', say: '像素家只有 1 种，像素游戏，适合闯关式的上手教程。' },
-    { beat: 4, key: '同一家', say: '一份课件可以按章换风格，但只在同一家里换。看完这份教程，AI 会打开样册，带你把全部风格过一遍。' },
+    { beat: 0, key: '风格', say: '再说风格。一共 16 种，每种都有自己的小形象和版式，不只是换个颜色。它们分成四类。' },
+    { beat: 1, key: '企业风', say: '企业风是公司品牌专属的风格，给对外演讲、给领导汇报用。' },
+    { beat: 2, key: '手绘风', say: '手绘风 8 种，用楷书，有方格纸、黑板、水彩、水墨、蓝图、漫画这些。' },
+    { beat: 3, key: '现代风', say: '现代风 6 种，用黑体，比如现在你看到的扁平插画，还有科技暗黑、毛玻璃这些。' },
+    { beat: 4, key: '同一类', say: '像素风只有 1 种，像素游戏，适合闯关式的上手教程。一份课件可以按章换风格，但只在同一类里换。看完这份教程，AI 会打开样册，带你把全部风格过一遍。' },
   ],
 });
 

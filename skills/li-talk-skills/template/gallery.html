@@ -9,7 +9,7 @@
        地址带 ?scene=<键名>、这种风格有自己的样板时，样册只放它自己的样板页（见下面引入章节前后的两段小脚本）。
      - 通用样板页 samples/samples.js、.css（封面、清单、步骤、结尾 4 页）：只用通用组件，哪种风格都能用。
        地址不带 ?scene=，或者这种风格还没有自己的样板时放它；它保持通用，不加只有某种风格认的东西。
-     直接打开（地址不带 ?scene=、?selftest、#页/拍）先显示风格总览：每种风格一张卡片，按家分组（企业家、手绘家、现代家、像素家），点一张就用 ?scene=<键名> 从第一页看。
+     直接打开（地址不带 ?scene=、?selftest、#页/拍）先显示风格总览：每种风格一张卡片，按类分组（企业风、手绘风、现代风、像素风），点一张就用 ?scene=<键名> 从第一页看。
      地址加 ?scene=<键名> 换成那个风格看；左下角的小条点一下也是这样换（一律回到第一页、播开场），点「全部风格」回到总览。
      不写 li-talk-mascot：形象跟着风格走（每种风格用自己的默认形象，见 scenes/index.json）。
      引入顺序照入口模板 index.html（接口约定 G）；通用样板页放在两对「章节」注释之间，不开浏览器的 check 读模板目录时查的是它们；
@@ -63,7 +63,7 @@
   .gl-bar .gl-hint{display:none}
 }
 
-/* 风格总览：直接打开样册时的首页，铺满窗口、盖在课件上面；每种风格一张卡片，按家分组（企业家、手绘家、现代家、像素家）。
+/* 风格总览：直接打开样册时的首页，铺满窗口、盖在课件上面；每种风格一张卡片，按类分组（企业风、手绘风、现代风、像素风）。
    卡片套 data-scene，风格的 CSS 变量（底色、墨色、强调色、字体）直接生效；上半截是缩小的 1920×1080 舞台，
    放这种风格的背景层（从引擎建好的背景层复制）、风格名和形象；下半截写「样子」和「适合讲什么」。
    类名用 sv- 开头，免得撞上风格自己的类名（液态玻璃用了 gl-） */
@@ -75,7 +75,7 @@
 .sv-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 20px;margin:0 0 24px}
 .sv-head h1{margin:0;font-size:30px;font-weight:700;line-height:1.2;color:#fff}
 .sv-head p{margin:0;max-width:62em;color:rgba(233,235,238,.72)}
-/* 卡片宽度 --cw：一排放 --cols 张；每家占 min(张数, --cols) 张的宽度，排不下就换行（宽屏时现代家和像素家排在同一行） */
+/* 卡片宽度 --cw：一排放 --cols 张；每类占 min(张数, --cols) 张的宽度，排不下就换行（宽屏时现代风和像素风排在同一行） */
 .sv-fams{--cw:calc((100vw - 80px - 17px - (var(--cols) - 1) * var(--gap)) / var(--cols));display:flex;flex-wrap:wrap;align-items:flex-start;gap:28px calc(var(--gap) * 2)}
 @supports (width:1cqw){.sv-fams{--cw:calc((100cqw - (var(--cols) - 1) * var(--gap)) / var(--cols))}}
 .sv-fam{--k:min(var(--n),var(--cols));width:calc(var(--k) * var(--cw) + (var(--k) - 1) * var(--gap));max-width:100%}
@@ -221,7 +221,7 @@ window.LI_TALK_STYLES = [
 </script>
 <script>
 /* 样册的两样东西（都不属于课件，自检模式 ?selftest 下都不放）：
-   1. 风格总览：地址不带 ?scene=、?selftest、#页/拍 时显示，盖在课件上面。每种风格一张卡片，按家分组（企业家、手绘家、现代家、像素家）；
+   1. 风格总览：地址不带 ?scene=、?selftest、#页/拍 时显示，盖在课件上面。每种风格一张卡片，按类分组（企业风、手绘风、现代风、像素风）；
       点一张就用 ?scene=<键名> 重新打开，从第一页看（带开场）。开着总览时课件不接键盘和点击，
       也不让引擎往地址里写 #页/拍（不然刷新一下总览就没了）。
    2. 换风格的小条：点一个风格，就用 ?scene=<键名> 重新打开，回到第一页、播开场（地址里的 #页/拍 去掉）；
@@ -234,7 +234,7 @@ window.LI_TALK_STYLES = [
   var I = Deck._, FAMILY = I.FAMILY || {};
   var keys = Object.keys(I.SCENES).filter(function (k) { return k !== 'plain'; });
   if (!keys.length) return;
-  var FAMS = [['corp', '企业家', '公司品牌专属'], ['hand', '手绘家', '楷书'], ['modern', '现代家', '黑体，杂志复古用宋体'], ['pixel', '像素家', '像素字体']];
+  var FAMS = [['corp', '企业风', '公司品牌专属'], ['hand', '手绘风', '楷书'], ['modern', '现代风', '黑体，杂志复古用宋体'], ['pixel', '像素风', '像素字体']];
   var home = location.href.split(/[?#]/)[0];   // 不带 ?、# 的地址：打开就是总览
   var el = function (tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 
@@ -270,9 +270,9 @@ window.LI_TALK_STYLES = [
     wrap.appendChild(el('p', 'sv-eyebrow', 'li-talk-skills 样册'));
     var head = el('header', 'sv-head');
     head.appendChild(el('h1', '', known.length + ' 种风格'));
-    head.appendChild(el('p', '', '点一张卡片，从第一页看这种风格；← → 翻页，左下角的小条随时换风格。同一份课件按章换风格时，只在同一家里换。'));
+    head.appendChild(el('p', '', '点一张卡片，从第一页看这种风格；← → 翻页，左下角的小条随时换风格。同一份课件按章换风格时，只在同一类里换。'));
     wrap.appendChild(head);
-    // 一屏放下全部风格：所有卡片排在一个网格里，按家的顺序（企业家、手绘家、现代家、像素家），每张左上角标出属于哪一家；
+    // 一屏放下全部风格：所有卡片排在一个网格里，按类的顺序（企业风、手绘风、现代风、像素风），每张左上角标出属于哪一类；
     // 列数按窗口算（见下面的 fit），窗口太矮放不下时才滚动
     var legend = el('div', 'sv-legend');
     var grid = el('div', 'sv-grid');
@@ -406,7 +406,7 @@ window.LI_TALK_STYLES = [
       try { sessionStorage.setItem(FOLD, folded ? '1' : '0'); } catch (e) { /* 存不了就算了 */ }
     });
 
-    // 按家分组：手绘家、现代家、像素家（同一份课件只在同一家里混用）
+    // 按类分组：手绘风、现代风、像素风（同一份课件只在同一类里混用）
     FAMS.forEach(function (f) {
       var ks = keys.filter(function (k) { return I.SCENES[k].family === f[0]; });
       if (!ks.length) return;
