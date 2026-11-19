@@ -6,7 +6,7 @@
      plan（同一拍里各块的先后，风格可以用 plan 改）、play（限制单拍时长）
    - 依赖总线：core 的常量和工具、风格注册表（I.sc、I.roughOf、I.hook）、I.state（running）；
      build.js 的 I.boxIn；mascot.js 的 I.placeMascot、I.moveMascot、I.mascotXY、I.spotFor
-   - 挂到总线：tiltOf、clearEl、setDrawn、drawDur、addFx、emphasize、showMark、drawMark、
+   - 挂到总线：tiltOf、scaleOf、clearEl、setDrawn、drawDur、addFx、emphasize、showMark、drawMark、
      finishRunning、setClasses、applyRecede、setInstant、plan、unionBox、
      callOnBeat、stepForward、stepBack、queueKeysAndMarks、play
    ===================================================================== */
@@ -20,8 +20,9 @@
      出场动效
      - 风格的 fx[名字] 可以覆盖某种出场，也可以新增出场：
        写成对象 { from, to, dur, ease }（和下面的 FX 同样的写法，from 可以是函数）；
-       或写成函数 (tl, e, t, ctx) => 时长，ctx = { name, scene, dur, ease, tilt(), done() }：
-       dur、ease 是引擎本来要用的时长和缓动，tilt() 取元素自己的倾斜角，done() 在动画结束时清掉内联样式
+       或写成函数 (tl, e, t, ctx) => 时长，ctx = { name, scene, dur, ease, tilt(), scale(), done() }：
+       dur、ease 是引擎本来要用的时长和缓动，tilt() 取元素自己的倾斜角，scale() 取元素自己的 CSS 缩放（补间 scale 时乘上它），
+       done() 在动画结束时清掉内联样式
      - 风格的 ease[名字] 换掉某种出场的缓动；draw 用在文字上时和 write 一样，读 ease.write
      ================================================================= */
   const FX = {
@@ -42,6 +43,21 @@
     e.style.removeProperty('rotate');
     const v = getComputedStyle(e).rotate;
     return v && v !== 'none' ? (parseFloat(v) || 0) : 0;
+  }
+  /* 元素自己的 CSS 缩放（scale 属性，比如在线编辑合并进来的 scale:1.2）。gsap 动画时会把 scale 清成 none、
+     改用 transform 里的 scale，所以出场里补间 scale 的（pop、drop、stamp、重点词放大……）都要乘上它，
+     不然动画收尾在 1 倍、清掉行内样式后才跳回 CSS 写的倍数，会闪一下 */
+  function scaleOf(e) {
+    if (e instanceof SVGElement) return 1;
+    e.style.removeProperty('scale');
+    const v = getComputedStyle(e).scale;
+    const n = v && v !== 'none' ? parseFloat(v) : 1;
+    return n > 0 ? n : 1;
+  }
+  /* 把补间里的 scale 乘上元素自己的 CSS 缩放 */
+  function withScale(props, k) {
+    if (k !== 1 && typeof props.scale === 'number') props.scale *= k;
+    return props;
   }
   // 去掉出场留下的行内样式；gsap 记着的位移（e._gsap 里的 x、y、scale…）也一起清掉，
   // 不然之后的出场只补间 x 或 scale 时，会把旧的 y 写回去，字低一截
@@ -91,7 +107,7 @@
       const dur = fx === 'draw' && svg ? drawDur(e) : TEXT_FX.includes(fx) ? textDur(e, fx) : FX[fx] ? FX[fx].dur : .5;
       const ease = easeOf(TEXT_FX.includes(fx) && !(fx === 'draw' && svg) ? textEase(e, fx) : FX[fx] ? FX[fx].ease : 'power2.out');
       try {
-        const d = ov.call(sc, tl, e, t, { name: fx, scene: sc.key, dur, ease, tilt: () => tiltOf(e), done: () => clearEl(e) });
+        const d = ov.call(sc, tl, e, t, { name: fx, scene: sc.key, dur, ease, tilt: () => tiltOf(e), scale: () => scaleOf(e), done: () => clearEl(e) });
         return typeof d === 'number' && d >= 0 ? d : dur;
       } catch (err) {
         console.error(`[Deck] 风格 ${sc.key} 的出场 ${fx} 出错，改用默认做法：`, err);
@@ -125,6 +141,8 @@
     const from = typeof f.from === 'function' ? f.from(e) : Object.assign({}, f.from);
     const to = Object.assign({}, f.to, { duration: dur, ease: easeOf(f.ease || 'power2.out'), immediateRender: true, onComplete: () => clearEl(e) });
     if (tilt) { from.rotation = (from.rotation || 0) + tilt; to.rotation = (to.rotation || 0) + tilt; }
+    const k = scaleOf(e);
+    withScale(from, k); withScale(to, k);
     if (svg) to.transformOrigin = '50% 50%';
     tl.fromTo(e, from, to, t);
     return dur;
@@ -137,7 +155,8 @@
     tl.fromTo(k.el, { '--k': 0 }, { '--k': 1, duration: .45, ease: 'power2.out', immediateRender: true }, t);
     // 放大一下就收回；收回后把 gsap 写在行内的 transform 和 translate/rotate/scale:none 都去掉，
     // 不然它们会盖住风格给重点词写的 CSS 变换（比如液态玻璃重点词的透镜放大）
-    tl.fromTo(k.el, { scale: 1 }, { scale: 1.1, duration: .16, yoyo: true, repeat: 1, ease: 'power1.out', onComplete: () => TF_KEYS.forEach(p => k.el.style.removeProperty(p)) }, t + .12);
+    const ks = scaleOf(k.el);
+    tl.fromTo(k.el, { scale: ks }, { scale: 1.1 * ks, duration: .16, yoyo: true, repeat: 1, ease: 'power1.out', onComplete: () => TF_KEYS.forEach(p => k.el.style.removeProperty(p)) }, t + .12);
   }
   function markLayer(p) {
     let svg = $(':scope > svg.marks', p.el);
@@ -219,7 +238,8 @@
     kids.forEach((c, i) => {
       tl.fromTo(c, { x: first[i].l - last[i].l, y: first[i].t - last[i].t, rotation: first[i].r },
         { x: 0, y: 0, rotation: last[i].r, duration: .8, ease: 'power3.inOut', immediateRender: true, onComplete: () => clearEl(c) }, t + i * each);
-      tl.fromTo(c, { scale: 1 }, { scale: 1.06, duration: .2, yoyo: true, repeat: 1, ease: 'power1.out', immediateRender: false }, t + i * each);
+      const cs = scaleOf(c);
+      tl.fromTo(c, { scale: cs }, { scale: 1.06 * cs, duration: .2, yoyo: true, repeat: 1, ease: 'power1.out', immediateRender: false }, t + i * each);
     });
     return .8 + each * kids.length;
   }
@@ -323,7 +343,7 @@
   }
 
   Object.assign(I, {
-    tiltOf, clearEl, setDrawn, drawDur, addFx, emphasize, showMark, drawMark,
+    tiltOf, scaleOf, clearEl, setDrawn, drawDur, addFx, emphasize, showMark, drawMark,
     finishRunning, setClasses, applyRecede, setInstant, plan, unionBox,
     callOnBeat, stepForward, stepBack, queueKeysAndMarks, play,
   });

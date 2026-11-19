@@ -13,7 +13,8 @@
 //       box   挪位置改大小：{ left, top, width, height }（舞台坐标）；position：absolute 或 flow（在排版流里）；
 //             origin：absolute 元素的定位容器不是页面本身时，容器在舞台上的左上角 { left, top }
 //       hide  隐藏：{ hidden }
-//       style 字号、颜色、粗细、对齐：{ fontSize, color, fontWeight, textAlign }，字号、颜色写风格变量（var(--fs-lg)、var(--accent)）
+//       style 字号、颜色、粗细、对齐：{ fontSize, color, fontWeight, textAlign }，字号是风格变量（var(--fs-lg)）或 px（64px），颜色写风格变量（var(--accent)）
+//       scale 整块等比缩放：{ scale, origin }，scale 是倍数（1.2），origin 是 center 或 top left
 //       beat  改拍号：{ beat }；own：元素本来写了 data-beat（false 是跟着外层的拍）；mascot：元素上还有 data-mascot
 //       notes 改讲词（演讲者视图里改的）：{ text }；beat 写第几拍，path 固定是 notes
 //   - batch：最近一次打印的清单 { id, at, items }（items 是打印时那些修改的副本）
@@ -26,7 +27,7 @@ import { UserError } from './cli.mjs';
 import { SKILL_DIR } from './paths.mjs';
 
 export const EDITS_FILE = join('.li-talk', 'edits.json');
-export const KINDS = ['text', 'box', 'hide', 'style', 'beat', 'notes'];
+export const KINDS = ['text', 'box', 'hide', 'style', 'beat', 'notes', 'scale'];
 const BOX_KEYS = ['left', 'top', 'width', 'height'];
 const STYLE_KEYS = ['fontSize', 'color', 'fontWeight', 'textAlign'];
 
@@ -95,6 +96,10 @@ export function cleanItem(it) {
     if (kind === 'style') { const r = {}; for (const k of STYLE_KEYS) r[k] = str(String(o[k] == null ? '' : o[k]), 80); return r; }
     if (kind === 'beat') return { beat: Math.max(0, int(o.beat) || 0) };
     if (kind === 'notes') return { text: str(o.text, 5000) };
+    if (kind === 'scale') {
+      const v = Number(o.scale);
+      return { scale: Number.isFinite(v) && v > 0 ? Math.round(v * 100) / 100 : 1, origin: o.origin === 'top left' ? 'top left' : 'center' };
+    }
     return { hidden: o.hidden === true };
   };
   out.before = side(it.before);
@@ -157,6 +162,7 @@ export function itemLine(it) {
   }
   if (it.kind === 'hide') return `${where}：隐藏（删掉这个元素）`;
   const b = it.before, a = it.after;
+  if (it.kind === 'scale') return `${where}：整块缩放 ${Math.round(b.scale * 100)}%→${Math.round(a.scale * 100)}%（原点 ${a.origin === 'top left' ? '左上角 top left' : '中心 center'}）`;
   if (it.kind === 'style') {
     const parts = STYLE_KEYS.filter(k => b[k] !== a[k]).map(k => `${STYLE_NAMES[k]} ${b[k]}→${a[k]}`);
     return `${where}：样式 ${parts.join('、') || '没有变化'}`;
@@ -201,12 +207,18 @@ export const RULES = [
     '没有的，在对应章节的 chN.css 里加一条 [data-id="页号"] <能定位到它的选择器>{left:…;top:…;width:…}（必要时加 position:absolute）。' +
     '在排版流里的元素，用 position:relative 加 left/top 偏移，或改所在容器的排法。文字块一般只改 width，height 只在本来就写了固定高度、或者是图片和截图时才写。不要在 JS 里加一堆行内 transform。',
   '- 隐藏：删掉这个元素，后面的拍号顺移，notes 里对应的讲词一起调整。',
+  '- 整块缩放：文字、图片、间距一起等比放大缩小。在源码里给这一块加个类名（比如 p05-shot），在章节 chN.css 里写 [data-id="页号"] .p05-shot{scale:1.2;transform-origin:center}' +
+    '（原点是左上角的写 top left），不改原来的宽高和字号，也不要写 transform（会和出场动画打架）。',
   '- 样式：优先换成已有的类名——字号 var(--fs-xl) 用 t-xl、var(--fs-lg) 用 t-lg、var(--fs-md) 用 t-md、var(--fs-min) 用 t-sm，粗细 700 用 b，' +
-    '居中用 center，颜色 var(--ink-2) 用 muted；没有对应类名的，在章节 chN.css 里加 [data-id="页号"] 选择器{font-size:var(--fs-…);color:var(--…)}，写变量不写死数值。不要堆行内 style。',
+    '居中用 center，颜色 var(--ink-2) 用 muted；没有对应类名的，在章节 chN.css 里加 [data-id="页号"] 选择器{font-size:…;color:var(--…)}，颜色写变量不写死。' +
+    '字号是 px 数字（64px）的：能对上风格档位变量的写变量（engine.css 默认 --fs-xl 84、--fs-title 68、--fs-lg 50、--fs-md 42、--fs-body 36、--fs-min 34，风格改过的以风格 css 为准），对不上的照写 px。不要堆行内 style。',
   '- 拍号：改这个元素的 data-beat（本来没写的就加上）；同一个元素上的 data-mascot 拍号一起改；notes 里对应拍的讲词跟着挪。改完拍数超出范围的话，check 会提醒，照提醒调。',
   '- 讲词：页面 notes 里对应拍的 say 和 讲稿.md 里这一页对应拍的讲词一起改成新的。',
   '- 自检报了溢出、被挡住：先自己调，调不了就告诉用户。',
 ];
+
+/** 清单末尾的提醒：文案先原样合并，再给建议（engine/edit.js 的 COPY_TIP 同一句） */
+export const COPY_TIP = '这一批里有文字或讲词改动的：先照用户改的原样合并；跑完自检、清掉批次以后，再逐条看这些文案，给用户优化建议（原文、用户改的、建议改成什么、为什么：更口语、更短、后排看得清、像误输入、和讲词对不上……），问用户采纳哪几条，用户没说就不动。';
 
 /** 整份清单；opts.dir 有值时末尾写上接下来要运行的命令；opts.batch 是批次号 */
 export function formatEdits(d, opts = {}) {
@@ -214,6 +226,7 @@ export function formatEdits(d, opts = {}) {
   const out = [`用户在浏览器里改了 ${d.items.length} 处（${perPage(d.items)}）${opts.batch ? `，批次 ${opts.batch}` : ''}：`];
   d.items.forEach((it, i) => out.push(`  ${i + 1}. ${itemLine(it)}`));
   out.push(...RULES);
+  if (d.items.some(it => it.kind === 'text' || it.kind === 'notes')) out.push(COPY_TIP);
   if (opts.dir) {
     out.push('改完以后：', `  ${cliLine('check', q(opts.dir), '--browser')}    （清零为止）`,
       `  ${cliLine('edits', q(opts.dir), '--done', ...(opts.batch ? [opts.batch] : []))}    （只清掉这一批；合并期间用户新改的留着，浏览器会自动刷新）`,

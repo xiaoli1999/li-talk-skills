@@ -487,7 +487,7 @@ test('真实浏览器：样式工具栏（字号、颜色、加粗）、重点�
     assert.match(await b.evaluate(`document.querySelector('.lt-edit-beat').textContent`), /第 3 拍出现/);
     assert.ok(await b.evaluate(`[...document.querySelectorAll('.lt-edit-badge')].some(x => x.textContent === '拍 2→3')`));
     // 样式：字号「标题」、颜色主色、加粗
-    await b.evaluate(`(() => { const s = document.querySelector('.lt-edit-fs'); s.value = 'var(--fs-lg)'; s.dispatchEvent(new Event('change', { bubbles: true })); })()`);
+    await tool('[data-act=fs][data-v="var(--fs-lg)"]');
     await tool('[data-act=color][data-v="--accent"]');
     await tool('[data-act=bold]');
     assert.equal(await b.evaluate(`getComputedStyle(document.querySelector('#slide-g2 .card:nth-of-type(2)')).fontSize`), '50px');
@@ -528,4 +528,150 @@ test('真实浏览器：样式工具栏（字号、颜色、加粗）、重点�
     await b.close();
     await s.close();
   }
+});
+
+test('真实浏览器：拖角整块缩放、Alt 拖角改框、字号选数字、撤销重做、还原这一块、全部还原', { skip: !browser && '本机没找到 Edge / Chrome', timeout: 120000 }, async () => {
+  const dir = deck();
+  const s = await startServer(dir, { token: 'tok' });
+  const b = await openBrowser(browser);
+  const ev = async (expr, ms = 15000) => {
+    const start = Date.now();
+    for (;;) {
+      const v = await b.evaluate(expr, 3000).catch(() => null);
+      if (v || Date.now() - start > ms) return v;
+      await sleep(100);
+    }
+  };
+  const mouse = (type, x, y, extra = {}) => b.call('Input.dispatchMouseEvent', { type, x, y, button: 'left', buttons: type === 'mouseReleased' ? 0 : 1, clickCount: 1, ...extra });
+  const key = (k, code, vk, modifiers = 0) => b.call('Input.dispatchKeyEvent', { type: 'keyDown', key: k, code, windowsVirtualKeyCode: vk, modifiers });
+  const st = () => b.evaluate('Deck._.editState()');
+  const kinds = async () => (await st()).items.map(i => i.kind).sort().join(',');
+  const drag = async (x, y, dx, dy, modifiers = 0, peek) => {
+    await mouse('mousePressed', x, y, { modifiers });
+    for (let i = 1; i <= 4; i++) await mouse('mouseMoved', x + dx * i / 4, y + dy * i / 4, { modifiers });
+    const label = peek ? await b.evaluate(`document.querySelector('.lt-edit-size').textContent`) : null;
+    await mouse('mouseReleased', x + dx, y + dy, { modifiers });
+    return label;
+  };
+  const corner = () => b.evaluate(`(() => { const r = document.querySelector('.lt-edit-h[data-c=se]').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
+  const C2 = '#slide-g2 .card:nth-of-type(2)';
+  try {
+    await b.goto(`http://127.0.0.1:${s.port}/index.html?edit=tok#2`, { w: 1280, h: 720 });
+    assert.ok(await ev('window.Deck && Deck._.editState && Deck._.editState().on'));
+    await sleep(300);
+    const c2 = await b.evaluate(`(() => { const r = document.querySelector('${C2}').getBoundingClientRect(); return { x: r.left + 8, y: r.bottom - 8, w: r.width }; })()`);
+    await mouse('mousePressed', c2.x, c2.y); await mouse('mouseReleased', c2.x, c2.y);
+    // 拖右下角（默认）：整块等比缩放，框旁边显示百分比
+    let h = await corner();
+    const pct = await drag(h.x, h.y, 60, 30, 0, true);
+    assert.match(pct, /^\d+%$/, '缩放时显示百分比');
+    const sc = (await st()).items.find(i => i.kind === 'scale');
+    assert.ok(sc && sc.after.scale > 1 && sc.after.origin === 'center' && sc.before.scale === 1, JSON.stringify(sc));
+    assert.equal(await b.evaluate(`getComputedStyle(document.querySelector('${C2}')).scale`), String(sc.after.scale));
+    const w0 = await b.evaluate(`document.querySelector('${C2}').offsetWidth`);
+    // 按住 Alt 拖角：改框的大小，显示「宽×高」
+    h = await corner();
+    const size = await drag(h.x, h.y, 40, 0, 1, true);
+    assert.match(size, /^\d+×\d+$/, '改框时显示宽×高');
+    assert.ok(await b.evaluate(`document.querySelector('${C2}').offsetWidth`) > w0, 'Alt 拖角改了宽度');
+    assert.equal(await kinds(), 'box,scale');
+    // 字号选数字
+    await b.evaluate(`document.querySelector('.lt-edit-tools [data-act=fs][data-v="64px"]').click()`);
+    assert.equal(await b.evaluate(`getComputedStyle(document.querySelector('${C2}')).fontSize`), '64px');
+    assert.equal((await st()).items.find(i => i.kind === 'style').after.fontSize, '64px');
+    // 撤销三步、重做一步
+    await key('z', 'KeyZ', 90, 2);
+    assert.equal(await kinds(), 'box,scale');
+    assert.equal(await b.evaluate(`getComputedStyle(document.querySelector('${C2}')).fontSize`), '36px');
+    await key('z', 'KeyZ', 90, 2);
+    assert.equal(await kinds(), 'scale');
+    await key('z', 'KeyZ', 90, 2);
+    assert.equal(await kinds(), '');
+    assert.equal(await b.evaluate(`getComputedStyle(document.querySelector('${C2}')).scale`), 'none', '撤销到底，页面也回到原样');
+    await key('y', 'KeyY', 89, 2);
+    assert.equal(await kinds(), 'scale');
+    await key('z', 'KeyZ', 90, 2 | 8);   // Ctrl+Shift+Z 也是重做
+    assert.equal(await kinds(), 'box,scale');
+    // 还原这一块
+    await b.evaluate(`document.querySelector('.lt-edit-tools [data-act=reset]').click()`);
+    assert.equal(await kinds(), '');
+    assert.equal(await b.evaluate(`document.querySelector('${C2}').offsetWidth`), w0);
+    // 全部还原：先确认
+    await key('z', 'KeyZ', 90, 2);
+    assert.equal(await kinds(), 'box,scale');
+    await b.evaluate(`window.confirm = () => false; document.querySelector('.lt-edit-all').click()`);
+    assert.equal(await kinds(), 'box,scale', '不确认就不动');
+    await b.evaluate(`window.confirm = () => true; document.querySelector('.lt-edit-all').click()`);
+    assert.equal(await kinds(), '');
+    // 自动保存：服务上的记录也空了
+    for (let i = 0; i < 30 && readEdits(dir).items.length; i++) await sleep(100);
+    assert.equal(readEdits(dir).items.length, 0);
+  } finally {
+    await b.close();
+    await s.close();
+  }
+});
+
+test('真实浏览器：章节 css 里写了 scale 的块，出场、退拍动画放完以后还是那个倍数', { skip: !browser && '本机没找到 Edge / Chrome', timeout: 60000 }, async () => {
+  const dir = deck();
+  writeFileSync(join(dir, 'slides', 'ch1.css'), readFileSync(join(dir, 'slides', 'ch1.css'), 'utf8') + '\n[data-id="g2"] .card:nth-child(2){scale:1.2;transform-origin:center}\n');
+  const b = await openBrowser(browser);
+  try {
+    const url = new URL('file:///' + join(dir, 'index.html').replace(/\\/g, '/'));
+    await b.goto(url.href + '#2', { w: 1280, h: 720 });
+    const look = `(() => { const c = document.querySelector('#slide-g2 .card:nth-of-type(2)'), cs = getComputedStyle(c); return cs.scale + '|' + (c.style.transform || 'none') + '|' + cs.visibility; })()`;
+    for (let i = 0; i < 50 && !(await b.evaluate(`window.Deck && Deck.page && !document.body.classList.contains('loading')`)); i++) await sleep(100);
+    for (const [step, want] of [['Deck.next()', 'hidden'], ['Deck.next()', 'visible'], ['Deck.next()', 'visible'], ['Deck.prev()', 'visible'], ['Deck.prev()', 'hidden']]) {
+      await b.evaluate(step);
+      await sleep(1500);   // 等这一拍的动画放完
+      const [scale, tf, vis] = (await b.evaluate(look)).split('|');
+      assert.equal(scale, '1.2', `${step} 之后 scale 还是 1.2`);
+      assert.ok(tf === 'none' || tf === '' || /translate\(0px, 0px\)|none/.test(tf), `动画留下的 transform：${tf}`);
+      assert.equal(vis, want);
+    }
+  } finally { await b.close(); }
+});
+
+test('edits：整块缩放的写法；有文字或讲词改动时，清单末尾提醒先原样合并再给文案建议', () => {
+  const sc = { page: 'p02', no: 2, path: 'figure.shot', hint: '截图：设置页', kind: 'scale', before: { scale: 1, origin: 'center' }, after: { scale: 1.2, origin: 'top left' } };
+  assert.equal(itemLine(sc), '第 2 页（p02）figure.shot「截图：设置页」：整块缩放 100%→120%（原点 左上角 top left）');
+  const onlyScale = formatEdits({ items: [sc] });
+  assert.match(onlyScale, /- 整块缩放：.*scale:1\.2;transform-origin:center/);
+  assert.doesNotMatch(onlyScale, /文案/);
+  const withText = formatEdits({ items: [sc, ITEMS[0]] });
+  assert.match(withText, /先照用户改的原样合并；跑完自检、清掉批次以后，再逐条看这些文案，给用户优化建议/);
+  assert.match(withText, /- 样式：.*字号是 px 数字（64px）的：能对上风格档位变量的写变量/);
+});
+
+test('真实浏览器：章节 css 写了 scale:1.3 的块用 pop 出场，动画后半段和放完都是 1.3 倍，不会回到 1 再跳', { skip: !browser && '本机没找到 Edge / Chrome', timeout: 60000 }, async () => {
+  const dir = deck();
+  const js = join(dir, 'slides', 'ch1.js');
+  writeFileSync(js, readFileSync(js, 'utf8').replace('<div class="card t-mint" data-beat="2"', '<div class="card t-mint" data-in="pop" data-beat="2"'));
+  writeFileSync(join(dir, 'slides', 'ch1.css'), readFileSync(join(dir, 'slides', 'ch1.css'), 'utf8') + '\n[data-id="g2"] .card:nth-child(2){scale:1.3;transform-origin:center}\n');
+  const b = await openBrowser(browser);
+  try {
+    const url = new URL('file:///' + join(dir, 'index.html').replace(/\\/g, '/'));
+    await b.goto(url.href + '#2/1', { w: 1280, h: 720 });
+    for (let i = 0; i < 50 && !(await b.evaluate(`window.Deck && Deck.page && !document.body.classList.contains('loading')`)); i++) await sleep(100);
+    await sleep(800);
+    // 每一帧记下实际的倍数：CSS scale × transform 里的 scale
+    await b.evaluate(`(() => {
+      window.__f = [];
+      const c = document.querySelector('#slide-g2 .card:nth-of-type(2)'), t0 = performance.now();
+      const eff = () => { const cs = getComputedStyle(c), s = cs.scale && cs.scale !== 'none' ? parseFloat(cs.scale) : 1;
+        const m = /matrix\\(([^,]+),\\s*([^,]+)/.exec(cs.transform); const k = m ? Math.hypot(+m[1], +m[2]) : 1; return s * k; };
+      (function f() { __f.push({ t: performance.now() - t0, s: eff() }); if (performance.now() - t0 < 1500) requestAnimationFrame(f); })();
+      Deck.next();
+    })()`);
+    await sleep(1800);
+    const f = await b.evaluate('__f');
+    assert.equal(await b.evaluate('Deck.page.beat'), 2);
+    const late = f.filter(x => x.t > 300);   // pop 动画 0.5 秒：后半段到放完以后
+    assert.ok(late.length > 10, '采到了足够的帧');
+    const low = late.filter(x => x.s < 1.25);
+    assert.deepEqual(low, [], '后半段和放完以后都不回到 1 倍附近');
+    const end = f[f.length - 1].s;
+    assert.ok(Math.abs(end - 1.3) < .01, `放完是 1.3 倍，现在 ${end}`);
+    assert.ok(Math.max(...f.map(x => x.s)) > 1.3, 'pop 有回弹，峰值超过 1.3 倍');
+  } finally { await b.close(); }
 });
