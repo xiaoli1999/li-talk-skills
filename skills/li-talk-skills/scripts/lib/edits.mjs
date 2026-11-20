@@ -110,6 +110,8 @@ export function cleanItem(it) {
       out.origin = { left: int(it.origin.left), top: int(it.origin.top) };
     }
   }
+  // keep：排版流里的块改了字号、宽高以后，预览时给它加的 margin-bottom（px），后面的内容才没被推开
+  if ((kind === 'style' || kind === 'box') && int(it.keep) !== null) out.keep = int(it.keep);
   if (kind === 'beat') { out.own = it.own !== false; if (it.mascot === true) out.mascot = true; }
   if (kind === 'notes') out.beat = Math.max(0, int(it.beat) || 0);
   if (out.no === null) delete out.no;
@@ -165,7 +167,7 @@ export function itemLine(it) {
   if (it.kind === 'scale') return `${where}：整块缩放 ${Math.round(b.scale * 100)}%→${Math.round(a.scale * 100)}%（原点 ${a.origin === 'top left' ? '左上角 top left' : '中心 center'}）`;
   if (it.kind === 'style') {
     const parts = STYLE_KEYS.filter(k => b[k] !== a[k]).map(k => `${STYLE_NAMES[k]} ${b[k]}→${a[k]}`);
-    return `${where}：样式 ${parts.join('、') || '没有变化'}`;
+    return `${where}：样式 ${parts.join('、') || '没有变化'}${keepNote(it)}`;
   }
   if (it.kind === 'beat') {
     let s = `${where}：拍号 第 ${b.beat} 拍→第 ${a.beat} 拍出现`;
@@ -187,8 +189,11 @@ export function itemLine(it) {
   } else if (it.origin) {
     s += `（定位容器在舞台 (${it.origin.left}, ${it.origin.top})，CSS 里的 left/top 要减去它）`;
   }
-  return s;
+  return s + keepNote(it);
 }
+
+// 排版流里的块变高变矮时，浏览器里是用 margin-bottom 抵掉的（后面的内容没动），合并时照写
+export const keepNote = it => (Number.isInteger(it.keep) ? `（后面的内容保持原位：给它写 margin-bottom:${it.keep}px）` : '');
 
 // 按页数一数：「第 2 页 2 处、第 5 页 1 处」
 function perPage(items) {
@@ -211,7 +216,9 @@ export const RULES = [
     '（原点是左上角的写 top left），不改原来的宽高和字号，也不要写 transform（会和出场动画打架）。',
   '- 样式：优先换成已有的类名——字号 var(--fs-xl) 用 t-xl、var(--fs-lg) 用 t-lg、var(--fs-md) 用 t-md、var(--fs-min) 用 t-sm，粗细 700 用 b，' +
     '居中用 center，颜色 var(--ink-2) 用 muted；没有对应类名的，在章节 chN.css 里加 [data-id="页号"] 选择器{font-size:…;color:var(--…)}，颜色写变量不写死。' +
-    '字号是 px 数字（64px）的：能对上风格档位变量的写变量（engine.css 默认 --fs-xl 84、--fs-title 68、--fs-lg 50、--fs-md 42、--fs-body 36、--fs-min 34，风格改过的以风格 css 为准），对不上的照写 px。不要堆行内 style。',
+    '字号是 px 数字（64px）的：能对上风格档位变量的写变量（engine.css 默认 --fs-xl 84、--fs-title 68、--fs-lg 50、--fs-md 42、--fs-body 36、--fs-min 34，风格改过的以风格 css 为准），对不上的照写 px。不要堆行内 style。' +
+    '这段字里面自己写了字号的行内小字（<small>、带类名的 <span>），按同样的比例改，或者改成 em 跟着外面走。' +
+    '写了「后面的内容保持原位：给它写 margin-bottom:Npx」的，把这个 margin-bottom 一起写进同一条 CSS（浏览器里就是这样预览的，不写的话后面的行会被推开）。',
   '- 拍号：改这个元素的 data-beat（本来没写的就加上）；同一个元素上的 data-mascot 拍号一起改；notes 里对应拍的讲词跟着挪。改完拍数超出范围的话，check 会提醒，照提醒调。',
   '- 讲词：页面 notes 里对应拍的 say 和 讲稿.md 里这一页对应拍的讲词一起改成新的。',
   '- 自检报了溢出、被挡住：先自己调，调不了就告诉用户。',

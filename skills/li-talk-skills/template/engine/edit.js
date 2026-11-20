@@ -197,6 +197,7 @@
   function ensureBase(n) {
     const i = info(n);
     if (i.base) return i;
+    flowBase(n);
     i.base = boxOf(n, i.slide);
     i.ot = ownTranslate(n);
     const pos = getComputedStyle(n).position;
@@ -261,9 +262,26 @@
     }
     return null;
   }
+  /* 叶子文字：有字，里面只有行内标签，而且这些标签真的跟着字排在行里（display 是 inline；
+     写成 block、inline-block、flex 或绝对定位的 <b>、<span>，是自己排成一块的，不算）。
+     不管课件是谁写的、怎么写的，都按「画出来的样子」判断，不按标签名猜 */
+  function inlineChild(c) {
+    if (!INLINE.test(c.tagName)) return false;
+    if (c.tagName === 'BR' || c.tagName === 'WBR') return true;
+    const cs = getComputedStyle(c);
+    return (cs.display === 'inline' || cs.display === 'contents') && cs.position !== 'absolute' && cs.position !== 'fixed' && cs.float === 'none';
+  }
   function isLeafText(n) {
-    if (!(n instanceof HTMLElement) || !norm(n.textContent)) return false;
-    return [...n.querySelectorAll('*')].every(c => INLINE.test(c.tagName));
+    if (!(n instanceof HTMLElement) || n instanceof SVGElement || !norm(n.textContent) || n.closest(EXCLUDE)) return false;
+    return [...n.querySelectorAll('*')].every(inlineChild);
+  }
+  /* n 里面最外层的那几段叶子文字（n 自己是叶子文字就只有它） */
+  function textsIn(n) {
+    if (isLeafText(n)) return [n];
+    const out = [];
+    const walk = x => { for (const c of x.children) { if (c.closest(EXCLUDE) || c instanceof SVGElement) continue; if (isLeafText(c)) out.push(c); else walk(c); } };
+    walk(n);
+    return out;
   }
   function textAt(x, y) {
     const p = curPage();
@@ -291,12 +309,12 @@
     const beat = extra && extra.beat;
     const it = findItem(i, kind, beat);
     if (same(before, after)) { if (it) E.items.splice(E.items.indexOf(it), 1); return; }
-    if (it) { it.after = after; it.at = Date.now(); return; }
+    if (it) { Object.assign(it, extra || {}, { after, at: Date.now() }); return; }
     E.items.push(Object.assign({ id: uid(), at: Date.now(), page: i.page, no: i.no, path: i.path, hint: i.hint, kind, before, after }, extra || {}));
   }
   function recordBox(n) {
     const i = n._lt;
-    const extra = { position: i.position };
+    const extra = Object.assign({ position: i.position }, keepOf(i));
     if (i.origin) extra.origin = i.origin;
     upsert(i, 'box', Object.assign({}, i.base), Object.assign({}, i.box || i.base), extra);
   }
@@ -319,7 +337,7 @@
     if (it.kind === 'hide') return where + '：隐藏（删掉这个元素）';
     const b = it.before, a = it.after;
     if (it.kind === 'scale') return where + '：整块缩放 ' + Math.round(b.scale * 100) + '%→' + Math.round(a.scale * 100) + '%（原点 ' + (a.origin === 'top left' ? '左上角 top left' : '中心 center') + '）';
-    if (it.kind === 'style') return where + '：样式 ' + (STYLE.filter(k => b[k] !== a[k]).map(k => STYLE_NAMES[k] + ' ' + b[k] + '→' + a[k]).join('、') || '没有变化');
+    if (it.kind === 'style') return where + '：样式 ' + (STYLE.filter(k => b[k] !== a[k]).map(k => STYLE_NAMES[k] + ' ' + b[k] + '→' + a[k]).join('、') || '没有变化') + keepNote(it);
     if (it.kind === 'beat') {
       const notes = [];
       if (!it.own) notes.push('它本来没写 data-beat，跟着外层第 ' + b.beat + ' 拍出现');
@@ -338,8 +356,10 @@
     } else if (it.origin) {
       s += '（定位容器在舞台 (' + it.origin.left + ', ' + it.origin.top + ')，CSS 里的 left/top 要减去它）';
     }
-    return s;
+    return s + keepNote(it);
   }
+  /* 排版流里的块变高变矮时，预览是用 margin-bottom 抵掉的（后面的内容没动），合并时照写；和 edits.mjs 的 keepNote 一字不差 */
+  const keepNote = it => (Number.isInteger(it.keep) ? '（后面的内容保持原位：给它写 margin-bottom:' + it.keep + 'px）' : '');
   const RULES = [
     '合并规则：',
     '- 找元素：路径从页面根往下写，:nth-of-type(n) 按 Deck.add 的 html 里的兄弟数，用来在源码里找到它，「」里是它开头的字。写 CSS 时不要照抄 nth-of-type（页面上引擎会多加元素，数出来对不上），给元素加一个类名（比如 p05-tip）再用它定位。',
@@ -353,7 +373,9 @@
       '（原点是左上角的写 top left），不改原来的宽高和字号，也不要写 transform（会和出场动画打架）。',
     '- 样式：优先换成已有的类名——字号 var(--fs-xl) 用 t-xl、var(--fs-lg) 用 t-lg、var(--fs-md) 用 t-md、var(--fs-min) 用 t-sm，粗细 700 用 b，' +
       '居中用 center，颜色 var(--ink-2) 用 muted；没有对应类名的，在章节 chN.css 里加 [data-id="页号"] 选择器{font-size:…;color:var(--…)}，颜色写变量不写死。' +
-      '字号是 px 数字（64px）的：能对上风格档位变量的写变量（engine.css 默认 --fs-xl 84、--fs-title 68、--fs-lg 50、--fs-md 42、--fs-body 36、--fs-min 34，风格改过的以风格 css 为准），对不上的照写 px。不要堆行内 style。',
+      '字号是 px 数字（64px）的：能对上风格档位变量的写变量（engine.css 默认 --fs-xl 84、--fs-title 68、--fs-lg 50、--fs-md 42、--fs-body 36、--fs-min 34，风格改过的以风格 css 为准），对不上的照写 px。不要堆行内 style。' +
+      '这段字里面自己写了字号的行内小字（<small>、带类名的 <span>），按同样的比例改，或者改成 em 跟着外面走。' +
+      '写了「后面的内容保持原位：给它写 margin-bottom:Npx」的，把这个 margin-bottom 一起写进同一条 CSS（浏览器里就是这样预览的，不写的话后面的行会被推开）。',
     '- 拍号：改这个元素的 data-beat（本来没写的就加上）；同一个元素上的 data-mascot 拍号一起改；notes 里对应拍的讲词跟着挪。改完拍数超出范围的话，check 会提醒，照提醒调。',
     '- 讲词：页面 notes 里对应拍的 say 和 讲稿.md 里这一页对应拍的讲词一起改成新的。',
     '- 自检报了溢出、被挡住：先自己调，调不了就告诉用户。',
@@ -388,6 +410,7 @@
     i.box = box;
     setVar(n, 'data-lt-w', '--lt-w', box.width !== i.base.width ? box.width + 'px' : null);
     setVar(n, 'data-lt-h', '--lt-h', box.height !== i.base.height ? box.height + 'px' : null);
+    keepFlow(n);
     box.width = n.offsetWidth || box.width; box.height = n.offsetHeight || box.height;   // 记实际画出来的大小（高度不会比内容还矮）
     // 改了大小以后版面位置可能跟着变（比如靠右对齐的元素），重新量一次，位移按量到的算
     const lay = I.boxIn(n, i.slide);
@@ -407,23 +430,53 @@
   const STYLE_VARS = { fontSize: ['data-lt-fs', '--lt-fs'], color: ['data-lt-color', '--lt-color'], fontWeight: ['data-lt-fw', '--lt-fw'], textAlign: ['data-lt-ta', '--lt-ta'] };
   function ensureStyle(n) {
     const i = info(n);
-    if (!i.style0) { i.style0 = styleOf(n); i.styleCur = Object.assign({}, i.style0); }
+    if (!i.style0) {
+      flowBase(n);
+      i.style0 = styleOf(n); i.styleCur = Object.assign({}, i.style0);
+      // 里面自己写了字号的行内小字（比如 80<small>℃</small>、讲者：<span class="name">…</span>）：记下和外面的比例，改字号时按比例跟着变
+      const fs = parseFloat(getComputedStyle(n).fontSize) || 0;
+      i.fsk = fs ? [...n.querySelectorAll('*')].filter(c => c.tagName !== 'BR').map(c => [c, (parseFloat(getComputedStyle(c).fontSize) || fs) / fs]).filter(([, k]) => Math.abs(k - 1) > .01) : [];
+    }
     return i;
   }
   function applyStyle(n, st) {
     const i = n._lt;
     i.styleCur = st;
     STYLE.forEach(k => setVar(n, STYLE_VARS[k][0], STYLE_VARS[k][1], st[k] !== i.style0[k] ? st[k] : null));
+    const on = st.fontSize !== i.style0.fontSize;
+    (i.fsk || []).forEach(([c, k]) => setVar(c, 'data-lt-fsk', '--lt-fsk', on ? String(+k.toFixed(4)) : null));
+    keepFlow(n);
   }
   function setStyle(n, key, v) {
     const i = ensureStyle(n);
     const st = Object.assign({}, i.styleCur);
     st[key] = v == null ? i.style0[key] : v;
     applyStyle(n, st);
-    upsert(i, 'style', Object.assign({}, i.style0), Object.assign({}, st));
+    upsert(i, 'style', Object.assign({}, i.style0), Object.assign({}, st), keepOf(i));
     changed();
     updateTools();
   }
+  /* 排版流里的块（不是 absolute）改了字号、宽高以后自己变高变矮：用 margin-bottom 抵掉高度的变化，
+     后面的内容（同一张卡片里的下一行、下一段）留在原地，只改这一块。合并时这个 margin-bottom 一起写进 CSS */
+  function flowBase(n) {
+    const i = n._lt;
+    if (i.flow0 !== undefined) return i.flow0;
+    const cs = getComputedStyle(n), pcs = n.parentElement ? getComputedStyle(n.parentElement) : null;
+    const blockish = /^(block|flex|grid|table|list-item|flow-root)$/.test(cs.display);
+    const inFlow = cs.position === 'static' || cs.position === 'relative';
+    const stack = !pcs || !/flex|grid/.test(pcs.display) || (/flex/.test(pcs.display) && /column/.test(pcs.flexDirection));
+    i.flow0 = blockish && inFlow && cs.float === 'none' && stack ? { h: n.offsetHeight, mb: parseFloat(cs.marginBottom) || 0 } : null;
+    return i.flow0;
+  }
+  function keepFlow(n) {
+    const i = n._lt, f = flowBase(n);
+    if (!f) return;
+    n.removeAttribute('data-lt-mb'); n.style.removeProperty('--lt-mb');
+    const d = n.offsetHeight - f.h;
+    i.keep = Math.abs(d) >= 1 ? Math.round(f.mb - d) : null;
+    if (i.keep != null) setVar(n, 'data-lt-mb', '--lt-mb', i.keep + 'px');
+  }
+  const keepOf = i => (i.keep != null ? { keep: i.keep } : { keep: undefined });
   function ensureBeat(n) {
     const i = info(n);
     if (!i.beat0) {
@@ -573,7 +626,7 @@
       const i = n._lt;
       if (!i) return;
       if (i.html0 != null && cleanHtml(n) !== i.html0) { n.innerHTML = i.html0; fixKeys(n); }
-      if (i.base) { ['data-lt-w', 'data-lt-h', 'data-lt-moved'].forEach(a => n.removeAttribute(a)); ['--lt-w', '--lt-h', '--lt-tx', '--lt-ty'].forEach(v => n.style.removeProperty(v)); i.box = null; }
+      if (i.base) { ['data-lt-w', 'data-lt-h', 'data-lt-moved', 'data-lt-mb'].forEach(a => n.removeAttribute(a)); ['--lt-w', '--lt-h', '--lt-tx', '--lt-ty', '--lt-mb'].forEach(v => n.style.removeProperty(v)); i.box = null; i.keep = null; }
       if (i.style0) applyStyle(n, Object.assign({}, i.style0));
       if (i.beat0) setBeat(n, i.beat0.beat);
       if (i.sc0) applyScale(n, Object.assign({}, i.sc0));
@@ -971,6 +1024,15 @@
      样式工具栏：选中块或改字时浮在它旁边
      ================================================================= */
   function toolTarget() { return E.text ? E.text.el : E.sel; }
+  /* 改字号、颜色、粗细、对齐的对象：正在改字的那段；选中的块本身是一段文字、或者里面只有一段文字时就是那段文字；
+     里面有好几段文字（比如名字和日期各排一行）时没有对象，工具栏不放这几组，双击其中一段再改 */
+  function styleTarget() {
+    if (E.text) return E.text.el;
+    if (!E.sel) return null;
+    // 撤销、改字会换掉里面的节点，换了就重找
+    if (!E.stMemo || E.stMemo.sel !== E.sel || (E.stMemo.t && !E.sel.contains(E.stMemo.t))) { const ts = textsIn(E.sel); E.stMemo = { sel: E.sel, t: ts.length === 1 ? ts[0] : null }; }
+    return E.stMemo.t;
+  }
   /* 两块面板跟着当前页的风格：深色风格（风格注册时写了 dark: true）用深色玻璃；强调色取这一页的 --accent */
   function themeUi() {
     const p = curPage();
@@ -989,7 +1051,7 @@
   /* 当前字号（px 数字）：工具栏上显示它，−/+ 在常用档位里走 */
   const pxOf = n => Math.round(parseFloat(getComputedStyle(n).fontSize) || 0);
   function stepFont(dir) {
-    const n = toolTarget();
+    const n = styleTarget();
     if (!n) return;
     const cur = pxOf(n);
     const next = dir > 0 ? PX.find(v => v > cur) : PX.slice().reverse().find(v => v < cur);
@@ -998,7 +1060,7 @@
   }
   function closePop() { if (E.pop) E.pop.hidden = true; }
   function openPop(anchor) {
-    const n = toolTarget();
+    const n = styleTarget();
     if (!n || !E.pop) return;
     if (!E.pop.hidden) { closePop(); return; }
     const st = ensureStyle(n).styleCur, cur = pxOf(n);
@@ -1022,6 +1084,21 @@
     if (!E.on || !n || E.drag) { t.hidden = true; closePop(); return; }
     themeUi();
     t.hidden = false;
+    const sn = styleTarget();
+    $('.lt-edit-g-text', t).hidden = !sn;
+    if (sn) paintStyle(t, sn);
+    $('.lt-edit-g-key', t).hidden = !E.text;
+    const bg = $('.lt-edit-g-beat', t);
+    bg.hidden = !!E.text || !E.sel;
+    if (E.sel && !E.text) $('.lt-edit-beatv', bg).textContent = ensureBeat(E.sel).beatCur;
+    $('[data-act=outer]', t).disabled = !!E.text || !E.sel;
+    $('[data-act=inner]', t).disabled = !!E.text || !E.inner.length;
+    const bi = info(n);
+    $('[data-act=reset]', t).disabled = !E.items.some(x => x.page === bi.page && (x.path === bi.path || x.path.indexOf(bi.path + '>') === 0));
+    placeTools(t, n);
+  }
+  /* 字号、颜色、粗细、对齐几组按钮的当前状态（n 是 styleTarget） */
+  function paintStyle(t, n) {
     const i = ensureStyle(n), st = i.styleCur;
     $('.lt-edit-fsv', t).textContent = pxOf(n);
     // 调色板：这一页风格算出来的颜色，当前色打勾
@@ -1038,14 +1115,8 @@
     });
     $('[data-act=bold]', t).classList.toggle('lt-edit-on', +st.fontWeight >= 600);
     $$('[data-act=align]', t).forEach(b => b.classList.toggle('lt-edit-on', st.textAlign === b.dataset.v));
-    $('.lt-edit-g-key', t).hidden = !E.text;
-    const bg = $('.lt-edit-g-beat', t);
-    bg.hidden = !!E.text || !E.sel;
-    if (E.sel && !E.text) $('.lt-edit-beatv', bg).textContent = ensureBeat(E.sel).beatCur;
-    $('[data-act=outer]', t).disabled = !!E.text || !E.sel;
-    $('[data-act=inner]', t).disabled = !!E.text || !E.inner.length;
-    const bi = info(n);
-    $('[data-act=reset]', t).disabled = !E.items.some(x => x.page === bi.page && (x.path === bi.path || x.path.indexOf(bi.path + '>') === 0));
+  }
+  function placeTools(t, n) {
     // 位置：贴着选中框（转过的按转后的外接框）的上方；上面放不下（挨着编辑条）就放下方；都放不下放在右边；不遮住元素
     const box = E.sel && !E.text && E.selBox && !E.selBox.hidden ? E.selBox : n;
     const r = box.getBoundingClientRect(), tw = t.offsetWidth, th = t.offsetHeight, gap = 12;
@@ -1065,10 +1136,10 @@
   function onTool(e) {
     const b = e.target.closest('[data-act]');
     if (!b || b.disabled) return;
-    const n = toolTarget();
-    if (!n) return;
-    const act = b.dataset.act, st = ensureStyle(n).styleCur;
+    if (!toolTarget()) return;
+    const act = b.dataset.act, n = styleTarget(), st = n ? ensureStyle(n).styleCur : null;
     if (act !== 'fsmenu') closePop();
+    if (/^(fs|fsmenu|fsstep|color|bold|align)$/.test(act) && !n) return;   // 选中的不是文字：这几组本来就藏着
     if (act === 'fsmenu') { openPop(b); return; }
     if (act === 'fs') setStyle(n, 'fontSize', b.dataset.v === 'reset' ? null : b.dataset.v);
     else if (act === 'fsstep') stepFont(+b.dataset.v);
@@ -1313,17 +1384,18 @@
     $('.lt-edit-exit', E.bar).addEventListener('click', exit);
     document.body.appendChild(E.bar);
 
+    // 每组后面自带分隔线，哪组藏起来都不会多出或少一道线；字号、颜色、粗细对齐这几组只在选中的是文字时出现（lt-edit-g-text）
     E.tools = el('div', 'lt-edit-tools lt-edit-glass',
-      '<span class="lt-edit-grp" data-tip="字号">' + ibtn('', 'minus', '字号小一档', ' data-act="fsstep" data-v="-1"') +
+      '<span class="lt-edit-g-text"><span class="lt-edit-grp" data-tip="字号">' + ibtn('', 'minus', '字号小一档', ' data-act="fsstep" data-v="-1"') +
         '<button type="button" class="lt-edit-fsbtn" data-act="fsmenu" data-tip="选字号"><b class="lt-edit-fsv">36</b>' + icon('down') + '</button>' +
         ibtn('', 'plus', '字号大一档', ' data-act="fsstep" data-v="1"') + '</span>' + sep +
       '<span class="lt-edit-grp">' + COLORS.map(([v, l]) => '<button type="button" class="lt-edit-sw" data-act="color" data-v="' + v + '" data-tip="' + l + '" aria-label="' + l + '">' + icon('check') + '</button>').join('') +
         '<button type="button" class="lt-edit-sw lt-edit-sw0" data-act="color" data-v="reset" data-tip="原来的颜色" aria-label="原来的颜色">' + icon('check') + '</button></span>' + sep +
       '<span class="lt-edit-grp">' + ibtn('', 'bold', '加粗', ' data-act="bold"') +
-        ibtn('', 'left', '左对齐', ' data-act="align" data-v="left"') + ibtn('', 'center', '居中', ' data-act="align" data-v="center"') + ibtn('', 'right', '右对齐', ' data-act="align" data-v="right"') + '</span>' +
-      '<span class="lt-edit-grp lt-edit-g-key">' + sep + ibtn('', 'key', '设成重点词（再点一次取消）', ' data-act="key"') + '</span>' +
-      '<span class="lt-edit-grp lt-edit-g-beat">' + sep + '<span class="lt-edit-beat" data-tip="第几拍出现">拍 <b class="lt-edit-beatv">0</b></span>' +
-        ibtn('', 'minus', '早一拍出现', ' data-act="beat" data-v="-1"') + ibtn('', 'plus', '晚一拍出现', ' data-act="beat" data-v="1"') + '</span>' + sep +
+        ibtn('', 'left', '左对齐', ' data-act="align" data-v="left"') + ibtn('', 'center', '居中', ' data-act="align" data-v="center"') + ibtn('', 'right', '右对齐', ' data-act="align" data-v="right"') + '</span>' + sep + '</span>' +
+      '<span class="lt-edit-grp lt-edit-g-key">' + ibtn('', 'key', '设成重点词（再点一次取消）', ' data-act="key"') + sep + '</span>' +
+      '<span class="lt-edit-grp lt-edit-g-beat"><span class="lt-edit-beat" data-tip="第几拍出现">拍 <b class="lt-edit-beatv">0</b></span>' +
+        ibtn('', 'minus', '早一拍出现', ' data-act="beat" data-v="-1"') + ibtn('', 'plus', '晚一拍出现', ' data-act="beat" data-v="1"') + sep + '</span>' +
       '<span class="lt-edit-grp">' + ibtn('', 'outer', '选外层 Alt+↑', ' data-act="outer"') + ibtn('', 'inner', '回内层 Alt+↓', ' data-act="inner"') +
         ibtn('', 'erase', '还原这一块', ' data-act="reset"') + '</span>');
     E.tools.hidden = true;
@@ -1369,6 +1441,7 @@
     '.lt-edit-ib{padding:0!important;width:32px}',
     '.lt-edit-sep{flex:none;width:1px;height:20px;margin:0 4px;background:var(--lt-sep)}',
     '.lt-edit-grp{display:inline-flex;align-items:center;gap:2px}',
+    '.lt-edit-g-text{display:contents}',
     /* 悬停提示：名字和快捷键 */
     '.lt-edit-glass [data-tip]:hover::after{content:attr(data-tip);position:absolute;left:50%;top:calc(100% + 8px);transform:translateX(-50%);padding:5px 8px;border-radius:7px;background:rgba(20,24,32,.88);color:#fff;font:500 12px/1.2 system-ui,"PingFang SC","Microsoft YaHei",sans-serif;white-space:nowrap;pointer-events:none;z-index:2}',
     '.lt-edit-tools.lt-edit-up [data-tip]:hover::after{top:auto;bottom:calc(100% + 8px)}',
@@ -1412,13 +1485,15 @@
     'body.lt-editing .slide .past,body.lt-editing svg.marks g.past{opacity:1!important}',
     'body.lt-editing #stage *,body.lt-editing #stage *::before,body.lt-editing #stage *::after,body.lt-editing .bg *{animation-play-state:paused!important}',
     'body.lt-editing [data-lt-hover]{outline:calc(2px * var(--lt-ik,1)) dashed var(--lt-accent,#2563eb)!important;outline-offset:calc(2px * var(--lt-ik,1));cursor:move}',
-    'body.lt-editing [data-lt-moved],body.lt-editing [data-lt-w],body.lt-editing [data-lt-h],body.lt-editing [data-lt-scale],body.lt-editing [data-lt-fs],body.lt-editing [data-lt-color],body.lt-editing [data-lt-fw],body.lt-editing [data-lt-ta]{transition:none!important}',   // 风格给 scale、字号写了过渡的：编辑时直接到位，选中框才量得准
+    'body.lt-editing [data-lt-moved],body.lt-editing [data-lt-w],body.lt-editing [data-lt-h],body.lt-editing [data-lt-scale],body.lt-editing [data-lt-fs],body.lt-editing [data-lt-color],body.lt-editing [data-lt-fw],body.lt-editing [data-lt-ta],body.lt-editing [data-lt-fsk],body.lt-editing [data-lt-mb]{transition:none!important}',   // 风格给 scale、字号写了过渡的：编辑时直接到位，选中框才量得准
     '[data-lt-moved]{translate:var(--lt-tx,0px) var(--lt-ty,0px)!important}',
     '[data-lt-w]{width:var(--lt-w)!important;max-width:none!important}',
     // 改高度用 min-height：框不能比内容还矮（不然内容跑出框，整块缩放的原点也会偏）
     '[data-lt-h]{height:auto!important;min-height:var(--lt-h)!important;max-height:none!important}',
     'img[data-lt-w],img[data-lt-h]{object-fit:contain}',
+    '[data-lt-fsk]{font-size:calc(var(--lt-fs) * var(--lt-fsk))!important}',   // 里面自己写了字号的行内小字，按比例跟着外面的字号
     '[data-lt-fs]{font-size:var(--lt-fs)!important}',
+    '[data-lt-mb]{margin-bottom:var(--lt-mb)!important}',   // 排版流里的块变高变矮时抵掉，后面的内容不动
     '[data-lt-color]{color:var(--lt-color)!important}',
     '[data-lt-fw]{font-weight:var(--lt-fw)!important}',
     '[data-lt-ta]{text-align:var(--lt-ta)!important}',

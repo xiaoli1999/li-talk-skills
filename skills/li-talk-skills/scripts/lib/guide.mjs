@@ -938,11 +938,13 @@ function nativeSamples(s) {
 }
 function readSteps(s, first) {
   const own = nativeSamples(s);
-  if (!own.length) return [[first ? '先读两份说明：样板页（照着改，少从零写）、写页面的规矩：' : '写法和前 3 页一样：先找最接近的样板照着改，规矩见：', refDoc('templates.md'), refDoc('authoring.md')]];
+  const edit = ['写成用户能在浏览器里直接改的结构（一段字一个元素、能拖的块带「前缀-名字」类名、要讲的字写在 html 里）：', refDoc('editable.md')];
+  if (!own.length) return [[first ? '先读两份说明：样板页（照着改，少从零写）、写页面的规矩：' : '写法和前 3 页一样：先找最接近的样板照着改，规矩见：', refDoc('templates.md'), refDoc('authoring.md')], edit];
   return [
     [(first ? '先读你选的风格自己的样板页，照它的版式、组件和每拍的动作写（不要退回通用的卡片排法）。' : '写法和前 3 页一样：照你选的风格自己的样板页写。') +
       '每页开头的注释写了这页是什么版式、为什么适合这种风格、抄过去改哪里：', ...own],
     ['写页面的规矩（第 0 节第 9 条是可读性底线：形态照风格来，但讲过的要点要留在页上、句子横排、一条阅读顺序），样板里没有的版式再看通用样板页：', refDoc('authoring.md'), refDoc('templates.md')],
+    edit,
   ];
 }
 

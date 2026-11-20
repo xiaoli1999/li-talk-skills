@@ -490,11 +490,19 @@ test('真实浏览器：样式工具栏（字号、颜色、加粗）、重点�
     await key('ArrowUp', 'ArrowUp', 38, 1);
     assert.ok(await b.evaluate(`[...document.querySelectorAll('.lt-edit-badge')].some(x => x.textContent === '拍 2→3')`));
     await key('ArrowDown', 'ArrowDown', 40, 1);
-    // 样式：字号「标题」、颜色主色、加粗
+    // 选中的卡片里有标题和正文两段字：字号、颜色那几组不出现
+    assert.equal(await b.evaluate(`document.querySelector('.lt-edit-tools .lt-edit-g-text').hidden`), true, '选中的块里有好几段字时不放字号、颜色');
+    // 样式：双击第二张卡片的标题进入改字，字号「标题」、颜色主色、加粗
+    const t2 = await center('#slide-g2 .card:nth-of-type(2) h3');
+    await sleep(500);
+    await click(t2.x, t2.y, 2);
+    assert.ok(await ev(`!!document.querySelector('.lt-edit-text')`));
+    assert.equal(await b.evaluate(`document.querySelector('.lt-edit-tools .lt-edit-g-text').hidden`), false, '改字时放字号、颜色');
     await b.evaluate(`document.querySelector('.lt-edit-pop [data-act=fs][data-v="var(--fs-lg)"]').click()`);
     await tool('[data-act=color][data-v="--accent"]');
     await tool('[data-act=bold]');
-    assert.equal(await b.evaluate(`getComputedStyle(document.querySelector('#slide-g2 .card:nth-of-type(2)')).fontSize`), '50px');
+    assert.equal(await b.evaluate(`getComputedStyle(document.querySelector('#slide-g2 .card:nth-of-type(2) h3')).fontSize`), '50px');
+    await key('Enter', 'Enter', 13);
     // 重点词：双击第三张卡片的标题，选中前两个字，点「重点」
     const h3 = await center('#slide-g2 .card:nth-of-type(3) h3');
     await sleep(500);
@@ -514,7 +522,8 @@ test('真实浏览器：样式工具栏（字号、颜色、加粗）、重点�
     const kinds = Object.fromEntries(saved.items.map(it => [it.kind, it]));
     assert.deepEqual(Object.keys(kinds).sort(), ['beat', 'notes', 'style', 'text'], JSON.stringify(saved.items));
     assert.deepEqual([kinds.beat.before, kinds.beat.after, kinds.beat.own, kinds.beat.mascot], [{ beat: 2 }, { beat: 3 }, true, true]);
-    assert.deepEqual(kinds.style.after, { fontSize: 'var(--fs-lg)', color: 'var(--accent)', fontWeight: '700', textAlign: kinds.style.before.textAlign });
+    // 标题本来就是粗体，点「加粗」是取消加粗
+    assert.deepEqual(kinds.style.after, { fontSize: 'var(--fs-lg)', color: 'var(--accent)', fontWeight: +kinds.style.before.fontWeight >= 600 ? '400' : '700', textAlign: kinds.style.before.textAlign });
     assert.notEqual(kinds.style.before.fontSize, 'var(--fs-lg)');
     assert.equal(kinds.text.after.html, '<em class="key">第三</em>张');
     assert.deepEqual([kinds.notes.page, kinds.notes.beat, kinds.notes.before.text, kinds.notes.after.text], ['g2', 1, '第一张。', '第一张，先写下要讲的话']);
@@ -579,14 +588,20 @@ test('真实浏览器：拖角整块缩放、Alt 拖角改框、字号选数字�
     assert.match(size, /^\d+×\d+$/, '改框时显示宽×高');
     assert.ok(await b.evaluate(`document.querySelector('${C2}').offsetWidth`) > w0, 'Alt 拖角改了宽度');
     assert.equal(await kinds(), 'box,scale');
-    // 字号选数字
+    // 字号选数字：卡片里有两段字，先双击标题进入改字
+    const H = C2 + ' h3', fs0 = await b.evaluate(`getComputedStyle(document.querySelector('${H}')).fontSize`);
+    const t2 = await b.evaluate(`(() => { const r = document.querySelector('${H}').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
+    await sleep(500);
+    for (let k = 1; k <= 2; k++) { await mouse('mousePressed', t2.x, t2.y, { clickCount: k }); await mouse('mouseReleased', t2.x, t2.y, { clickCount: k }); }
+    assert.ok(await ev(`!!document.querySelector('.lt-edit-text')`));
     await b.evaluate(`document.querySelector('.lt-edit-pop [data-act=fs][data-v="64px"]').click()`);
-    assert.equal(await b.evaluate(`getComputedStyle(document.querySelector('${C2}')).fontSize`), '64px');
+    assert.equal(await b.evaluate(`getComputedStyle(document.querySelector('${H}')).fontSize`), '64px');
     assert.equal((await st()).items.find(i => i.kind === 'style').after.fontSize, '64px');
+    await key('Enter', 'Enter', 13);
     // 撤销三步、重做一步
     await key('z', 'KeyZ', 90, 2);
     assert.equal(await kinds(), 'box,scale');
-    assert.equal(await b.evaluate(`getComputedStyle(document.querySelector('${C2}')).fontSize`), '36px');
+    assert.equal(await b.evaluate(`getComputedStyle(document.querySelector('${H}')).fontSize`), fs0);
     await key('z', 'KeyZ', 90, 2);
     assert.equal(await kinds(), 'scale');
     await key('z', 'KeyZ', 90, 2);
@@ -596,7 +611,10 @@ test('真实浏览器：拖角整块缩放、Alt 拖角改框、字号选数字�
     assert.equal(await kinds(), 'scale');
     await key('z', 'KeyZ', 90, 2 | 8);   // Ctrl+Shift+Z 也是重做
     assert.equal(await kinds(), 'box,scale');
-    // 还原这一块
+    // 还原这一块（改字结束后没有选中，先重新选中卡片）
+    await sleep(500);
+    const c2b = await b.evaluate(`(() => { const r = document.querySelector('${C2}').getBoundingClientRect(); return { x: r.left + 8, y: r.bottom - 8 }; })()`);
+    await mouse('mousePressed', c2b.x, c2b.y); await mouse('mouseReleased', c2b.x, c2b.y);
     await b.evaluate(`document.querySelector('.lt-edit-tools [data-act=reset]').click()`);
     assert.equal(await kinds(), '');
     assert.equal(await b.evaluate(`document.querySelector('${C2}').offsetWidth`), w0);
