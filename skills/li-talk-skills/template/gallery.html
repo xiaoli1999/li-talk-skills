@@ -235,7 +235,9 @@ window.LI_TALK_STYLES = [
   var keys = Object.keys(I.SCENES).filter(function (k) { return k !== 'plain'; });
   if (!keys.length) return;
   var FAMS = [['corp', '企业风', '公司品牌专属'], ['hand', '手绘风', '楷书'], ['modern', '现代风', '黑体，杂志复古用宋体'], ['pixel', '像素风', '像素字体']];
-  var home = location.href.split(/[?#]/)[0];   // 不带 ?、# 的地址：打开就是总览
+  // 在线编辑（serve 打开的，地址带 ?edit=口令）时，换风格、回总览都带着口令，不然一换风格就退出编辑了
+  var edit = qs.get('edit'), keep = edit ? '&edit=' + encodeURIComponent(edit) : '';
+  var home = location.href.split(/[?#]/)[0] + (edit ? '?edit=' + encodeURIComponent(edit) : '');   // 不带 scene、# 的地址：打开就是总览
   var el = function (tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 
   if (!qs.has('scene') && !location.hash) { showHome(); return; }
@@ -326,7 +328,7 @@ window.LI_TALK_STYLES = [
   function card(s, minis, f) {
     var a = el('a', 'sv-card' + (f && f[0] === 'corp' ? ' sv-corp' : ''));
     a.title = (s.label || s.key) + '\n' + (s.look || '') + (s.fit ? '\n适合：' + s.fit : '');
-    a.href = '?scene=' + encodeURIComponent(s.key);
+    a.href = '?scene=' + encodeURIComponent(s.key) + keep;
     a.dataset.scene = s.key;
     a.setAttribute('aria-label', (s.label || s.key) + '：' + (s.look || '') + (s.fit ? '。适合' + s.fit : '') + '。点开从第一页看');
     var pv = el('span', 'sv-pv');
@@ -418,7 +420,7 @@ window.LI_TALK_STYLES = [
         if (k === cur) b.setAttribute('aria-current', 'true');
         b.addEventListener('click', function () {
           if (k === cur) return;
-          location.href = '?scene=' + encodeURIComponent(k);   // 不带 #页/拍：从第一页开始，播开场
+          location.href = '?scene=' + encodeURIComponent(k) + keep;   // 不带 #页/拍：从第一页开始，播开场
         });
         list.appendChild(b);
       });

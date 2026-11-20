@@ -144,8 +144,8 @@ test('样册：风格总览只在不带 ?scene=、?selftest、#页/拍 时显示
   const html = readFileSync(join(TPL, 'gallery.html'), 'utf8');
   assert.match(html, /if \(qs\.has\('selftest'\)[^\n]*return;/);
   assert.match(html, /if \(!qs\.has\('scene'\) && !location\.hash\) \{ showHome\(\); return; \}/);
-  assert.match(html, /a\.href = '\?scene=' \+ encodeURIComponent\(s\.key\);/);
-  assert.match(html, /location\.href = '\?scene=' \+ encodeURIComponent\(k\);/);
+  assert.match(html, /a\.href = '\?scene=' \+ encodeURIComponent\(s\.key\) \+ keep;/);
+  assert.match(html, /location\.href = '\?scene=' \+ encodeURIComponent\(k\) \+ keep;/);
   assert.doesNotMatch(html, /encodeURIComponent\(k\) \+ location\.hash/, '换风格要回到第一页，不能带上 #页/拍');
   assert.match(html, /全部风格/);
 });

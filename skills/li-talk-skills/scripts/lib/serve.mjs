@@ -23,6 +23,7 @@ import { openPath } from './open.mjs';
 
 export const MAX_BODY = 1024 * 1024;
 const DEBOUNCE = 300;
+const WATCH_DIRS = ['slides', 'samples'];
 const TYPES = {
   '.html': 'text/html; charset=utf-8', '.htm': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
   '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8',
@@ -126,7 +127,8 @@ export async function startServer(dir, opts = {}) {
     try { st = statSync(file); } catch { return send(res, 404, '没有这个文件'); }
     if (!st.isFile()) return send(res, 404, '没有这个文件');
     const type = TYPES[extname(file).toLowerCase()] || 'application/octet-stream';
-    if (segs.length === 1 && segs[0].toLowerCase() === 'index.html') {
+    // 根目录下的 .html（课件的 index.html、样册 gallery.html）都插入在线编辑脚本
+    if (segs.length === 1 && /\.html?$/i.test(segs[0])) {
       return send(res, 200, req.method === 'HEAD' ? '' : injectEdit(readFileSync(file, 'utf8')), type);
     }
     res.writeHead(200, { 'Content-Type': type, 'Content-Length': st.size, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
@@ -155,18 +157,18 @@ export async function startServer(dir, opts = {}) {
   });
   port = server.address().port;
 
-  // 监听 slides/ 和 index.html：变了（去抖 300ms）推 reload。fs.watch 不可用时退回每秒看一次修改时间
+  // 监听 slides/、samples/（样册的样板页）和根目录的 .html：变了（去抖 300ms）推 reload。fs.watch 不可用时退回每秒看一次修改时间
   const watchers = [];
   let timer = null;
   const changed = () => { clearTimeout(timer); timer = setTimeout(() => push('reload'), DEBOUNCE); };
   const stamp = () => {
-    const list = [join(root, 'index.html')];
-    try { for (const f of readdirSync(join(root, 'slides'))) list.push(join(root, 'slides', f)); } catch { /* 没有 slides/ */ }
+    const list = [join(root, 'index.html'), join(root, 'gallery.html')];
+    for (const d of WATCH_DIRS) { try { for (const f of readdirSync(join(root, d))) list.push(join(root, d, f)); } catch { /* 没有这个目录 */ } }
     return list.map(f => { try { return f + ':' + statSync(f).mtimeMs; } catch { return f + ':-'; } }).join('|');
   };
   try {
-    watchers.push(watch(root, (ev, f) => { if (!f || String(f).toLowerCase() === 'index.html') changed(); }));
-    if (existsSync(join(root, 'slides'))) watchers.push(watch(join(root, 'slides'), () => changed()));
+    watchers.push(watch(root, (ev, f) => { if (!f || /\.html?$/i.test(String(f))) changed(); }));
+    for (const d of WATCH_DIRS) if (existsSync(join(root, d))) watchers.push(watch(join(root, d), () => changed()));
   } catch {
     for (const w of watchers) { try { w.close(); } catch { /* 已关 */ } }
     watchers.length = 0;
@@ -183,7 +185,9 @@ export async function startServer(dir, opts = {}) {
   // SSE 心跳：有的环境连接空闲太久会被断开
   const beat = setInterval(() => { for (const c of clients) { try { c.write(': ping\n\n'); } catch { /* 忽略 */ } } }, 20000);
 
-  const url = `http://127.0.0.1:${port}/index.html?edit=${token}`;
+  // opts.page：打开哪一页（默认 index.html；改样册时是 gallery.html?scene=键名），口令接在它的查询串后面
+  const page = String(opts.page || 'index.html').replace(/^\/+/, '');
+  const url = `http://127.0.0.1:${port}/${page}${page.includes('?') ? '&' : '?'}edit=${token}`;
   async function close() {
     clearTimeout(timer); clearInterval(mt); clearInterval(beat);
     for (const w of watchers) { try { w.close(); } catch { /* 已关 */ } }
@@ -207,7 +211,14 @@ export async function run(args = {}, opts = {}) {
     port = Number(args.port);
     if (args.port === true || !Number.isInteger(port) || port < 1 || port > 65535) throw new UserError('--port 后面写 1 到 65535 之间的端口号，比如：--port 5180');
   }
-  const s = await startServer(dir, { port, log: line => log(line) });
+  let page;
+  if (args.page !== undefined) {
+    page = String(args.page);
+    const file = page.split(/[?#]/)[0];
+    if (args.page === true || !/^[\w.-]+\.html?$/i.test(file)) throw new UserError('--page 后面写课件目录里的一个 .html，比如：--page "gallery.html?scene=fangguo"');
+    if (!existsSync(join(dir, file))) throw new UserError(`${dir} 里没有 ${file}。`);
+  }
+  const s = await startServer(dir, { port, page, log: line => log(line) });
   mkdirSync(join(dir, '.li-talk'), { recursive: true });
   const info = servePath(dir);
   writeFileSync(info, JSON.stringify({ port: s.port, token: s.token, pid: process.pid, startedAt: new Date().toISOString() }, null, 2) + '\n');
