@@ -782,3 +782,38 @@ test('合并核对的报告：照我改的对不上算错误，润色算提醒�
   assert.match(formatVerify({ mode: 'exact', list: null, count: 3 }).text, /没法核对/);
   assert.equal(formatVerify(null).text, '');
 });
+
+test('真实浏览器：选中的块里再点一段字就单独选中它、单独拖；改完字回车保持选中；Alt+↑ 回到外面的块', { skip: !browser && '本机没找到 Edge / Chrome', timeout: 60000 }, async () => {
+  const dir = deck();
+  const s = await startServer(dir, { token: 'tok' });
+  const b = await openBrowser(browser);
+  const mouse = (type, x, y, extra = {}) => b.call('Input.dispatchMouseEvent', { type, x, y, button: 'left', buttons: type === 'mouseReleased' ? 0 : 1, clickCount: 1, ...extra });
+  const click = async (x, y, n = 1) => { for (let k = 1; k <= n; k++) { await mouse('mousePressed', x, y, { clickCount: k }); await mouse('mouseReleased', x, y, { clickCount: k }); } };
+  const drag = async (x, y, dx, dy) => { await mouse('mousePressed', x, y); for (let i = 1; i <= 4; i++) await mouse('mouseMoved', x + dx * i / 4, y + dy * i / 4); await mouse('mouseReleased', x + dx, y + dy); };
+  const center = sel => b.evaluate(`(() => { const r = document.querySelector(${JSON.stringify(sel)}).getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; })()`);
+  const st = () => b.evaluate('Deck._.editState()');
+  const C2 = '#slide-g2 .card:nth-of-type(2)';
+  try {
+    await b.goto(`http://127.0.0.1:${s.port}/index.html?edit=tok#2`, { w: 1280, h: 720 });
+    for (let i = 0; i < 50 && !(await b.evaluate('!!(window.Deck && Deck._.editState && Deck._.editState().on)')); i++) await sleep(100);
+    await sleep(300);
+    const c = await b.evaluate(`(() => { const r = document.querySelector('${C2}').getBoundingClientRect(); return { x: r.left + 8, y: r.bottom - 8 }; })()`);
+    await click(c.x, c.y); await sleep(200);
+    assert.equal((await st()).sel, 'div.grid>div.card:nth-of-type(2)', '第一次单击选中卡片');
+    const h3 = await center(C2 + ' h3');
+    await sleep(500); await click(h3.x, h3.y); await sleep(200);
+    assert.equal((await st()).sel, 'div.grid>div.card:nth-of-type(2)>h3', '再点标题就单独选中标题');
+    await sleep(500); await drag(h3.x, h3.y, 40, 24); await sleep(200);
+    const it = (await st()).items.find(x => x.kind === 'box');
+    assert.equal(it.path, 'div.grid>div.card:nth-of-type(2)>h3', '拖的是标题');
+    assert.match(it.css, /^position:relative;left:\d+px;top:\d+px$/);
+    assert.equal(await b.evaluate(`document.querySelector('${C2}').hasAttribute('data-lt-moved')`), false, '卡片本身不动');
+    // 双击第三张卡片的标题改字，回车后保持选中
+    const t3 = await center('#slide-g2 .card:nth-of-type(3) h3');
+    await sleep(500); await click(t3.x, t3.y, 2); await sleep(200);
+    await b.call('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter', code: 'Enter', windowsVirtualKeyCode: 13 }); await sleep(200);
+    assert.equal((await st()).sel, 'div.grid>div.card:nth-of-type(3)>h3', '改完字回车后这段字保持选中');
+    await b.call('Input.dispatchKeyEvent', { type: 'keyDown', key: 'ArrowUp', code: 'ArrowUp', windowsVirtualKeyCode: 38, modifiers: 1 }); await sleep(200);
+    assert.equal((await st()).sel, 'div.grid>div.card:nth-of-type(3)', 'Alt+↑ 回到卡片');
+  } finally { await b.close(); await s.close(); }
+});

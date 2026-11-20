@@ -76,7 +76,7 @@ The AI starts from whatever you have (a topic, notes and screenshots, or a scrip
 Tell the AI "I want to edit it in the browser" and the page opens in edit mode:
 
 - **Text**: double-click to edit and mark key words; font size and colour appear only when text is selected, and one change never moves the rest
-- **Layout**: drag to move, drag a corner to scale, hold Alt to resize the box, Delete to hide
+- **Layout**: drag to move, drag a corner to scale, hold Alt to resize the box, Delete to hide; with a block selected, click a line of text inside it to move just that text
 - **Pacing**: change which beat a block appears on; edit notes right in the presenter view
 - **Undo anything**: Ctrl+Z / Ctrl+Y, or reset in one click
 - **Hand it to the AI**: changes save automatically; click "Notify AI" and it writes them back into the source, re-runs the self-check, and the page reloads
@@ -183,8 +183,4 @@ Third-party components keep their own licenses (see `skills/li-talk-skills/templ
 
 ## Friends
 
-<sub>
-
 - [skillhey.com](https://skillhey.com): more curated skills
-
-</sub>

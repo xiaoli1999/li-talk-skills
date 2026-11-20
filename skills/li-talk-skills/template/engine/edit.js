@@ -1018,8 +1018,17 @@
     const d = E.drag;
     E.drag = null;
     if (d && d.moved && E.sel) { if (d.mode === 'scale') recordScale(E.sel); else recordBox(E.sel); changed(); }
+    if (d && !d.moved && d.drill && E.sel) {
+      const tn = textAt(d.drill.x, d.drill.y);
+      if (tn && tn !== E.sel && E.sel.contains(tn)) selectInner(tn);
+    }
     drawSel();
     updateTools();
+  }
+  /* 选中块里面的一段字：之后拖动、缩放、改大小都只动它；Alt+↑（选外层）回到外面的块 */
+  function selectInner(tn) {
+    select(tn);
+    I.toast('选中了这段字，可以单独拖动、缩放；Alt+↑ 回到外面的块', 2200);
   }
   function nudge(dx, dy) {
     const i = ensureBase(E.sel), b = Object.assign({}, i.box || i.base), l = toLocal(dx, dy, accum(E.sel.parentElement, i.slide));
@@ -1223,8 +1232,12 @@
     if (!b) { deselect(); return; }
     e.preventDefault();
     // 点在已选中的块里（包括选了外层以后点它里面的小块）：保持选中，拖的是选中的这一块
-    if (!(E.sel && E.sel.contains(b))) select(b);
+    // 点在已选中的块里（包括选了里面的一段字以后点这段字）：保持选中，拖的是选中的这一块
+    const inside = !!(E.sel && (E.sel.contains(b) || E.sel.contains(t)));
+    if (!inside) select(b);
     startDrag(e, 'move');
+    // 已经选中的块里再单击（没拖动）：松手时改成选中鼠标下面的那段字（先选组、再选里面），见 onDragEnd
+    if (inside && E.drag) E.drag.drill = { x: e.clientX, y: e.clientY };
   }
   function onMove(e) {
     if (!E.on || E.drag || E.text || inUi(e.target)) { if (E.on && !E.drag) setHover(null); return; }
@@ -1251,7 +1264,7 @@
     if (!E.on) return false;
     const k = e.key;
     if (E.text) {
-      if (k === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); commitText(); }
+      if (k === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); const tn = E.text.el; commitText(); select(tn); }   // 改完字这段字保持选中，可以接着拖
       else if (k === 'Escape') { e.preventDefault(); cancelText(); }
       return true;   // 其余的键都是在打字（Ctrl+Z 这类交给浏览器）
     }
