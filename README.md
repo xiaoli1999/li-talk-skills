@@ -183,4 +183,4 @@ Chrome、Edge 全部功能正常；Safari、Firefox 可以看，个别效果会�
 
 ## 友情推荐
 
-- [skillhey.com](https://skillhey.com)：更多精选 skills
+- [skillhey.com](https://skillhey.com)：精选 AI Skills 合集，想给你的 AI 再添几项本领，可以去这里逛逛

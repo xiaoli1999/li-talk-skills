@@ -183,4 +183,4 @@ Third-party components keep their own licenses (see `skills/li-talk-skills/templ
 
 ## Friends
 
-- [skillhey.com](https://skillhey.com): more curated skills
+- [skillhey.com](https://skillhey.com): a curated collection of AI skills, a good place to find more abilities for your AI agent
