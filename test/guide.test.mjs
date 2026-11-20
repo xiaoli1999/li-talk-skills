@@ -767,8 +767,8 @@ test('styles：按类分组列出所有风格，末尾写推荐规则', async ()
   assert.equal(code, 0);
   assert.match(t, /内置风格：16 种能用/);
   // 按类分组：每种风格都列在自己那一类的标题下面
-  const groups = [['企业风', ['fangguo']], ['手绘风', ['paper', 'board', 'journal', 'desk', 'watercolor', 'ink', 'blueprint', 'comic']],
-    ['现代风', ['dark', 'frost', 'glass', 'flat', 'magazine', 'brutal']], ['像素风', ['pixel']]];
+  const groups = [['手绘风', ['paper', 'board', 'journal', 'desk', 'watercolor', 'ink', 'blueprint', 'comic']],
+    ['现代风', ['dark', 'frost', 'glass', 'flat', 'magazine', 'brutal']], ['像素风', ['pixel']], ['企业风', ['fangguo']]];
   const heads = groups.map(([name]) => t.indexOf('\n' + name));
   assert.ok(heads.every((h, i) => h > 0 && (i === 0 || h > heads[i - 1])), '四类按顺序都在');
   groups.forEach(([name, ks], i) => {

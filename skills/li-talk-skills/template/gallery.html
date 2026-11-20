@@ -9,7 +9,7 @@
        地址带 ?scene=<键名>、这种风格有自己的样板时，样册只放它自己的样板页（见下面引入章节前后的两段小脚本）。
      - 通用样板页 samples/samples.js、.css（封面、清单、步骤、结尾 4 页）：只用通用组件，哪种风格都能用。
        地址不带 ?scene=，或者这种风格还没有自己的样板时放它；它保持通用，不加只有某种风格认的东西。
-     直接打开（地址不带 ?scene=、?selftest、#页/拍）先显示风格总览：每种风格一张卡片，按类分组（企业风、手绘风、现代风、像素风），点一张就用 ?scene=<键名> 从第一页看。
+     直接打开（地址不带 ?scene=、?selftest、#页/拍）先显示风格总览：每种风格一张卡片，按类分组（手绘风、现代风、像素风、企业风），点一张就用 ?scene=<键名> 从第一页看。
      地址加 ?scene=<键名> 换成那个风格看；左下角的小条点一下也是这样换（一律回到第一页、播开场），点「全部风格」回到总览。
      不写 li-talk-mascot：形象跟着风格走（每种风格用自己的默认形象，见 scenes/index.json）。
      引入顺序照入口模板 index.html（接口约定 G）；通用样板页放在两对「章节」注释之间，不开浏览器的 check 读模板目录时查的是它们；
@@ -63,7 +63,7 @@
   .gl-bar .gl-hint{display:none}
 }
 
-/* 风格总览：直接打开样册时的首页，铺满窗口、盖在课件上面；每种风格一张卡片，按类分组（企业风、手绘风、现代风、像素风）。
+/* 风格总览：直接打开样册时的首页，铺满窗口、盖在课件上面；每种风格一张卡片，按类分组（手绘风、现代风、像素风、企业风）。
    卡片套 data-scene，风格的 CSS 变量（底色、墨色、强调色、字体）直接生效；上半截是缩小的 1920×1080 舞台，
    放这种风格的背景层（从引擎建好的背景层复制）、风格名和形象；下半截写「样子」和「适合讲什么」。
    类名用 sv- 开头，免得撞上风格自己的类名（液态玻璃用了 gl-） */
@@ -119,7 +119,6 @@
 .sv-grid .sv-look,.sv-grid .sv-fit{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .sv-tag{position:absolute;left:8px;top:8px;padding:1px 8px 2px;border-radius:6px;background:rgba(20,22,26,.62);color:#F1F3F5;font:600 11px/1.5 system-ui,"Microsoft YaHei",sans-serif}
 .sv-tag::before{content:"";display:inline-block;width:6px;height:6px;margin-right:5px;border-radius:50%;background:var(--fc);vertical-align:1px}
-.sv-card.sv-corp{box-shadow:0 0 0 2px #ED5E6E,0 8px 22px rgba(0,0,0,.35)}
 @media (max-width:999px){.sv-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (max-width:699px){.sv-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:420px){.sv-grid{grid-template-columns:1fr}}
@@ -201,7 +200,6 @@ if (window.LI_TALK_SAMPLES) (function (b) {
 /* 风格总览用的风格说明：从 scenes/index.json 抄来的 key、label、family、mascot、look、fit。
    样册是双击打开的本地文件，不能 fetch，所以写在这里；改了 index.json 要同步改这里（test/gallery.test.mjs 会对照） */
 window.LI_TALK_STYLES = [
-  {"key":"fangguo","label":"方果","family":"corp","mascot":"fangfang","look":"方果 ERP 的品牌风格：近白底上慢慢流动的淡蓝柔光和网格，纯白大圆角卡片，品牌蓝主色，大气的大数字和图表，左上角带方果 Logo","fit":"给客户演讲、领导汇报、产品介绍、经营数据"},
   {"key":"paper","label":"方格纸","family":"hand","mascot":"jianjian","look":"浅色方格纸，左侧一列活页孔，便签翘起纸角","fit":"开场、总览、愿景、收尾"},
   {"key":"board","label":"黑板","family":"hand","mascot":"shasha","look":"深绿板面，只有白粉笔和一支黄粉笔，翻页用板擦","fit":"基础教学、命令清单、安装步骤"},
   {"key":"journal","label":"像素手账","family":"hand","mascot":"diandian","look":"很淡的点阵纸，像素只留给形象、对话框和节拍格","fit":"以角色为主线的章节、讲原理的示意图"},
@@ -216,12 +214,13 @@ window.LI_TALK_STYLES = [
   {"key":"flat","label":"扁平插画","family":"modern","mascot":"xiaoye","look":"统一左上受光的几何扁平插画，珊瑚、明黄、墨蓝三组配色，组件右下一道深色厚度、投影落向右下","fit":"上手教程、产品介绍、流程步骤、新人或非技术听众"},
   {"key":"magazine","label":"杂志复古","family":"modern","mascot":"xiaoqian","look":"墨绿、橘红、米白撞色拼贴，撕边纸、胶带、套印错位，宋体大标题","fit":"观点、方法论、读书分享、复盘总结"},
   {"key":"brutal","label":"新粗野主义","family":"modern","mascot":"pengpeng","look":"奶黄底加墨点阵，粗黑描边、不带模糊的硬阴影，黄粉蓝三种色块，卡片「砸」下来","fit":"上手教程、流程步骤、产品和工具介绍、内部分享"},
-  {"key":"pixel","label":"像素游戏","family":"pixel","mascot":"xiaoqi","look":"像 8-bit 游戏的标题画面：深夜蓝抖动夜空和远山，全页对齐 4px 网格、只用 16 色，金色像素大标题","fit":"上手教程、新人引导、闯关式分步、轻松的团队分享"}
+  {"key":"pixel","label":"像素游戏","family":"pixel","mascot":"xiaoqi","look":"像 8-bit 游戏的标题画面：深夜蓝抖动夜空和远山，全页对齐 4px 网格、只用 16 色，金色像素大标题","fit":"上手教程、新人引导、闯关式分步、轻松的团队分享"},
+  {"key":"fangguo","label":"方果","family":"corp","mascot":"fangfang","look":"方果 ERP 的品牌风格：近白底上慢慢流动的淡蓝柔光和网格，纯白大圆角卡片，品牌蓝主色，大气的大数字和图表，左上角带方果 Logo","fit":"给客户演讲、领导汇报、产品介绍、经营数据"}
 ];
 </script>
 <script>
 /* 样册的两样东西（都不属于课件，自检模式 ?selftest 下都不放）：
-   1. 风格总览：地址不带 ?scene=、?selftest、#页/拍 时显示，盖在课件上面。每种风格一张卡片，按类分组（企业风、手绘风、现代风、像素风）；
+   1. 风格总览：地址不带 ?scene=、?selftest、#页/拍 时显示，盖在课件上面。每种风格一张卡片，按类分组（手绘风、现代风、像素风、企业风）；
       点一张就用 ?scene=<键名> 重新打开，从第一页看（带开场）。开着总览时课件不接键盘和点击，
       也不让引擎往地址里写 #页/拍（不然刷新一下总览就没了）。
    2. 换风格的小条：点一个风格，就用 ?scene=<键名> 重新打开，回到第一页、播开场（地址里的 #页/拍 去掉）；
@@ -234,7 +233,7 @@ window.LI_TALK_STYLES = [
   var I = Deck._, FAMILY = I.FAMILY || {};
   var keys = Object.keys(I.SCENES).filter(function (k) { return k !== 'plain'; });
   if (!keys.length) return;
-  var FAMS = [['corp', '企业风', '公司品牌专属'], ['hand', '手绘风', '楷书'], ['modern', '现代风', '黑体，杂志复古用宋体'], ['pixel', '像素风', '像素字体']];
+  var FAMS = [['hand', '手绘风', '楷书'], ['modern', '现代风', '黑体，杂志复古用宋体'], ['pixel', '像素风', '像素字体'], ['corp', '企业风', '公司品牌专属']];
   // 在线编辑（serve 打开的，地址带 ?edit=口令）时，换风格、回总览都带着口令，不然一换风格就退出编辑了
   var edit = qs.get('edit'), keep = edit ? '&edit=' + encodeURIComponent(edit) : '';
   var home = location.href.split(/[?#]/)[0] + (edit ? '?edit=' + encodeURIComponent(edit) : '');   // 不带 scene、# 的地址：打开就是总览
@@ -274,7 +273,7 @@ window.LI_TALK_STYLES = [
     head.appendChild(el('h1', '', known.length + ' 种风格'));
     head.appendChild(el('p', '', '点一张卡片，从第一页看这种风格；← → 翻页，左下角的小条随时换风格。同一份课件按章换风格时，只在同一类里换。'));
     wrap.appendChild(head);
-    // 一屏放下全部风格：所有卡片排在一个网格里，按类的顺序（企业风、手绘风、现代风、像素风），每张左上角标出属于哪一类；
+    // 一屏放下全部风格：所有卡片排在一个网格里，按类的顺序（手绘风、现代风、像素风、企业风），每张左上角标出属于哪一类；
     // 列数按窗口算（见下面的 fit），窗口太矮放不下时才滚动
     var legend = el('div', 'sv-legend');
     var grid = el('div', 'sv-grid');

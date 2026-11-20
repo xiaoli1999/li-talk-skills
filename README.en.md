@@ -27,13 +27,13 @@ Hand your topic, notes or script to the AI and get an HTML deck you can present 
 
 ![The gallery home page: all 16 styles on one screen](docs/images/hero.jpg)
 
-<sub>The gallery home page: 16 styles in four groups (corporate, hand-drawn, modern, pixel) on one screen, each with its own mascot. Click a card to step through that style's sample slides.</sub>
+<sub>The gallery home page: 16 styles in four groups (hand-drawn, modern, pixel, corporate) on one screen, each with its own mascot. Click a card to step through that style's sample slides.</sub>
 
 ## Highlights
 
 - **One sentence to start**: a bare topic, scattered notes and screenshots, or a finished script all work. The AI follows a nine-step flow (script, style, layout, animation) and stops at five checkpoints (outline, script, style, first 3 slides, final review) for your OK.
 - **Live editing**: double-click to change text, drag and scale blocks, change font size, colour and beat, undo and redo, all in the browser. Click "Notify AI" and the AI writes the changes back into the source with class names and chapter CSS, re-runs the self-check, and the page reloads.
-- **16 styles, 16 mascots**: four families (corporate, hand-drawn, modern, pixel). Not just colour swaps: each style has its own layouts, components, beat animations, and a mascot that walks around and talks.
+- **16 styles, 16 mascots**: four families (hand-drawn, modern, pixel, corporate). Not just colour swaps: each style has its own layouts, components, beat animations, and a mascot that walks around and talks.
 - **Ready to present**: content appears beat by beat and fades once covered; the presenter view shows notes, the next beat, a timer and rehearsal mode; blackout, laser pointer and slide overview; clickers just work.
 - **Self-check at 5 screen sizes**: a real browser steps through every slide and beat from 1920×1080 down to a phone in portrait, checking overflow, overlap, contrast and font size, and writes a report that even models without vision can act on.
 - **Offline, zero dependencies**: plain HTML; double-click `index.html` to present, no network, nothing to install. Phones switch to a vertical reading mode automatically.
@@ -97,12 +97,6 @@ Four families. A deck can switch styles by chapter, but only within one family. 
 
 A style is more than a color scheme: its layouts, structure and what happens on each beat all follow its own look. Graph Paper corrects in red pen, Blueprint draws an assembly list, Comic tells it in four panels, Pixel Game walks a level map. Each style turns the same topic into 5–6 sample slides, and the AI writes your deck after the samples of the style you pick. The images below show one signature slide per style.
 
-### Corporate (company brand)
-
-| Look | Style | Default mascot | Good for |
-|---|---|---|---|
-| <img src="docs/images/styles/fangguo.jpg" width="240" alt="Fangguo"> | **Fangguo** `fangguo` | Fang Xiaoguo: the company IP, a little fruit with a rounded square head | Client pitches, reports to management, product intros, business numbers |
-
 ### Hand-drawn (Kai script)
 
 | Look | Style | Default mascot | Good for |
@@ -132,6 +126,12 @@ A style is more than a color scheme: its layouts, structure and what happens on 
 | Look | Style | Default mascot | Good for |
 |---|---|---|---|
 | <img src="docs/images/styles/pixel.jpg" width="240" alt="Pixel Game"> | **Pixel Game** `pixel` | Xiaoqi: a pixel guide carrying a pennant | Tutorials, onboarding, level-by-level steps, casual team talks |
+
+### Corporate (company brand)
+
+| Look | Style | Default mascot | Good for |
+|---|---|---|---|
+| <img src="docs/images/styles/fangguo.jpg" width="240" alt="Fangguo"> | **Fangguo** `fangguo` | Fang Xiaoguo: the company IP, a little fruit with a rounded square head | Client pitches, reports to management, product intros, business numbers |
 
 ## Presenting
 

@@ -14,9 +14,9 @@ import { run as check } from '../skills/li-talk-skills/scripts/lib/check.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const TPL = join(ROOT, 'skills', 'li-talk-skills', 'template');
-// 样册引入的全部风格，按类排：企业风、手绘风、现代风、像素风（和 scenes/index.json 一致）
-const SCENES = ['fangguo', 'paper', 'board', 'journal', 'desk', 'watercolor', 'ink', 'blueprint', 'comic',
-  'dark', 'frost', 'glass', 'flat', 'magazine', 'brutal', 'pixel'];
+// 样册引入的全部风格，按类排：手绘风、现代风、像素风、企业风（和 scenes/index.json 一致）
+const SCENES = ['paper', 'board', 'journal', 'desk', 'watercolor', 'ink', 'blueprint', 'comic',
+  'dark', 'frost', 'glass', 'flat', 'magazine', 'brutal', 'pixel', 'fangguo'];
 
 const TMP = [];
 const tmp = prefix => { const d = mkdtempSync(join(tmpdir(), prefix)); TMP.push(d); return d; };
@@ -232,7 +232,7 @@ test('真实浏览器：样册的风格总览和换风格的小条', { skip: !br
   try {
     const home = await b.peek(TPL, { entry: 'gallery.html', expression: probe });
     assert.equal(home.home, true, '直接打开样册要显示风格总览');
-    // 一屏放下：所有卡片在一个网格里，按类排（企业风的方果在第一个），每张标出属于哪一类
+    // 一屏放下：所有卡片在一个网格里，按类排（企业风的方果在最后一个），每张标出属于哪一类
     const fam = k => k === 'fangguo' ? '企业风' : k === 'pixel' ? '像素风' : SCENES.indexOf(k) <= SCENES.indexOf('comic') ? '手绘风' : '现代风';
     assert.deepEqual(home.fams, SCENES.map(k => [fam(k), k]));
     assert.equal(home.fit, true, '默认窗口里全部风格一屏放下，不用滚动');
