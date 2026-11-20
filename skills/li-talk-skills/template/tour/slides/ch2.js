@@ -165,7 +165,7 @@ Deck.add({
   scene: 'watercolor',
   title: '样册：全部风格一屏看完',
   html: `
-    <figure class="abs shot" data-beat="0" data-src="素材/hero.jpg" data-caption="真图：样册首页，点一张卡片就从第一页看" style="left:120px;top:250px;width:860px;--ar:2040/1620;--r:-.8deg"></figure>
+    <figure class="abs shot" data-beat="0" data-src="素材/hero.jpg" data-caption="真图：样册首页，点一张卡片就从第一页看" style="left:120px;top:300px;width:900px;--ar:16/9;--r:-.8deg"></figure>
     <div class="wc-paper abs p13-n" data-beat="1" data-mascot="1" data-mascot-side="left" style="left:1260px;top:260px;width:540px;--r:-1deg"><h3><i class="wc-no">1</i>点一张卡片</h3><p>从第一页看这种风格的样板</p></div>
     <div class="wc-paper abs p13-n" data-beat="2" style="left:1260px;top:500px;width:540px;--r:.8deg"><h3><i class="wc-no">2</i>左下角的小条</h3><p>随时换一种风格看</p></div>
     <div class="wc-paper abs p13-n" data-beat="3" data-mascot="3" data-mascot-side="left" data-mascot-pose="happy" style="left:1260px;top:740px;width:540px;--r:-.6deg"><h3><i class="wc-no">3</i>想再看</h3><p>对 AI 说「打开样册」</p></div>

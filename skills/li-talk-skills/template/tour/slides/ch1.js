@@ -18,7 +18,7 @@ Deck.add({
     <p class="wc-title abs p01-h" data-beat="0" style="left:146px;top:262px">你专心讲好内容，<br>其他交给 <em class="key">AI</em></p>
     <i class="wc-wash abs" data-beat="0" style="left:136px;top:548px;width:860px;height:80px"></i>
     <p class="abs p01-sub" data-beat="0" style="left:160px;top:556px">版式、风格、动效都交给 AI，你只管讲</p>
-    <figure class="abs shot p01-shot" data-beat="0" data-src="素材/hero.jpg" data-caption="真图：样册首页，16 种风格一屏看完" style="left:1090px;top:262px;width:710px;--ar:2040/1620;--r:1deg"></figure>
+    <figure class="abs shot p01-shot" data-beat="0" data-src="素材/hero.jpg" data-caption="真图：样册首页，16 种风格一屏看完" style="left:1060px;top:330px;width:740px;--ar:16/9;--r:1deg"></figure>
     <span class="tag abs p01-fold" data-beat="0" data-recede="off" style="left:1560px;top:176px">专注分享本身</span>
     <div class="wc-paper wc-plate abs p01-plate" data-beat="1" data-mascot="1" data-mascot-side="bottom" data-mascot-x=".7" data-mascot-pose="happy" style="left:150px;top:690px;--r:-1deg">
       <p>适合 <b>分享 · 培训 · 汇报 · 演讲</b></p>

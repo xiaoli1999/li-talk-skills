@@ -67,7 +67,7 @@
    整页是水彩田园的样子：水彩纸底、上方淡淡的天空蓝和暖阳、下方一条草坡，标题用楷体；
    总览本身套 data-scene="watercolor"，借用水彩田园的颜料遮罩（--wc-pad1、--wc-pad2、--wc-blob、--wc-brush1）和纸纹（--scene-bg）。
    卡片套自己风格的 data-scene，上半截是缩小的 1920×1080 舞台（这种风格的背景层、风格名、形象），下半截是一张纸，写「样子」和「适合讲什么」。
-   卡片铺满整个窗口（四周留安全距离），列数由脚本按窗口挑：让卡片尽量大、一屏放下（16 种在 1920×1080 上是 6 列 3 行，最后一行居中）。
+   卡片铺满整个窗口（四周留安全距离），列数由脚本按窗口挑：让卡片尽量大、一屏放下（16 种在 1920×1080 上是 6 列 3 行，最后一行靠左）。
    类名用 sv- 开头，免得撞上风格自己的类名（液态玻璃用了 gl-） */
 .sv-home{position:fixed;inset:0;z-index:1000;overflow:auto;overscroll-behavior:contain;color:#3A322B;background:var(--scene-bg,#FBF7EE);
   font:400 15px/1.6 "PingFang SC","Microsoft YaHei UI","Microsoft YaHei",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
@@ -89,7 +89,7 @@
 .sv-chip b{font-weight:700;color:#3A322B}
 .sv-f-hand{--fc:#F4C35A}.sv-f-modern{--fc:#8EC3E6}.sv-f-pixel{--fc:#9CCB7E}.sv-f-corp{--fc:#C9BFB2}
 /* 卡片：像一张张夹在画板上的画纸，微微歪一点，鼠标移上去抬起来摆正 */
-.sv-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:var(--gap)}
+.sv-grid{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:var(--gap)}
 .sv-card{position:relative;display:flex;flex-direction:column;flex:none;width:var(--cw,300px);min-width:0;padding:8px 8px 0;text-decoration:none;
   background:#FFFEFA;box-shadow:0 1px 2px rgba(58,50,43,.08),0 12px 26px -12px rgba(58,50,43,.36);border-radius:4px 6px 5px 7px;
   transition:transform .3s cubic-bezier(.3,1.5,.5,1),box-shadow .2s}
@@ -300,7 +300,7 @@ window.LI_TALK_STYLES = [
     try { box.focus({ preventScroll: true }); } catch (e) { /* 老浏览器不认参数 */ }
 
     // 卡片铺满整个窗口：在 3 到 8 列里挑一个让卡片最大、又一屏放得下的列数（16 种在 1920×1080 上是 6 列 3 行），
-    // 每行居中，整块在标题下面的空间里上下居中；算出来太小（手机、很矮的窗口）就退回 CSS 按宽度排的列数，允许滚动
+    // 整块水平居中、最后一行靠左，整块在标题下面的空间里上下居中；算出来太小（手机、很矮的窗口）就退回 CSS 按宽度排的列数，允许滚动
     var layout = function () {
       var cards = grid.children, n = cards.length;
       if (!n) return;
