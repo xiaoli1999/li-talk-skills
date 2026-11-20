@@ -432,6 +432,8 @@ test('真实浏览器：双击 file:// 打开时按 E 进编辑，修改存进 l
     const st = await b.evaluate('Deck._.editState()');
     assert.equal(st.server, false);
     assert.match(st.bar, /复制修改给 AI/);
+    // 离线编辑：底部一条提示，引导用户对 AI 说「我要在线改这份课件」
+    assert.equal(await b.evaluate(`(() => { const h = document.querySelector('.lt-edit-hint'); return !!h && !h.hidden && h.textContent.includes('我要在线改这份课件'); })()`), true, '离线编辑要出引导提示');
     // 选中第 3 页的副标题，按 Delete 隐藏、方向键挪 10px
     const p = await b.evaluate(`(() => { const r = document.querySelector('#slide-g3 .g3-quote').getBoundingClientRect(); return { x: r.left + 20, y: r.top + r.height / 2 }; })()`);
     await b.call('Input.dispatchMouseEvent', { type: 'mousePressed', x: p.x, y: p.y, button: 'left', buttons: 1, clickCount: 1 });
@@ -471,6 +473,7 @@ test('真实浏览器：样式工具栏（字号、颜色、加粗）、重点�
     await b.goto(`http://127.0.0.1:${s.port}/index.html?edit=tok#2`, { w: 1280, h: 720 });
     assert.ok(await ev('window.Deck && Deck._.editState && Deck._.editState().on'));
     await sleep(300);
+    assert.equal(await b.evaluate(`!document.querySelector('.lt-edit-hint')`), true, '连着编辑服务时不出离线提示');
     // 选中第二张卡片（点在卡片的内边距上），工具栏浮出来
     const c2 = await b.evaluate(`(() => { const r = document.querySelector('#slide-g2 .card:nth-of-type(2)').getBoundingClientRect(); return { x: r.left + 8, y: r.bottom - 8 }; })()`);
     await click(c2.x, c2.y);
@@ -572,6 +575,7 @@ test('真实浏览器：拖角整块缩放、Alt 拖角改框、字号选数字�
     await b.goto(`http://127.0.0.1:${s.port}/index.html?edit=tok#2`, { w: 1280, h: 720 });
     assert.ok(await ev('window.Deck && Deck._.editState && Deck._.editState().on'));
     await sleep(300);
+    assert.equal(await b.evaluate(`!document.querySelector('.lt-edit-hint')`), true, '连着编辑服务时不出离线提示');
     const c2 = await b.evaluate(`(() => { const r = document.querySelector('${C2}').getBoundingClientRect(); return { x: r.left + 8, y: r.bottom - 8, w: r.width }; })()`);
     await mouse('mousePressed', c2.x, c2.y); await mouse('mouseReleased', c2.x, c2.y);
     // 拖右下角（默认）：整块等比缩放，框旁边显示百分比

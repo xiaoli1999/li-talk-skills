@@ -42,6 +42,9 @@
   const API = name => '/__li-talk/' + name + '?token=' + encodeURIComponent(TOKEN);
   const LS_KEY = 'li-talk-edits:' + document.title;
   const SS_KEY = 'li-talk-edit-resume:' + document.title;
+  // 离线编辑提示：引导用户对 AI 说这句，AI 照 SKILL.md 开编辑服务；点「知道了」后这次打开不再出
+  const OFFLINE_SAY = '我要在线改这份课件';
+  const HINT_KEY = 'li-talk-edit-offline-hint';
   const BOX = ['left', 'top', 'width', 'height'];
   const STYLE = ['fontSize', 'color', 'fontWeight', 'textAlign'];
   const SAVE_DELAY = 400;
@@ -1162,7 +1165,7 @@
   /* =================================================================
      指针
      ================================================================= */
-  function inUi(t) { return !!(t && t.closest && t.closest('.lt-edit-bar, .lt-edit-tools, .lt-edit-pop, .lt-edit-copy, #toast, #lightbox')); }
+  function inUi(t) { return !!(t && t.closest && t.closest('.lt-edit-bar, .lt-edit-hint, .lt-edit-tools, .lt-edit-pop, .lt-edit-copy, #toast, #lightbox')); }
   function onDown(e) {
     if (!E.on || e.button !== 0) return;
     const t = e.target;
@@ -1269,6 +1272,11 @@
     if (G) G.globalTimeline.pause();
     buildUi();
     E.bar.hidden = false;
+    if (E.hint) {
+      let seen = false;
+      try { seen = sessionStorage.getItem(HINT_KEY) === '1'; } catch (e) { seen = false; }
+      E.hint.hidden = seen;
+    }
     setScale();
     showPage(S.cur.p);
     const first = !E.loaded;
@@ -1292,6 +1300,7 @@
     document.body.classList.remove('lt-editing');
     if (G) G.globalTimeline.resume();
     if (E.bar) E.bar.hidden = true;
+    if (E.hint) E.hint.hidden = true;
     updateTools(); drawBeats();
     if (!S.reading) I.go(S.cur.p, PAGES[S.cur.p].total, { anim: false });
     if (I.syncPresenter) I.syncPresenter();
@@ -1380,6 +1389,27 @@
       ibtn('lt-edit-exit', 'exit', '退出编辑 E'));
     E.bar.setAttribute('role', 'toolbar');
     E.bar.setAttribute('data-noclick', '');
+    // 离线编辑（没连上 AI 开的编辑服务）：屏幕底部一条提示，说明改完怎么交给 AI，并引导用户让 AI 开在线编辑（改完一键通知）
+    if (!SERVER) {
+      E.hint = el('div', 'lt-edit-hint lt-edit-glass',
+        '<span class="lt-edit-hint-tag">离线编辑</span>' +
+        '<span class="lt-edit-hint-txt">改完点「复制修改给 AI」贴进对话。想改完<b>一键交给 AI</b>？把这句话发给 AI，它会开在线编辑：</span>' +
+        '<button type="button" class="lt-edit-hint-say" data-tip="复制这句话">' + icon('copy') + '<span>' + OFFLINE_SAY + '</span></button>' +
+        '<button type="button" class="lt-edit-hint-x" data-tip="知道了" aria-label="知道了">' + icon('exit') + '</button>');
+      E.hint.hidden = true;
+      E.hint.setAttribute('data-noclick', '');
+      E.hint.setAttribute('role', 'note');
+      E.hint.addEventListener('mousedown', e => e.preventDefault());
+      $('.lt-edit-hint-say', E.hint).addEventListener('click', () => {
+        I.copyText(OFFLINE_SAY).then(ok => I.toast(ok ? '已复制，发给 AI 就行' : '没能自动复制，请手动对 AI 说：' + OFFLINE_SAY, 3500));
+      });
+      $('.lt-edit-hint-x', E.hint).addEventListener('click', () => {
+        E.hint.hidden = true;
+        try { sessionStorage.setItem(HINT_KEY, '1'); } catch (e) { /* 存不了就只关这一次 */ }
+        updateTools();
+      });
+      document.body.appendChild(E.hint);
+    }
     E.bar.addEventListener('mousedown', e => e.preventDefault());   // 点按钮不抢焦点：免得之后按空格又点一次按钮
     $('.lt-edit-status', E.bar).addEventListener('click', () => { if (E.failed) save(); });
     $('.lt-edit-go', E.bar).addEventListener('click', notify);
@@ -1436,6 +1466,15 @@
       'box-shadow:0 12px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.08)}',
     '.lt-edit-glass[hidden],.lt-edit-glass [hidden]{display:none!important}',
     '.lt-edit-bar{left:50%;top:12px;transform:translateX(-50%)}',
+    '.lt-edit-glass.lt-edit-hint{left:50%;bottom:24px;transform:translateX(-50%);display:flex;align-items:center;gap:10px;width:max-content;max-width:calc(100vw - 24px);padding:6px 6px 6px 8px;font-size:13px;line-height:1.5}',
+    '.lt-edit-hint-tag{flex:none;padding:2px 8px;border-radius:8px;background:var(--lt-acc);color:var(--lt-on-accent,#fff);font-weight:600;font-size:12px}',
+    '.lt-edit-hint-txt{color:var(--lt-fg)}',
+    '.lt-edit-hint-txt b{font-weight:700}',
+    '.lt-edit-hint-say{height:30px!important;padding:0 10px!important;border-radius:9px!important;background:var(--lt-on)!important;font-weight:600}',
+    '.lt-edit-hint-say:hover{background:var(--lt-hov)!important}',
+    '.lt-edit-hint-x{flex:none;height:28px!important;min-width:28px!important;padding:0!important}',
+    '.lt-edit-hint svg{width:15px;height:15px}',
+    '@media (max-width:900px){.lt-edit-hint-txt{display:none}}',
     '.lt-edit-tools{z-index:955}',
     '.lt-edit-pop{z-index:965;flex-direction:column;align-items:stretch;gap:4px;padding:8px;width:236px}',
     '.lt-edit-glass button{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;min-width:32px;padding:0 8px;margin:0;border:0;border-radius:10px;background:transparent;color:inherit;font:inherit;cursor:pointer;position:relative}',
