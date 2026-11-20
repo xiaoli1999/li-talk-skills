@@ -1,0 +1,4 @@
+/* 自带的常用字小字库：完整字体下载失败时用；缺的字回退到系统楷体 */
+/* 粗体声明成 500–900：页面里写 500、600 的字也用粗体，和旧引擎的效果一致 */
+@font-face { font-family: "WK"; src: url("wenkai-lite-regular.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "WK"; src: url("wenkai-lite-bold.woff2") format("woff2"); font-weight: 500 900; font-display: swap; }

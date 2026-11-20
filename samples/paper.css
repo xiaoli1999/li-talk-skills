@@ -1,0 +1,51 @@
+/* 方格纸自己的样板页的页面样式（和 samples/paper.js 配套）
+   - 每条选择器都以 [data-id="t-paper-…"] 开头，只管那一页；抄样板时连同这里的规则一起抄，[data-id="…"] 换成新页面的 id
+   - 只写大小和位置；颜色用风格的变量（--ink、--ink-2、--pp-pencil、--pp-red 都在 scenes/paper.css 里）
+   - 对齐方格：方格 48px 一格，格线在 48 的倍数上。48px 的字一个字占一格，96px 占四格；行高写成 48 的倍数，字就落在格子里 */
+
+/* ---------- 封面 ---------- */
+/* 大标题：144px，一个字占九格，行高 192（四行格子）；副题 48px 一个字一格，次要色 */
+[data-id="t-paper-cover"] .cv-title{left:192px;top:240px;font-size:144px;line-height:192px;font-weight:700}
+[data-id="t-paper-cover"] .cv-sub{left:192px;top:480px;font-size:48px;line-height:96px;color:var(--ink-2)}
+[data-id="t-paper-cover"] .cv-note p{font-size:40px;line-height:48px;white-space:nowrap}
+
+/* ---------- 大括号归纳 ---------- */
+/* 左边的总称：96px 两行（一个字四格），竖向居中对着右边三行 */
+[data-id="t-paper-list"] .ls-head{left:192px;top:440px;font-size:96px;line-height:96px;font-weight:700}
+/* 一行笔记：圈码在左；物名 48px（一格一个字）；说明 40px 次要色，落在下一道格线上；小速写在行尾 */
+[data-id="t-paper-list"] .ls-row{width:1248px;height:144px}
+[data-id="t-paper-list"] .ls-row .pp-no{position:absolute;left:0;top:0}
+[data-id="t-paper-list"] .ls-row h3{position:absolute;left:96px;top:0;font-size:48px;line-height:48px;font-weight:700}
+[data-id="t-paper-list"] .ls-row p{position:absolute;left:96px;top:60px;font-size:40px;line-height:48px;color:var(--ink-2)}
+[data-id="t-paper-list"] .ls-row .pp-fig{position:absolute;left:768px;top:-40px;width:176px}
+
+/* ---------- 图解三步 ---------- */
+/* 一张图宽 432（九格）：速写高 336，底边落在 y 624 的桌沿线上；下面图注 48px（「图 1」小一号、次要色），说明 40px */
+[data-id="t-paper-steps"] .st-fig{width:432px}
+[data-id="t-paper-steps"] .st-cap{width:max-content;margin:24px 0 0 48px;font-size:48px;line-height:48px;font-weight:700}
+[data-id="t-paper-steps"] .st-cap span{margin-right:.5em;font-size:40px;font-weight:400;color:var(--ink-2)}
+[data-id="t-paper-steps"] .st-desc{width:max-content;margin:16px 0 0 48px;font-size:40px;line-height:48px;color:var(--ink-2)}
+
+/* ---------- 红笔订正 ---------- */
+/* 一行一个坑：行高 96（96px 的字一个占四格），行与行隔 192；题号的圈在页边线外，错的做法在线里（x 336 起） */
+[data-id="t-paper-fix"] .fx-bad{display:flex;align-items:center;gap:96px;height:96px;margin:0 0 96px}
+[data-id="t-paper-fix"] .fx-bad .pp-hand{font-size:96px;line-height:96px;color:var(--pp-pencil)}
+/* 红笔：96px，和错的一样大，一行之内左边错、右边对 */
+[data-id="t-paper-fix"] .pp-fix{height:96px}
+[data-id="t-paper-fix"] .pp-fix .pp-red{font-size:96px;line-height:96px;font-weight:400}
+
+/* ---------- 坐标纸推演 ---------- */
+/* 轴的名字、刻度数字：次要色的小一号字（刻度数字右对齐到 x 224，贴着纵轴） */
+[data-id="t-paper-graph"] .gr-ax{font-size:36px;line-height:48px;color:var(--ink-2)}
+[data-id="t-paper-graph"] .gr-tk{width:80px;font-size:34px;line-height:36px;text-align:right;color:var(--ink-2)}
+/* 图上的标注：40px 铅笔字 */
+[data-id="t-paper-graph"] .gr-lb{font-size:40px;line-height:48px}
+/* 右边三张便签：宽 480（十格），标签 40px 次要色，数 96px */
+[data-id="t-paper-graph"] .gr-n{width:480px;box-sizing:border-box;display:flex;white-space:nowrap;align-items:baseline;gap:28px;padding:20px 40px 24px}
+[data-id="t-paper-graph"] .gr-n span{font-size:40px;color:var(--ink-2)}
+[data-id="t-paper-graph"] .gr-n b{font-size:96px;line-height:96px;font-weight:700}
+
+/* ---------- 框出重点 ---------- */
+/* 金句：120px 一行，在框里上下、左右居中（框 288–1632 × 336–672） */
+[data-id="t-paper-end"] .ed-quote{left:432px;top:432px;font-size:120px;line-height:144px;font-weight:700}
+[data-id="t-paper-end"] .ed-note p{font-size:48px;line-height:56px;white-space:nowrap}

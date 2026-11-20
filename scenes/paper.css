@@ -1,0 +1,168 @@
+/* =====================================================================
+   风格 · 方格纸 paper 的样子（行为在 paper.js）
+   浅色方格、墨色线框、黄色荧光笔、左侧活页孔；所有选择器的第一段都带 [data-scene="paper"]
+   ===================================================================== */
+
+/* 变量：浅色方格纸（--recede 由 paper.js 的 recede 写入）
+   方格 48px 一格。格线的起点对准舞台左上角（舞台 x 0、y 0 正好落在格线上）：背景层铺满整个窗口、舞台居中，
+   所以格线按「窗口中心」定位——横向 calc(50% + 24px)、纵向 calc(50% + 12px)，换算下来舞台坐标 48 的倍数就是格线，
+   页面里把框的边、大字的格子放在 48 的倍数上，就和方格对齐（窗口不是 16:9 时也对得上）
+   方格纸自有组件的颜色：--pp-pencil 铅笔线、--pp-red 红笔（订正、打勾）、--pp-red-soft 作业本的红色页边线 */
+[data-scene="paper"]{
+  --bg:#FBFBF7; --ink:#1E2B48; --ink-2:#4A5368; --ink-3:#8A8F98; --line:#1E2B48;
+  --mark:#4A5368; --key-ink:#1E2B48; --hl:#FFD43B; --accent:#FFD43B;
+  --card-ink:#1E2B48; --card-ink-2:#4A5368; --paper:#FFFFFF;
+  --t-yellow:#FFE27A; --t-mint:#D5F0DC; --t-pink:#FFDCE6; --t-blue:#D9EAFF; --t-white:#FFFFFF; --t-peach:#FFE4C8;
+  --term-bg:#22252B; --term-ink:#ECE8E0;
+  --human:#F76707; --ai:#2B8A3E; --idle:#9AA0A8;
+  --pp-pencil:#3B4256; --pp-red:#D0312D; --pp-red-soft:rgba(208,49,45,.42);
+  --scene-bg:
+    radial-gradient(ellipse 50% 40% at 20% 26%,rgba(120,130,150,.05),transparent 70%),
+    linear-gradient(rgba(30,43,72,.035) 1px,transparent 1px) calc(50% + 24px) calc(50% + 12px)/48px 48px,
+    linear-gradient(90deg,rgba(30,43,72,.035) 1px,transparent 1px) calc(50% + 24px) calc(50% + 12px)/48px 48px,
+    #FBFBF7;
+}
+
+/* 翻页时翻过去的那张纸（paper.js 的 pageTurn 加 .pp-turning 和 .pp-shade） */
+[data-scene="paper"].slide.pp-turning{background:var(--scene-bg);box-shadow:0 0 40px rgba(0,0,0,.25)}
+[data-scene="paper"] .pp-shade{position:absolute;inset:0;z-index:60;pointer-events:none;opacity:0;background:linear-gradient(90deg,rgba(20,24,34,.05),rgba(20,24,34,.35))}
+/* 方格纸的签名：左侧一列活页孔（paper.js 的 decorate 放进每张方格纸页） */
+[data-scene="paper"] .pp-holes{position:absolute;left:36px;top:128px;bottom:128px;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none;z-index:1}
+[data-scene="paper"] .pp-holes i{display:block;width:22px;height:22px;border-radius:50%;background:#3A3C42;box-shadow:inset 0 3px 3px rgba(0,0,0,.55),inset 0 -1px 0 rgba(255,255,255,.12),0 1.5px 0 #fff,0 0 0 7px rgba(30,43,72,.035)}
+
+/* 主题行：章节是墨线框，主题下面一道荧光笔 */
+[data-scene="paper"] .s-topic .tc{color:var(--ink);border:2.4px solid var(--ink);border-radius:var(--rough-r)}
+[data-scene="paper"] .s-topic .tt::before{content:"";position:absolute;z-index:-1;left:-.1em;right:-.1em;top:.5em;height:.5em;background:rgba(255,212,59,.6);border-radius:3px 6px 4px 5px;rotate:-.6deg}
+[data-scene="paper"] .explain::before{background:#FFD43B}
+
+/* 重点词：黄色荧光笔斜着「划」过去 */
+[data-scene="paper"] .key::before{content:"";position:absolute;z-index:-1;left:-.12em;right:-.12em;top:.36em;height:.62em;mix-blend-mode:multiply;pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cpath d='M10 3 L100 2 L198 5 L190 37 L100 36 L2 35 Z' fill='%23FFD43B' fill-opacity='.55'/%3E%3Cpath d='M10 3 L22 3 L14 35 L2 35Z' fill='%23FFD43B' fill-opacity='.4'/%3E%3Cpath d='M186 5 L198 5 L190 37 L178 37Z' fill='%23FFD43B' fill-opacity='.45'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat;
+  clip-path:polygon(0 -20%,calc(var(--k) * (100% + 24px)) -20%,calc(var(--k) * (100% + 24px) - 22px) 120%,0 120%)}
+
+/* 卡片：墨色线框；带颜色的就是贴上去的便签 */
+[data-scene="paper"] .card{background:transparent;border:2.6px solid var(--ink);border-radius:var(--rough-r)}
+[data-scene="paper"] .card:is(.t-yellow,.t-mint,.t-pink,.t-blue,.t-peach){border:0;border-radius:0;background:var(--tint);box-shadow:0 14px 16px -12px rgba(40,30,10,.4),0 1px 0 rgba(0,0,0,.05)}
+[data-scene="paper"] .card.t-white{background:#fff}
+[data-scene="paper"] .lab{background:rgba(255,226,122,.92);rotate:-2deg;color:#1E2B48}
+[data-scene="paper"] .cell{background:#fff}
+
+/* 可复制的命令：一张贴上去的黄便签，右下角翘起（翘多少跟着 --pp-curl：贴上的那一下翘得高，按平后只剩一个小角）；「已复制」用绿笔 */
+[data-scene="paper"] .copy{--pp-curl:0;background:#FFE27A;color:#1E2B48;padding:15px 36px 15px 28px;rotate:-.8deg;box-shadow:0 14px 16px -12px rgba(40,30,10,.4),0 1px 0 rgba(0,0,0,.05)}
+[data-scene="paper"] .copy .ps{color:#9A7B12;opacity:1}
+[data-scene="paper"] .copy .ic{display:none}
+[data-scene="paper"] .copy::before{content:"";position:absolute;top:-14px;left:46px;width:104px;height:28px;background:rgba(255,255,255,.62);box-shadow:0 1px 2px rgba(0,0,0,.1);rotate:-4deg}
+[data-scene="paper"] .copy::after{content:"";position:absolute;right:0;bottom:0;width:calc(30px + var(--pp-curl) * 30px);height:calc(30px + var(--pp-curl) * 30px);background:linear-gradient(315deg,#FBFBF7 0 47%,rgba(40,30,10,.12) 47% 52%,#EECB55 52%,#FBE7A2 100%)}
+[data-scene="paper"] .copied-tip{color:#2B8A3E;font-weight:500}
+
+/* 形象（不管用哪个）：淡淡的落地影子；说的话是墨线圆角框 */
+[data-scene="paper"] .mascot{--mascot-shadow:drop-shadow(0 4px 3px rgba(30,43,72,.12))}
+[data-scene="paper"] .mascot-say{background:#fff;color:var(--ink);border:2.6px solid var(--ink);border-radius:18px}
+[data-scene="paper"] .mascot-say::after{background:#fff;border-right:2.6px solid var(--ink);border-bottom:2.6px solid var(--ink)}
+
+/* 节拍格：页码在前、铅笔小方格、「第几拍 / 共几拍」 */
+#stage[data-scene="paper"] .pageno{order:-1}
+#stage[data-scene="paper"] .dots i{width:16px;height:16px;border:2px solid #C9CCD2;border-radius:3px 5px 2px 4px;rotate:-5deg;transition:background-color .3s,border-color .3s,transform .3s cubic-bezier(.34,1.56,.64,1)}
+#stage[data-scene="paper"] .dots i:nth-child(even){rotate:4deg}
+#stage[data-scene="paper"] .dots i.on{background:#FFD43B;border-color:#4A5368}
+#stage[data-scene="paper"] .dots i.now{transform:scale(1.22);border-color:#1E2B48}
+
+/* =====================================================================
+   方格纸自有版式组件（类名带 pp- 前缀；别的风格不认识，只是普通容器）
+   用法和每拍的动作写在 paper.js 开头；样板页见 samples/paper.js。这里只管样子：
+   - 静止时（直接摆到某一拍、阅读模式、减少动态、自检）一律是「画完」的样子：--pp-d、--pp-f1…4 默认 1，尺子 --pp-ru 默认 0
+   - 字一律实色；讲过的只由引擎退到 .8，这里不另加透明度
+   ===================================================================== */
+
+/* ---------- 手写字 .pp-hand：铅笔写的一行字（不折行，换行写 <br>）。字号、颜色在页面 CSS 里定；
+   48px 的字一个字正好占一格，96px 占四格，放在 48 的倍数上就是「写在格子里」 ---------- */
+[data-scene="paper"] .pp-hand{margin:0;font:400 48px/1.2 var(--f-hand);color:var(--ink);white-space:nowrap}
+[data-scene="paper"] .pp-hand .key{padding:0;margin:0}
+/* ---------- 红笔字 .pp-red：老师订正的字（红、加粗一点）；红只给订正用 ---------- */
+[data-scene="paper"] .pp-red{color:var(--pp-red);font-weight:700}
+
+/* ---------- 圈码 .pp-no：铅笔圈起来的序号（1、2、3 就是顺序）。圈是 ::before，写的时候顺时针一笔圈出来（--pp-d） ---------- */
+[data-scene="paper"] .pp-no{--pp-d:1;display:inline-grid;place-items:center;width:48px;height:48px;font:700 34px/1 var(--f-hand);color:var(--ink)}
+[data-scene="paper"] .pp-no::before{content:"";position:absolute;inset:0;border:3px solid var(--pp-pencil);border-radius:50%;rotate:-8deg;
+  -webkit-mask:conic-gradient(#000 calc(var(--pp-d) * 360deg),transparent 0);mask:conic-gradient(#000 calc(var(--pp-d) * 360deg),transparent 0)}
+
+/* ---------- 尺子线 .pp-rule：一条笔直的铅笔线。left/top 是起点，width 是长度，--r 是方向（0 朝右、-90deg 朝上、正的往下斜）；
+   终点 = 起点 + 长度 ×（cos 角度, sin 角度）。
+   ::after 是线（画到 --pp-d），::before 是尺子（透明塑料尺，带毫米刻度；--pp-ru 从 0 到 1 时出现）
+   .dash 虚线（随手描的引线，不用尺子）  .arrow 终点带箭头  .dim 尺寸线（两头各一道短竖）  .red 红笔
+   data-tick 加刻度（间距写在 --pp-tick，比如 --pp-tick:48px，画坐标轴用） ---------- */
+[data-scene="paper"] .pp-rule{--pp-d:1;--pp-ru:0;display:block;height:4px;margin:-2px 0 0;transform-origin:0 50%;rotate:var(--r);pointer-events:none}
+[data-scene="paper"] .pp-rule::after{content:"";position:absolute;left:0;top:0;width:calc(var(--pp-d) * 100%);height:100%;border-radius:2px;background:var(--pp-pencil)}
+[data-scene="paper"] .pp-rule::before{content:"";position:absolute;left:-36px;right:-36px;bottom:6px;height:50px;opacity:var(--pp-ru);translate:0 calc((1 - var(--pp-ru)) * -12px);
+  border:1.5px solid rgba(70,110,140,.42);border-radius:5px;box-shadow:0 3px 8px rgba(30,43,72,.12);
+  background:
+    repeating-linear-gradient(90deg,rgba(30,43,72,.62) 0 1.6px,transparent 1.6px 60px) 36px 100%/100% 20px no-repeat,
+    repeating-linear-gradient(90deg,rgba(30,43,72,.42) 0 1.2px,transparent 1.2px 12px) 36px 100%/100% 10px no-repeat,
+    rgba(206,228,240,.55)}
+[data-scene="paper"] .pp-rule.dash{height:3px;margin-top:-1.5px}
+[data-scene="paper"] .pp-rule.dash::after{background:repeating-linear-gradient(90deg,var(--pp-pencil) 0 12px,transparent 12px 22px)}
+[data-scene="paper"] .pp-rule.dash::before{display:none}
+[data-scene="paper"] .pp-rule.red::after{background:var(--pp-red)}
+[data-scene="paper"] .pp-rule .pp-ah{position:absolute;right:4px;top:50%;width:20px;height:20px;margin-top:-10px;border-top:4px solid var(--pp-pencil);border-right:4px solid var(--pp-pencil);rotate:45deg;opacity:calc((var(--pp-d) - .9) * 10)}
+[data-scene="paper"] .pp-rule .pp-end{position:absolute;top:50%;width:4px;height:30px;margin-top:-15px;border-radius:2px;background:var(--pp-pencil)}
+[data-scene="paper"] .pp-rule .pp-end:first-of-type{left:-2px}
+[data-scene="paper"] .pp-rule .pp-end+.pp-end{right:-2px;opacity:calc((var(--pp-d) - .9) * 10)}
+[data-scene="paper"] .pp-rule .pp-tk{position:absolute;left:0;top:-7px;width:calc(var(--pp-d) * 100%);height:18px;
+  background:repeating-linear-gradient(90deg,transparent 0 calc(var(--pp-tick,48px) - 3px),var(--pp-pencil) calc(var(--pp-tick,48px) - 3px) var(--pp-tick,48px))}
+
+/* ---------- 尺子框 .pp-frame：用尺子沿方格线画的一个框（框住重点）。四条边按 上 → 右 → 下 → 左 依次画出（--pp-f1…4）；
+   .double 里面再画一圈细线（作业本里框公式的双线框）。写死宽高，边放在 48 的倍数上；框只是线，字另放一块压在框里 ---------- */
+[data-scene="paper"] .pp-frame{--pp-f1:1;--pp-f2:1;--pp-f3:1;--pp-f4:1;--pp-fw:4px;--pp-fc:var(--pp-pencil);pointer-events:none;
+  background:
+    linear-gradient(var(--pp-fc),var(--pp-fc)) 0 0/calc(var(--pp-f1) * 100%) var(--pp-fw) no-repeat,
+    linear-gradient(var(--pp-fc),var(--pp-fc)) 100% 0/var(--pp-fw) calc(var(--pp-f2) * 100%) no-repeat,
+    linear-gradient(var(--pp-fc),var(--pp-fc)) 100% 100%/calc(var(--pp-f3) * 100%) var(--pp-fw) no-repeat,
+    linear-gradient(var(--pp-fc),var(--pp-fc)) 0 100%/var(--pp-fw) calc(var(--pp-f4) * 100%) no-repeat}
+[data-scene="paper"] .pp-frame.double::before{content:"";position:absolute;inset:12px;--pp-fw:2px;
+  background:
+    linear-gradient(var(--pp-fc),var(--pp-fc)) 0 0/calc(var(--pp-f1) * 100%) var(--pp-fw) no-repeat,
+    linear-gradient(var(--pp-fc),var(--pp-fc)) 100% 0/var(--pp-fw) calc(var(--pp-f2) * 100%) no-repeat,
+    linear-gradient(var(--pp-fc),var(--pp-fc)) 100% 100%/calc(var(--pp-f3) * 100%) var(--pp-fw) no-repeat,
+    linear-gradient(var(--pp-fc),var(--pp-fc)) 0 100%/var(--pp-fw) calc(var(--pp-f4) * 100%) no-repeat}
+
+/* ---------- 描点 .pp-dot：坐标纸上的一个点（left/top 写点的位置，元素自己居中）；.ring 再用铅笔打一个圈（落点、答案） ---------- */
+[data-scene="paper"] .pp-dot{--pp-d:1;position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:var(--pp-pencil);pointer-events:none}
+[data-scene="paper"] .pp-dot.ring::after{content:"";position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border:3.5px solid var(--pp-pencil);border-radius:50%;box-sizing:border-box;
+  -webkit-mask:conic-gradient(#000 calc(var(--pp-d) * 360deg),transparent 0);mask:conic-gradient(#000 calc(var(--pp-d) * 360deg),transparent 0)}
+
+/* ---------- 铅笔速写 .pp-fig：里面放一张内联 svg（写 viewBox，宽度跟着 .pp-fig），图形默认是铅笔线（不填色），
+   带一点手抖（滤镜 #pp-wobble，在 paper.js 的 defs 里）。svg 后面可以跟图注（.pp-hand），画完图再写。
+   上色类：.lt 细一点的淡线  .hl 荧光笔涂的一块黄（不描边）  .tea 淡淡的茶绿（不描边）  .dk 铅笔涂黑的小块  .rd 红笔线
+   不描边的块（.hl .tea .dk）在线画完后再淡入；把它们写在前面，就压在线的下面 ---------- */
+[data-scene="paper"] .pp-fig svg{display:block;width:100%;height:auto;overflow:visible;filter:url(#pp-wobble)}
+[data-scene="paper"] .pp-fig :is(path,line,polyline,polygon,circle,ellipse,rect){fill:none;stroke:var(--pp-pencil);stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round}
+[data-scene="paper"] .pp-fig .lt{stroke:var(--ink-2);stroke-width:2.4}
+[data-scene="paper"] .pp-fig .hl{fill:rgba(255,212,59,.5);stroke:none}
+[data-scene="paper"] .pp-fig .tea{fill:rgba(150,185,80,.4);stroke:none}
+[data-scene="paper"] .pp-fig .dk{fill:var(--pp-pencil);stroke:none}
+[data-scene="paper"] .pp-fig .rd{stroke:var(--pp-red)}
+
+/* ---------- 便签 .pp-note：一张贴上去的便签（颜色写 t-yellow / t-mint / t-pink / t-blue / t-peach，默认黄），右下角翘起一个小角。
+   贴上的那一下：从上面落下来、角翘得高（--pp-curl 1）、影子大（--pp-lift 1），按平以后角只剩一点 ---------- */
+[data-scene="paper"] .pp-note{--pp-curl:0;--pp-lift:0;padding:24px 40px 28px;color:var(--ink);rotate:var(--r);
+  background:var(--tint,#FFE27A) linear-gradient(rgba(40,30,10,.05),rgba(40,30,10,0) 26px);
+  box-shadow:0 calc(12px + var(--pp-lift) * 18px) calc(14px + var(--pp-lift) * 16px) calc(-10px - var(--pp-lift) * 4px) rgba(40,30,10,.38),0 1px 0 rgba(0,0,0,.05)}
+[data-scene="paper"] .pp-note::after{content:"";position:absolute;right:0;bottom:0;width:calc(26px + var(--pp-curl) * 46px);height:calc(26px + var(--pp-curl) * 46px);
+  background:linear-gradient(315deg,var(--bg) 0 47%,rgba(40,30,10,.16) 47% 51%,color-mix(in srgb,var(--tint,#FFE27A) 84%,#7A5A10) 51%,var(--tint,#FFE27A) 100%)}
+/* 不带 .abs 时（放在别的容器里）也要是定位元素，好放翘起的角；带 .abs 的由引擎的 .slide .abs 定成绝对定位 */
+[data-scene="paper"] :is(.pp-note,.pp-no):not(.abs){position:relative}
+[data-scene="paper"] .pp-note p{margin:0}
+
+/* ---------- 红笔订正 .pp-fix：老师在旁边写的一组红笔（箭头 .pp-arw → 对的写法 .pp-red → 打勾 .pp-tick），横排一行，一样样写出来 ---------- */
+[data-scene="paper"] .pp-fix{display:flex;align-items:center;gap:20px;white-space:nowrap}
+[data-scene="paper"] :is(.pp-arw,.pp-tick){display:block;flex:none;overflow:visible}
+[data-scene="paper"] :is(.pp-arw,.pp-tick) :is(path,line,polyline){fill:none;stroke:var(--pp-red);stroke-width:6;stroke-linecap:round;stroke-linejoin:round}
+[data-scene="paper"] .pp-arw{width:96px;height:40px}
+[data-scene="paper"] .pp-tick{width:72px;height:64px}
+
+/* ---------- 页边线 .pp-margin：作业本左边那道淡红竖线（只是装饰；left 写它在哪） ---------- */
+[data-scene="paper"] .pp-margin{position:absolute;top:240px;bottom:96px;width:0;border-left:2.5px solid var(--pp-red-soft);pointer-events:none}
+
+/* ---------- 写字时跟着走的笔尖（paper.js 临时放进页面、写完就拿走，页面里不用写）：铅笔，红笔订正时换成红笔 ---------- */
+[data-scene="paper"] .pp-tip{position:absolute;left:0;top:0;z-index:40;width:120px;height:120px;margin:-118px 0 0 -2px;pointer-events:none;filter:drop-shadow(3px 6px 3px rgba(30,43,72,.2))}
+[data-scene="paper"] .pp-tip svg{display:block;width:100%;height:100%}

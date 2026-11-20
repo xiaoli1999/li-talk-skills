@@ -1,0 +1,21 @@
+/* 第三部分的页面样式 */
+[data-id="p17"] .p17-q{padding:60px 56px 50px}
+[data-id="p17"] .p17-q::before{content:"“";position:absolute;left:40px;top:-40px;font:700 220px/1 Georgia,serif;color:#D6E4FC}
+[data-id="p17"] .p17-say{position:relative;font:700 56px/1.4 var(--f-hand);color:var(--ink)}
+[data-id="p17"] .p17-by{margin-top:30px;font-size:30px;color:var(--ink-3)}
+[data-id="p17"] .p17-rows{display:flex;flex-direction:column}
+[data-id="p17"] .p17-rows>div{padding:22px 0 26px;border-bottom:2px solid var(--fg-sep)}
+[data-id="p17"] .p17-rows>div>span{font-size:30px;color:var(--ink-3)}
+[data-id="p17"] .p17-rows .fg-vs{margin-top:6px}
+[data-id="p17"] .p17-rows .fg-old{font-size:56px}
+[data-id="p17"] .p17-rows .fg-new{font-size:104px}
+
+[data-id="p18"] .p18-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+[data-id="p18"] .p18-row>div{padding:20px 0 20px 40px;border-left:2px solid #DCE6F5}
+[data-id="p18"] .p18-row .fg-num{font-size:160px}
+[data-id="p18"] .p18-row p{margin-top:20px;font-size:40px;color:var(--ink-2)}
+
+[data-id="p19"] .p19-tag{padding:8px 24px 10px;border-radius:999px;background:#E3EDFE;color:var(--fg-blue-ink);font:600 34px/1.2 var(--f-hand)}
+
+[data-id="p21"] .p21-text h1{margin:30px 0 30px;font:700 72px/1.22 var(--f-hand);color:var(--ink)}
+[data-id="p21"] .p21-text p{font-size:36px;line-height:1.65;color:var(--ink-2)}

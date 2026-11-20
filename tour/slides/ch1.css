@@ -1,0 +1,47 @@
+/* 教程第一部分的页面样式（和 slides/ch1.js 配套）：每条选择器都以 [data-id="p…"] 开头，只管那一页；自己的零件类名用 p〈页号〉- 开头，
+   几页共用的（对白便签 p-say、「示意」一行 p-capt）用 p- 开头。颜色只用风格变量；晾画、藏书票、水彩纸的样子在 scenes/watercolor.css */
+
+/* ---------- 几页共用：绘本对白（一句一张便签，左边一块水彩小标签写是谁说的）和「示意」一行 ---------- */
+[data-id="p04"] .p-hd,[data-id="p06"] .p-hd{display:flex;align-items:center;gap:22px;margin:0}
+[data-id="p04"] .p-hint,[data-id="p06"] .p-hint{font:400 30px/1.3 var(--f-hand);color:var(--ink-3)}
+[data-id="p04"] .p-say,[data-id="p06"] .p-say{display:flex;align-items:flex-start;gap:24px;padding:28px 36px 30px}
+[data-id="p04"] .p-me,[data-id="p06"] .p-me{cursor:pointer}
+[data-id="p04"] .p-who,[data-id="p06"] .p-who{flex:none;margin-top:4px}
+[data-id="p04"] .p-txt,[data-id="p06"] .p-txt{margin:0;font:400 38px/1.45 var(--f-hand);color:var(--ink)}
+[data-id="p06"] .p-col{display:flex;flex-direction:column;gap:18px}
+[data-id="p06"] .p-opts{display:flex;gap:20px;margin:0}
+[data-id="p03"] .p-capt,[data-id="p04"] .p-capt,[data-id="p05"] .p-capt,[data-id="p06"] .p-capt{display:flex;align-items:center;gap:16px;margin:0;font:400 30px/1.3 var(--f-hand);color:var(--ink-2);white-space:nowrap}
+
+/* ---------- p01 封面：书名两行 104px（一行 8 个字约 870 宽）；副题 46px 压在一道很淡的天空蓝笔触上 ---------- */
+[data-id="p01"] .p01-h{font-size:104px;line-height:1.22}
+[data-id="p01"] .p01-sub{margin:0;font:400 46px/1.3 var(--f-hand);letter-spacing:.03em;color:var(--ink-2);white-space:nowrap}
+[data-id="p01"] .p01-plate>p b{color:var(--ink)}
+
+/* ---------- p02 ---------- */
+[data-id="p02"] .p02-c{padding:34px 40px}
+[data-id="p02"] .p02-no{display:flex;align-items:center;gap:22px}
+[data-id="p02"] .p02-lb{font:700 32px/1.2 var(--f-hand);color:var(--ink-2)}
+
+/* ---------- p03 ---------- */
+[data-id="p03"] .p03-big{margin:0;font:700 50px/1.35 var(--f-hand);color:var(--ink)}
+[data-id="p03"] .p03-sm{margin:30px 0 0;font-size:36px;line-height:1.55;color:var(--ink-2)}
+[data-id="p03"] .p03-core{padding:26px 30px;text-align:center}
+[data-id="p03"] .p03-core p{margin:0;font:700 46px/1.2 var(--f-hand);color:var(--ink);white-space:nowrap}
+[data-id="p03"] .p03-plt{padding:26px 34px;text-align:center}
+[data-id="p03"] .p03-plt p{margin:0;font:700 42px/1.2 var(--f-hand);white-space:nowrap}
+
+/* ---------- p04、p06 右边的卡 ---------- */
+[data-id="p04"] .p04-card p{font-size:36px;line-height:1.5}
+[data-id="p06"] .p06-card p{font-size:36px;line-height:1.5}
+
+/* ---------- p05 ---------- */
+[data-id="p05"] .p05-flow>li>span{font-size:34px}
+
+/* ---------- p07 金句页 ---------- */
+[data-id="p07"] .p07-q{font-size:92px;line-height:1.3;text-align:left;white-space:nowrap}
+[data-id="p07"] .p07-by{margin:0;font:400 42px/1.3 var(--f-hand);color:var(--ink-2)}
+[data-id="p07"] .p07-copy{display:flex;flex-direction:column;align-items:flex-start;gap:16px}
+[data-id="p07"] .p07-tip{margin:0;font:400 30px/1.3 var(--f-hand);color:var(--ink-3)}
+
+/* ---------- p08 晾画：说明两行，画纸宽 500 ---------- */
+[data-id="p08"] .p08-h>p{white-space:normal;line-height:1.4}

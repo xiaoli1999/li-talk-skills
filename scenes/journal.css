@@ -1,0 +1,220 @@
+/* =====================================================================
+   风格 · 像素手账 journal 的样子（行为在 journal.js）
+   很淡的点阵纸、墨绿字、琥珀强调；像素只给形象的对话框、提示框和节拍格
+   所有选择器的第一段都带 [data-scene="journal"]
+   ===================================================================== */
+
+/* 变量：点阵纸（--recede 由 journal.js 的 recede 写入） */
+[data-scene="journal"]{
+  --bg:#FAF8F2; --ink:#1F3B2F; --ink-2:#4E6559; --ink-3:#8A9A91; --line:#1F3B2F;
+  --mark:#F2A93B; --key-ink:#1F3B2F; --hl:rgba(255,196,64,.55); --accent:#F2A93B;
+  --card-ink:#1F3B2F; --card-ink-2:#4E6559; --paper:#FFFDF4;
+  --t-yellow:rgba(242,169,59,.16); --t-mint:rgba(79,174,98,.13); --t-pink:rgba(232,120,140,.12); --t-blue:rgba(90,150,210,.12); --t-white:#FFFDF4; --t-peach:rgba(242,169,59,.09);
+  --term-bg:#1E2A24; --term-ink:#ECEFE8;
+  --human:#E07A2E; --ai:#4FAE62; --idle:#A3ADA7;
+  --scene-bg:radial-gradient(circle,rgba(31,59,47,.10) 1.5px,transparent 2px) 18px 18px/36px 36px,#FAF8F2;
+}
+
+/* 主题行：章节是细线框带像素投影，主题下面一道琥珀荧光 */
+[data-scene="journal"] .s-topic .tc{color:var(--ink);border:2.5px solid var(--ink);border-radius:2px;box-shadow:4px 4px 0 rgba(31,59,47,.16);background:#FFFDF4}
+[data-scene="journal"] .s-topic .tt::before{content:"";position:absolute;z-index:-1;left:-.08em;right:-.08em;top:.52em;height:.46em;background:rgba(255,196,64,.55)}
+[data-scene="journal"] .explain{top:200px}   /* 大标题是 72px，往下让一点 */
+[data-scene="journal"] .s-title{font-weight:500;font-size:72px}
+
+/* 重点词：琥珀荧光带 */
+[data-scene="journal"] .key{font-size:1.1em;background-image:linear-gradient(transparent 52%,var(--hl) 52%,var(--hl) 94%,transparent 94%);background-size:calc(var(--k)*100%) 100%}
+
+/* 组件：细线框 */
+[data-scene="journal"] .card{background:var(--tint,transparent);border:2.5px solid var(--ink);border-radius:8px}
+[data-scene="journal"] .card.t-white{background:#FFFDF4}
+[data-scene="journal"] .card.tape::before{background:rgba(242,169,59,.35);box-shadow:none}
+[data-scene="journal"] .lab{background:var(--bg);padding:0 14px;top:-28px;left:22px}
+[data-scene="journal"] .steps>li::before{border-width:2.5px;border-radius:50%}
+[data-scene="journal"] .cell{border-width:2.5px;border-radius:8px;background:var(--tint,#FFFDF4)}
+[data-scene="journal"] .tag{border-radius:6px}
+[data-scene="journal"] .term{border-radius:8px;box-shadow:6px 8px 0 rgba(31,59,47,.12)}
+
+/* 可复制的命令：细线框；复制后变绿。「已复制」提示框是像素框 */
+[data-scene="journal"] .copy{color:var(--ink);background:#FFFDF4;border:2.5px solid var(--ink);border-radius:8px;font-weight:700}
+[data-scene="journal"] .copy .ps{color:#F2A93B;opacity:1}
+@media (hover:hover){[data-scene="journal"] .copy:hover{background:#FFF1CC}}
+[data-scene="journal"] .copy.is-copied{border-color:var(--ai);background:#EDF8EE}
+[data-scene="journal"] .copied-tip{padding:10px 18px 9px;color:#2F7A44;background:#FFFDF4;box-shadow:0 -5px 0 0 var(--ink),0 5px 0 0 var(--ink),-5px 0 0 0 var(--ink),5px 0 0 0 var(--ink),5px 10px 0 0 rgba(31,59,47,.14)}
+[data-scene="journal"] .copied-tip svg{display:none}
+[data-scene="journal"] .shot{background:#FFFDF4;border:2.5px solid var(--ink);border-radius:6px;box-shadow:6px 8px 0 rgba(31,59,47,.12)}
+[data-scene="journal"] .shot::before{display:none}
+[data-scene="journal"] .shot figcaption{color:var(--ink)}
+
+/* 形象（不管用哪个）：往下错开一格（6px）的墨绿硬影子，不虚化，跟像素对话框的硬投影一家（默认形象点点是一格 6px 的像素画）；
+   说的话是像素对话框，一格格弹出 */
+[data-scene="journal"] .mascot{--mascot-shadow:drop-shadow(0 6px 0 rgba(31,59,47,.14))}
+[data-scene="journal"] .mascot-say{padding:10px 18px 9px;color:var(--ink);background:#FFFDF4;border-radius:0;box-shadow:0 -6px 0 0 var(--ink),0 6px 0 0 var(--ink),-6px 0 0 0 var(--ink),6px 0 0 0 var(--ink),6px 12px 0 0 rgba(31,59,47,.14);transition:opacity .1s}
+[data-scene="journal"] .mascot-say.on{transition:none;animation:pxPop .22s steps(3,end) both}
+@keyframes pxPop{from{opacity:0;transform:scale(.3)}}
+[data-scene="journal"] .mascot-say::after{rotate:0deg;width:6px;height:6px;bottom:-18px;left:20px;background:var(--ink);box-shadow:6px -6px 0 var(--ink)}
+[data-scene="journal"] .mascot[data-face="left"] .mascot-say::after{left:auto;right:20px;box-shadow:-6px -6px 0 var(--ink)}
+
+/* 节拍格：像素格子，亮的填琥珀，当前一格蹦一下 */
+#stage[data-scene="journal"] .meta{font:700 26px/1 var(--f-mono)}
+#stage[data-scene="journal"] .meter .ml{display:none}#stage[data-scene="journal"] .meter .ms{display:inline}
+#stage[data-scene="journal"] .dots{gap:6px}
+#stage[data-scene="journal"] .dots i{width:22px;height:22px;box-shadow:inset 0 0 0 4px rgba(31,59,47,.5)}
+#stage[data-scene="journal"] .dots i.on{background:#F2A93B;box-shadow:inset 0 0 0 4px #1F3B2F}
+#stage[data-scene="journal"] .dots i.now{animation:cellHit .28s steps(3,end)}
+@keyframes cellHit{50%{transform:translateY(-8px)}}
+#stage[data-scene="journal"] .pageno{font:400 26px/1 var(--f-hand)}
+
+/* =====================================================================
+   手账自有的版式组件（.jn-*，用法见 journal.js 开头；样板页 samples/journal.js 把每个都用了一遍）
+   - 手账本：牛皮纸封面、模切贴纸、纸胶带、朱红印章、索引卡和牛皮纸口袋、涂色记录格；像素只留给 .jn-say 对话框
+   - 可读性：有字的纸（贴纸、卡片、标签、便签）都是实色浅底、墨绿字；胶带、印章、涂色只压在纸角和空白处
+   - 带 .abs 的保持绝对定位，没写 .abs 的才给 relative（选择器的分量比 .abs 高，直接写 position 会把 .abs 顶掉）
+   ===================================================================== */
+[data-scene="journal"]{
+  --jn-paper:#FFFDF7; --jn-kraft:#D8BA8A; --jn-kraft-d:#BC955F;
+  --jn-red:#C9443A; --jn-green:#2F8A4C;
+  --jn-c1:#F7CC7E; --jn-c2:#B6DEBC; --jn-c3:#F4BCC6; --jn-c4:#C2D9EF; --jn-c5:#EE8678;
+}
+
+/* 纸类组件不写 .abs 时也要给里面的伪元素当定位的底 */
+[data-scene="journal"] :is(.jn-book,.jn-label,.jn-memo,.jn-sheet,.jn-pocket):not(.abs){position:relative}
+
+/* 手绘小图：墨线 + 错开一点的彩色涂色 */
+[data-scene="journal"] .jn-art{display:block;width:160px;color:var(--ink);pointer-events:none}
+[data-scene="journal"] .jn-art svg{display:block;width:100%;height:auto;overflow:visible}
+[data-scene="journal"] .jn-art .c1{fill:var(--jn-c1)}
+[data-scene="journal"] .jn-art .c2{fill:var(--jn-c2)}
+[data-scene="journal"] .jn-art .c3{fill:var(--jn-c3)}
+[data-scene="journal"] .jn-art .c4{fill:var(--jn-c4)}
+[data-scene="journal"] .jn-art .c5{fill:var(--jn-c5)}
+[data-scene="journal"] .jn-art .ln{fill:none;stroke:currentColor;stroke-width:4.2;stroke-linecap:round;stroke-linejoin:round}
+[data-scene="journal"] .jn-art .tn{fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+
+/* 模切贴纸：淡色实底、一圈白边、一道很淡的模切线、软影子（--jn-lift 0→1 是揭起来时影子变大） */
+[data-scene="journal"] .jn-sticker{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;box-sizing:border-box;width:300px;height:190px;padding:8px 18px 12px;
+  border-radius:28px;background-color:#FCEDCD;color:var(--ink);rotate:var(--r);
+  box-shadow:0 0 0 11px var(--jn-paper),0 0 0 13px rgba(31,59,47,.10),0 calc(8px + var(--jn-lift,0) * 18px) calc(12px + var(--jn-lift,0) * 22px) calc(var(--jn-lift,0) * 6px) rgba(31,59,47,calc(.2 + var(--jn-lift,0) * .08))}
+[data-scene="journal"] .jn-sticker:not(.abs){position:relative}
+[data-scene="journal"] .jn-sticker.t-mint{background-color:#DDF1E0}
+[data-scene="journal"] .jn-sticker.t-blue{background-color:#DDEAF7}
+[data-scene="journal"] .jn-sticker.t-pink{background-color:#FBE0E5}
+[data-scene="journal"] .jn-sticker > b{display:block;font:700 44px/1.2 var(--f-hand);color:var(--ink);white-space:nowrap}
+[data-scene="journal"] .jn-sticker > .jn-art{width:120px}
+/* 只有图、不带字的小圆贴纸（封面、结尾点缀） */
+[data-scene="journal"] .jn-sticker.jn-mini{width:var(--s,124px);height:var(--s,124px);padding:6px;border-radius:50%}
+[data-scene="journal"] .jn-sticker.jn-mini > .jn-art{width:100%}
+
+/* 贴纸页：一张底纸，顶上一条琥珀色的挂头（中间一个挂孔）；格子是模切线 + 揭走后露出来的底纸 */
+[data-scene="journal"] .jn-sheet{box-sizing:border-box;border-radius:16px;background:var(--jn-paper);box-shadow:0 0 0 2px rgba(31,59,47,.12),8px 10px 0 rgba(31,59,47,.07)}
+[data-scene="journal"] .jn-sheet::before{content:"";position:absolute;left:0;right:0;top:0;height:46px;border-radius:16px 16px 0 0;background:repeating-linear-gradient(90deg,var(--jn-c1) 0 22px,#FBE2B0 22px 44px)}
+[data-scene="journal"] .jn-sheet::after{content:"";position:absolute;left:50%;top:14px;width:60px;height:16px;margin-left:-30px;border-radius:8px;background:var(--bg);box-shadow:inset 0 2px 3px rgba(31,59,47,.28)}
+[data-scene="journal"] .jn-slot{position:absolute;width:300px;height:190px}
+[data-scene="journal"] .jn-slot::before{content:"";position:absolute;inset:-13px;border-radius:40px;background:repeating-linear-gradient(-45deg,rgba(31,59,47,.03) 0 8px,transparent 8px 22px),#F5F3EC}
+[data-scene="journal"] .jn-slot::after{content:"";position:absolute;inset:-14px;border-radius:41px;border:2.5px dashed rgba(31,59,47,.34);pointer-events:none}
+[data-scene="journal"] .jn-ghost{width:100%;height:100%;rotate:none}
+/* 贴纸到拍：贴纸页上那一格的复制品揭走（引擎给页面加 .b1 .b2 …，data-jn-peel 是贴纸的拍号，建页时写上） */
+.slide[data-scene="journal"].b1 .jn-slot[data-jn-peel="1"] > .jn-ghost,
+.slide[data-scene="journal"].b2 .jn-slot[data-jn-peel="2"] > .jn-ghost,
+.slide[data-scene="journal"].b3 .jn-slot[data-jn-peel="3"] > .jn-ghost,
+.slide[data-scene="journal"].b4 .jn-slot[data-jn-peel="4"] > .jn-ghost,
+.slide[data-scene="journal"].b5 .jn-slot[data-jn-peel="5"] > .jn-ghost,
+.slide[data-scene="journal"].b6 .jn-slot[data-jn-peel="6"] > .jn-ghost{visibility:hidden}
+
+/* 纸胶带：两头撕口（撕口画在 ::before 的 clip-path 里，出场动的是外层的 clip-path） */
+[data-scene="journal"] .jn-tape{display:block;position:absolute;width:150px;height:40px;rotate:var(--r);z-index:4;pointer-events:none;filter:drop-shadow(0 1px 1px rgba(31,59,47,.2))}
+[data-scene="journal"] .jn-tape::before{content:"";position:absolute;inset:0;
+  clip-path:polygon(0 0,100% 0,calc(100% - 6px) 17%,100% 34%,calc(100% - 5px) 51%,100% 68%,calc(100% - 6px) 85%,100% 100%,0 100%,6px 84%,0 67%,5px 50%,0 33%,6px 16%);
+  background:repeating-linear-gradient(-45deg,rgba(240,164,52,.62) 0 9px,rgba(248,212,140,.6) 9px 18px)}
+[data-scene="journal"] .jn-tape.jn-mint::before{background:radial-gradient(circle,rgba(255,255,255,.8) 3px,transparent 3.8px) 0 0/16px 16px,rgba(116,192,138,.56)}
+[data-scene="journal"] .jn-tape.jn-pink::before{background:linear-gradient(rgba(255,255,255,.55) 2px,transparent 2px) 0 0/14px 14px,linear-gradient(90deg,rgba(255,255,255,.55) 2px,transparent 2px) 0 0/14px 14px,rgba(234,136,158,.52)}
+
+/* 印章：朱红双圈，正片叠底压在纸上；落下那一下洇开的一圈是 .jn-thud（临时的） */
+[data-scene="journal"] .jn-stamp{display:block;width:var(--s,180px);height:var(--s,180px);color:var(--jn-red);rotate:var(--r);mix-blend-mode:multiply;pointer-events:none}
+[data-scene="journal"] .jn-stamp:not(.abs){position:relative}
+[data-scene="journal"] .jn-stamp svg{display:block;width:100%;height:100%;overflow:visible}
+[data-scene="journal"] .jn-stamp .o{fill:none;stroke:currentColor;stroke-width:5.5}
+[data-scene="journal"] .jn-stamp .i{fill:none;stroke:currentColor;stroke-width:2}
+[data-scene="journal"] .jn-stamp .s{fill:currentColor}
+[data-scene="journal"] .jn-stamp .g{fill:none;stroke:currentColor;stroke-width:5.5;stroke-linecap:round;stroke-linejoin:round}
+[data-scene="journal"] .jn-thud{position:absolute;inset:-4px;border-radius:50%;border:7px solid var(--jn-red);pointer-events:none}
+/* 印章将要盖下去的地方：一圈很淡的虚线 */
+[data-scene="journal"] .jn-spot{display:block;box-sizing:border-box;width:var(--s,180px);height:var(--s,180px);border-radius:50%;border:3px dashed rgba(31,59,47,.26)}
+
+/* 勾、叉、箭头（大小跟着字号） */
+[data-scene="journal"] .jn-tick,[data-scene="journal"] .jn-cross{display:inline-block;width:1.05em;height:1.05em;vertical-align:-.16em}
+[data-scene="journal"] .jn-arw{display:inline-block;width:1.5em;height:.86em;vertical-align:-.05em}
+[data-scene="journal"] .jn-arw.jn-down{rotate:-90deg}
+[data-scene="journal"] .jn-tick svg,[data-scene="journal"] .jn-cross svg,[data-scene="journal"] .jn-arw svg{display:block;width:100%;height:100%;overflow:visible}
+[data-scene="journal"] .jn-tick path{fill:none;stroke:var(--jn-green);stroke-width:7.5;stroke-linecap:round;stroke-linejoin:round}
+[data-scene="journal"] .jn-cross path{fill:none;stroke:var(--jn-red);stroke-width:6.5;stroke-linecap:round}
+[data-scene="journal"] .jn-arw path{fill:none;stroke:var(--ink-2);stroke-width:3.6;stroke-linecap:round;stroke-linejoin:round}
+
+/* 手画圈里的编号、菜单式点线 */
+[data-scene="journal"] .jn-no{display:inline-grid;place-items:center;width:1.3em;height:1.3em;margin-right:.3em;vertical-align:.04em;font:700 .74em/1 var(--f-hand);color:var(--ink);border:3px solid var(--ink);border-radius:52% 46% 50% 48%/48% 52% 46% 50%}
+[data-scene="journal"] .jn-dots{display:block;height:0;border-bottom:5px dotted rgba(31,59,47,.32)}
+
+/* 索引卡：白卡、红色页眉线、淡蓝横线，软影子（--jn-head 是红线离卡片顶边多远） */
+[data-scene="journal"] .jn-card{box-sizing:border-box;padding:26px 34px 28px;border-radius:6px;color:var(--ink);rotate:var(--r);background-color:var(--jn-paper);
+  background-image:linear-gradient(rgba(201,68,58,.55),rgba(201,68,58,.55)),repeating-linear-gradient(transparent 0 61px,rgba(90,150,210,.32) 61px 64px);
+  background-size:100% 3px,100% calc(100% - var(--jn-head,108px));background-position:0 var(--jn-head,108px),0 calc(var(--jn-head,108px) + 3px);background-repeat:no-repeat;
+  box-shadow:0 0 0 1.5px rgba(31,59,47,.12),0 12px 18px -10px rgba(31,59,47,.38)}
+[data-scene="journal"] .jn-card:not(.abs){position:relative}
+
+/* 牛皮纸口袋：正面压在卡片上面（中间一道拇指缺口、一圈缝线）；背面深一点、高出一截，建页时补在页面最底下 */
+[data-scene="journal"] .jn-pocket{box-sizing:border-box;z-index:3;border-radius:6px 6px 22px 22px;background:var(--jn-kraft);
+  -webkit-mask:radial-gradient(circle 52px at 50% 0,transparent 50px,#000 52px);mask:radial-gradient(circle 52px at 50% 0,transparent 50px,#000 52px)}
+[data-scene="journal"] .jn-pocket::before{content:"";position:absolute;inset:16px 16px 18px;border:3px dashed rgba(112,78,36,.45);border-radius:4px 4px 14px 14px}
+[data-scene="journal"] .jn-pocket-back{position:absolute;z-index:0;box-sizing:content-box;padding-top:44px;margin-top:-44px;border-radius:22px;background:var(--jn-kraft-d);box-shadow:8px 10px 0 rgba(31,59,47,.08)}
+
+/* 涂色记录格：空格子（墨线框）在上，彩笔涂的那层在下面，涂的颜色透过格子露出来 */
+[data-scene="journal"] .jn-meter{--cw:56px;--ch:40px;--gap:12px;--px:0px;--py:0px;--mk:var(--jn-c1);box-sizing:border-box;padding:var(--py) var(--px)}
+[data-scene="journal"] .jn-meter:not(.abs){position:relative}
+[data-scene="journal"] .jn-cells{position:relative;z-index:1;display:flex;gap:var(--gap)}
+[data-scene="journal"] .jn-meter > .jn-ink{position:absolute;z-index:0;left:var(--px);top:var(--py);display:flex;gap:var(--gap);padding-right:var(--gap)}
+[data-scene="journal"] .jn-cells s,[data-scene="journal"] .jn-meter > .jn-ink s{display:block;flex:none;width:var(--cw);height:var(--ch);text-decoration:none;border-radius:9px}
+[data-scene="journal"] .jn-cells s{box-sizing:border-box;border:3.5px solid var(--ink)}
+[data-scene="journal"] .jn-meter > .jn-ink s{background:repeating-linear-gradient(-56deg,rgba(255,255,255,.3) 0 5px,transparent 5px 12px),var(--mk)}
+/* 温度计：横放，左边一个球，管子里一节一节 */
+[data-scene="journal"] .jn-meter[data-jn-cell="tube"]{--px:104px;--py:16px;--mk:var(--jn-c5);border:4px solid var(--ink);border-radius:999px;background:var(--jn-paper);padding-right:20px}
+[data-scene="journal"] .jn-meter[data-jn-cell="tube"]::before{content:"";position:absolute;left:-30px;top:50%;width:112px;height:112px;margin-top:-56px;border-radius:50%;box-sizing:border-box;border:4px solid var(--ink);
+  background:radial-gradient(circle at 38% 36%,rgba(255,255,255,.55) 0 9px,transparent 10px),var(--jn-c5)}
+[data-scene="journal"] .jn-meter[data-jn-cell="tube"] .jn-cells s{border-width:2.5px;border-color:rgba(31,59,47,.55);border-radius:6px}
+[data-scene="journal"] .jn-meter[data-jn-cell="tube"] .jn-ink s{border-radius:6px}
+/* 一排叶子 */
+[data-scene="journal"] .jn-meter[data-jn-cell="leaf"]{--cw:96px;--ch:62px;--gap:30px;--mk:#93CC9C}
+[data-scene="journal"] .jn-meter[data-jn-cell="leaf"] s{border-radius:4px 100% 4px 100%}
+[data-scene="journal"] .jn-meter[data-jn-cell="leaf"] .jn-cells s{background:linear-gradient(to top right,transparent calc(50% - 1.5px),rgba(31,59,47,.6) calc(50% - 1.5px) calc(50% + 1.5px),transparent calc(50% + 1.5px))}
+/* 钟面（秒表）：顶上一个按钮，一圈 12 道刻度，一根指针指着 12 点；涂色那层在刻度下面 */
+[data-scene="journal"] .jn-clock{width:var(--s,176px);height:var(--s,176px);box-sizing:border-box;border-radius:50%;border:4.5px solid var(--ink);background:var(--jn-paper)}
+[data-scene="journal"] .jn-clock:not(.abs){position:relative}
+[data-scene="journal"] .jn-clock::before{content:"";position:absolute;inset:3px;z-index:2;border-radius:50%;background:repeating-conic-gradient(from -1.3deg,var(--ink) 0 2.6deg,transparent 2.6deg 30deg);
+  -webkit-mask:radial-gradient(closest-side,transparent calc(100% - 17px),#000 calc(100% - 16px));mask:radial-gradient(closest-side,transparent calc(100% - 17px),#000 calc(100% - 16px))}
+[data-scene="journal"] .jn-clock::after{content:"";position:absolute;left:50%;top:-30px;width:38px;height:26px;margin-left:-19px;box-sizing:border-box;border:4.5px solid var(--ink);border-radius:7px 7px 2px 2px;background:var(--jn-paper)}
+[data-scene="journal"] .jn-hand{position:absolute;left:50%;top:50%;z-index:3;width:7px;height:56px;margin:-56px 0 0 -3.5px;border-radius:4px;background:var(--ink)}
+[data-scene="journal"] .jn-hand::after{content:"";position:absolute;left:50%;bottom:-9px;width:20px;height:20px;margin-left:-10px;border-radius:50%;background:var(--ink)}
+[data-scene="journal"] .jn-clock > .jn-ink{position:absolute;inset:6px;z-index:1;border-radius:50%;
+  background:repeating-linear-gradient(-56deg,rgba(255,255,255,.3) 0 5px,transparent 5px 12px),var(--jn-c1);
+  -webkit-mask:conic-gradient(#000 calc(var(--jn-p,1) * 360deg),transparent 0);mask:conic-gradient(#000 calc(var(--jn-p,1) * 360deg),transparent 0)}
+
+/* 像素对话框（形象说的话）：和形象头上的气泡同一种一格 6px 的像素框，尾巴朝左下（.jn-r 朝右下） */
+[data-scene="journal"] .jn-say{position:absolute;padding:16px 28px 14px;background:var(--jn-paper);color:var(--ink);font:400 44px/1.25 var(--f-hand);white-space:nowrap;
+  box-shadow:0 -6px 0 0 var(--ink),0 6px 0 0 var(--ink),-6px 0 0 0 var(--ink),6px 0 0 0 var(--ink),6px 12px 0 0 rgba(31,59,47,.14)}
+[data-scene="journal"] .jn-say::after{content:"";position:absolute;left:-18px;bottom:10px;width:6px;height:6px;background:var(--ink);box-shadow:6px -6px 0 var(--ink),6px 0 0 var(--ink)}
+[data-scene="journal"] .jn-say.jn-r::after{left:auto;right:-18px;box-shadow:-6px -6px 0 var(--ink),-6px 0 0 var(--ink)}
+
+/* 手账本封面：牛皮纸面（很淡的纤维点）、左边书脊、一圈缝线；松紧带竖在右边，上下各探出一点 */
+[data-scene="journal"] .jn-book{box-sizing:border-box;border-radius:10px 28px 28px 10px;
+  background:radial-gradient(rgba(112,78,36,.13) 1.2px,transparent 1.8px) 0 0/13px 13px,radial-gradient(rgba(255,255,255,.18) 1px,transparent 1.6px) 6px 7px/17px 17px,var(--jn-kraft);
+  box-shadow:12px 14px 0 rgba(31,59,47,.10),0 30px 40px -28px rgba(70,46,14,.5)}
+[data-scene="journal"] .jn-book::before{content:"";position:absolute;left:0;top:0;bottom:0;width:80px;border-radius:10px 0 0 10px;background:var(--jn-kraft-d);box-shadow:inset -4px 0 0 rgba(90,60,25,.22)}
+[data-scene="journal"] .jn-book::after{content:"";position:absolute;inset:26px 26px 26px 106px;border:3px dashed rgba(112,78,36,.38);border-radius:18px;pointer-events:none}
+[data-scene="journal"] .jn-band{position:absolute;top:-12px;bottom:-12px;width:32px;border-radius:6px;background:linear-gradient(90deg,#24402F,#3E6553 42%,#2C4A3D 70%,#223B2E);box-shadow:4px 0 0 rgba(31,59,47,.16);z-index:2}
+/* 标签纸：双线框 */
+[data-scene="journal"] .jn-label{box-sizing:border-box;border:3.5px solid var(--ink);border-radius:20px;background:var(--jn-paper);box-shadow:8px 10px 0 rgba(31,59,47,.14)}
+[data-scene="journal"] .jn-label::before{content:"";position:absolute;inset:9px;border:1.8px solid var(--ink);border-radius:13px;pointer-events:none}
+
+/* 便签纸（结尾放金句）：从线圈本上撕下来的一页——顶上一排穿孔，一圈虚线内框 */
+[data-scene="journal"] .jn-memo{box-sizing:border-box;border-radius:14px;background:var(--jn-paper);box-shadow:0 0 0 2px rgba(31,59,47,.12),10px 12px 0 rgba(31,59,47,.08)}
+[data-scene="journal"] .jn-memo::before{content:"";position:absolute;inset:58px 22px 22px;border:3px dashed rgba(31,59,47,.24);border-radius:8px;pointer-events:none}
+[data-scene="journal"] .jn-memo::after{content:"";position:absolute;left:40px;right:40px;top:18px;height:22px;pointer-events:none;
+  background:radial-gradient(circle,var(--bg) 0 8px,rgba(31,59,47,.22) 8.5px 10px,transparent 10.5px) 0 0/44px 22px repeat-x}

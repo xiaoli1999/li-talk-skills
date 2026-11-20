@@ -1,0 +1,58 @@
+/* 方果 fangguo 自己的样板页的页面样式（和 samples/fangguo.js 配套）
+   - 每条选择器都以 [data-id="t-fangguo-…"] 开头，只管那一页；抄样板时连同这里的规则一起抄，[data-id="…"] 和 t-fangguo-… 的类名换成新页面的
+   - 版式组件（.fg-*）的样子在 scenes/fangguo.css 里，这里只补这几页自己的字号和位置
+   - 不给讲过的块另加透明度、不调灰：讲过的只由引擎退到 .8 */
+
+/* cover */
+[data-id="t-fangguo-cover"] .t-fangguo-cover-h{font-size:108px;line-height:1.14}
+
+/* quote */
+[data-id="t-fangguo-quote"] .t-fangguo-quote-tags{display:flex;gap:24px}
+[data-id="t-fangguo-quote"] .t-fangguo-quote-tags span{padding:14px 34px 16px;border-radius:999px;background:#fff;box-shadow:0 10px 26px rgba(30,60,110,.1),inset 0 0 0 2px #D6E4FC;color:var(--fg-blue-ink);font:600 44px/1.2 var(--f-hand)}
+
+/* hero */
+[data-id="t-fangguo-hero"] .t-fangguo-hero-n{font-size:380px}
+[data-id="t-fangguo-hero"] .t-fangguo-hero-n small{font-size:.42em}
+[data-id="t-fangguo-hero"] .fg-cap{margin-top:24px}
+[data-id="t-fangguo-hero"] .t-fangguo-hero-side>:nth-child(2){margin-left:-50px}
+[data-id="t-fangguo-hero"] .t-fangguo-hero-side>:nth-child(3){margin-left:-100px}
+
+/* chart */
+[data-id="t-fangguo-chart"] .card{min-height:600px}
+[data-id="t-fangguo-chart"] .t-fangguo-chart-bar{padding-right:120px}
+[data-id="t-fangguo-chart"] .t-fangguo-chart-pie{z-index:2;box-shadow:0 2px 4px rgba(22,35,63,.05),0 36px 80px rgba(22,35,63,.14)}
+[data-id="t-fangguo-chart"] .t-fangguo-chart-hi{position:absolute;right:140px;bottom:0;width:150px;height:1px}
+
+/* demo */
+[data-id="t-fangguo-demo"] .t-fangguo-demo-sum{margin:0 26px 26px;padding:16px 22px;border-radius:16px;background:#F3F8FE;font-size:30px;color:var(--ink-2)}
+[data-id="t-fangguo-demo"] .t-fangguo-demo-sum b{font-family:var(--f-num);color:var(--fg-blue-ink)}
+[data-id="t-fangguo-demo"] .t-fangguo-demo-vs{margin-top:22px}
+[data-id="t-fangguo-demo"] .t-fangguo-demo-vs .fg-old{font-size:64px}
+[data-id="t-fangguo-demo"] .t-fangguo-demo-new{margin-top:6px;font-size:200px}
+
+/* mock */
+[data-id="t-fangguo-mock"] .fg-cap{margin-top:22px;text-align:center;width:400px}
+[data-id="t-fangguo-mock"] .t-fangguo-mock-arrow{display:block;width:100px;height:40px;background:#9DBCF3;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 40' fill='none' stroke='black' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h88M76 6l16 14-16 14'/%3E%3C/svg%3E") center/contain no-repeat;
+          mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 40' fill='none' stroke='black' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h88M76 6l16 14-16 14'/%3E%3C/svg%3E") center/contain no-repeat}
+[data-id="t-fangguo-mock"] .t-fangguo-mock-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px 60px;justify-items:center}
+[data-id="t-fangguo-mock"] .fg-prod{width:250px}
+
+/* lens */
+[data-id="t-fangguo-lens"] .t-fangguo-lens-t{padding:6px 26px 4px}
+[data-id="t-fangguo-lens"] .t-fangguo-lens-t p{display:grid;grid-template-columns:1fr 1.2fr 1.1fr 1.4fr;align-items:center;gap:14px;padding:16px 10px;border-bottom:2px solid #F2F4F7;font-size:30px;color:var(--ink-2);white-space:nowrap}
+[data-id="t-fangguo-lens"] .t-fangguo-lens-t p b{font-family:var(--f-num);color:var(--ink)}
+[data-id="t-fangguo-lens"] .t-fangguo-lens-t .t-fangguo-lens-h{color:var(--ink-3);font-size:26px}
+[data-id="t-fangguo-lens"] .t-fangguo-lens-t p>span:last-child{display:flex;align-items:center;gap:14px}
+[data-id="t-fangguo-lens"] .t-fangguo-lens-t i{display:block;width:120px;height:12px;border-radius:6px;background:linear-gradient(90deg,#3B74F0 calc(var(--v) * 100%),#E6ECF5 0)}
+[data-id="t-fangguo-lens"] .t-fangguo-lens-bad{color:#B4303F}
+[data-id="t-fangguo-lens"] .t-fangguo-lens-bad i{background:linear-gradient(90deg,#E9505F calc(var(--v) * 100%),#F8E1E4 0)!important}
+[data-id="t-fangguo-lens"] .t-fangguo-lens-bad>span:last-child{color:#B4303F;font-weight:600}
+[data-id="t-fangguo-lens"] .t-fangguo-lens-sum{display:flex;align-items:baseline;gap:22px;margin:18px 26px 26px;padding:16px 24px;border-radius:18px;background:#F3F8FE;font-size:30px;color:var(--ink-2)}
+[data-id="t-fangguo-lens"] .t-fangguo-lens-sum .fg-num{font-size:64px}
+[data-id="t-fangguo-lens"] .t-fangguo-lens-notes{display:flex;flex-direction:column;gap:26px}
+[data-id="t-fangguo-lens"] .t-fangguo-lens-notes p{padding:22px 28px;border-radius:24px;background:#fff;box-shadow:var(--fg-card);font-size:34px;line-height:1.4;color:var(--ink-2)}
+[data-id="t-fangguo-lens"] .t-fangguo-lens-notes b{display:block;margin-bottom:6px;font-size:38px;color:var(--ink)}
+
+/* hub */
+[data-id="t-fangguo-hub"] .t-fangguo-hub-tag{padding:8px 24px 10px;border-radius:999px;background:#E3EDFE;color:var(--fg-blue-ink);font:600 34px/1.2 var(--f-hand)}

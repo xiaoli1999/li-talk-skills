@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>li-talk-skills 样册</title>
+<!-- 样册：全部风格、全部形象，以及两套样板页：
+     - 每种风格自己的样板页 samples/<键名>.js、.css：同一个虚构主题，按这种风格自己的版式和每拍动作做，用了风格的专用组件。
+       地址带 ?scene=<键名>、这种风格有自己的样板时，样册只放它自己的样板页（见下面引入章节前后的两段小脚本）。
+     - 通用样板页 samples/samples.js、.css（封面、清单、步骤、结尾 4 页）：只用通用组件，哪种风格都能用。
+       地址不带 ?scene=，或者这种风格还没有自己的样板时放它；它保持通用，不加只有某种风格认的东西。
+     直接打开（地址不带 ?scene=、?selftest、#页/拍）先显示风格总览：每种风格一张卡片，按类分组（手绘风、现代风、像素风、企业风），点一张就用 ?scene=<键名> 从第一页看。
+     地址加 ?scene=<键名> 换成那个风格看；左下角的小条点一下也是这样换（一律回到第一页、播开场），点「全部风格」回到总览。
+     不写 li-talk-mascot：形象跟着风格走（每种风格用自己的默认形象，见 scenes/index.json）。
+     引入顺序照入口模板 index.html（接口约定 G）；通用样板页放在两对「章节」注释之间，不开浏览器的 check 读模板目录时查的是它们；
+     各风格自己的样板页由各自的预览课件 test/fixtures/decks/native-<键名>/ 检查 -->
+<script>/* 自检用：记下页面里的报错和加载失败 */window.__deckErrors=[];addEventListener('error',function(e){var t=e.target;__deckErrors.push(t&&t!==window&&(t.src||t.href)?'加载失败：'+(t.src||t.href):String(e.message))},true);(function(c){var o=c.error;c.error=function(){__deckErrors.push([].slice.call(arguments).join(' '));return o.apply(c,arguments)}})(console);</script>
+<link rel="stylesheet" href="vendor/fonts/wenkai-lite.css">
+<link rel="stylesheet" href="engine/engine.css">
+<link rel="stylesheet" href="scenes/paper.css">
+<link rel="stylesheet" href="scenes/board.css">
+<link rel="stylesheet" href="scenes/journal.css">
+<link rel="stylesheet" href="scenes/desk.css">
+<link rel="stylesheet" href="scenes/watercolor.css">
+<link rel="stylesheet" href="scenes/ink.css">
+<link rel="stylesheet" href="scenes/blueprint.css">
+<link rel="stylesheet" href="scenes/comic.css">
+<link rel="stylesheet" href="scenes/dark.css">
+<link rel="stylesheet" href="scenes/frost.css">
+<link rel="stylesheet" href="scenes/glass.css">
+<link rel="stylesheet" href="scenes/flat.css">
+<link rel="stylesheet" href="scenes/magazine.css">
+<link rel="stylesheet" href="scenes/brutal.css">
+<link rel="stylesheet" href="scenes/fangguo.css">
+<link rel="stylesheet" href="scenes/pixel.css">
+<!-- 章节样式（开始） -->
+<link rel="stylesheet" href="samples/samples.css">
+<!-- 章节样式（结束） -->
+<style>
+/* 换风格的小条：固定在窗口左下角，盖在舞台上面一小块，可以收起；不属于课件，自检模式下不放 */
+.gl-bar{position:fixed;left:12px;bottom:12px;z-index:700;display:flex;align-items:center;gap:4px;max-width:calc(100vw - 24px);padding:5px;border-radius:12px;
+  background:rgba(24,26,30,.8);box-shadow:0 6px 18px rgba(0,0,0,.28);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  font:500 13px/1 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;color:#E9EBEE;user-select:none;-webkit-user-select:none}
+.gl-bar button{margin:0;padding:7px 10px;border:0;border-radius:8px;background:transparent;color:inherit;font:inherit;cursor:pointer;white-space:nowrap}
+.gl-bar button:hover{background:rgba(255,255,255,.12)}
+.gl-bar button:focus-visible{outline:2px solid #9CC3F5;outline-offset:1px}
+.gl-bar button[aria-current="true"]{background:#F1F3F5;color:#17191D}
+.gl-bar .gl-toggle{font-weight:700}
+.gl-bar .gl-all{flex:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
+.gl-bar .gl-list{display:flex;flex-wrap:wrap;align-items:center;gap:2px}
+.gl-bar .gl-fam{padding:0 2px 0 8px;color:rgba(233,235,238,.5);white-space:nowrap}
+.gl-bar .gl-fam::after{content:"："}
+.gl-bar .gl-hint{padding:0 8px 0 10px;color:rgba(233,235,238,.5);white-space:nowrap}
+.gl-bar.folded .gl-list,.gl-bar.folded .gl-hint{display:none}
+/* 16 个按钮加「全部风格」：窗口不到 1600 宽时排紧一点（字小一号、家名换成一道细竖线、不显示「← → 翻页」），
+   1280 宽时展开的小条也只占左边一排，不压右下角的署名（署名最宽的像素游戏也还隔着几十 px） */
+@media (max-width:1599px){
+  .gl-bar{gap:2px;font-size:12px}
+  .gl-bar button{padding:6px 3px}
+  .gl-bar .gl-all{padding:6px 5px}
+  .gl-bar .gl-fam{width:1px;height:16px;margin:0 4px;padding:0;overflow:hidden;font-size:0;background:rgba(233,235,238,.3)}
+  .gl-bar .gl-fam::after{content:none}
+  .gl-bar .gl-hint{display:none}
+}
+
+/* 风格总览：直接打开样册时的首页，铺满窗口、盖在课件上面；每种风格一张卡片，按类排（手绘风、现代风、像素风、企业风）。
+   整页是水彩田园的样子：水彩纸底、上方淡淡的天空蓝和暖阳、下方一条草坡，标题用楷体；
+   总览本身套 data-scene="watercolor"，借用水彩田园的颜料遮罩（--wc-pad1、--wc-pad2、--wc-blob、--wc-brush1）和纸纹（--scene-bg）。
+   卡片套自己风格的 data-scene，上半截是缩小的 1920×1080 舞台（这种风格的背景层、风格名、形象），下半截是一张纸，写「样子」和「适合讲什么」。
+   卡片铺满整个窗口（四周留安全距离），列数由脚本按窗口挑：让卡片尽量大、一屏放下（16 种在 1920×1080 上是 6 列 3 行，最后一行靠左）。
+   类名用 sv- 开头，免得撞上风格自己的类名（液态玻璃用了 gl-） */
+.sv-home{position:fixed;inset:0;z-index:1000;overflow:auto;overscroll-behavior:contain;color:#3A322B;background:var(--scene-bg,#FBF7EE);
+  font:400 15px/1.6 "PingFang SC","Microsoft YaHei UI","Microsoft YaHei",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.sv-home:focus{outline:none}
+/* 天空、暖阳、草坡：铺在最底下，不挡点击 */
+.sv-home::before{content:"";position:fixed;inset:0 0 auto;height:60vh;pointer-events:none;
+  background:radial-gradient(55% 75% at 12% 0%,rgba(244,195,90,.30),transparent 70%),radial-gradient(60% 80% at 70% -10%,rgba(142,195,230,.45),transparent 72%)}
+.sv-hills{position:fixed;left:0;right:0;bottom:0;width:100%;height:clamp(70px,11vh,130px);pointer-events:none}
+.sv-wrap{position:relative;--pad:clamp(20px,3.6vw,72px);--gap:clamp(18px,1.7vw,34px);margin:0 auto;padding:clamp(22px,3.2vh,44px) var(--pad) clamp(60px,9vh,110px)}
+.sv-eyebrow{margin:0 0 2px;font:700 15px/1.4 var(--f-hand,"WK",KaiTi,serif);letter-spacing:.2em;color:#4F8DBF}
+.sv-eyebrow::before{content:"～ "}.sv-eyebrow::after{content:" ～"}
+.sv-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 22px;margin:0 0 clamp(16px,2.6vh,30px)}
+.sv-head h1{position:relative;isolation:isolate;margin:0;font:700 clamp(28px,2.6vw,44px)/1.2 "WK","LXGW WenKai",KaiTi,STKaiti,serif;letter-spacing:.04em;color:#3A322B}
+.sv-head h1::after{content:"";position:absolute;z-index:-1;left:-.1em;right:-.1em;bottom:.04em;height:.42em;background:var(--wc-brush1) 0 0/100% 100% no-repeat}
+.sv-head p{margin:0;max-width:62em;font-size:clamp(14px,1vw,16px);color:#4F463E}
+.sv-legend{display:flex;flex-wrap:wrap;gap:10px;width:100%}
+.sv-chip{position:relative;isolation:isolate;display:inline-flex;align-items:center;gap:8px;padding:4px 16px 5px;font:500 14px/1.4 "WK","LXGW WenKai",KaiTi,serif;color:#4F463E}
+.sv-chip::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--fc);opacity:.4;-webkit-mask:var(--wc-pad2) 0 0/100% 100% no-repeat;mask:var(--wc-pad2) 0 0/100% 100% no-repeat}
+.sv-chip b{font-weight:700;color:#3A322B}
+.sv-f-hand{--fc:#F4C35A}.sv-f-modern{--fc:#8EC3E6}.sv-f-pixel{--fc:#9CCB7E}.sv-f-corp{--fc:#C9BFB2}
+/* 卡片：像一张张夹在画板上的画纸，微微歪一点，鼠标移上去抬起来摆正 */
+.sv-grid{display:flex;flex-wrap:wrap;justify-content:flex-start;gap:var(--gap)}
+.sv-card{position:relative;display:flex;flex-direction:column;flex:none;width:var(--cw,300px);min-width:0;padding:8px 8px 0;text-decoration:none;
+  background:#FFFEFA;box-shadow:0 1px 2px rgba(58,50,43,.08),0 12px 26px -12px rgba(58,50,43,.36);border-radius:4px 6px 5px 7px;
+  transition:transform .3s cubic-bezier(.3,1.5,.5,1),box-shadow .2s}
+.sv-card:nth-child(3n+1){transform:rotate(-.7deg)}.sv-card:nth-child(3n+2){transform:rotate(.5deg)}.sv-card:nth-child(3n){transform:rotate(-.25deg)}
+.sv-card:hover{transform:translateY(-6px) rotate(0);box-shadow:0 1px 2px rgba(58,50,43,.08),0 24px 40px -14px rgba(58,50,43,.45)}
+.sv-card:focus-visible{outline:3px solid #4F8DBF;outline-offset:4px}
+.sv-pv{position:relative;flex:none;aspect-ratio:16/9;overflow:hidden;border-radius:2px}
+.sv-mini{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;pointer-events:none}
+.sv-mini>.bg{display:block!important;visibility:visible}   /* 手机上引擎进阅读模式会把背景层藏起来，缩略舞台里照样显示 */
+.sv-mini-title{position:absolute;left:150px;top:330px;isolation:isolate;margin:0;font:700 192px/1.2 var(--f-hand);color:var(--ink);white-space:nowrap}
+.sv-mini-title::after{content:"";position:absolute;z-index:-1;left:-.06em;right:-.06em;bottom:.1em;height:.3em;background:var(--hl);border-radius:.06em}
+.sv-mini-art{position:absolute;right:120px;bottom:120px}
+.sv-mini-art svg{display:block;width:100%;height:100%;overflow:visible}
+.sv-mini-art.sv-px svg{shape-rendering:crispEdges}
+/* 下半截是纸，统一用水彩田园的墨色，不跟着各风格变 */
+.sv-info{flex:1;display:flex;flex-direction:column;gap:3px;padding:9px 6px 11px;font-size:13px;line-height:1.5;font-family:"PingFang SC","Microsoft YaHei UI","Microsoft YaHei",sans-serif}
+.sv-look{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#6B6157}
+.sv-fit{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#3A322B}
+.sv-fit b{margin-right:.3em;font-weight:700;color:#4F8DBF}
+.sv-key{position:absolute;right:8px;top:8px;padding:1px 8px 2px;border-radius:7px 5px 8px 4px;background:rgba(255,254,250,.86);color:#6B6157;
+  font:500 11px/1.5 ui-monospace,Consolas,"Cascadia Mono",monospace;letter-spacing:.02em}
+.sv-tag{position:absolute;left:8px;top:8px;display:inline-flex;align-items:center;gap:6px;padding:2px 10px 3px 8px;border-radius:9px 6px 10px 5px;background:rgba(255,254,250,.92);
+  box-shadow:0 1px 3px rgba(58,50,43,.18);font:700 12px/1.5 "WK","LXGW WenKai",KaiTi,serif;color:#3A322B}
+.sv-tag::before{content:"";width:9px;height:9px;border-radius:52% 48% 55% 45%;background:var(--fc);box-shadow:0 0 0 1px rgba(58,50,43,.18)}
+/* 放不下一屏时（手机、很矮的窗口）：按宽度排列数，可以滚动 */
+.sv-home:not(.sv-fit) .sv-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.sv-home:not(.sv-fit) .sv-card{width:auto}
+@media (max-width:999px){.sv-home:not(.sv-fit) .sv-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:699px){.sv-home:not(.sv-fit) .sv-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.sv-head h1{font-size:26px}}
+@media (max-width:420px){.sv-home:not(.sv-fit) .sv-grid{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.sv-card{transition:none}.sv-card:hover{transform:none}}
+@media (prefers-reduced-motion:reduce){.sv-card{transition:none}.sv-card:hover{transform:none}}
+</style>
+</head>
+<body class="loading">
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/rough.min.js"></script>
+<script src="engine/core.js"></script>
+<script src="engine/build.js"></script>
+<script src="engine/beats.js"></script>
+<script src="engine/mascot.js"></script>
+<script src="engine/pages.js"></script>
+<script src="engine/ui.js"></script>
+<script src="engine/presenter.js"></script>
+<script src="engine/tools.js"></script>
+<script src="engine/selftest.js"></script>
+<script src="scenes/paper.js"></script>
+<script src="scenes/board.js"></script>
+<script src="scenes/journal.js"></script>
+<script src="scenes/desk.js"></script>
+<script src="scenes/watercolor.js"></script>
+<script src="scenes/ink.js"></script>
+<script src="scenes/blueprint.js"></script>
+<script src="scenes/comic.js"></script>
+<script src="scenes/dark.js"></script>
+<script src="scenes/frost.js"></script>
+<script src="scenes/glass.js"></script>
+<script src="scenes/flat.js"></script>
+<script src="scenes/magazine.js"></script>
+<script src="scenes/brutal.js"></script>
+<script src="scenes/fangguo.js"></script>
+<script src="scenes/pixel.js"></script>
+<script src="mascots/jianjian.js"></script>
+<script src="mascots/shasha.js"></script>
+<script src="mascots/diandian.js"></script>
+<script src="mascots/juanjuan.js"></script>
+<script src="mascots/duoduo.js"></script>
+<script src="mascots/mowan.js"></script>
+<script src="mascots/weiguang.js"></script>
+<script src="mascots/xiaowu.js"></script>
+<script src="mascots/toutou.js"></script>
+<script src="mascots/xiaoye.js"></script>
+<script src="mascots/xiaoqian.js"></script>
+<script src="mascots/pengpeng.js"></script>
+<script src="mascots/xiaoqi.js"></script>
+<script src="mascots/quanquan.js"></script>
+<script src="mascots/daodao.js"></script>
+<script src="mascots/fangfang.js"></script>
+<script>
+/* 每种风格自己的样板页：地址带 ?scene=<键名>、NATIVE 里有这种风格时，只放它自己的样板页（id 以 t-<键名>- 开头），
+   下面通用样板页的 Deck.add 在这里拦下；引入它自己的样板文件在章节注释后面那段。
+   新做好一种风格的样板，就把键名加进 NATIVE（test/gallery.test.mjs 会对照 samples/ 里的文件） */
+(function () {
+  var NATIVE = ['blueprint', 'board', 'brutal', 'comic', 'dark', 'desk', 'fangguo', 'flat', 'frost', 'glass', 'ink', 'journal', 'magazine', 'paper', 'pixel', 'watercolor'];
+  var k = new URLSearchParams(location.search).get('scene');
+  if (!k || NATIVE.indexOf(k) < 0 || !window.Deck) return;
+  window.LI_TALK_SAMPLES = k;
+  var add = Deck.add, own = 't-' + k + '-';
+  Deck.add = function (def) { if (def && typeof def.id === 'string' && def.id.indexOf(own) === 0) return add.apply(this, arguments); };
+})();
+</script>
+<!-- 章节（开始）：通用样板页（samples/samples.js），页面顺序 = 引入顺序 -->
+<script src="samples/samples.js"></script>
+<!-- 章节（结束） -->
+<script>
+/* 这种风格自己的样板页：样册是双击打开的本地文件，不能 fetch，用 document.write 同步引入（引擎启动前就加好页）。
+   标签名拆开写：不开浏览器的 check 会把这里当成引入行去找文件 */
+if (window.LI_TALK_SAMPLES) (function (b) {
+  document.write('<' + 'link rel="stylesheet" href="' + b + '.css"><' + 'script src="' + b + '.js"></' + 'script>');
+})('samples/' + window.LI_TALK_SAMPLES);
+</script>
+<script>
+/* 风格总览用的风格说明：从 scenes/index.json 抄来的 key、label、family、mascot、look、fit。
+   样册是双击打开的本地文件，不能 fetch，所以写在这里；改了 index.json 要同步改这里（test/gallery.test.mjs 会对照） */
+window.LI_TALK_STYLES = [
+  {"key":"paper","label":"方格纸","family":"hand","mascot":"jianjian","look":"浅色方格纸，左侧一列活页孔，便签翘起纸角","fit":"开场、总览、愿景、收尾"},
+  {"key":"board","label":"黑板","family":"hand","mascot":"shasha","look":"深绿板面，只有白粉笔和一支黄粉笔，翻页用板擦","fit":"基础教学、命令清单、安装步骤"},
+  {"key":"journal","label":"像素手账","family":"hand","mascot":"diandian","look":"很淡的点阵纸，像素只留给形象、对话框和节拍格","fit":"以角色为主线的章节、讲原理的示意图"},
+  {"key":"desk","label":"工位桌面","family":"hand","mascot":"juanjuan","look":"白纸落到米色桌面上，纸胶带、标签机打出的命令条","fit":"讲者自己的故事、多方协作"},
+  {"key":"watercolor","label":"水彩田园","family":"hand","mascot":"duoduo","look":"水彩天空和草坡，铅笔描线，颜色一笔洇开","fit":"入门教程、上手流程、温和的分享、面向非技术同事"},
+  {"key":"ink","label":"水墨国风","family":"hand","mascot":"mowan","look":"宣纸底、左下淡墨远山，竖笔把墨点串成步骤，重点词用朱砂圈点","fit":"人文、方法论、流程讲解，开场和收尾要有仪式感的时候"},
+  {"key":"blueprint","label":"蓝图","family":"hand","mascot":"quanquan","look":"深蓝晒图纸、细白网格，四周双线图框；内容画成零件，带零件编号、斜线阴影和尺寸标注","fit":"搭建、组成、拆成几块讲的系统和结构"},
+  {"key":"comic","label":"漫画","family":"hand","mascot":"daodao","look":"米白漫画原稿纸，毛笔墨线格框、半调网点阴影，金句像拟声大字","fit":"讲故事、前后对比、有情绪的转折、轻松的吐槽和反转"},
+  {"key":"dark","label":"科技暗黑","family":"modern","mascot":"weiguang","look":"近黑底加一个冰蓝，柔和光晕，1px 渐变描边的缎面卡片","fit":"技术分享、命令行教学、发布会、产品介绍"},
+  {"key":"frost","label":"毛玻璃","family":"modern","mascot":"xiaowu","look":"柔和的彩色光斑底上，薄薄的乳白磨砂卡片，重点词是一枚玻璃小胶囊","fit":"产品介绍、工具上手、新功能发布"},
+  {"key":"glass","label":"液态玻璃","family":"modern","mascot":"toutou","look":"柔和的彩色光斑底，上面是透明、厚、边缘会折光的胶囊玻璃，动起来像果冻","fit":"产品、界面、设计、科技类，每页信息不多"},
+  {"key":"flat","label":"扁平插画","family":"modern","mascot":"xiaoye","look":"统一左上受光的几何扁平插画，珊瑚、明黄、墨蓝三组配色，组件右下一道深色厚度、投影落向右下","fit":"上手教程、产品介绍、流程步骤、新人或非技术听众"},
+  {"key":"magazine","label":"杂志复古","family":"modern","mascot":"xiaoqian","look":"墨绿、橘红、米白撞色拼贴，撕边纸、胶带、套印错位，宋体大标题","fit":"观点、方法论、读书分享、复盘总结"},
+  {"key":"brutal","label":"新粗野主义","family":"modern","mascot":"pengpeng","look":"奶黄底加墨点阵，粗黑描边、不带模糊的硬阴影，黄粉蓝三种色块，卡片「砸」下来","fit":"上手教程、流程步骤、产品和工具介绍、内部分享"},
+  {"key":"pixel","label":"像素游戏","family":"pixel","mascot":"xiaoqi","look":"像 8-bit 游戏的标题画面：深夜蓝抖动夜空和远山，全页对齐 4px 网格、只用 16 色，金色像素大标题","fit":"上手教程、新人引导、闯关式分步、轻松的团队分享"},
+  {"key":"fangguo","label":"方果","family":"corp","mascot":"fangfang","look":"方果 ERP 的品牌风格：近白底上慢慢流动的淡蓝柔光和网格，纯白大圆角卡片，品牌蓝主色，大气的大数字和图表，左上角带方果 Logo","fit":"给客户演讲、领导汇报、产品介绍、经营数据"}
+];
+</script>
+<script>
+/* 样册的两样东西（都不属于课件，自检模式 ?selftest 下都不放）：
+   1. 风格总览：地址不带 ?scene=、?selftest、#页/拍 时显示，盖在课件上面。每种风格一张卡片，按类分组（手绘风、现代风、像素风、企业风）；
+      点一张就用 ?scene=<键名> 重新打开，从第一页看（带开场）。开着总览时课件不接键盘和点击，
+      也不让引擎往地址里写 #页/拍（不然刷新一下总览就没了）。
+   2. 换风格的小条：点一个风格，就用 ?scene=<键名> 重新打开，回到第一页、播开场（地址里的 #页/拍 去掉）；
+      「全部风格」回到总览。收起与否记在本次会话里。
+   风格的名字、形象、背景层从引擎内部的 Deck._ 取（只有样册这么用，课件页面里不要这么写） */
+(function () {
+  'use strict';
+  var qs = new URLSearchParams(location.search);
+  if (qs.has('selftest') || !window.Deck || !Deck._) return;
+  var I = Deck._, FAMILY = I.FAMILY || {};
+  var keys = Object.keys(I.SCENES).filter(function (k) { return k !== 'plain'; });
+  if (!keys.length) return;
+  var FAMS = [['hand', '手绘风', '楷书'], ['modern', '现代风', '黑体，杂志复古用宋体'], ['pixel', '像素风', '像素字体'], ['corp', '企业风', '公司品牌专属']];
+  // 在线编辑（serve 打开的，地址带 ?edit=口令）时，换风格、回总览都带着口令，不然一换风格就退出编辑了
+  var edit = qs.get('edit'), keep = edit ? '&edit=' + encodeURIComponent(edit) : '';
+  var home = location.href.split(/[?#]/)[0] + (edit ? '?edit=' + encodeURIComponent(edit) : '');   // 不带 scene、# 的地址：打开就是总览
+  var el = function (tag, cls, text) { var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+
+  if (!qs.has('scene') && !location.hash) { showHome(); return; }
+  showBar();
+
+  /* ---------------- 风格总览 ---------------- */
+  function showHome() {
+    // 引擎翻到第一页时会用 replaceState 写 #1：总览开着时拦下只改 # 的那种，地址保持不带 #
+    var rs = history.replaceState;
+    history.replaceState = function (st, title, url) {
+      if (typeof url === 'string' && url.charAt(0) === '#') return;
+      return rs.apply(history, arguments);
+    };
+    // 键盘：总览开着时课件不接（翻页、O、B、L、S…）；按键本身的默认动作照常（Tab 换卡片、回车打开、方向键滚动）
+    addEventListener('keydown', function (e) { e.stopImmediatePropagation(); }, true);
+    // 卡片要用引擎建好的背景层和形象滤镜：等引擎启动（DOMContentLoaded）之后再建
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', buildHome);
+    else setTimeout(buildHome, 0);
+  }
+
+  function buildHome() {
+    var known = (window.LI_TALK_STYLES || []).filter(function (s) { return I.SCENES[s.key]; });
+    // index.json 里没写、却注册了的风格也放上（名字取注册表的）
+    keys.forEach(function (k) {
+      if (!known.some(function (s) { return s.key === k; })) known.push({ key: k, label: I.SCENES[k].label || k, family: I.SCENES[k].family, mascot: I.SCENES[k].mascot });
+    });
+
+    var box = el('div', 'sv-home');
+    box.dataset.scene = 'watercolor';   // 借水彩田园的颜料遮罩和纸纹（变量），整页是水彩田园的样子
+    box.setAttribute('role', 'main');
+    // 下方一条水彩草坡（两层，边缘用滤镜抖一抖）
+    box.insertAdjacentHTML('beforeend', '<svg class="sv-hills" viewBox="0 0 1440 130" preserveAspectRatio="none" aria-hidden="true">' +
+      '<filter id="sv-hill-edge" x="-5%" y="-30%" width="110%" height="160%"><feTurbulence type="fractalNoise" baseFrequency=".012 .06" numOctaves="3" seed="7"/><feDisplacementMap in="SourceGraphic" scale="12" xChannelSelector="R" yChannelSelector="G"/></filter>' +
+      '<path d="M-60 52C200 22 380 30 600 56S980 86 1180 54 1400 34 1500 42V200H-60Z" fill="#C3E2AC" opacity=".85" filter="url(#sv-hill-edge)"/>' +
+      '<path d="M-60 86C240 62 460 74 700 92S1100 108 1280 84 1420 72 1500 76V200H-60Z" fill="#A8D48C" opacity=".9" filter="url(#sv-hill-edge)"/></svg>');
+    box.tabIndex = -1;
+    var wrap = el('div', 'sv-wrap');
+    wrap.appendChild(el('p', 'sv-eyebrow', 'li-talk-skills 样册'));
+    var head = el('header', 'sv-head');
+    head.appendChild(el('h1', '', known.length + ' 种风格'));
+    head.appendChild(el('p', '', '点一张卡片，从第一页看这种风格；← → 翻页，左下角的小条随时换风格。同一份课件按章换风格时，只在同一类里换。'));
+    wrap.appendChild(head);
+    // 一屏放下全部风格：所有卡片排在一个网格里，按类的顺序（手绘风、现代风、像素风、企业风），每张左上角标出属于哪一类；
+    // 列数按窗口算（见下面的 fit），窗口太矮放不下时才滚动
+    var legend = el('div', 'sv-legend');
+    var grid = el('div', 'sv-grid');
+    var minis = [];
+    var groups = FAMS.map(function (f) { return f; });
+    known.forEach(function (s) { if (!groups.some(function (f) { return f[0] === s.family; })) groups.push([s.family, FAMILY[s.family] || s.family, '']); });
+    groups.forEach(function (f) {
+      var list = known.filter(function (s) { return s.family === f[0]; });
+      if (!list.length) return;
+      var chip = el('span', 'sv-chip sv-f-' + f[0]);
+      chip.appendChild(el('b', '', f[1]));
+      chip.appendChild(document.createTextNode((f[2] ? f[2] + ' · ' : '') + list.length + ' 种'));
+      legend.appendChild(chip);
+      list.forEach(function (s) { grid.appendChild(card(s, minis, f)); });
+    });
+    head.appendChild(legend);
+    var fams = grid;
+    wrap.appendChild(fams);
+    box.appendChild(wrap);
+    // 点击、触屏只给总览自己：不往下传到课件（课件在 document 上听点击翻拍、滑动翻页）
+    ['click', 'touchstart', 'touchend'].forEach(function (t) { box.addEventListener(t, function (e) { e.stopPropagation(); }); });
+    document.body.appendChild(box);
+    try { box.focus({ preventScroll: true }); } catch (e) { /* 老浏览器不认参数 */ }
+
+    // 卡片铺满整个窗口：在 3 到 8 列里挑一个让卡片最大、又一屏放得下的列数（16 种在 1920×1080 上是 6 列 3 行），
+    // 整块水平居中、最后一行靠左，整块在标题下面的空间里上下居中；算出来太小（手机、很矮的窗口）就退回 CSS 按宽度排的列数，允许滚动
+    var layout = function () {
+      var cards = grid.children, n = cards.length;
+      if (!n) return;
+      box.classList.add('sv-fit');
+      grid.style.setProperty('--cw', '300px');
+      grid.style.maxWidth = ''; grid.style.marginTop = '';
+      var ws = getComputedStyle(wrap), gap = parseFloat(getComputedStyle(grid).columnGap) || 24;
+      var frame = 16;   // 卡片左右的纸边（8px × 2）
+      var extra = cards[0].offsetHeight - (cards[0].offsetWidth - frame) * 9 / 16;   // 卡片里舞台以外的高度：纸边和两行字
+      var top = grid.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop;
+      var availH = box.clientHeight - top - parseFloat(ws.paddingBottom);
+      var availW = wrap.clientWidth - parseFloat(ws.paddingLeft) - parseFloat(ws.paddingRight);
+      var best = 0, bestC = 0;
+      for (var c = 3; c <= Math.min(8, n); c++) {
+        var rows = Math.ceil(n / c);
+        var byW = (availW - (c - 1) * gap) / c;
+        var byH = ((availH - (rows - 1) * gap) / rows - extra) * 16 / 9 + frame;
+        var cw = Math.floor(Math.min(byW, byH));
+        if (cw > best) { best = cw; bestC = c; }
+      }
+      if (best < 200) { box.classList.remove('sv-fit'); grid.style.removeProperty('--cw'); return; }
+      grid.style.setProperty('--cw', best + 'px');
+      grid.style.maxWidth = (bestC * best + (bestC - 1) * gap + 1) + 'px';
+      grid.style.marginLeft = grid.style.marginRight = 'auto';
+      var used = grid.offsetHeight;
+      if (availH > used) grid.style.marginTop = Math.floor((availH - used) / 2) + 'px';
+    };
+    var fit = function () { layout(); minis.forEach(function (m) { var w = m.parentNode.clientWidth; if (w) m.style.transform = 'scale(' + (w / 1920) + ')'; }); };
+    fit();
+    addEventListener('resize', fit);
+  }
+
+  // 一张卡片：<a href="?scene=键名">，上半截是缩小的舞台（背景层 + 风格名 + 形象），下半截是样子和适合讲什么
+  function card(s, minis, f) {
+    var a = el('a', 'sv-card' + (f && f[0] === 'corp' ? ' sv-corp' : ''));
+    a.title = (s.label || s.key) + '\n' + (s.look || '') + (s.fit ? '\n适合：' + s.fit : '');
+    a.href = '?scene=' + encodeURIComponent(s.key) + keep;
+    a.dataset.scene = s.key;
+    a.setAttribute('aria-label', (s.label || s.key) + '：' + (s.look || '') + (s.fit ? '。适合' + s.fit : '') + '。点开从第一页看');
+    var pv = el('span', 'sv-pv');
+    pv.setAttribute('aria-hidden', 'true');
+    var mini = el('span', 'sv-mini');
+    mini.appendChild(backdrop(s.key));
+    mini.appendChild(el('span', 'sv-mini-title', s.label || s.key));
+    var art = mascot(s.mascot || I.SCENES[s.key].mascot);
+    if (art) mini.appendChild(art);
+    pv.appendChild(mini);
+    pv.appendChild(el('span', 'sv-key', s.key));
+    if (f) pv.appendChild(el('span', 'sv-tag sv-f-' + f[0], f[1]));
+    minis.push(mini);
+    a.appendChild(pv);
+    var info = el('span', 'sv-info');
+    if (s.look) info.appendChild(el('span', 'sv-look', s.look));
+    if (s.fit) { var fit = el('span', 'sv-fit'); fit.appendChild(el('b', '', '适合')); fit.appendChild(document.createTextNode(s.fit)); info.appendChild(fit); }
+    a.appendChild(info);
+    return a;
+  }
+
+  // 这种风格的背景层：复制引擎建好的那一层（里面有风格 backdrop 放的远山、光斑、图框）；取不到就只铺底色
+  function backdrop(key) {
+    var src = I.dom && I.dom.bg && I.dom.bg[key];
+    var b;
+    if (src) { b = src.cloneNode(true); b.removeAttribute('style'); b.removeAttribute('id'); }
+    else { b = el('span', 'bg'); b.dataset.scene = key; }
+    b.classList.add('on');
+    b.setAttribute('aria-hidden', 'true');
+    return b;
+  }
+
+  // 形象的开心姿势：直接用形象注册的 svg(pose, opts)；画不出来就不画
+  function mascot(key) {
+    var m = key && I.MASCOTS && I.MASCOTS[key];
+    if (!m || typeof m.svg !== 'function') return null;
+    var svg = '';
+    try { svg = m.svg('happy', { blink: false, flip: false, look: null }); } catch (e) { svg = ''; }
+    if (typeof svg !== 'string' || svg.indexOf('<svg') < 0) return null;
+    var size = m.size || [120, 120];
+    var h = 620, w = Math.round(h * size[0] / size[1]);
+    var art = el('span', 'sv-mini-art' + (m.pixel ? ' sv-px' : ''));
+    art.style.width = w + 'px';
+    art.style.height = h + 'px';
+    art.innerHTML = svg;
+    return art;
+  }
+
+  /* ---------------- 换风格的小条 ---------------- */
+  function showBar() {
+    var asked = qs.get('scene');
+    var cur = asked && I.SCENES[asked] ? asked : (I.DEFS[0] && I.SCENES[I.DEFS[0].scene] ? I.DEFS[0].scene : keys[0]);
+    var FOLD = 'li-talk-gallery-folded';
+    var folded = innerWidth < 1200;   // 窗口窄时先收起，免得盖住舞台太多；点一下展开
+    try { var saved = sessionStorage.getItem(FOLD); if (saved) folded = saved === '1'; } catch (e) { /* 存不了就按窗口宽度 */ }
+
+    var bar = el('nav', 'gl-bar' + (folded ? ' folded' : ''));
+    bar.setAttribute('aria-label', '换风格');
+    var toggle = el('button', 'gl-toggle');
+    toggle.type = 'button';
+    var all = el('button', 'gl-all', '全部风格');
+    all.type = 'button';
+    all.title = '回到风格总览';
+    all.addEventListener('click', function () { location.href = home; });
+    var list = el('div', 'gl-list');
+    var hint = el('span', 'gl-hint', '← → 翻页');
+    var setToggle = function () {
+      toggle.textContent = folded ? '换风格 ▸' : '风格 ◂';
+      toggle.title = folded ? '展开风格列表' : '收起';
+      toggle.setAttribute('aria-expanded', folded ? 'false' : 'true');
+    };
+    setToggle();
+    toggle.addEventListener('click', function () {
+      folded = !folded;
+      bar.classList.toggle('folded', folded);
+      setToggle();
+      try { sessionStorage.setItem(FOLD, folded ? '1' : '0'); } catch (e) { /* 存不了就算了 */ }
+    });
+
+    // 按类分组：手绘风、现代风、像素风（同一份课件只在同一类里混用）
+    FAMS.forEach(function (f) {
+      var ks = keys.filter(function (k) { return I.SCENES[k].family === f[0]; });
+      if (!ks.length) return;
+      list.appendChild(el('span', 'gl-fam', FAMILY[f[0]] || f[0]));   // 冒号由 CSS 的 ::after 加，窄窗口不加
+      ks.forEach(function (k) {
+        var b = el('button', '', I.SCENES[k].label || k);
+        b.type = 'button';
+        b.title = k;
+        if (k === cur) b.setAttribute('aria-current', 'true');
+        b.addEventListener('click', function () {
+          if (k === cur) return;
+          location.href = '?scene=' + encodeURIComponent(k) + keep;   // 不带 #页/拍：从第一页开始，播开场
+        });
+        list.appendChild(b);
+      });
+    });
+
+    bar.appendChild(toggle);
+    bar.appendChild(all);
+    bar.appendChild(list);
+    bar.appendChild(hint);
+    document.body.appendChild(bar);
+  }
+})();
+</script>
+</body>
+</html>

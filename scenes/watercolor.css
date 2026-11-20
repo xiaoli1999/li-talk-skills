@@ -1,0 +1,387 @@
+/* =====================================================================
+   风格 · 水彩田园 watercolor 的样子（行为在 watercolor.js）
+   水彩纸底、淡蓝天、暖阳、积云、两层草坡；铅笔线加水彩上色；所有选择器的第一段都带 [data-scene="watercolor"]
+   配色只有：纸色、暖褐墨（三级）、铅笔灰，强调色天空蓝、暖阳黄；草绿只属于背景和「AI 做的」小格
+   - 水彩底一律画在伪元素上，形状来自遮罩里的水彩色块图（不规则边缘、边缘颜料积深、颜料斑驳），
+     颜色取 --tint，所以各种颜色共用同一张遮罩图
+   - 洇开：伪元素的第二层遮罩是径向渐变，半径跟着 --bp 走（watercolor.js 的出场 bloom 从 -25% 动到 100%，
+     不写时是 100%，也就是完整显出）；--bx --by 是洇开的起点
+   - 背景层里的天空、草坡由 watercolor.js 的 backdrop 生成；滤镜 #wc-wash 在 watercolor.js 的 defs 里
+   ===================================================================== */
+
+/* 变量（--recede 由 watercolor.js 的 recede 写入：.8） */
+[data-scene="watercolor"]{
+  --bg:#FBF7EE; --ink:#3A322B; --ink-2:#4F463E; --ink-3:#8A7E71; --line:#5E564D;
+  --mark:#4F8DBF; --key-ink:#3A322B; --hl:rgba(244,195,90,.58); --accent:#F4C35A;
+  --card-ink:#3A322B; --card-ink-2:#4F463E; --paper:#FFFEFA;
+  /* 水彩颜料（做底色时都带透明度用） */
+  --t-yellow:#F4C35A; --t-mint:#9CCB7E; --t-pink:#F29C8F; --t-blue:#8EC3E6; --t-white:#FFFEFA; --t-peach:#F5B98A;
+  --term-bg:#FFFDF7; --term-ink:#3A322B;
+  --human:#D9714F; --ai:#5E9A48; --idle:#A39A8F;
+  --sign-color:rgba(79,70,62,.62);
+  --wc-sky:#8EC3E6; --wc-sky-d:#4F8DBF; --wc-sun:#F4C35A; --wc-grass:#9CCB7E;
+  --wc-pop:cubic-bezier(.3,1.5,.5,1);
+  /* 水彩形状图（data URI，用样页的算法按种子生成）：色块遮罩两张、一大团、重点词笔触两张、铅笔框 */
+  --wc-pad1:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200' preserveAspectRatio='none'%3E%3Cfilter id='w' x='-8%25' y='-8%25' width='116%25' height='116%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.025' numOctaves='3' seed='3' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='16' xChannelSelector='R' yChannelSelector='G' result='d'/%3E%3CfeMorphology in='d' operator='erode' radius='3' result='e'/%3E%3CfeGaussianBlur in='e' stdDeviation='4' result='eb'/%3E%3CfeComposite in='d' in2='eb' operator='out' result='edge'/%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.035' numOctaves='2' seed='43' result='g'/%3E%3CfeColorMatrix in='g' type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.1 0 0 0 .2' result='ga'/%3E%3CfeComposite in='d' in2='ga' operator='in' result='body'/%3E%3CfeMerge%3E%3CfeMergeNode in='body'/%3E%3CfeMergeNode in='edge'/%3E%3C/feMerge%3E%3C/filter%3E%3Cpath d='M22.5 17.3C32.2 7.7 55.7 13.1 72.5 12.7C89.4 12.2 106.5 14 123.6 14.7C140.7 15.5 158.8 17.4 175.1 17.4C191.4 17.3 205 14.8 221.4 14.3C237.8 13.7 256.7 13.9 273.4 14.2C290 14.5 303.9 16.9 321.1 16.3C338.2 15.8 365.4 2 376.3 11C387.2 20.1 385.1 51 386.5 70.7C387.9 90.3 387.3 109.9 384.7 129C382.2 148.1 381.8 176 371.4 185.3C361 194.6 338 184.1 322.3 184.7C306.6 185.3 292.8 188.6 277 189C261.2 189.4 245 188 227.5 187.1C210 186.2 189.3 183.9 172 183.6C154.7 183.3 139.2 184.9 123.7 185.3C108.1 185.7 95.4 186.1 78.6 186.1C61.7 186.1 33.3 195.3 22.6 185.3C11.9 175.2 15.6 144.9 14.2 125.8C12.8 106.6 12.8 88.5 14.2 70.4C15.6 52.3 12.8 26.9 22.5 17.3Z' fill='%23000' fill-opacity='.85' filter='url(%23w)'/%3E%3C/svg%3E");
+  --wc-pad2:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200' preserveAspectRatio='none'%3E%3Cfilter id='w' x='-8%25' y='-8%25' width='116%25' height='116%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.025' numOctaves='3' seed='17' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='16' xChannelSelector='R' yChannelSelector='G' result='d'/%3E%3CfeMorphology in='d' operator='erode' radius='3' result='e'/%3E%3CfeGaussianBlur in='e' stdDeviation='4' result='eb'/%3E%3CfeComposite in='d' in2='eb' operator='out' result='edge'/%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.035' numOctaves='2' seed='57' result='g'/%3E%3CfeColorMatrix in='g' type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.1 0 0 0 .2' result='ga'/%3E%3CfeComposite in='d' in2='ga' operator='in' result='body'/%3E%3CfeMerge%3E%3CfeMergeNode in='body'/%3E%3CfeMergeNode in='edge'/%3E%3C/feMerge%3E%3C/filter%3E%3Cpath d='M22.5 12.9C33.1 2.9 59.2 14.2 76.8 14.4C94.3 14.7 111.5 14.7 127.7 14.3C143.9 13.9 158.1 12.1 174 11.9C189.9 11.7 206.5 12.3 223 13C239.4 13.8 255.2 16.5 272.7 16.6C290.1 16.8 310.5 14 327.8 13.7C345 13.4 366.2 5.1 376.1 14.8C386 24.4 385.7 52.4 387.1 71.7C388.4 90.9 386.1 111 384.1 130.4C382 149.7 384.6 179.1 375 187.8C365.4 196.6 343.7 183.3 326.5 182.9C309.3 182.5 288.5 185 271.6 185.4C254.7 185.8 241.1 185.1 225.1 185.5C209 185.9 191.8 188.4 175.4 188C158.9 187.6 142.8 183.8 126.4 183.3C109.9 182.8 93.7 184.9 76.7 185.1C59.6 185.3 34.3 193.8 24.3 184.6C14.4 175.5 18.8 148.5 16.9 130.1C15 111.7 12.1 93.9 13 74.4C14 54.9 11.9 22.9 22.5 12.9Z' fill='%23000' fill-opacity='.85' filter='url(%23w)'/%3E%3C/svg%3E");
+  --wc-blob:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200' preserveAspectRatio='none'%3E%3Cfilter id='w' x='-8%25' y='-8%25' width='116%25' height='116%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.02' numOctaves='3' seed='29' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='22' xChannelSelector='R' yChannelSelector='G' result='d'/%3E%3CfeMorphology in='d' operator='erode' radius='3' result='e'/%3E%3CfeGaussianBlur in='e' stdDeviation='4' result='eb'/%3E%3CfeComposite in='d' in2='eb' operator='out' result='edge'/%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.035' numOctaves='2' seed='69' result='g'/%3E%3CfeColorMatrix in='g' type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.1 0 0 0 .2' result='ga'/%3E%3CfeComposite in='d' in2='ga' operator='in' result='body'/%3E%3CfeMerge%3E%3CfeMergeNode in='body'/%3E%3CfeMergeNode in='edge'/%3E%3C/feMerge%3E%3C/filter%3E%3Cpath d='M359.5 89.7C358.3 103.9 368.2 129 354.5 141.3C340.8 153.6 303.7 157 277.2 163.7C250.8 170.5 228.8 182.7 195.7 181.8C162.7 180.9 109.8 169.4 78.8 158.5C47.8 147.7 20.5 129 9.7 116.8C-1 104.6 2.4 96.8 14.4 85.3C26.3 73.7 54.9 57.2 81.4 47.3C107.9 37.5 138.7 29 173.3 26.1C207.9 23.3 257.6 25 289 30C320.4 35.1 349.8 46.3 361.5 56.3C373.3 66.2 360.6 75.5 359.5 89.7Z' fill='%23000' fill-opacity='.85' filter='url(%23w)'/%3E%3C/svg%3E");
+  --wc-brush1:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cfilter id='w' x='-6%25' y='-30%25' width='112%25' height='160%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.06' numOctaves='2' seed='21' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='6' xChannelSelector='R' yChannelSelector='G' result='d'/%3E%3CfeMorphology in='d' operator='erode' radius='1.2' result='e'/%3E%3CfeGaussianBlur in='e' stdDeviation='1.6' result='eb'/%3E%3CfeComposite in='d' in2='eb' operator='out' result='edge'/%3E%3CfeMerge%3E%3CfeMergeNode in='d'/%3E%3CfeMergeNode in='edge'/%3E%3C/feMerge%3E%3C/filter%3E%3Cpath d='M2 21.6C2 17.2 4.4 7.2 10 4.8C15.6 2.4 27.1 6.8 35.7 7.2C44.3 7.7 52.9 7.6 61.4 7.5C70 7.5 78.6 7.5 87.1 6.9C95.7 6.3 104.3 3.7 112.9 4C121.4 4.4 130 8.4 138.6 9.1C147.1 9.7 155.7 8.3 164.3 7.9C172.9 7.6 184.2 5.7 190 7C195.8 8.3 199 12.4 199 16C199 19.6 195.8 26.5 190 28.4C184.2 30.2 172.9 27.2 164.3 27.1C155.7 27 147.1 26.9 138.6 27.9C130 29 121.4 33.3 112.9 33.5C104.3 33.7 95.7 28.9 87.1 29C78.6 29 70 33.4 61.4 33.8C52.9 34.2 44.3 31.8 35.7 31.3C27.1 30.9 15.6 32.9 10 31.2C4.4 29.6 2 26 2 21.6Z' fill='%23F4C35A' fill-opacity='.58' filter='url(%23w)'/%3E%3C/svg%3E");
+  --wc-brush2:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 40' preserveAspectRatio='none'%3E%3Cfilter id='w' x='-6%25' y='-30%25' width='112%25' height='160%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.06' numOctaves='2' seed='34' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='6' xChannelSelector='R' yChannelSelector='G' result='d'/%3E%3CfeMorphology in='d' operator='erode' radius='1.2' result='e'/%3E%3CfeGaussianBlur in='e' stdDeviation='1.6' result='eb'/%3E%3CfeComposite in='d' in2='eb' operator='out' result='edge'/%3E%3CfeMerge%3E%3CfeMergeNode in='d'/%3E%3CfeMergeNode in='edge'/%3E%3C/feMerge%3E%3C/filter%3E%3Cpath d='M2 21.6C2 16.4 4.4 7.6 10 4.8C15.6 2 27.1 3.6 35.7 4.5C44.3 5.5 52.9 10.4 61.4 10.5C70 10.5 78.6 5.2 87.1 4.7C95.7 4.2 104.3 7.2 112.9 7.3C121.4 7.3 130 5.3 138.6 5C147.1 4.7 155.7 5.5 164.3 5.6C172.9 5.7 184.2 3.7 190 5.4C195.8 7.1 199 11.8 199 16C199 20.2 195.8 28.4 190 30.7C184.2 33 172.9 30 164.3 29.8C155.7 29.6 147.1 29.7 138.6 29.5C130 29.2 121.4 28 112.9 28.4C104.3 28.8 95.7 30.8 87.1 31.8C78.6 32.8 70 33.9 61.4 34.2C52.9 34.5 44.3 33.4 35.7 33.7C27.1 34 15.6 38 10 35.9C4.4 33.9 2 26.8 2 21.6Z' fill='%23F4C35A' fill-opacity='.58' filter='url(%23w)'/%3E%3C/svg%3E");
+  --wc-pencil:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 200' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='%235E564D' stroke-linecap='round' vector-effect='non-scaling-stroke'%3E%3Cpath d='M-0.1 6.3Q199.5 7.7 397.3 6.2M392.8 0.1Q392.3 98.5 392.2 195.8M395.4 192.6Q197.7 191.8 2.8 193.6M6.9 196.8Q6.6 98.8 7.6 1.5' stroke-opacity='.5' stroke-width='2.2' vector-effect='non-scaling-stroke'/%3E%3Cpath d='M-0.1 7.1Q197.8 8.2 396.4 6.7M392.5 0.6Q392.1 96.6 392.7 195.4M395.3 194Q197.8 192.4 2.7 192.6M6.7 197.3Q7.8 98.6 6.5 2.3' stroke-opacity='.22' stroke-width='1.4' vector-effect='non-scaling-stroke'/%3E%3C/g%3E%3C/svg%3E");
+  /* 水彩纸：底色 + 两层极淡的纸纹（细颗粒平铺；大块的纸面起伏只铺一张、拉满） */
+  --scene-bg:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .36 0 0 0 0 .3 0 0 0 0 .23 0 0 0 .42 -.17'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23a)'/%3E%3C/svg%3E") 0 0/220px 220px repeat,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1600' height='1000' viewBox='0 0 1600 1000' preserveAspectRatio='none'%3E%3Cfilter id='b'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.008 .012' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 .55 0 0 0 0 .47 0 0 0 0 .36 0 0 0 .2 -.075'/%3E%3C/filter%3E%3Crect width='1600' height='1000' filter='url(%23b)'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat,
+    #FBF7EE;
+}
+
+/* ---------- 背景层（watercolor.js 的 backdrop 放进来）：天空一层、草坡一层，按舞台坐标画、向四周延伸 ---------- */
+.bg[data-scene="watercolor"] :is(.wc-sky,.wc-hills){position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+/* 开场：天空从左上角的阳光处晕开（--sp 是晕开的半径）、草坡从左往右一笔刷过去（--hp 是刷到哪）。播完 watercolor.js 去掉这两个类 */
+.bg[data-scene="watercolor"] .wc-sky.wc-wipe-sky{
+  -webkit-mask-image:radial-gradient(circle at calc(50% - 820px) calc(50% - 530px),#000 var(--sp,2600px),transparent calc(var(--sp,2600px) + 520px));
+          mask-image:radial-gradient(circle at calc(50% - 820px) calc(50% - 530px),#000 var(--sp,2600px),transparent calc(var(--sp,2600px) + 520px))}
+.bg[data-scene="watercolor"] .wc-hills.wc-wipe-hills{
+  -webkit-mask-image:linear-gradient(90deg,#000 calc(var(--hp,110%) - 6%),transparent var(--hp,110%));
+          mask-image:linear-gradient(90deg,#000 calc(var(--hp,110%) - 6%),transparent var(--hp,110%))}
+
+/* ---------- 主题行：章节是一小块天空蓝水彩，主题用深褐墨 ---------- */
+[data-scene="watercolor"] .s-topic .tc{position:relative;isolation:isolate;color:var(--ink-2);padding:3px 16px 5px}
+[data-scene="watercolor"] .s-topic .tc::before{content:"";position:absolute;inset:-3px -6px;z-index:-1;background:var(--wc-sky);opacity:.42;
+  -webkit-mask:var(--wc-pad2) 0 0/100% 100% no-repeat;mask:var(--wc-pad2) 0 0/100% 100% no-repeat}
+[data-scene="watercolor"] .s-topic .ts{color:var(--ink-3)}
+[data-scene="watercolor"] .s-topic .tt{color:var(--ink)}
+[data-scene="watercolor"] .s-title{color:var(--ink);letter-spacing:.04em}
+[data-scene="watercolor"] .explain{color:var(--ink-2)}
+[data-scene="watercolor"] .explain::before{width:7px;border-radius:4px 2px 5px 3px;background:var(--wc-sky-d);opacity:.7}
+[data-scene="watercolor"] .explain b{color:var(--ink)}
+[data-scene="watercolor"] .c-mark{color:var(--wc-sky-d)}
+/* 标题、命令逐字显出时临时拆成的单字（watercolor.js 的 letters，播完拆回原样） */
+[data-scene="watercolor"] .wc-ch{display:inline-block}
+
+/* ---------- 重点词：底下晕开一抹暖阳黄。--k 从 0 到 1（引擎在那一拍动画）：前沿往右洇开、同时由扁变满 ---------- */
+[data-scene="watercolor"] .key{color:var(--key-ink)}
+[data-scene="watercolor"] .key::before{content:"";position:absolute;z-index:-1;left:-.18em;right:-.18em;top:calc(50% + .04em);height:.6em;pointer-events:none;
+  background:var(--wc-brush1) 0 0/100% 100% no-repeat;
+  transform-origin:0 60%;transform:scaleY(calc(.5 + var(--k) * .5));opacity:min(1,calc(var(--k) * 5));
+  -webkit-mask-image:linear-gradient(90deg,#000 calc(var(--k) * 130% - 30%),transparent calc(var(--k) * 130%));
+          mask-image:linear-gradient(90deg,#000 calc(var(--k) * 130% - 30%),transparent calc(var(--k) * 130%))}
+[data-scene="watercolor"] .key:nth-of-type(even)::before{background-image:var(--wc-brush2)}
+
+/* ---------- 卡片：铅笔框 + 一块水彩底（::after，颜色取 --tint，默认天空蓝）；::before 留给胶带、图钉 ---------- */
+[data-scene="watercolor"] .card{--wash:.4;isolation:isolate;border:0;border-radius:0;color:var(--card-ink);
+  background:var(--wc-pencil) 0 0/100% 100% no-repeat;
+  transition:translate .45s var(--wc-pop),scale .25s var(--wc-pop)}
+[data-scene="watercolor"] .card::after{content:"";position:absolute;inset:-8px -12px;z-index:-1;pointer-events:none;
+  background:var(--tint,var(--wc-sky));opacity:var(--wash);transition:opacity .45s ease;
+  -webkit-mask:var(--wc-pad1) 0 0/100% 100% no-repeat,radial-gradient(circle at var(--bx,38%) var(--by,46%),#000 var(--bp,100%),transparent calc(var(--bp,100%) + 22%));
+  -webkit-mask-composite:source-in;
+  mask:var(--wc-pad1) 0 0/100% 100% no-repeat,radial-gradient(circle at var(--bx,38%) var(--by,46%),#000 var(--bp,100%),transparent calc(var(--bp,100%) + 22%));
+  mask-composite:intersect}
+[data-scene="watercolor"] .card:nth-of-type(even)::after{-webkit-mask-image:var(--wc-pad2),radial-gradient(circle at var(--bx,62%) var(--by,46%),#000 var(--bp,100%),transparent calc(var(--bp,100%) + 22%));
+  mask-image:var(--wc-pad2),radial-gradient(circle at var(--bx,62%) var(--by,46%),#000 var(--bp,100%),transparent calc(var(--bp,100%) + 22%))}
+[data-scene="watercolor"] .card.t-yellow{--wash:.46}
+[data-scene="watercolor"] .card.t-mint{--wash:.46}
+[data-scene="watercolor"] .card.t-pink{--wash:.38}
+[data-scene="watercolor"] .card.t-peach{--wash:.44}
+[data-scene="watercolor"] .card.t-white{--wash:.92}
+[data-scene="watercolor"] .card h3{color:var(--ink)}
+[data-scene="watercolor"] .card li::before{background:var(--wc-sky-d);opacity:.7}
+/* 胶带是一截半透明的天空蓝纸胶带 */
+[data-scene="watercolor"] .card.tape::before{background:rgba(142,195,230,.5);box-shadow:none;
+  -webkit-mask:var(--wc-pad2) 0 0/100% 100% no-repeat;mask:var(--wc-pad2) 0 0/100% 100% no-repeat}
+/* 卡片上沿的标签：一小块暖阳黄水彩 */
+[data-scene="watercolor"] .lab{color:var(--ink);isolation:isolate;padding:4px 22px 6px}
+[data-scene="watercolor"] .lab::before{content:"";position:absolute;inset:0 -4px;z-index:-1;background:var(--wc-sun);opacity:.55;
+  -webkit-mask:var(--wc-pad2) 0 0/100% 100% no-repeat;mask:var(--wc-pad2) 0 0/100% 100% no-repeat}
+
+/* ---------- 带序号的步骤：序号是一滴天空蓝水彩（边上颜料积深），外面一圈铅笔线；序号随 --bp 洇开 ---------- */
+[data-scene="watercolor"] .steps>li{transition:translate .45s var(--wc-pop),scale .25s var(--wc-pop)}
+[data-scene="watercolor"] .steps>li::before{color:var(--wc-sky-d);border:2.2px solid rgba(94,86,77,.5);
+  background:radial-gradient(circle,rgba(142,195,230,.4) 48%,rgba(79,141,191,.5) 64%,rgba(142,195,230,.12) 70%);
+  box-shadow:inset 0 0 0 40px rgba(142,195,230,0);transition:box-shadow .45s ease,border-color .35s;
+  -webkit-mask:radial-gradient(circle at 42% 46%,#000 var(--bp,100%),transparent calc(var(--bp,100%) + 25%));
+          mask:radial-gradient(circle at 42% 46%,#000 var(--bp,100%),transparent calc(var(--bp,100%) + 25%))}
+[data-scene="watercolor"] .steps>li>b{color:var(--ink)}
+[data-scene="watercolor"] .steps>li>span{color:var(--ink-2)}
+
+/* ---------- 左右对比：中间的箭头是天空蓝 ---------- */
+[data-scene="watercolor"] .vs::before{color:var(--wc-sky-d)}
+
+/* ---------- 一排小格：铅笔框 + 小块水彩（::before；::after 留给「人做的」那颗小圆点） ---------- */
+[data-scene="watercolor"] .cell{--wash:.34;isolation:isolate;border:0;border-radius:0;background:var(--wc-pencil) 0 0/100% 100% no-repeat;
+  transition:translate .45s var(--wc-pop),scale .25s var(--wc-pop)}
+[data-scene="watercolor"] .cell::before{content:"";position:absolute;inset:-6px -8px;z-index:-1;pointer-events:none;
+  background:var(--tint,var(--wc-sky));opacity:var(--wash);transition:opacity .45s ease;
+  -webkit-mask:var(--wc-pad2) 0 0/100% 100% no-repeat,radial-gradient(circle at var(--bx,40%) var(--by,45%),#000 var(--bp,100%),transparent calc(var(--bp,100%) + 25%));
+  -webkit-mask-composite:source-in;
+  mask:var(--wc-pad2) 0 0/100% 100% no-repeat,radial-gradient(circle at var(--bx,40%) var(--by,45%),#000 var(--bp,100%),transparent calc(var(--bp,100%) + 25%));
+  mask-composite:intersect}
+[data-scene="watercolor"] .cell>b{color:var(--ink)}
+[data-scene="watercolor"] .cell.ai{--tint:var(--wc-grass);--wash:.42}
+[data-scene="watercolor"] .cell.ai>b{color:#3F6E2E}
+[data-scene="watercolor"] .cell.human{--tint:var(--t-peach);--wash:.46}
+[data-scene="watercolor"] .cell.human::after{width:26px;height:26px;box-shadow:none;background:radial-gradient(circle,rgba(217,113,79,.62) 46%,rgba(178,82,52,.85) 64%,rgba(217,113,79,0) 71%)}
+[data-scene="watercolor"] .cell.idle{--tint:#C9C0B5;--wash:.3;color:var(--idle)}
+[data-scene="watercolor"] .cell.idle>b{color:var(--idle)}
+[data-scene="watercolor"] .dot{background:var(--wc-sky)}
+[data-scene="watercolor"] .dot.human{background:var(--human)}[data-scene="watercolor"] .dot.ai{background:var(--ai)}[data-scene="watercolor"] .dot.idle{background:var(--idle)}
+
+/* ---------- 标签：一小块暖阳黄水彩 ---------- */
+[data-scene="watercolor"] .tag{isolation:isolate;border:0;border-radius:0;color:var(--ink);padding:4px 20px 6px}
+[data-scene="watercolor"] .tag:not(.abs){position:relative}
+[data-scene="watercolor"] .tag::before{content:"";position:absolute;inset:-2px -4px;z-index:-1;background:var(--tint,var(--wc-sun));opacity:.5;
+  -webkit-mask:var(--wc-pad1) 0 0/100% 100% no-repeat;mask:var(--wc-pad1) 0 0/100% 100% no-repeat}
+
+/* ---------- 大字金句：后面一大团很淡的天空蓝水彩，随 --bp 洇开 ---------- */
+[data-scene="watercolor"] .quote{isolation:isolate;color:var(--ink)}
+[data-scene="watercolor"] .quote:not(.abs){position:relative}
+[data-scene="watercolor"] .quote::before{content:"";position:absolute;inset:-34px -60px;z-index:-1;pointer-events:none;background:var(--tint,var(--wc-sky));opacity:.3;
+  -webkit-mask:var(--wc-blob) 0 0/100% 100% no-repeat,radial-gradient(circle at var(--bx,40%) var(--by,50%),#000 var(--bp,100%),transparent calc(var(--bp,100%) + 22%));
+  -webkit-mask-composite:source-in;
+  mask:var(--wc-blob) 0 0/100% 100% no-repeat,radial-gradient(circle at var(--bx,40%) var(--by,50%),#000 var(--bp,100%),transparent calc(var(--bp,100%) + 22%));
+  mask-composite:intersect}
+
+/* ---------- 终端窗口：一张水彩纸卡片，标题栏是一道淡天空蓝，三颗颜料点；字是深褐墨（投影上比深底清楚） ---------- */
+[data-scene="watercolor"] .term{background:var(--term-bg);color:var(--term-ink);border-radius:14px;
+  box-shadow:0 18px 28px -18px rgba(90,70,40,.38),0 0 0 1.6px rgba(94,86,77,.42)}
+[data-scene="watercolor"] .term-bar{background:rgba(142,195,230,.24);color:var(--ink-3)}
+[data-scene="watercolor"] .term-bar i{background:radial-gradient(circle,rgba(142,195,230,.6) 46%,rgba(79,141,191,.85) 64%,rgba(142,195,230,0) 71%)}
+[data-scene="watercolor"] .term-bar i:nth-child(2){background:radial-gradient(circle,rgba(244,195,90,.65) 46%,rgba(205,150,45,.85) 64%,rgba(244,195,90,0) 71%)}
+[data-scene="watercolor"] .term-bar i:nth-child(3){background:radial-gradient(circle,rgba(156,203,126,.65) 46%,rgba(104,156,80,.85) 64%,rgba(156,203,126,0) 71%)}
+[data-scene="watercolor"] .term .in::before{color:var(--wc-sky-d)}
+[data-scene="watercolor"] .term .cc::before{color:#B9832A}
+[data-scene="watercolor"] .term .dim{color:#7E7266}
+[data-scene="watercolor"] .term .ok{color:#3F7A2E}
+[data-scene="watercolor"] .term .warn{color:#B4572A}
+[data-scene="watercolor"] .term .hi{color:var(--ink);background:linear-gradient(transparent 58%,rgba(244,195,90,.5) 58%,rgba(244,195,90,.5) 92%,transparent 92%)}
+
+/* ---------- 可复制的一行：一小块淡黄水彩，铅笔画的复制图标；悬停时颜色加深、图标歪一下 ----------
+   复制成功时 watercolor.js 把 --wet 从 1 动到 0：底下的黄像刚刷上去一样湿亮，再慢慢干掉 */
+[data-scene="watercolor"] .copy{isolation:isolate;color:var(--ink);padding:14px 28px 14px 30px;font-weight:600}
+[data-scene="watercolor"] .copy::before{content:"";position:absolute;inset:-4px -8px;z-index:-1;pointer-events:none;
+  background:var(--wc-sun);opacity:calc(.36 + var(--wet,0) * .42);transition:opacity .25s ease;
+  -webkit-mask:var(--wc-pad1) 0 0/100% 100% no-repeat,radial-gradient(circle at var(--bx,30%) var(--by,50%),#000 var(--bp,100%),transparent calc(var(--bp,100%) + 25%));
+  -webkit-mask-composite:source-in;
+  mask:var(--wc-pad1) 0 0/100% 100% no-repeat,radial-gradient(circle at var(--bx,30%) var(--by,50%),#000 var(--bp,100%),transparent calc(var(--bp,100%) + 25%));
+  mask-composite:intersect}
+[data-scene="watercolor"] .copy .ps{display:none}
+[data-scene="watercolor"] .copy .ic{background:var(--line);opacity:.85;transition:rotate .3s var(--wc-pop),translate .3s var(--wc-pop)}
+[data-scene="watercolor"] .copy:active{scale:.97;transition-duration:.08s}
+[data-scene="watercolor"] .copy:focus-visible{outline:2px dashed var(--ink-3);outline-offset:8px}
+/* 「已复制」：一滴天空蓝洇开（watercolor.js 的 copied 往勾的 svg 里加一个圆）、铅笔打勾、手写字 */
+[data-scene="watercolor"] .copied-tip{color:var(--ink);gap:6px}
+[data-scene="watercolor"] .copied-tip svg{width:52px;height:44px}
+[data-scene="watercolor"] .copied-tip path{stroke-width:4.2}
+[data-scene="watercolor"] .copied-tip .wc-drop{fill:var(--wc-sky);fill-opacity:.62;stroke:none;filter:url(#wc-wash)}
+/* 复制时溅开的颜料点、点击处洇开的水彩（都在内容下面，像颜料落在纸上，不压字） */
+[data-scene="watercolor"] .wc-fx{position:absolute;left:0;top:0;width:1920px;height:1080px;z-index:0;pointer-events:none;overflow:visible}
+[data-scene="watercolor"] .wc-drip{position:absolute;left:0;top:0;border-radius:50%;pointer-events:none}
+[data-scene="watercolor"] .wc-drip.sky{background:radial-gradient(circle,rgba(142,195,230,.5) 48%,rgba(79,141,191,.78) 66%,rgba(142,195,230,0) 71%)}
+[data-scene="watercolor"] .wc-drip.sun{background:radial-gradient(circle,rgba(244,195,90,.55) 48%,rgba(205,150,45,.8) 66%,rgba(244,195,90,0) 71%)}
+[data-scene="watercolor"] .wc-drip.grass{background:radial-gradient(circle,rgba(156,203,126,.55) 48%,rgba(104,156,80,.8) 66%,rgba(156,203,126,0) 71%)}
+
+/* ---------- 截图位：水彩纸衬底 + 一截天空蓝纸胶带 ---------- */
+[data-scene="watercolor"] .shot{background:var(--paper);box-shadow:0 16px 24px -16px rgba(90,70,40,.42),0 0 0 1.4px rgba(94,86,77,.3)}
+[data-scene="watercolor"] .shot::before{background:rgba(142,195,230,.55);box-shadow:none;
+  -webkit-mask:var(--wc-pad2) 0 0/100% 100% no-repeat;mask:var(--wc-pad2) 0 0/100% 100% no-repeat}
+[data-scene="watercolor"] .shot figcaption{color:var(--ink-2);font-size:var(--fs-min)}
+[data-scene="watercolor"] .shot-miss{background:repeating-linear-gradient(-45deg,#F6F0E2 0 14px,#EFE7D6 14px 28px);color:var(--ink-3)}
+
+/* ---------- 手绘线稿：细铅笔线；带填充色的图元，填充线加粗叠成一片，再套水彩滤镜（填充线的线宽 = watercolor.js 里 rough.fillWeight） ---------- */
+[data-scene="watercolor"] svg.sketch{color:var(--line)}
+[data-scene="watercolor"] svg.sketch path{stroke-opacity:.82}
+[data-scene="watercolor"] svg.sketch path[stroke-width="7.5"]{stroke-opacity:.5;filter:url(#wc-fill)}
+[data-scene="watercolor"] svg.sketch path[stroke="none"]{fill-opacity:.46;filter:url(#wc-fill)}
+[data-scene="watercolor"] svg.marks{color:var(--mark)}
+
+/* 只在「讲过」和悬停时给不透明度、倾斜加过渡：平时不加，免得和出场、退场时 gsap 改的不透明度、
+   清掉行内 rotate 时打架（会让卡片的淡出拖慢、倾斜在出场后又转一下） */
+[data-scene="watercolor"] :is(.card,.cell,.steps>li).past{transition:opacity .45s ease,translate .45s var(--wc-pop),scale .25s var(--wc-pop)}
+/* ---------- 悬停：卡片、步骤、小格抬起，朝鼠标那侧轻轻一斜（--wc-lr 由 watercolor.js 写），水彩颜色加深；按下时压一下 ---------- */
+@media (hover:hover){
+  [data-scene="watercolor"] :is(.card,.cell,.steps>li):hover{translate:0 -6px;rotate:calc(var(--r) + var(--wc-lr,0deg));transition:opacity .45s ease,translate .45s var(--wc-pop),rotate .3s ease-out,scale .25s var(--wc-pop)}
+  [data-scene="watercolor"] .card:hover::after{opacity:calc(var(--wash) + .2)}
+  [data-scene="watercolor"] .cell:hover::before{opacity:calc(var(--wash) + .2)}
+  [data-scene="watercolor"] .steps>li:hover::before{box-shadow:inset 0 0 0 40px rgba(142,195,230,.3);border-color:rgba(58,50,43,.75)}
+  [data-scene="watercolor"] .copy:hover::before{opacity:calc(.58 + var(--wet,0) * .3)}
+  [data-scene="watercolor"] .copy:hover .ic{rotate:-10deg;translate:0 -2px}
+}
+[data-scene="watercolor"] :is(.card,.cell,.steps>li):active{scale:.985}
+
+/* ---------- 形象：脚下一抹带草色的淡影（样页朵朵脚下的影子）；说的话是水彩纸气泡、铅笔边 ---------- */
+[data-scene="watercolor"] .mascot{--mascot-shadow:drop-shadow(0 7px 4px rgba(70,96,52,.2))}
+[data-scene="watercolor"] .mascot-say{color:var(--ink);background:var(--paper);border:2.4px solid rgba(94,86,77,.7);border-radius:20px 16px 22px 14px}
+[data-scene="watercolor"] .mascot-say::after{background:var(--paper);border-right:2.4px solid rgba(94,86,77,.7);border-bottom:2.4px solid rgba(94,86,77,.7)}
+
+/* ---------- 节拍指示：一排小颜料点，讲过的是天空蓝、当前拍是暖阳黄（大一点）；
+   换拍时当前那滴从上面落下弹一下、漾开一圈，拍号从上面落下（都是只播一次的 CSS 动画） ---------- */
+#stage[data-scene="watercolor"] .meta{color:var(--ink-2);font:400 26px/1 var(--f-hand);gap:26px}
+#stage[data-scene="watercolor"] .pageno{color:var(--ink-3)}
+#stage[data-scene="watercolor"] .pageno b{color:var(--ink-2)}
+#stage[data-scene="watercolor"] .meter{gap:16px}
+#stage[data-scene="watercolor"] .meter .mnum{order:-1}
+#stage[data-scene="watercolor"] .meter .mnum b{display:inline-block;color:var(--ink);animation:wcNum .34s cubic-bezier(.3,1.6,.5,1)}
+#stage[data-scene="watercolor"] .dots{gap:8px}
+#stage[data-scene="watercolor"] .dots i{position:relative;width:30px;height:30px;border-radius:50%;border:1.6px solid rgba(94,86,77,.45)}
+#stage[data-scene="watercolor"] .dots i::before{content:"";position:absolute;inset:1px;border-radius:50%;opacity:0;transform:scale(.2);
+  background:radial-gradient(circle,rgba(142,195,230,.62) 46%,rgba(79,141,191,.88) 64%,rgba(142,195,230,0) 70%);
+  transition:transform .45s var(--wc-pop),opacity .25s}
+#stage[data-scene="watercolor"] .dots i.on::before{opacity:1;transform:scale(1)}
+#stage[data-scene="watercolor"] .dots i.now::before{transform:scale(1.2);background:radial-gradient(circle,rgba(244,195,90,.72) 46%,rgba(205,150,45,.9) 64%,rgba(244,195,90,0) 70%);animation:wcDrop .5s cubic-bezier(.3,1.6,.5,1)}
+#stage[data-scene="watercolor"] .dots i.now::after{content:"";position:absolute;inset:-2px;border-radius:50%;border:1.4px solid var(--wc-sky-d);opacity:0;animation:wcRipple .65s ease-out .14s}
+@keyframes wcNum{from{transform:translateY(-12px);opacity:0}to{transform:none;opacity:1}}
+@keyframes wcDrop{0%{transform:translateY(-14px) scale(.7,1.3);opacity:.3}60%{transform:translateY(1px) scale(1.3,1.1);opacity:1}100%{transform:scale(1.2)}}
+@keyframes wcRipple{from{transform:scale(.7);opacity:.8}to{transform:scale(1.9);opacity:0}}
+
+/* ---------- 翻页：一道湿润的水痕扫过去，旧页随水痕褪去、新页随之显出（--tp 由 watercolor.js 从 0 动到 1） ---------- */
+[data-scene="watercolor"].slide.wc-turn-in{
+  -webkit-mask-image:linear-gradient(var(--wc-ang,90deg),#000 calc(var(--tp,1) * 140% - 40%),transparent calc(var(--tp,1) * 140% - 10%));
+          mask-image:linear-gradient(var(--wc-ang,90deg),#000 calc(var(--tp,1) * 140% - 40%),transparent calc(var(--tp,1) * 140% - 10%))}
+[data-scene="watercolor"].slide.wc-turn-out{
+  -webkit-mask-image:linear-gradient(var(--wc-ang,90deg),transparent calc(var(--tp,0) * 140% - 40%),#000 calc(var(--tp,0) * 140% - 10%));
+          mask-image:linear-gradient(var(--wc-ang,90deg),transparent calc(var(--tp,0) * 140% - 40%),#000 calc(var(--tp,0) * 140% - 10%))}
+
+/* ---------- 阅读模式（没有背景层）：每页底下垫一张画好的天空、暖阳、积云和草坡 ---------- */
+[data-scene="watercolor"].slide:is(.reading *){background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1920 1080' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='s' gradientUnits='userSpaceOnUse' x1='0' y1='0' x2='0' y2='620'%3E%3Cstop offset='0' stop-color='%237DB8E2' stop-opacity='.46'/%3E%3Cstop offset='.5' stop-color='%239CCAEB' stop-opacity='.2'/%3E%3Cstop offset='1' stop-color='%23B9DBF2' stop-opacity='0'/%3E%3C/linearGradient%3E%3CradialGradient id='u' gradientUnits='userSpaceOnUse' cx='140' cy='10' r='860'%3E%3Cstop offset='0' stop-color='%23FFF3D2' stop-opacity='.95'/%3E%3Cstop offset='.45' stop-color='%23FFE9B4' stop-opacity='.42'/%3E%3Cstop offset='1' stop-color='%23FFE9B4' stop-opacity='0'/%3E%3C/radialGradient%3E%3ClinearGradient id='b' gradientUnits='userSpaceOnUse' x1='0' y1='860' x2='0' y2='1040'%3E%3Cstop offset='0' stop-color='%23A8D08A' stop-opacity='.34'/%3E%3Cstop offset='1' stop-color='%23B9D9A0' stop-opacity='.16'/%3E%3C/linearGradient%3E%3ClinearGradient id='f' gradientUnits='userSpaceOnUse' x1='0' y1='936' x2='0' y2='1080'%3E%3Cstop offset='0' stop-color='%238EC46E' stop-opacity='.42'/%3E%3Cstop offset='1' stop-color='%23A6D088' stop-opacity='.24'/%3E%3C/linearGradient%3E%3Cfilter id='c' x='-20%25' y='-40%25' width='140%25' height='180%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.018' numOctaves='3' seed='5' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='34' xChannelSelector='R' yChannelSelector='G' result='d'/%3E%3CfeGaussianBlur in='d' stdDeviation='4'/%3E%3C/filter%3E%3Cmask id='m' maskUnits='userSpaceOnUse' x='0' y='0' width='1920' height='700'%3E%3Crect width='1920' height='700' fill='%23fff'/%3E%3Cg fill='%23000' fill-opacity='.9' filter='url(%23c)'%3E%3Ccircle cx='1356' cy='240' r='44'/%3E%3Ccircle cx='1420' cy='206' r='66'/%3E%3Ccircle cx='1504' cy='180' r='82'/%3E%3Ccircle cx='1592' cy='208' r='60'/%3E%3Ccircle cx='1652' cy='240' r='40'/%3E%3Crect x='1316' y='226' width='376' height='50' rx='25'/%3E%3C/g%3E%3C/mask%3E%3C/defs%3E%3Crect width='1920' height='700' fill='url(%23s)' mask='url(%23m)'/%3E%3Crect width='1920' height='1080' fill='url(%23u)'/%3E%3Cpath d='M-96 896C-88 897 -64 898 -48 897C-32 897 -16 895 0 894C16 893 32 894 48 894C63 893 79 893 95 892C111 891 127 889 143 888C158 887 174 886 190 885C206 884 222 883 238 882C253 880 269 878 285 876C301 874 317 872 333 871C348 870 364 870 380 870C396 871 413 871 429 872C445 873 462 875 478 877C494 878 510 878 527 879C543 880 559 881 576 883C592 885 608 891 624 893C641 895 657 894 673 895C690 896 706 897 722 898C739 899 755 901 771 903C787 904 804 906 820 906C836 907 851 905 867 904C882 903 898 901 913 900C929 900 944 901 960 900C976 899 991 897 1007 896C1022 894 1038 893 1053 891C1069 890 1084 888 1100 887C1116 886 1131 887 1147 886C1162 886 1178 885 1193 885C1209 885 1224 886 1240 886C1256 885 1273 883 1290 883C1307 882 1323 881 1340 881C1357 880 1373 881 1390 881C1407 880 1423 879 1440 878C1457 876 1473 873 1490 873C1507 872 1523 873 1540 874C1557 874 1573 873 1590 873C1607 873 1624 872 1640 872C1656 871 1671 869 1687 870C1702 871 1718 876 1733 878C1749 880 1764 880 1780 882C1796 883 1811 887 1827 888C1842 889 1858 889 1873 889C1889 890 1904 891 1920 891C1936 892 1952 891 1968 891C1984 892 2008 894 2016 894L2040 1080L-120 1080Z' fill='url(%23b)'/%3E%3Cpath d='M-96 962C-88 961 -64 958 -48 957C-32 957 -16 960 0 960C16 959 33 957 50 956C67 955 83 955 100 954C117 953 133 952 150 951C167 950 183 949 200 947C217 946 233 943 250 942C267 941 283 941 300 942C317 943 333 945 350 946C367 947 383 945 400 946C417 947 433 950 450 951C467 952 483 953 500 954C517 956 533 959 550 960C567 961 583 961 600 962C617 963 633 963 650 965C667 966 683 968 700 968C717 969 733 967 750 966C767 966 783 966 800 965C817 965 833 965 850 964C867 963 883 960 900 959C917 958 933 959 950 957C967 956 983 952 1000 951C1017 950 1033 953 1050 952C1067 952 1083 949 1100 948C1117 948 1133 948 1150 949C1167 949 1183 950 1200 949C1217 948 1233 946 1250 945C1267 944 1283 943 1300 942C1317 941 1333 940 1350 939C1367 939 1383 939 1400 939C1417 939 1433 941 1450 941C1467 941 1484 940 1500 939C1516 938 1531 936 1547 936C1562 936 1578 936 1593 938C1609 940 1624 945 1640 947C1656 949 1671 949 1687 951C1702 952 1718 954 1733 955C1749 956 1764 957 1780 958C1796 959 1811 961 1827 961C1842 961 1858 959 1873 958C1889 958 1904 959 1920 960C1936 961 1952 963 1968 963C1984 964 2008 963 2016 963L2040 1080L-120 1080Z' fill='url(%23f)'/%3E%3Cpath d='M-86 955C-78 954 -54 951 -38 950C-22 950 -6 953 10 953C26 952 43 950 60 949C77 948 93 948 110 947C127 946 143 945 160 944C177 943 193 942 210 940C227 939 243 936 260 935C277 934 293 934 310 935C327 936 343 938 360 939C377 940 393 938 410 939C427 940 443 943 460 944C477 945 493 946 510 947C527 949 543 952 560 953C577 954 593 954 610 955C627 956 643 956 660 958C677 959 693 961 710 961C727 962 743 960 760 959C777 959 793 959 810 958C827 958 843 958 860 957C877 956 893 953 910 952C927 951 943 952 960 950C977 949 993 945 1010 944C1027 943 1043 946 1060 945C1077 945 1093 942 1110 941C1127 941 1143 941 1160 942C1177 942 1193 943 1210 942C1227 941 1243 939 1260 938C1277 937 1293 936 1310 935C1327 934 1343 933 1360 932C1377 932 1393 932 1410 932C1427 932 1443 934 1460 934C1477 934 1494 933 1510 932C1526 931 1541 929 1557 929C1572 929 1588 929 1603 931C1619 933 1634 938 1650 940C1666 942 1681 942 1697 944C1712 945 1728 947 1743 948C1759 949 1774 950 1790 951C1806 952 1821 954 1837 954C1852 954 1868 952 1883 951C1899 951 1914 952 1930 953C1946 954 1962 956 1978 956C1994 957 2018 956 2026 956' fill='none' stroke='%235E564D' stroke-opacity='.22' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat,var(--scene-bg)}
+
+/* =====================================================================
+   自有版式组件（水彩田园专用，类名都带 wc- 前缀；用法、出场见 watercolor.js 开头，样板页见 samples/watercolor.js）
+   - 颜色层、笔触、木牌、颜料格的水彩底都带一层 --bp 径向遮罩：出场时从 -25% 推到 100%（watercolor.js），
+     平时不写就是 100%，也就是完整显出（阅读模式、总览、自检、减少动态看到的都是画好的样子）
+   - 可读性：字一律实色深褐墨（--ink、--ink-2），身后只有纸色或很淡的一层水彩（不超过 .55）；画里不放字；
+     讲过的块只退到 recede（.8），这里不另加透明度
+   ===================================================================== */
+[data-scene="watercolor"]{
+  --wc-sky-dd:#2E6593; --wc-earth:#D9B98C; --wc-wood:#D9AD72;
+  /* 水彩纸的毛边（遮罩）、纸纹 */
+  --wc-deckle:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 600' preserveAspectRatio='none'%3E%3Cfilter id='d' x='-3%25' y='-3%25' width='106%25' height='106%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.045' numOctaves='3' seed='6' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='9' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3Crect x='6' y='6' width='788' height='588' fill='%23000' filter='url(%23d)'/%3E%3C/svg%3E");
+  --wc-grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='a'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .36 0 0 0 0 .3 0 0 0 0 .23 0 0 0 .42 -.17'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23a)'/%3E%3C/svg%3E");
+  /* 箭头木牌：铅笔轮廓、木头颜色的水彩形状（遮罩）；柱子脚下一丛草 */
+  --wc-arrow-pen:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 170' preserveAspectRatio='none'%3E%3Cg fill='none' stroke='%235E564D' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 9Q180 5 348 8L395 84Q372 124 350 163Q180 167 8 161Q4 86 7 9Z' stroke-opacity='.58' stroke-width='2.2' vector-effect='non-scaling-stroke'/%3E%3Cpath d='M5 11Q182 7 351 9L392 86Q370 126 352 161Q178 164 6 160Q6 84 5 11Z' stroke-opacity='.24' stroke-width='1.4' vector-effect='non-scaling-stroke'/%3E%3C/g%3E%3C/svg%3E");
+  --wc-arrow-pad:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 170' preserveAspectRatio='none'%3E%3Cfilter id='w' x='-8%25' y='-12%25' width='116%25' height='124%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.03' numOctaves='3' seed='8' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='12' xChannelSelector='R' yChannelSelector='G' result='d'/%3E%3CfeMorphology in='d' operator='erode' radius='3' result='e'/%3E%3CfeGaussianBlur in='e' stdDeviation='4' result='eb'/%3E%3CfeComposite in='d' in2='eb' operator='out' result='edge'/%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.035' numOctaves='2' seed='47' result='g'/%3E%3CfeColorMatrix in='g' type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.1 0 0 0 .2' result='ga'/%3E%3CfeComposite in='d' in2='ga' operator='in' result='body'/%3E%3CfeMerge%3E%3CfeMergeNode in='body'/%3E%3CfeMergeNode in='edge'/%3E%3C/feMerge%3E%3C/filter%3E%3Cpath d='M12 13Q180 9 346 11L388 85L349 159Q180 162 13 157Q8 85 12 13Z' fill='%23000' fill-opacity='.85' filter='url(%23w)'/%3E%3C/svg%3E");
+  --wc-tuft:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 90 36'%3E%3Cellipse cx='45' cy='31' rx='42' ry='5' fill='%2390C46E' fill-opacity='.4'/%3E%3Cpath d='M18 33Q20 20 25 10M29 33Q28 18 22 6M38 33Q41 20 48 12M54 33Q51 16 56 4M63 33Q66 22 73 16M72 33Q70 20 64 10' fill='none' stroke='%236FA34E' stroke-opacity='.75' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E");
+  /* 调色盘的一格颜料（遮罩：圆的一摊，湿边、颜料斑驳） */
+  --wc-pool:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='w' x='-10%25' y='-10%25' width='120%25' height='120%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.04' numOctaves='3' seed='12' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='12' xChannelSelector='R' yChannelSelector='G' result='d'/%3E%3CfeMorphology in='d' operator='erode' radius='3' result='e'/%3E%3CfeGaussianBlur in='e' stdDeviation='4' result='eb'/%3E%3CfeComposite in='d' in2='eb' operator='out' result='edge'/%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.05' numOctaves='2' seed='52' result='g'/%3E%3CfeColorMatrix in='g' type='matrix' values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1.1 0 0 0 .25' result='ga'/%3E%3CfeComposite in='d' in2='ga' operator='in' result='body'/%3E%3CfeMerge%3E%3CfeMergeNode in='body'/%3E%3CfeMergeNode in='edge'/%3E%3C/feMerge%3E%3C/filter%3E%3Ccircle cx='100' cy='100' r='86' fill='%23000' fill-opacity='.85' filter='url(%23w)'/%3E%3C/svg%3E");
+  /* 木夹子、藏书票角上的一枝小画、邮票上的画 */
+  --wc-peg:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 96'%3E%3Cg stroke='%235E564D' stroke-width='1.6' stroke-linejoin='round'%3E%3Cpath d='M5 4Q11 2 16 4L16 90Q11 95 6 90Z' fill='%23D7AE78' fill-opacity='.9'/%3E%3Cpath d='M18 4Q23 2 29 4L28 90Q23 95 18 90Z' fill='%23E6C594' fill-opacity='.9'/%3E%3C/g%3E%3Ccircle cx='17' cy='36' r='6.5' fill='none' stroke='%235E564D' stroke-width='1.8'/%3E%3Cpath d='M9 60Q12 70 10 80M24 58Q22 68 25 78' fill='none' stroke='%235E564D' stroke-opacity='.3' stroke-width='1.2' stroke-linecap='round'/%3E%3C/svg%3E");
+  --wc-sprig:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 90 64'%3E%3Cpath d='M8 58Q40 50 70 14' fill='none' stroke='%237DB35A' stroke-opacity='.8' stroke-width='3' stroke-linecap='round'/%3E%3Cpath d='M34 46C34 30 46 22 58 22C56 36 46 46 34 46Z' fill='%238CC06A' fill-opacity='.62' stroke='%235E564D' stroke-opacity='.6' stroke-width='1.3'/%3E%3Cpath d='M50 34C62 36 70 46 70 58C58 56 50 46 50 34Z' fill='%23B6DA8C' fill-opacity='.7' stroke='%235E564D' stroke-opacity='.6' stroke-width='1.3'/%3E%3Cpath d='M66 18C66 10 72 4 80 4C80 12 74 18 66 18Z' fill='%23B6DA8C' fill-opacity='.75' stroke='%235E564D' stroke-opacity='.6' stroke-width='1.3'/%3E%3C/svg%3E");
+  --wc-stamp-art:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 140 164'%3E%3Crect x='14' y='14' width='112' height='136' fill='%238EC3E6' fill-opacity='.34'/%3E%3Ccircle cx='96' cy='44' r='18' fill='%23F4C35A' fill-opacity='.7'/%3E%3Cpath d='M14 118Q50 100 80 110T126 104L126 150L14 150Z' fill='%239CCB7E' fill-opacity='.6'/%3E%3Cpath d='M46 112C40 80 58 58 84 52C88 80 72 104 46 112Z' fill='%237DB35A' fill-opacity='.7' stroke='%235E564D' stroke-opacity='.7' stroke-width='1.4'/%3E%3Cpath d='M48 108Q62 84 82 56' fill='none' stroke='%235E564D' stroke-opacity='.6' stroke-width='1.2'/%3E%3Crect x='14' y='14' width='112' height='136' fill='none' stroke='%235E564D' stroke-opacity='.55' stroke-width='1.4'/%3E%3C/svg%3E");
+}
+
+/* ---------- .wc-art 一幅水彩小画：颜色层 svg.wc-paint 在下，铅笔线稿 svg.sketch 在上，都铺满小画（视图框和小画一样大） ---------- */
+[data-scene="watercolor"] .wc-art{pointer-events:none}
+[data-scene="watercolor"] .wc-art:not(.abs){position:relative}
+[data-scene="watercolor"] .wc-art>svg{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible}
+/* 颜色层：整层带 --bp 径向遮罩（出场时颜色从 --bx --by 那一点洇开）；每块颜色套 #wc-wet（湿边、颜料斑驳），颜色取类名 */
+[data-scene="watercolor"] svg.wc-paint{
+  -webkit-mask:radial-gradient(circle at var(--bx,40%) var(--by,50%),#000 var(--bp,100%),transparent calc(var(--bp,100%) + 22%));
+          mask:radial-gradient(circle at var(--bx,40%) var(--by,50%),#000 var(--bp,100%),transparent calc(var(--bp,100%) + 22%))}
+[data-scene="watercolor"] svg.wc-paint :is(path,ellipse,circle,rect,polygon){fill:currentColor;fill-opacity:var(--o,.45);stroke:none;filter:url(#wc-wet)}
+[data-scene="watercolor"] svg.wc-paint .st{fill:none;stroke:currentColor;stroke-width:var(--w,6);stroke-opacity:var(--o,.5);stroke-linecap:round;stroke-linejoin:round}
+[data-scene="watercolor"] svg.wc-paint .sky{color:#8EC3E6}
+[data-scene="watercolor"] svg.wc-paint .sky-d{color:#4F8DBF}
+[data-scene="watercolor"] svg.wc-paint .sun{color:#F4C35A}
+[data-scene="watercolor"] svg.wc-paint .grass{color:#9CCB7E}
+[data-scene="watercolor"] svg.wc-paint .leaf{color:#7DB35A}
+[data-scene="watercolor"] svg.wc-paint .mint{color:#B6DA8C}
+[data-scene="watercolor"] svg.wc-paint .peach{color:#F5B98A}
+[data-scene="watercolor"] svg.wc-paint .pink{color:#F29C8F}
+[data-scene="watercolor"] svg.wc-paint .tea{color:#C4C95E}
+[data-scene="watercolor"] svg.wc-paint .wood{color:#C99A62}
+[data-scene="watercolor"] svg.wc-paint .shade{color:#8A7E71}
+[data-scene="watercolor"] svg.wc-paint .white{color:#FFFEFA;filter:none}   /* 瓷白、纸白不要颜料斑驳（斑驳在白上看着发脏），边缘交给铅笔线 */
+/* 绘本插画：四边柔柔地淡出纸面（没有硬框，像直接画在纸上） */
+[data-scene="watercolor"] .wc-art.wc-book{
+  -webkit-mask:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent),linear-gradient(180deg,transparent,#000 7%,#000 86%,transparent);
+  -webkit-mask-composite:source-in;
+          mask:linear-gradient(90deg,transparent,#000 6%,#000 94%,transparent),linear-gradient(180deg,transparent,#000 7%,#000 86%,transparent);
+  mask-composite:intersect}
+
+/* ---------- .wc-wash 一道水彩笔触（装饰，不放字）：颜色取 --tint（默认天空蓝），出场时从左往右刷过去 ---------- */
+[data-scene="watercolor"] .wc-wash{display:block;pointer-events:none;background:var(--tint,var(--wc-sky));opacity:.62;
+  -webkit-mask:var(--wc-brush2) 0 0/100% 100% no-repeat,linear-gradient(90deg,#000 calc(var(--bp,100%) * 1.3 - 30%),transparent calc(var(--bp,100%) * 1.3));
+  -webkit-mask-composite:source-in;
+          mask:var(--wc-brush2) 0 0/100% 100% no-repeat,linear-gradient(90deg,#000 calc(var(--bp,100%) * 1.3 - 30%),transparent calc(var(--bp,100%) * 1.3));
+  mask-composite:intersect}
+
+/* ---------- .wc-title 手写大字、.wc-tale 绘本旁白（一行居中，句子横排） ---------- */
+[data-scene="watercolor"] .wc-title{margin:0;font:700 128px/1.2 var(--f-hand);letter-spacing:.04em;color:var(--ink);white-space:nowrap}
+[data-scene="watercolor"] .wc-tale{margin:0;font:400 68px/1.4 var(--f-hand);letter-spacing:.06em;color:var(--ink);text-align:center;white-space:nowrap}
+[data-scene="watercolor"] .wc-tale>span{display:inline-block}
+
+/* ---------- .wc-paper 一张水彩纸：::before 是落在纸下面的软投影，::after 是纸（纸色实底 + 纸纹，毛边遮罩）；字压在纸上 ---------- */
+[data-scene="watercolor"] .wc-paper{isolation:isolate;color:var(--ink);rotate:var(--r)}
+[data-scene="watercolor"] .wc-paper:not(.abs){position:relative}
+[data-scene="watercolor"] .wc-paper::before{content:"";position:absolute;inset:16px 6px -12px 14px;z-index:-2;border-radius:8px;background:rgba(92,72,44,.22);filter:blur(12px);pointer-events:none}
+[data-scene="watercolor"] .wc-paper::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:var(--wc-grain) 0 0/220px 220px,#FFFEFA;
+  -webkit-mask:var(--wc-deckle) 0 0/100% 100% no-repeat;mask:var(--wc-deckle) 0 0/100% 100% no-repeat}
+/* 藏书票：里面一道铅笔框，右下角一枝小画（字留开右边的位置） */
+[data-scene="watercolor"] .wc-plate{padding:34px 124px 34px 50px;outline:2px solid rgba(94,86,77,.42);outline-offset:-14px}
+[data-scene="watercolor"] .wc-plate::after{background:var(--wc-sprig) right 22px bottom 16px/86px 61px no-repeat,var(--wc-grain) 0 0/220px 220px,#FFFEFA}
+[data-scene="watercolor"] .wc-plate>p{margin:0;font:400 42px/1.4 var(--f-hand);color:var(--ink);white-space:nowrap}
+/* 邮票：齿孔边（遮罩：里面一块实的，四边一圈半圆孔；宽高取 14 的倍数，孔才刚好落在角上） */
+[data-scene="watercolor"] .wc-stamp{display:block;pointer-events:none;rotate:var(--r);background:var(--wc-stamp-art) center/100% 100% no-repeat,#FFFEFA;
+  -webkit-mask:linear-gradient(#000,#000) center/calc(100% - 14px) calc(100% - 14px) no-repeat,radial-gradient(circle,transparent 4.5px,#000 5px) -7px -7px/14px 14px;
+          mask:linear-gradient(#000,#000) center/calc(100% - 14px) calc(100% - 14px) no-repeat,radial-gradient(circle,transparent 4.5px,#000 5px) -7px -7px/14px 14px}
+
+/* ---------- .wc-hang 晾在绳子上的画：上沿正中一只木夹子（.wc-peg，watercolor.js 自动加），转轴在夹子；
+   上半截一幅小画（默认 220 高），下面名字、一句说明 ---------- */
+[data-scene="watercolor"] .wc-hang{padding:46px 28px 26px;text-align:center;transform-origin:50% 0}
+[data-scene="watercolor"] .wc-hang>.wc-art{width:100%;height:220px}
+[data-scene="watercolor"] .wc-hang>h3{margin:12px 0 0;font:700 46px/1.25 var(--f-hand);color:var(--ink);white-space:nowrap}
+[data-scene="watercolor"] .wc-hang>h3>.wc-no{vertical-align:middle;margin:-8px 12px 0 0}
+[data-scene="watercolor"] .wc-hang>p{margin:6px 0 0;font:400 36px/1.4 var(--f-hand);color:var(--ink-2);white-space:nowrap}
+[data-scene="watercolor"] .wc-peg{position:absolute;left:50%;top:-38px;width:32px;height:92px;margin-left:-16px;z-index:2;background:var(--wc-peg) center/100% 100% no-repeat;pointer-events:none}
+
+/* ---------- .wc-sign 箭头木路牌：铅笔轮廓（背景）+ 木头颜色的水彩（::before，随 --bp 洇开）+ 柱子和脚下一丛草（::after，
+   从牌子底边往下 --post 长）；转轴在柱子落地处（立起来、倒下去、悬停晃一下都绕它转）。右边留出箭头尖的位置 ---------- */
+[data-scene="watercolor"] .wc-sign{isolation:isolate;padding:20px 74px 24px 30px;color:var(--ink);rotate:var(--r);
+  transform-origin:50% calc(100% + var(--post,260px));background:var(--wc-arrow-pen) 0 0/100% 100% no-repeat}
+[data-scene="watercolor"] .wc-sign::before{content:"";position:absolute;inset:-6px -8px;z-index:-1;pointer-events:none;background:var(--wc-wood);opacity:.5;transition:opacity .45s ease;
+  -webkit-mask:var(--wc-arrow-pad) 0 0/100% 100% no-repeat,radial-gradient(circle at var(--bx,30%) var(--by,50%),#000 var(--bp,100%),transparent calc(var(--bp,100%) + 22%));
+  -webkit-mask-composite:source-in;
+          mask:var(--wc-arrow-pad) 0 0/100% 100% no-repeat,radial-gradient(circle at var(--bx,30%) var(--by,50%),#000 var(--bp,100%),transparent calc(var(--bp,100%) + 22%));
+  mask-composite:intersect}
+[data-scene="watercolor"] .wc-sign::after{content:"";position:absolute;left:calc(50% - 45px);top:calc(100% - 6px);width:90px;height:calc(var(--post,260px) + 12px);z-index:-2;pointer-events:none;
+  background:var(--wc-tuft) 50% 100%/90px 36px no-repeat,
+    linear-gradient(90deg,transparent 34px,rgba(94,86,77,.62) 34px 36px,rgba(201,154,98,.58) 36px 54px,rgba(94,86,77,.62) 54px 56px,transparent 56px) 0 0/100% calc(100% - 14px) no-repeat}
+[data-scene="watercolor"] .wc-sign>b{display:flex;align-items:center;gap:14px;font:700 52px/1.2 var(--f-hand);white-space:nowrap}
+[data-scene="watercolor"] .wc-sign>span{display:block;margin-top:6px;font:400 36px/1.4 var(--f-hand);color:var(--ink-2);white-space:nowrap}
+/* 编号：一滴天空蓝颜料里写一个数字（数字用深一档的蓝，和颜料底的对比度够 3:1） */
+[data-scene="watercolor"] .wc-no{flex:none;display:inline-grid;place-items:center;width:58px;height:58px;border-radius:50%;font:700 34px/1 var(--f-hand);font-style:normal;color:var(--wc-sky-dd);
+  background:radial-gradient(circle,rgba(142,195,230,.42) 50%,rgba(79,141,191,.5) 64%,rgba(142,195,230,.1) 70%,transparent 72%)}
+
+/* ---------- svg.wc-brush 宽笔刷画的路、河（舞台坐标）：线宽就是笔刷宽，颜色取类名；滤镜让两边颜料积深、边缘不齐 ---------- */
+/* 浓淡和滤镜加在整层上（--o，默认 .5）：几段路首尾叠在一起的地方先合成一片再变淡、再积深边缘，接头处不会叠出深色圆斑 */
+[data-scene="watercolor"] svg.wc-brush{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:visible;pointer-events:none;opacity:var(--o,.5);filter:url(#wc-brushf)}
+[data-scene="watercolor"] svg.wc-brush path{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+[data-scene="watercolor"] svg.wc-brush .earth{color:var(--wc-earth)}
+[data-scene="watercolor"] svg.wc-brush .grass{color:#9CCB7E}
+[data-scene="watercolor"] svg.wc-brush .sky{color:#8EC3E6}
+
+/* ---------- .wc-well 调色盘里的一格颜料：圆的一摊水彩（::before，颜色取 --tint，随 --bp 洇开）上写大数字和名字 ---------- */
+[data-scene="watercolor"] .wc-well{isolation:isolate;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:50%;color:var(--ink);text-align:center}
+[data-scene="watercolor"] .wc-well::before{content:"";position:absolute;inset:7%;z-index:-1;pointer-events:none;background:var(--tint,var(--wc-sky));opacity:.55;transition:opacity .45s ease;
+  -webkit-mask:var(--wc-pool) 0 0/100% 100% no-repeat,radial-gradient(circle at var(--bx,40%) var(--by,40%),#000 var(--bp,100%),transparent calc(var(--bp,100%) + 22%));
+  -webkit-mask-composite:source-in;
+          mask:var(--wc-pool) 0 0/100% 100% no-repeat,radial-gradient(circle at var(--bx,40%) var(--by,40%),#000 var(--bp,100%),transparent calc(var(--bp,100%) + 22%));
+  mask-composite:intersect}
+[data-scene="watercolor"] .wc-well>b{display:block;font:700 124px/1 var(--f-hand);letter-spacing:-.01em;white-space:nowrap}
+[data-scene="watercolor"] .wc-well>b small{font-size:.44em;margin-left:.08em}
+[data-scene="watercolor"] .wc-well>span{display:block;margin-top:12px;font:700 46px/1.2 var(--f-hand);color:var(--ink-2);white-space:nowrap}
+
+/* ---------- 路牌立起来时飘下来的叶子（watercolor.js 的 leaves，放在内容上面的一层，一秒多就淡去） ---------- */
+[data-scene="watercolor"] .wc-fx.wc-top{z-index:30}
+[data-scene="watercolor"] .wc-leaf{position:absolute;width:28px;height:16px;border-radius:0 85% 0 85%;pointer-events:none;
+  background:linear-gradient(135deg,rgba(111,163,78,.85),rgba(156,203,126,.75));box-shadow:inset 0 0 0 1.2px rgba(94,86,77,.32)}
+[data-scene="watercolor"] .wc-leaf.sun{background:linear-gradient(135deg,rgba(226,166,70,.85),rgba(244,195,90,.72))}
+
+/* ---------- 悬停：晾着的画绕夹子、路牌绕柱子脚轻轻晃一下（--wc-lr 由 watercolor.js 写），木头、颜料颜色加深 ---------- */
+[data-scene="watercolor"] :is(.wc-hang,.wc-sign).past{transition:opacity .45s ease,rotate .4s var(--wc-pop)}
+@media (hover:hover){
+  [data-scene="watercolor"] :is(.wc-hang,.wc-sign):hover{rotate:calc(var(--r) + var(--wc-lr,0deg));transition:opacity .45s ease,rotate .4s var(--wc-pop)}
+  [data-scene="watercolor"] .wc-sign:hover::before{opacity:.66}
+  [data-scene="watercolor"] .wc-well:hover::before{opacity:.7}
+}
