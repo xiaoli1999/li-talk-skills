@@ -1,9 +1,9 @@
 {
-  "version": "0.4.2",
+  "version": "0.4.3",
   "files": {
     "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
     "NOTICE": "b80310f961b75c35260f64df94c26ecf5f8d025b132f912089a58a9843872e4b",
-    "SKILL.md": "5b2b8ad4a28de761d3e8d00035ab52eeea9a6555707437f5995fbe95182e063e",
+    "SKILL.md": "a80e63cc93a77f67da2e210db6f421d3293f7deeb1e9da191d41e3f0b04af4af",
     "fonts/wenkai.json": "1df3f00d2ef1218f9e4991fedb8925ea97154f581a4bed248ca18c39a8910bb3",
     "references/authoring.md": "4386ba3ec100a84b372e2915059ddc3be0b67f8df0532adaa855247febc61ec6",
     "references/checklist.md": "65d892184eba830c0b848d2a1c64126998536e63521ffcfbf5d7d65b399353a6",
@@ -14,10 +14,10 @@
     "scripts/li-talk.mjs": "9306668128fdbad5083865d6a8919c9b6afa981bfbee6eddbd9f7446ed86c47a",
     "scripts/lib/browser.mjs": "ca5ec2a353d31e21977f120bba2778eee1f1e943f2b52d8d1a538e8c271ac9de",
     "scripts/lib/check-static.mjs": "1f4de796a2b48f20f18653bb982fa5c91d69e09b628aa48c5ec017128b003cf6",
-    "scripts/lib/check.mjs": "8e0fd6ad925e139ffb82b587baf238499ea144c179e8f9e0d53c51b8b3fb6f7f",
+    "scripts/lib/check.mjs": "716ce1e925bd44ef91ccf96d940682a0f66e9eba2ff030ae58479a24912806d8",
     "scripts/lib/cli.mjs": "08a2400f8b0291bba1fecd2477a2d1bd2ec7789d2cf1b1bcd892b37e0f5ac31b",
     "scripts/lib/deck.mjs": "0f30187465f35d9fa7791143f1497e81aa6d6dd5a2bbafb25156c326e3b46db4",
-    "scripts/lib/edits.mjs": "e17af626fc7af1ed2d6fab9d45e1da45024ffb07d61b66a647e074a3babdb8e0",
+    "scripts/lib/edits.mjs": "1b8c72a7aa0883b30e542867e65425f51b6d8db8e0c696e4c51645fc937203c4",
     "scripts/lib/fonts.mjs": "a8187c029af284d547d4ab02b94c124c860ce532d9467afa88680844079e3963",
     "scripts/lib/guide.mjs": "88b6f4203cabdd72839b188efb91d8a6a80cb287e08d982e93bb7172112eeeae",
     "scripts/lib/imagesize.mjs": "09be9d2da34853e5480070c59bd5ed91584b50968a2f52dbe2bc3e4d0ddef77d",
@@ -29,7 +29,7 @@
     "scripts/lib/paths.mjs": "c3afdba17aea968f3370a93c76d19400a2311843e3e0d5230a7b09675096e5d5",
     "scripts/lib/report.mjs": "d6ff494d3d17f42e4b341fbbd369536d310bcf8538ab1045fee60e803748395c",
     "scripts/lib/selftest-run.mjs": "4113e4e891ea3d4cc0f3861e37cd8e4b0bbbc3ccbe4a3c7f5f059fa5781312d8",
-    "scripts/lib/serve.mjs": "1f546ff2502ee370a143708bbeb85836ed10edf8515f3b89288caccd56aac32c",
+    "scripts/lib/serve.mjs": "c415a543f0360707e994ec975dd3e8672e916ded7a414e4a578a10349830ff87",
     "scripts/lib/styles.mjs": "aee4acefdbf3d2da804cbd7337b4b21725cc9ee9acfde4d07fb2c18b7bf31ced",
     "scripts/lib/tour.mjs": "3c90607c3309c3245d88a1654a63a7788d3226c31fbcb360a43f7d559d1defe7",
     "scripts/lib/update.mjs": "698ba50d09367e4b26f068c03cf0e5470932ab7be149a9ceeeee5f8c92dcf686",
@@ -38,7 +38,7 @@
     "template/engine/beats.js": "9c8f570b97b100131000a9495c86bca4c37e3e2389894d00de9786e8b1f0aca5",
     "template/engine/build.js": "fc53ccf7039b179c674575d3f3526becde8c110fac0b781629d0d86ce7d9cd7a",
     "template/engine/core.js": "f80fe9ad253c3dace255550120ad150ad9fd71fbe91ac94af401191ddad7c5f7",
-    "template/engine/edit.js": "edae87e252b995d3cca396f684537b2870429de87bc5d5c524c0b9f9d3fa4879",
+    "template/engine/edit.js": "8b7456a64baba2374f46c9fa1adea12a66c272f9aff1385a33474f8335c25fc2",
     "template/engine/engine.css": "6a9891e496f6db28b316f646a5c49738b2e910860ecc1ad2e3caa0debd579a28",
     "template/engine/mascot.js": "2aaf2f926bcfe2ad4f2c8da0315ef934ab61510e3f061f0ce3ed1693e7f5a63a",
     "template/engine/pages.js": "367f3156fe00eadcf0a50f0e0d205efafcd984ae8b874abad5f7d778a27e1048",
@@ -176,6 +176,6 @@
     "template/vendor/fonts/wenkai-lite.css": "b15e0d0662543155920c9244fbf3636fa3c6bce7dad6e4f33ad258656c9f5b04",
     "template/vendor/gsap.min.js": "96c01b81f44a3290e2b4532f55e2c9534b2adc43273a19f3756b2cb41f0fd0b6",
     "template/vendor/rough.min.js": "6853af8619532f3939b156cd16824d2e14f31e71d3df306ad5558eeafacab194",
-    "version.txt": "e2f7bb608ebc9e24092ffcb796ad0aa83f0015afe23635f017df52273150f00d"
+    "version.txt": "520a19075780a38b440395e2c70e20d7cddd96b8c2e2c2403b265cbb74a1b333"
   }
 }
