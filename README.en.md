@@ -180,3 +180,7 @@ See [docs/roadmap.md](docs/roadmap.md) for what's planned.
 Licensed under the [Apache License 2.0](LICENSE): free to use, modify and use commercially. **If you redistribute, fork or build on this project, keep the attribution in [NOTICE](NOTICE)** (based on li-talk-skills by xiaoli1999) and mark the files you changed.
 
 Third-party components keep their own licenses (see `skills/li-talk-skills/template/vendor/`): [GSAP](https://gsap.com) (GreenSock Standard License), [rough.js](https://roughjs.com) (MIT), [LXGW WenKai](https://github.com/lxgw/LxgwWenKai) (OFL 1.1), [Fusion Pixel Font](https://github.com/TakWolf/fusion-pixel-font) (OFL 1.1).
+
+---
+
+<sub>Looking for more curated skills? Take a look at [skillhey.com](https://skillhey.com).</sub>

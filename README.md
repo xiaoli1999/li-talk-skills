@@ -180,3 +180,7 @@ Chrome、Edge 全部功能正常；Safari、Firefox 可以看，个别效果会�
 以 [Apache License 2.0](LICENSE) 开源，可免费使用、修改和商用。**转载、fork 或二次开发时，请保留 [NOTICE](NOTICE) 中的署名和出处**（基于 li-talk-skills，作者 xiaoli1999），并在修改过的文件里注明已修改。
 
 第三方组件保留各自的许可证（见 `skills/li-talk-skills/template/vendor/`）：[GSAP](https://gsap.com)（GreenSock Standard License）、[rough.js](https://roughjs.com)（MIT）、[霞鹜文楷](https://github.com/lxgw/LxgwWenKai)（OFL 1.1）、[缝合像素字体](https://github.com/TakWolf/fusion-pixel-font)（OFL 1.1）。
+
+---
+
+<sub>想找更多精选 skills，可以去 [skillhey.com](https://skillhey.com) 看看。</sub>
