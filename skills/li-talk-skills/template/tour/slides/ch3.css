@@ -1,73 +1,100 @@
-/* 教程第三部分的页面样式（和 slides/ch3.js 配套）：每条选择器都以 [data-id="p…"] 开头，只管那一页；自己的零件类名用 p〈页号〉- 开头 */
-[data-id="p17"] .p17-rows{display:flex;flex-direction:column;gap:30px}
-[data-id="p17"] .p17-rows>div{display:flex;align-items:center;justify-content:space-between;gap:40px;padding:26px 36px;border-radius:28px;background:#fff;box-shadow:var(--fg-card)}
-[data-id="p17"] .p17-rows p{display:flex;flex-wrap:wrap;align-items:center;gap:16px}
-[data-id="p17"] .p17-rows p span{margin-left:10px;font-size:34px;color:var(--ink-2)}
-[data-id="p17"] .p17-rows b{font:700 50px/1.2 var(--f-hand);color:var(--fg-blue-ink);white-space:nowrap}
+/* 教程第三部分的页面样式（和 slides/ch3.js 配套）：每条选择器都以 [data-id="p…"] 开头，只管那一页；自己的零件类名用 p〈页号〉- 开头，
+   几页共用的（对白便签 p-say、「示意」一行 p-capt）用 p- 开头。颜色只用风格变量；水彩纸、晾画、明信片的样子在 scenes/watercolor.css */
 
-[data-id="p18"] .p18-body{display:flex;gap:22px;padding:22px 26px 10px}
-[data-id="p18"] .p18-now{flex:1.1;display:flex;flex-direction:column;gap:10px}
-[data-id="p18"] .p18-now .fg-ph{height:300px;border-color:#C9DBFD}
-[data-id="p18"] .p18-now span{font-size:26px;color:var(--ink-3)}
-[data-id="p18"] .p18-side{flex:1;display:flex;flex-direction:column;gap:18px}
-[data-id="p18"] .p18-notes{padding:16px 20px;border-radius:16px;background:#F3F8FE}
-[data-id="p18"] .p18-notes span{font-size:26px;color:var(--ink-3)}
-[data-id="p18"] .p18-notes p{margin-top:6px;font-size:30px;line-height:1.45;color:var(--ink)}
-[data-id="p18"] .p18-timer{display:flex;align-items:baseline;gap:18px;padding:14px 20px;border-radius:16px;background:#F3F8FE}
-[data-id="p18"] .p18-timer b{font:600 56px/1 var(--f-num);color:var(--ink)}
-[data-id="p18"] .p18-timer span{font-size:26px;color:var(--ink-3)}
-[data-id="p18"] .p18-reh{margin:8px 26px 26px;padding:12px 18px;border-radius:16px;background:#F3F8FE}
-[data-id="p18"] .p18-reh p{display:grid;grid-template-columns:120px 1fr 90px;align-items:center;gap:16px;padding:8px 0;font-size:28px;color:var(--ink-2)}
-[data-id="p18"] .p18-reh i{display:block;height:12px;border-radius:6px;background:linear-gradient(90deg,#3B74F0 calc(var(--v) * 100%),#E6ECF5 0)}
-[data-id="p18"] .p18-reh em{font-style:normal;font-weight:600}
-[data-id="p18"] .p18-reh .over{color:#B4303F}
-[data-id="p18"] .p18-reh .over i{background:#E9505F}
-[data-id="p18"] .p18-keys{display:flex;flex-direction:column;gap:22px}
-[data-id="p18"] .p18-keys p{padding:22px 26px;border-radius:24px;background:#fff;box-shadow:var(--fg-card);font-size:34px;line-height:1.4;color:var(--ink-2)}
-[data-id="p18"] .p18-keys b{display:flex;align-items:center;gap:12px;margin-bottom:10px;font-size:38px;color:var(--ink)}
-[data-id="p18"] .p18-keys .fg-kbd{min-width:56px;height:56px;padding:0 12px;font-size:34px}
+/* ---------- 几页共用：绘本对白（一句一张便签，左边一块水彩小标签写是谁说的）和「示意」一行 ---------- */
+[data-id="p24"] .p-hd{display:flex;align-items:center;gap:22px;margin:0}
+[data-id="p24"] .p-hint{font:400 30px/1.3 var(--f-hand);color:var(--ink-3)}
+[data-id="p23"] .p-say,[data-id="p24"] .p-say{display:flex;align-items:flex-start;gap:24px;padding:28px 36px 30px}
+[data-id="p23"] .p-who,[data-id="p24"] .p-who{flex:none;margin-top:4px}
+[data-id="p23"] .p-txt,[data-id="p24"] .p-txt{margin:0;font:400 38px/1.45 var(--f-hand);color:var(--ink)}
+[data-id="p23"] .p-col{display:flex;flex-direction:column;gap:14px}
+[data-id="p23"] .p-warn{margin:0;font:400 30px/1.4 var(--f-hand);color:var(--ink-2)}
+[data-id="p23"] .p-opts{display:flex;gap:20px;margin:4px 0 0}
+[data-id="p23"] .p-url{font:500 32px/1.4 var(--f-mono);color:var(--wc-sky-dd)}
+[data-id="p18"] .p-capt,[data-id="p19"] .p-capt,[data-id="p20"] .p-capt,[data-id="p22"] .p-capt,[data-id="p23"] .p-capt,[data-id="p24"] .p-capt{display:flex;align-items:center;gap:16px;margin:0;font:400 30px/1.3 var(--f-hand);color:var(--ink-2);white-space:nowrap}
 
-[data-id="p19"] .p19-rows{display:flex;flex-direction:column;gap:22px}
-[data-id="p19"] .p19-rows p{display:flex;align-items:center;gap:24px;padding:20px 28px;border-radius:24px;background:#fff;box-shadow:var(--fg-card);font-size:34px;color:var(--ink-2)}
-[data-id="p19"] .p19-rows b{font:700 42px/1.2 var(--f-hand);color:var(--ink);white-space:nowrap}
-[data-id="p19"] .p19-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:22px 26px 28px}
-[data-id="p19"] .p19-grid .fg-ph{height:130px}
+/* ---------- p17 翻页：三张纸条，按键是水彩小标签 ---------- */
+[data-id="p17"] .p17-rows{display:flex;flex-direction:column;gap:32px}
+[data-id="p17"] .p17-r{display:flex;align-items:center;justify-content:space-between;gap:40px;padding:28px 40px}
+[data-id="p17"] .p17-k{display:flex;flex-wrap:wrap;align-items:center;gap:18px;margin:0}
+[data-id="p17"] .p17-k .tag{font-size:36px}
+[data-id="p17"] .p17-or{margin-left:10px;font-size:34px;color:var(--ink-2)}
+[data-id="p17"] .p17-do{font:700 50px/1.2 var(--f-hand);color:var(--wc-sky-dd);white-space:nowrap}
 
-[data-id="p20"] .p20-c{padding:28px 32px 34px}
-[data-id="p20"] .p20-c h3{margin-top:24px}
-[data-id="p20"] .p20-slide{position:relative;height:300px;padding:40px 0 0;border-radius:18px;background:#F3F8FE}
-[data-id="p20"] .p20-bar{position:absolute;left:24px;right:24px;bottom:22px;display:flex;gap:10px}
-[data-id="p20"] .p20-bar i{flex:1;height:8px;border-radius:4px;background:#C9D6EC}
-[data-id="p20"] .p20-bar i.on{background:linear-gradient(90deg,#3B74F0 55%,#C9D6EC 55%)}
-[data-id="p20"] .p20-phone{display:flex;flex-direction:column;gap:12px;width:200px;height:300px;margin:0 auto;padding:16px 14px;border-radius:30px;border:6px solid #16233F;background:#fff;overflow:hidden}
-[data-id="p20"] .p20-phone .fg-ph{flex:none;height:96px}
+/* ---------- p18 演讲者视图（示意）：一大张水彩纸，里面各块的位置写死，铅笔圈的坐标跟着算（见 ch3.js） ---------- */
+[data-id="p18"] .p18-hd{display:flex;align-items:center;gap:20px;margin:0}
+[data-id="p18"] .p18-hint{font:400 28px/1.3 var(--f-hand);color:var(--ink-3)}
+[data-id="p18"] .p18-lb{margin:0;font:400 26px/1.3 var(--f-hand);color:var(--ink-3)}
+[data-id="p18"] .p18-notes{padding:20px 26px}
+[data-id="p18"] .p18-notes>p{margin:8px 0 0;font-size:30px;line-height:1.45;color:var(--ink)}
+[data-id="p18"] .p18-timer{display:flex;align-items:baseline;gap:20px;padding:18px 26px}
+[data-id="p18"] .p18-timer>b{font:700 56px/1 var(--f-num);color:var(--ink)}
+[data-id="p18"] .p18-reh{display:flex;flex-direction:column;justify-content:center;gap:6px;padding:18px 26px}
+[data-id="p18"] .p18-bar{display:grid;grid-template-columns:130px 1fr 90px;align-items:center;gap:18px;margin:0;font:400 28px/1.3 var(--f-hand);color:var(--ink-2)}
+[data-id="p18"] .p18-bar>i{display:block;height:16px;border:1.6px solid var(--ink-3);border-radius:8px;overflow:hidden}
+[data-id="p18"] .p18-bar>i>s{display:block;width:calc(var(--v) * 100%);height:100%;background:var(--wc-sky)}
+[data-id="p18"] .p18-bar>em{font-style:normal;font-weight:700}
+[data-id="p18"] .p18-over>em{color:var(--human)}
+[data-id="p18"] .p18-over>i>s{background:var(--t-pink)}
+[data-id="p18"] .p18-keys{display:flex;flex-direction:column;gap:24px}
+[data-id="p18"] .p18-k{padding:22px 28px 24px}
+[data-id="p18"] .p18-kh{display:flex;align-items:center;gap:12px;margin:0 0 10px}
+[data-id="p18"] .p18-kh>b{margin-left:6px;font:700 40px/1.2 var(--f-hand);color:var(--ink)}
+[data-id="p18"] .p18-kt{margin:0;font-size:34px;line-height:1.4;color:var(--ink-2)}
 
-[data-id="p21"] .p21-rows{display:flex;flex-direction:column;gap:22px}
-[data-id="p21"] .p21-rows>div{display:grid;grid-template-columns:1fr 1fr;gap:40px;padding:18px 30px;border-radius:24px;background:#fff;box-shadow:var(--fg-card)}
-[data-id="p21"] .p21-rows p{display:flex;align-items:center;gap:24px;font-size:34px;color:var(--ink-2)}
-[data-id="p21"] .p21-rows .fg-code{flex:none;width:350px}
+/* ---------- p19 小工具 ---------- */
+[data-id="p19"] .p19-rows{display:flex;flex-direction:column;gap:24px}
+[data-id="p19"] .p19-r{display:flex;align-items:center;gap:24px;margin:0;padding:22px 30px;font-size:34px;color:var(--ink-2)}
+[data-id="p19"] .p19-r>.tag{font-size:36px}
+[data-id="p19"] .p19-r>b{font:700 42px/1.2 var(--f-hand);color:var(--ink);white-space:nowrap}
+[data-id="p19"] .p19-win{padding:24px 30px 30px}
+[data-id="p19"] .p19-hd{display:flex;align-items:center;gap:20px;margin:0 0 20px}
+[data-id="p19"] .p19-hint{font:400 28px/1.3 var(--f-hand);color:var(--ink-3)}
+[data-id="p19"] .p19-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+[data-id="p19"] .p19-th{position:relative;display:block;height:130px;border:2px solid var(--ink-3);border-radius:4px}
+[data-id="p19"] .p19-th::before{content:"";position:absolute;inset:8px;background:var(--t-blue);opacity:.3}
+[data-id="p19"] .p19-th.on{border:3px solid var(--wc-sky-d)}
+[data-id="p19"] .p19-th.on::before{background:var(--t-yellow);opacity:.5}
+
+/* ---------- p20 晾画：画纸宽 760，说明一行 ---------- */
+[data-id="p20"] .p20-h>p{white-space:nowrap}
+
+/* ---------- p21 常用命令：命令写在淡蓝水彩小标签上，等宽字 ---------- */
+[data-id="p21"] .p21-cap{margin:0;font:400 36px/1.3 var(--f-hand);color:var(--ink-2);white-space:nowrap}
+[data-id="p21"] .p21-rows{display:flex;flex-direction:column;gap:24px}
+[data-id="p21"] .p21-r{display:grid;grid-template-columns:1fr 1fr;gap:40px;padding:20px 34px}
+[data-id="p21"] .p21-r>p{display:flex;align-items:center;gap:24px;margin:0;font-size:34px;color:var(--ink-2)}
+[data-id="p21"] .p21-c{flex:none;width:330px;font:600 34px/1.2 var(--f-mono);text-align:left}
+[data-id="p21"] .p21-foot{margin:0}
 [data-id="p21"] .p21-foot span{font-size:28px;color:var(--ink-3)}
 
-[data-id="p22"] .p22-files{padding:14px 26px 22px}
-[data-id="p22"] .p22-files p{display:flex;align-items:center;gap:16px;padding:14px 10px;border-bottom:2px solid #F2F4F7;font:500 30px/1.2 var(--f-mono);color:var(--ink)}
-[data-id="p22"] .p22-files i{display:block;width:30px;height:30px;border-radius:8px}
-[data-id="p22"] .p22-files .p22-f{background:#DCE8FB}
-[data-id="p22"] .p22-files .p22-d{background:#FFE2A8}
+/* ---------- p22 分享课件：一张水彩纸画着课件文件夹，一行 60 高，index.html 那行的中心在舞台 y 407 ---------- */
+[data-id="p22"] .p22-flow>li>span{font-size:34px}
+[data-id="p22"] .p22-win{padding:24px 34px 26px}
+[data-id="p22"] .p22-hd{display:flex;align-items:center;gap:20px;margin:0 0 12px}
+[data-id="p22"] .p22-hint{font:400 28px/1.3 var(--f-hand);color:var(--ink-3)}
+[data-id="p22"] .p22-files p{display:flex;align-items:center;gap:16px;height:60px;margin:0;padding:0 10px;border-bottom:1.6px dashed var(--ink-3);font:500 30px/1.2 var(--f-mono);color:var(--ink)}
+[data-id="p22"] .p22-files i{position:relative;display:block;flex:none;width:30px;height:30px}
+[data-id="p22"] .p22-files i::before{content:"";position:absolute;inset:0;border-radius:4px 6px 5px 3px;opacity:.6}
+[data-id="p22"] .p22-files .p22-f::before{background:var(--t-blue)}
+[data-id="p22"] .p22-files .p22-d::before{background:var(--t-yellow)}
 
-[data-id="p23"] .fg-msg.ai{max-width:92%}
-[data-id="p23"] .p23-warn{display:block;margin-top:8px;font-size:30px;color:#8A5200}
-[data-id="p23"] .p23-ex{display:flex;flex-direction:column;gap:22px}
-[data-id="p23"] .p23-ex .fg-code{font-size:32px}
-[data-id="p23"] .p23-pts{display:flex;flex-direction:column;gap:22px}
-[data-id="p23"] .p23-pts p{padding:22px 26px;border-radius:24px;background:#fff;box-shadow:var(--fg-card);font-size:34px;line-height:1.4;color:var(--ink-2)}
-[data-id="p23"] .p23-pts b{display:block;margin-bottom:6px;font-size:38px;color:var(--ink)}
+/* ---------- p23 右边的要点便签 ---------- */
+[data-id="p23"] .p23-pts{display:flex;flex-direction:column;gap:24px}
+[data-id="p23"] .p23-pt{padding:22px 28px 24px}
+[data-id="p23"] .p23-pt>b{display:block;margin-bottom:6px;font:700 38px/1.3 var(--f-hand);color:var(--ink)}
+[data-id="p23"] .p23-pt>p{margin:0;font-size:34px;line-height:1.4;color:var(--ink-2)}
 
+/* ---------- p24 ---------- */
 [data-id="p24"] .p24-card p{font-size:36px;line-height:1.5}
 
-[data-id="p25"] .fg-val>.fg-ico{margin:18px 0 0}
-[data-id="p25"] .fg-val>b{font-size:48px}
+/* ---------- p25 常见问题 ---------- */
+[data-id="p25"] .p25-c{padding:32px 38px 36px}
+[data-id="p25"] .p25-c h3{display:flex;align-items:center;gap:14px;font-size:40px}
+[data-id="p25"] .p25-c p{line-height:1.5}
 
-[data-id="p26"] .p26-q{font-size:104px}
+/* ---------- p26 明信片：金句两行 84px（一行 7 个字约 610 宽，右边留给邮票）；下面一行话和项目地址 ---------- */
+[data-id="p26"] .p26-q{font-size:84px;line-height:1.35}
 [data-id="p26"] .p26-link{display:flex;flex-direction:column;align-items:flex-start;gap:14px}
-[data-id="p26"] .p26-link>span:first-child{font-size:30px;color:var(--ink-3)}
-[data-id="p26"] .p26-link .fg-code{font-size:40px}
+[data-id="p26"] .p26-tip{margin:0;font:400 30px/1.3 var(--f-hand);color:var(--ink-2)}
+[data-id="p26"] .p26-link .copy{font-size:36px}

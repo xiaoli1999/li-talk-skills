@@ -1,38 +1,58 @@
-/* 教程第二部分的页面样式（和 slides/ch2.js 配套）：每条选择器都以 [data-id="p…"] 开头，只管那一页；自己的零件类名用 p- 或 p〈页号〉- 开头 */
-[data-id="p09"] .p09-road{display:flex;flex-wrap:wrap;gap:12px}
-[data-id="p09"] .p09-road span{padding:8px 18px 10px;border-radius:999px;background:#F1F4F9;color:var(--ink-3);font:500 34px/1.2 var(--f-hand)}
-[data-id="p09"] .p09-road span.on{background:#E3EDFE;color:var(--fg-blue-ink);font-weight:700}
-[data-id="p09"] .fg-st>p{font-size:30px}
+/* 教程第二部分的页面样式（和 slides/ch2.js 配套）：每条选择器都以 [data-id="p…"] 开头，只管那一页；自己的零件类名用 p- 或 p〈页号〉- 开头。
+   颜色只用风格变量；路牌、水彩纸、绘本插画的样子在 scenes/watercolor.css */
 
-[data-id="p10"] .p10-big{font:700 56px/1.3 var(--f-hand);color:var(--ink)}
-[data-id="p10"] .p10-sm{margin-top:28px;font-size:36px;line-height:1.6;color:var(--ink-2)}
+/* ---------- 几页共用：页面上方的一行说明、「示意」一行 ---------- */
+[data-id="p11"] .p-cap,[data-id="p12"] .p-cap{margin:0;font:400 36px/1.3 var(--f-hand);color:var(--ink-2);white-space:nowrap}
+[data-id="p10"] .p-capt,[data-id="p15"] .p-capt{display:flex;align-items:center;gap:16px;margin:0;font:400 30px/1.3 var(--f-hand);color:var(--ink-2);white-space:nowrap}
+
+/* ---------- p09 小路路牌：五块牌子挤在一行，字比样板小一号（名字 40px，说明 34px） ---------- */
+[data-id="p09"] .p09-road{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin:0}
+[data-id="p09"] .p09-off{padding:4px 14px 6px;font:400 34px/1.2 var(--f-hand);color:var(--ink-3)}
+[data-id="p09"] .p09-cap{margin:0;font:400 36px/1.3 var(--f-hand);color:var(--ink-2);white-space:nowrap}
+[data-id="p09"] .p09-s{padding:16px 58px 18px 22px}
+[data-id="p09"] .p09-s>b{gap:12px;font-size:40px}
+[data-id="p09"] .p09-s>b>.wc-no{width:54px;height:54px}
+[data-id="p09"] .p09-s>span{font-size:34px}
+
+/* ---------- p10 ---------- */
+[data-id="p10"] .p10-big{margin:0;font:700 56px/1.3 var(--f-hand);color:var(--ink)}
+[data-id="p10"] .p10-sm{margin:28px 0 0;font-size:36px;line-height:1.7;color:var(--ink-2)}
+[data-id="p10"] .p10-code{font-family:var(--f-mono)}
 [data-id="p10"] .p10-term p{padding-top:8px;padding-bottom:8px}
 
-/* 风格图墙：一张图一个链接（点了新窗口打开样册，不进拍），图下面写风格名和所属的那一类 */
+/* ---------- 风格图墙：一张图贴在一张水彩纸上，一张图一个链接（点了新窗口打开样册，不进拍），图下面写风格名和所属的那一类 ---------- */
 [data-id="p11"] .p-tw,[data-id="p12"] .p-tw{display:grid;gap:26px}
-[data-id="p11"] .p11-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:22px 22px}
-[data-id="p12"] .p12-row{grid-template-columns:repeat(4,minmax(0,1fr))}
-[data-id="p11"] .p-ti,[data-id="p12"] .p-ti{display:flex;flex-direction:column;gap:6px;padding:10px 10px 12px;border-radius:20px;background:#fff;box-shadow:var(--fg-card);color:inherit;text-decoration:none;transition:translate .3s var(--fg-ease),box-shadow .3s ease}
-[data-id="p11"] .p-ti img,[data-id="p12"] .p-ti img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:12px;background:#EEF2F7}
+[data-id="p12"] .p12-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:22px 22px}
+[data-id="p11"] .p11-row{grid-template-columns:repeat(4,minmax(0,1fr))}
+[data-id="p11"] .p-ti,[data-id="p12"] .p-ti{display:flex;flex-direction:column;gap:6px;padding:12px 12px 14px;color:var(--ink);text-decoration:none;transition:translate .3s var(--wc-pop)}
+[data-id="p11"] .p-ti img,[data-id="p12"] .p-ti img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:4px}
 [data-id="p11"] .p-ti b,[data-id="p12"] .p-ti b{padding:0 6px;font:700 34px/1.2 var(--f-hand);color:var(--ink)}
-[data-id="p11"] .p-ti span,[data-id="p12"] .p-ti span{padding:0 6px;font:400 26px/1.2 var(--f-hand);color:var(--ink-3)}
-[data-id="p11"] .p-row{flex-direction:row;align-items:center;gap:20px}
-[data-id="p11"] .p-row img{width:220px!important}
-[data-id="p11"] .p-row>span{display:flex;flex-direction:column;gap:6px}
-[data-id="p11"] .p-row>span>span{padding:0}
-[data-id="p11"] .p-row>span>b{padding:0}
+[data-id="p11"] .p-ti span,[data-id="p12"] .p-ti span{padding:0 6px;font:400 26px/1.2 var(--f-hand);color:var(--ink-2)}
+[data-id="p12"] .p-row{flex-direction:row;align-items:center;gap:20px}
+[data-id="p12"] .p-row img{width:220px!important}
+[data-id="p12"] .p-row>span{display:flex;flex-direction:column;gap:6px}
+[data-id="p12"] .p-row>span>span{padding:0}
+[data-id="p12"] .p-row>span>b{padding:0}
 @media (hover:hover){
-  [data-id="p11"] .p-ti:hover,[data-id="p12"] .p-ti:hover{translate:0 -6px;box-shadow:0 0 0 3px #C9DBFD,0 26px 56px rgba(30,60,110,.16)}
+  [data-id="p11"] .p-ti:hover,[data-id="p12"] .p-ti:hover{translate:0 -6px}
 }
 
-[data-id="p13"] .p13-n{min-height:0;padding:26px 32px}
-[data-id="p13"] .p13-n h3{margin-bottom:6px}
+/* ---------- p13 三张便签 ---------- */
+[data-id="p13"] .p13-n{padding:24px 32px 26px}
+[data-id="p13"] .p13-n h3{display:flex;align-items:center;gap:14px;margin:0 0 6px;font:700 42px/1.2 var(--f-hand);color:var(--ink)}
+[data-id="p13"] .p13-n p{margin:0;font-size:36px;line-height:1.45;color:var(--ink-2)}
 
-[data-id="p14"] .p14-list{display:flex;flex-direction:column;gap:18px}
-[data-id="p14"] .p14-list p{width:760px;padding:22px 30px;border-radius:24px;background:#fff;box-shadow:var(--fg-card);font-size:34px;line-height:1.35;color:var(--ink-2)}
-[data-id="p14"] .p14-list b{margin-right:20px;font-size:40px;color:var(--ink)}
+/* ---------- p14 四条 ---------- */
+[data-id="p14"] .p14-list{display:flex;flex-direction:column;gap:24px}
+[data-id="p14"] .p14-r{display:flex;align-items:baseline;gap:24px;width:780px;padding:22px 32px}
+[data-id="p14"] .p14-r b{flex:none;font:700 40px/1.3 var(--f-hand);color:var(--ink)}
+[data-id="p14"] .p14-r span{font-size:34px;line-height:1.35;color:var(--ink-2)}
 
-[data-id="p15"] .p15-flow .fg-step p{font-size:34px}
+/* ---------- p15 ---------- */
+[data-id="p15"] .p15-flow>li>span{font-size:34px}
 [data-id="p15"] .p15-term p{padding-top:6px;padding-bottom:6px}
 
-[data-id="p16"] .p16-q{font-size:88px}
+/* ---------- p16 绘本跨页：旁白 64px 一行（20 个字约 1340 宽）；下面两行居中 ---------- */
+[data-id="p16"] .p16-q{font-size:64px}
+[data-id="p16"] .p16-by{margin:0;font:400 38px/1.3 var(--f-hand);color:var(--ink-2);text-align:center}
+[data-id="p16"] .p16-note{margin:0;text-align:center}
