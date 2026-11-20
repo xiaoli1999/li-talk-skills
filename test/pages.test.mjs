@@ -1,24 +1,55 @@
-// pages.mjs：把教程课件打成 GitHub Pages 用的独立目录。打出来的 index.html 不再引用 ../，引用的文件都在目录里
+// pages.mjs：打 GitHub Pages 网站。根目录是介绍页，tour/ 是教程课件，gallery.html 是样册；引用的文件都在目录里
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, dirname } from 'node:path';
+import { join, dirname, posix } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { buildPages } from '../pages.mjs';
 
 const made = [];
 after(() => { for (const d of made) rmSync(d, { recursive: true, force: true }); });
+const TPL = join(dirname(fileURLToPath(import.meta.url)), '..', 'skills', 'li-talk-skills', 'template');
 
-test('教程打包：index.html 只引用目录里的文件，CSS 里 url() 用到的字体、图标也一起带上', () => {
-  const out = join(mkdtempSync(join(tmpdir(), 'li-talk-pages-')), 'site');
+// html 里 href/src 引用的本地文件（相对这个 html 所在目录），都要在打包目录里，不能指到网站外面
+function assertRefs(out, rel) {
+  const html = readFileSync(join(out, ...rel.split('/')), 'utf8');
+  const base = posix.dirname(rel);
+  for (const m of html.matchAll(/(?:href|src)="([^"#?]*)[^"]*"/g)) {
+    const u = m[1];
+    if (u === '' || /^(https?:|data:|mailto:)/.test(u) || /['+]/.test(u)) continue;   // 脚本里拼出来的地址（' + b + '.css）不算
+    const target = posix.normalize(posix.join(base, u.endsWith('/') ? u + 'index.html' : u));
+    assert.ok(!target.startsWith('..'), `${rel} 引用到网站外面：${u}`);
+    assert.ok(existsSync(join(out, ...target.split('/'))), `${rel} 缺文件：${u}`);
+  }
+  return html;
+}
+
+let out;
+test('网站打包：教程在 tour/，样册在根目录，引用的文件（含 CSS 里 url() 用到的字体、图标）都带上', () => {
+  out = join(mkdtempSync(join(tmpdir(), 'li-talk-pages-')), 'site');
   made.push(dirname(out));
   const files = buildPages(out);
   assert.ok(files.length > 5, '至少带上引擎、风格、形象');
-  const html = readFileSync(join(out, 'index.html'), 'utf8');
-  assert.doesNotMatch(html, /(href|src)="\.\.\//, '不能再引用模板目录');
-  for (const m of html.matchAll(/(?:href|src)="(\.\/[^"]+)"/g)) {
-    assert.ok(existsSync(join(out, m[1].split(/[?#]/)[0])), '缺文件：' + m[1]);
-  }
+  assertRefs(out, 'tour/index.html');
+  assertRefs(out, 'gallery.html');
   assert.ok(existsSync(join(out, '.nojekyll')));
-  assert.ok(!existsSync(join(out, '.li-talk')), '自检记录不带上去');
+  assert.ok(!existsSync(join(out, 'tour', '.li-talk')), '自检记录不带上去');
+});
+
+test('介绍页：在根目录，链到教程和样册，风格清单从 scenes/index.json 填进去，每种风格都有截图', () => {
+  const html = assertRefs(out, 'index.html');
+  assert.match(html, /href="tour\/"/);
+  assert.match(html, /href="gallery\.html"/);
+  assert.doesNotMatch(html, /\/\*LT_STYLES\*\/\[\]/, '占位要换成真的清单');
+  const m = /window\.LT_STYLES = (\[.*?\]);<\/script>/s.exec(html);
+  assert.ok(m, '找到风格清单');
+  const styles = JSON.parse(m[1]);
+  const want = JSON.parse(readFileSync(join(TPL, 'scenes', 'index.json'), 'utf8')).map(s => s.key);
+  assert.deepEqual(styles.map(s => s.key), want);
+  for (const s of styles) {
+    assert.ok(s.label && s.family && s.fit, JSON.stringify(s));
+    assert.ok(existsSync(join(out, 'img', 'styles', s.key + '.jpg')), '缺截图：' + s.key);
+  }
+  assert.ok(existsSync(join(out, 'img', 'edit.jpg')));
 });

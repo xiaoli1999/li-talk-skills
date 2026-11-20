@@ -1,12 +1,13 @@
 #!/usr/bin/env node
-// 把教程课件（skills/li-talk-skills/template/tour/）打成 GitHub Pages 用的独立网页目录，可选推到 gh-pages 分支
+// 打包 GitHub Pages 网站：根目录是介绍页（site/index.html），tour/ 是教程课件，gallery.html 是样册；可选推到 gh-pages 分支
 //   node pages.mjs            打包到 .pages/（git 不收），打开 .pages/index.html 就能看
 //   node pages.mjs --deploy   打包后把 .pages/ 作为 gh-pages 分支强推到 origin（只动 gh-pages，不碰 master、dev）
 //
-// 教程在 skill 里是直接引用模板的（../engine/…、../scenes/…），网页上没有模板目录，所以这里：
-//   1. 把 tour/ 整个复制过去（index.html、slides/、素材），index.html 里的 ../ 改成 ./
-//   2. 顺着 index.html 引入的文件，以及这些 CSS 里 url(...) 引用的文件，把用到的模板文件原样复制到同样的相对位置
-//   3. 加一个 .nojekyll（不让 GitHub Pages 用 Jekyll 处理，下划线开头的文件也能访问）
+// 网站目录照模板目录的样子摆：
+//   1. 教程课件 tour/ 整个复制到 tour/（它引用的 ../engine/…、../scenes/…、../gallery.html 正好指到网站根目录，不用改路径）
+//   2. 顺着教程和样册引入的文件，以及这些 CSS 里 url(...) 引用的文件，把用到的模板文件原样复制到根目录同样的相对位置
+//   3. 介绍页 site/index.html 放到根目录：填上风格清单（scenes/index.json 加上每个形象的名字），图片从 docs/images 复制到 img/
+//   4. 加一个 .nojekyll（不让 GitHub Pages 用 Jekyll 处理，下划线开头的文件也能访问）
 // 只用 Node 18 自带的模块。
 import { existsSync, mkdirSync, readFileSync, writeFileSync, copyFileSync, readdirSync, statSync, rmSync } from 'node:fs';
 import { dirname, join, resolve, relative, sep } from 'node:path';
@@ -16,6 +17,8 @@ import { spawnSync } from 'node:child_process';
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const TPL = join(ROOT, 'skills', 'li-talk-skills', 'template');
 const TOUR = join(TPL, 'tour');
+const SITE = join(ROOT, 'site');
+const IMAGES = join(ROOT, 'docs', 'images');
 
 const posix = p => p.split(sep).join('/');
 const copy = (from, to) => { mkdirSync(dirname(to), { recursive: true }); copyFileSync(from, to); };
@@ -37,41 +40,61 @@ const cssUrls = text => [...text.matchAll(/url\(\s*(['"]?)([^'")]+)\1\s*\)/g)].m
 export function buildPages(out = join(ROOT, '.pages')) {
   if (!existsSync(join(TOUR, 'index.html'))) throw new Error('找不到教程课件 ' + posix(join(TOUR, 'index.html')));
   rmSync(out, { recursive: true, force: true });
-  copyDir(TOUR, out);
-  const html = readFileSync(join(TOUR, 'index.html'), 'utf8');
-  const refs = [...html.matchAll(/(?:href|src)="\.\.\/([^"]+)"/g)].map(m => m[1].split(/[?#]/)[0]);
+  copyDir(TOUR, join(out, 'tour'));
   const done = new Set();
   const take = rel => {
     rel = posix(rel);
     if (done.has(rel)) return;
     const abs = join(TPL, ...rel.split('/'));
-    if (!abs.startsWith(TPL) || !existsSync(abs)) throw new Error('教程引用的模板文件不存在：' + rel);
+    if (!abs.startsWith(TPL) || !existsSync(abs)) throw new Error('教程或样册引用的模板文件不存在：' + rel);
     done.add(rel);
     copy(abs, join(out, ...rel.split('/')));
     if (rel.endsWith('.css')) {
       for (const u of cssUrls(readFileSync(abs, 'utf8'))) take(relative(TPL, resolve(dirname(abs), u)));
     }
   };
-  refs.forEach(take);
-  writeFileSync(join(out, 'index.html'), html.replace(/(href|src)="\.\.\//g, '$1="./'));
+  // 教程引用的模板文件（../ 开头），gallery.html 单独处理
+  const html = readFileSync(join(TOUR, 'index.html'), 'utf8');
+  for (const m of html.matchAll(/(?:href|src)="\.\.\/([^"]+)"/g)) {
+    const rel = m[1].split(/[?#]/)[0];
+    if (rel !== 'gallery.html') take(rel);
+  }
 
-  // 样册：教程里点风格小图会跳到 ../gallery.html?scene=键名。网页版把样册放在根目录，
+  // 样册：教程里点风格小图会跳到 ../gallery.html?scene=键名，也就是网站根目录的 gallery.html；
   // 带上它引入的文件，加上它用 document.write 按风格引入的 samples/ 整个目录
   const gallery = readFileSync(join(TPL, 'gallery.html'), 'utf8');
   for (const m of gallery.matchAll(/(?:href|src)="([\w./-]+\.(?:css|js|svg|png|jpe?g|webp|woff2?))"/g)) take(m[1]);
   copyDir(join(TPL, 'samples'), join(out, 'samples'));
   writeFileSync(join(out, 'gallery.html'), gallery);
-  // 教程章节里指向样册的链接：../gallery.html 改成 ./gallery.html
-  const slides = join(out, 'slides');
-  if (existsSync(slides)) {
-    for (const n of readdirSync(slides)) {
-      if (!/\.(js|css)$/.test(n)) continue;
-      const p = join(slides, n), s = readFileSync(p, 'utf8');
-      if (s.includes('../gallery.html')) writeFileSync(p, s.split('../gallery.html').join('./gallery.html'));
-    }
-  }
+
+  buildSite(out);
   writeFileSync(join(out, '.nojekyll'), '');
   return [...done].sort();
+}
+
+/** 介绍页：填风格清单，复制图片（每种风格一张样板截图 docs/images/styles/<键名>.jpg，缺了就报错） */
+function buildSite(out) {
+  const page = readFileSync(join(SITE, 'index.html'), 'utf8');
+  const styles = JSON.parse(readFileSync(join(TPL, 'scenes', 'index.json'), 'utf8')).map(s => {
+    let mascotLabel = '';
+    const mf = join(TPL, 'mascots', s.mascot + '.js');
+    if (existsSync(mf)) {
+      const m = /label:\s*'([^']+)'/.exec(readFileSync(mf, 'utf8'));
+      if (m) mascotLabel = m[1];
+    }
+    return { key: s.key, label: s.label, family: s.family, fit: s.fit, mascotLabel };
+  });
+  for (const s of styles) {
+    const img = join(IMAGES, 'styles', s.key + '.jpg');
+    if (!existsSync(img)) throw new Error('介绍页缺这种风格的截图：' + posix(relative(ROOT, img)));
+    copy(img, join(out, 'img', 'styles', s.key + '.jpg'));
+  }
+  for (const n of ['hero.jpg', 'edit.jpg']) copy(join(IMAGES, n), join(out, 'img', n));
+  const SLOT = '/*LT_STYLES*/[]';
+  if (!page.includes(SLOT)) throw new Error('site/index.html 里找不到风格清单的占位 ' + SLOT);
+  // JSON 里的 < 写成 <：说明文字里万一有 </script> 也不会提前结束脚本
+  const json = JSON.stringify(styles).replace(/</g, '\\u003c');
+  writeFileSync(join(out, 'index.html'), page.replace(SLOT, () => json));
 }
 
 // 把 out 作为 gh-pages 分支强推到 origin：在 out 里建一个只有一个提交的临时仓库
@@ -85,7 +108,7 @@ function deploy(out) {
   const head = run(['rev-parse', '--short', 'HEAD'], ROOT);
   run(['init', '-q', '-b', 'gh-pages']);
   run(['add', '-A']);
-  run(['-c', 'user.name=li-talk-skills', '-c', 'user.email=li-talk-skills@users.noreply.github.com', 'commit', '-q', '-m', `教程网页（来自 ${head}）`]);
+  run(['-c', 'user.name=li-talk-skills', '-c', 'user.email=li-talk-skills@users.noreply.github.com', 'commit', '-q', '-m', `介绍页和教程网页（来自 ${head}）`]);
   run(['push', '-f', remote, 'gh-pages:gh-pages']);
   rmSync(join(out, '.git'), { recursive: true, force: true });
 }
@@ -93,7 +116,7 @@ function deploy(out) {
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const out = join(ROOT, '.pages');
   const files = buildPages(out);
-  console.log(`已打包到 ${posix(out)}：教程课件，加 ${files.length} 个模板文件`);
+  console.log(`已打包到 ${posix(out)}：介绍页、教程课件（tour/）、样册，加 ${files.length} 个模板文件`);
   if (process.argv.includes('--deploy')) {
     deploy(out);
     console.log('已推到 gh-pages 分支。');

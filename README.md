@@ -1,18 +1,51 @@
-# li-talk-skills · 演讲课件
+<div align="center">
 
-中文 | [English](README.en.md)
+# li-talk-skills
 
-一个给 AI 智能体用的 skill：**你专心讲好内容，版式、风格和动效交给 AI。** 把主题、想法、截图或讲稿交给 AI，它做成一份 **HTML 演讲课件**：像幻灯片一样一拍一拍地翻，双击就能离线打开，带演讲者视图、计时、彩排和动效，每种风格还有自己的小形象。
+**支持在线编辑 · 16 种风格 · 一句话生成的 AI 演讲课件 Skill**
+
+把主题、笔记或讲稿交给 AI，得到一份能直接上台讲的 HTML 课件：一拍一拍地翻，双击离线打开，带演讲者视图、计时彩排和专属形象；想改哪里，在浏览器里直接改，改完一键交回 AI 合进源码。
+
+[![在线体验](https://img.shields.io/badge/在线体验-xiaoli1999.github.io-2f6bff?style=flat-square&logo=githubpages&logoColor=white)](https://xiaoli1999.github.io/li-talk-skills/)
+[![License](https://img.shields.io/badge/License-Apache_2.0-22c55e?style=flat-square)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.3.1-111827?style=flat-square)](CHANGELOG.md)
+[![Styles](https://img.shields.io/badge/风格-16_种-7c5cff?style=flat-square)](#16-种风格)
+[![Mascots](https://img.shields.io/badge/形象-16_个-ef4f64?style=flat-square)](#16-种风格)
+[![Live Editing](https://img.shields.io/badge/在线编辑-支持-00b4d8?style=flat-square)](#在浏览器里直接改)
+[![Self Check](https://img.shields.io/badge/自检-5_种尺寸-f59e0b?style=flat-square)](#质量怎么保证)
+[![Offline](https://img.shields.io/badge/HTML-离线_·_零依赖-e34f26?style=flat-square&logo=html5&logoColor=white)](#常见问题)
+
+[![Claude Code](https://img.shields.io/badge/Claude_Code-支持-d97757?style=flat-square&logo=anthropic&logoColor=white)](#怎么装)
+[![Codex](https://img.shields.io/badge/Codex-支持-10a37f?style=flat-square&logo=openai&logoColor=white)](#怎么装)
+[![Cursor](https://img.shields.io/badge/Cursor-支持-000000?style=flat-square&logo=cursor&logoColor=white)](#怎么装)
+[![DeepSeek](https://img.shields.io/badge/DeepSeek-支持-4d6bfe?style=flat-square)](#怎么装)
+[![WorkBuddy](https://img.shields.io/badge/WorkBuddy-支持-0052d9?style=flat-square)](#怎么装)
+
+**[🌐 介绍页](https://xiaoli1999.github.io/li-talk-skills/)** · **[📖 新手教程](https://xiaoli1999.github.io/li-talk-skills/tour/)** · **[🎨 全部风格](https://xiaoli1999.github.io/li-talk-skills/gallery.html)** · **[📝 更新日志](CHANGELOG.md)** · 中文 | [English](README.en.md)
+
+</div>
 
 ![样册首页：16 种风格一屏看完](docs/images/hero.jpg)
 
 <sub>样册首页：16 种风格分企业风、手绘风、现代风、像素风四类，一屏看完，每种都有自己的小形象；点一张卡片就从第一页看这种风格的样板。</sub>
 
-**适合**：要做技术分享、培训、汇报、演讲，想要一份网页版幻灯片，讲的时候一拍一拍地点、有演讲者视图看讲词的人。
+## 亮点
+
+- **一句话生成**：只有一个主题、零散笔记和截图、或现成讲稿，三种起点都能开工。AI 按九步流程写讲稿、选风格、排版、加动效，在提纲、讲稿、风格、试做、过稿五处停下来等你确认。
+- **在线编辑**：在浏览器里双击改字、拖动缩放、改字号颜色和拍号，撤销重做；改完点「通知 AI 修改」，AI 用类名和章节样式写回源码、跑完自检，页面自动刷新。
+- **16 种风格，16 个形象**：企业风、手绘风、现代风、像素风四大家族。不是换配色：每种风格有自己的版式、组件、翻页动作，和一个会走动、会说话的小形象。
+- **上台就能讲**：一拍一拍地出内容，讲过的自动变淡；演讲者视图看讲词、预告下一拍、计时彩排；黑屏、激光笔、总览跳页，翻页笔直接用。
+- **5 种尺寸自检**：用真浏览器按 1920×1080 到手机竖屏逐页逐拍检查溢出、遮挡、对比度和字号，出中文报告；看不了图的模型也能照着改干净。
+- **离线、零依赖**：纯 HTML，双击 `index.html` 就能放映，不联网、不装软件；手机上自动变成竖屏阅读模式。
+- **多种 AI 都能用**：Claude Code、Codex、Cursor，以及 DeepSeek、WorkBuddy 等国产 AI 工具，能跑命令、能读写本地文件就行。
+
+![在线编辑：选中柱状图上的数字，浮出字号、颜色、对齐、拍号工具条，顶部是撤销重做和「通知 AI 修改」](docs/images/edit.jpg)
+
+<sub>在线编辑：选到文字才出现字号和颜色，改一处不牵动别处；顶部一条是改动数、撤销重做、全部还原和「通知 AI 修改」。</sub>
+
+**适合**：要做技术分享、培训、汇报、演讲、客户方案，想要一份网页版幻灯片，讲的时候一拍一拍地点、有演讲者视图看讲词的人。
 
 **不适合**：要导出 pptx 或 pdf、要的是纯文档或数据看板。
-
-能跑命令、能读写本地文件的 AI 智能体都能用：Claude Code、Codex、Cursor，以及 DeepSeek、WorkBuddy 等国产 AI 工具；网页版聊天框用不了。
 
 ## 怎么装
 
@@ -32,7 +65,7 @@ npx skills add xiaoli1999/li-talk-skills -g -a claude-code -y
 
 只装到全局目录，不装进某个项目。装好后新开一个对话，新装的 skill 才会加载。
 
-**新手教程**：先在线看一遍也行：[https://xiaoli1999.github.io/li-talk-skills/](https://xiaoli1999.github.io/li-talk-skills/)，讲了安装、怎么开始、九步流程、选风格、翻页和演讲者视图、常用命令。第一次用时，AI 也会先问你要不要花几分钟过一遍新手教程。选了的话，AI 会在浏览器里打开一份讲「这个工具怎么用」的课件，再打开样册带你看全部风格；不想看可以跳过，以后对 AI 说「打开 li-talk-skills 新手教程」随时能回来。
+**新手教程**：先在线看一遍也行：[https://xiaoli1999.github.io/li-talk-skills/tour/](https://xiaoli1999.github.io/li-talk-skills/tour/)，讲了安装、怎么开始、九步流程、选风格、翻页和演讲者视图、常用命令。第一次用时，AI 也会先问你要不要花几分钟过一遍新手教程。选了的话，AI 会在浏览器里打开一份讲「这个工具怎么用」的课件，再打开样册带你看全部风格；不想看可以跳过，以后对 AI 说「打开 li-talk-skills 新手教程」随时能回来。
 
 ## 怎么用
 
@@ -185,9 +218,11 @@ Chrome、Edge 上所有功能正常。Safari、Firefox 能正常看，少数效�
 
 屏幕画笔、快捷键帮助、代码逐行点亮、前后对比滑块、视频、图表、更多样板页、打包发送、升级已经做好的课件等还没做，计划见 [docs/roadmap.md](docs/roadmap.md)。
 
-## 致谢与许可
+## 许可与署名
 
-本项目以 [MIT](LICENSE) 许可发布。用到的第三方组件保留各自的许可证，许可证文件和组件一起放在 `skills/li-talk-skills/template/vendor/`：
+本项目以 [Apache License 2.0](LICENSE) 开源，可以免费使用、修改和商用。**转载、fork 或二次开发时，请按协议保留 [NOTICE](NOTICE) 里的署名和出处**（基于 li-talk-skills，作者 xiaoli1999），并在修改过的文件里注明已修改。
+
+用到的第三方组件保留各自的许可证，许可证文件和组件一起放在 `skills/li-talk-skills/template/vendor/`：
 
 - [GSAP](https://gsap.com)：动画，GreenSock 标准许可证（Standard License）
 - [rough.js](https://roughjs.com)：手绘线条，MIT

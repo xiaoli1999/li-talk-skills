@@ -513,10 +513,10 @@ Deck.scene('ink', {
 ### 11.1 仓库结构
 
 ```
-li-talk-skills/                  仓库根（公开，MIT）
+li-talk-skills/                  仓库根（公开，Apache-2.0）
   README.md、README.en.md         图文说明：是什么、怎么装、怎么对 AI 说、风格一览
   CHANGELOG.md                    每一版的要点，自动更新时转述给用户
-  LICENSE                         MIT；vendor 里各个库保留自己的许可证
+  LICENSE、NOTICE                 Apache-2.0 全文和署名出处；vendor 里各个库保留自己的许可证
   .claude-plugin/                 Claude Code 插件方式安装用
   docs/                           设计文档
   build.mjs                       发版前生成文件清单、做干净度检查

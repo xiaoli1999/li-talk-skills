@@ -1,20 +1,51 @@
+<div align="center">
+
 # li-talk-skills
 
-[中文](README.md) | English
+**AI talk-deck skill with live editing · 16 styles · one sentence to start**
 
-A skill for AI agents: **you focus on what you want to say; the AI takes care of layout, style and animation.** Hand your topic, ideas, screenshots or script to the AI and get an **HTML talk deck** back. It steps through beat by beat like slides, opens offline with a double-click, and comes with a presenter view, timer, rehearsal mode and animations. Every style has its own little mascot.
+Hand your topic, notes or script to the AI and get an HTML deck you can present right away: it steps through beat by beat, opens offline with a double-click, and comes with a presenter view, rehearsal timer and a mascot for every style. Want to change something? Edit it in the browser, then hand the changes back to the AI to merge into the source.
+
+[![Live site](https://img.shields.io/badge/Live_site-xiaoli1999.github.io-2f6bff?style=flat-square&logo=githubpages&logoColor=white)](https://xiaoli1999.github.io/li-talk-skills/)
+[![License](https://img.shields.io/badge/License-Apache_2.0-22c55e?style=flat-square)](LICENSE)
+[![Version](https://img.shields.io/badge/version-0.3.1-111827?style=flat-square)](CHANGELOG.md)
+[![Styles](https://img.shields.io/badge/Styles-16-7c5cff?style=flat-square)](#16-styles)
+[![Mascots](https://img.shields.io/badge/Mascots-16-ef4f64?style=flat-square)](#16-styles)
+[![Live Editing](https://img.shields.io/badge/Live_editing-yes-00b4d8?style=flat-square)](#edit-in-the-browser)
+[![Self Check](https://img.shields.io/badge/Self--check-5_screen_sizes-f59e0b?style=flat-square)](#how-quality-is-checked)
+[![Offline](https://img.shields.io/badge/HTML-offline_·_zero_deps-e34f26?style=flat-square&logo=html5&logoColor=white)](#faq)
+
+[![Claude Code](https://img.shields.io/badge/Claude_Code-supported-d97757?style=flat-square&logo=anthropic&logoColor=white)](#install)
+[![Codex](https://img.shields.io/badge/Codex-supported-10a37f?style=flat-square&logo=openai&logoColor=white)](#install)
+[![Cursor](https://img.shields.io/badge/Cursor-supported-000000?style=flat-square&logo=cursor&logoColor=white)](#install)
+[![DeepSeek](https://img.shields.io/badge/DeepSeek-supported-4d6bfe?style=flat-square)](#install)
+[![WorkBuddy](https://img.shields.io/badge/WorkBuddy-supported-0052d9?style=flat-square)](#install)
+
+**[🌐 Website](https://xiaoli1999.github.io/li-talk-skills/)** · **[📖 Tutorial](https://xiaoli1999.github.io/li-talk-skills/tour/)** · **[🎨 All styles](https://xiaoli1999.github.io/li-talk-skills/gallery.html)** · **[📝 Changelog](CHANGELOG.md)** · [中文](README.md) | English
+
+</div>
 
 ![The gallery home page: all 16 styles on one screen](docs/images/hero.jpg)
 
 <sub>The gallery home page: 16 styles in four groups (corporate, hand-drawn, modern, pixel) on one screen, each with its own mascot. Click a card to step through that style's sample slides.</sub>
 
-**Good for**: tech talks, training sessions, reports and presentations, when you want web slides you click through beat by beat, with a presenter view for your notes.
+## Highlights
+
+- **One sentence to start**: a bare topic, scattered notes and screenshots, or a finished script all work. The AI follows a nine-step flow (script, style, layout, animation) and stops at five checkpoints (outline, script, style, first 3 slides, final review) for your OK.
+- **Live editing**: double-click to change text, drag and scale blocks, change font size, colour and beat, undo and redo, all in the browser. Click "Notify AI" and the AI writes the changes back into the source with class names and chapter CSS, re-runs the self-check, and the page reloads.
+- **16 styles, 16 mascots**: four families (corporate, hand-drawn, modern, pixel). Not just colour swaps: each style has its own layouts, components, beat animations, and a mascot that walks around and talks.
+- **Ready to present**: content appears beat by beat and fades once covered; the presenter view shows notes, the next beat, a timer and rehearsal mode; blackout, laser pointer and slide overview; clickers just work.
+- **Self-check at 5 screen sizes**: a real browser steps through every slide and beat from 1920×1080 down to a phone in portrait, checking overflow, overlap, contrast and font size, and writes a report that even models without vision can act on.
+- **Offline, zero dependencies**: plain HTML; double-click `index.html` to present, no network, nothing to install. Phones switch to a vertical reading mode automatically.
+- **Works with many agents**: Claude Code, Codex, Cursor, and Chinese tools such as DeepSeek and WorkBuddy; anything that can run commands and read and write local files.
+
+![Live editing: a number on a bar chart is selected, with a floating toolbar for font size, colour, alignment and beat; the top bar has undo, redo and "Notify AI"](docs/images/edit.jpg)
+
+<sub>Live editing: font size and colour only appear when you select text, and changing one block doesn't move the others; the top bar shows the change count, undo and redo, reset all, and "Notify AI".</sub>
+
+**Good for**: tech talks, training sessions, reports, presentations and client proposals, when you want web slides you click through beat by beat, with a presenter view for your notes.
 
 **Not for**: exporting to pptx or pdf, plain documents, or data dashboards.
-
-Works in any AI agent that can run commands and read and write local files: Claude Code, Codex, Cursor, and Chinese tools such as DeepSeek and WorkBuddy. Browser-based chat apps can't run it.
-
-> The guide, command output and in-deck labels are currently in Chinese. The AI can relay them in your language.
 
 ## Install
 
@@ -34,7 +65,7 @@ For Codex, replace `claude-code` with `codex`; for Cursor, with `cursor`.
 
 Install globally only, not into a project. Start a new conversation afterwards so the skill gets loaded.
 
-**Tutorial**: you can also read it online first: [https://xiaoli1999.github.io/li-talk-skills/](https://xiaoli1999.github.io/li-talk-skills/) (in Chinese). The first time you use it, the AI asks whether you want a few-minute tutorial. If you do, it opens a short deck about how the tool works in your browser, then the gallery to show you every style. You can skip it and come back any time by asking the AI to "open the li-talk-skills tutorial".
+**Tutorial**: you can also read it online first: [https://xiaoli1999.github.io/li-talk-skills/tour/](https://xiaoli1999.github.io/li-talk-skills/tour/) (in Chinese). The first time you use it, the AI asks whether you want a few-minute tutorial. If you do, it opens a short deck about how the tool works in your browser, then the gallery to show you every style. You can skip it and come back any time by asking the AI to "open the li-talk-skills tutorial".
 
 ## Use
 
@@ -123,6 +154,19 @@ A style is more than a color scheme: its layouts, structure and what happens on 
 - **Phones and tablets in portrait** switch to reading mode: slides stack vertically with all beats shown. Add `?read` to the URL to force it, `?notes=1` to show the notes.
 - Swipe left and right on touch screens; reloading keeps your place.
 
+## Edit in the browser
+
+Once the first draft is done and you want to tweak it yourself, tell the AI "I want to edit it in the browser". It starts an editing service that only listens on your machine, and the page opens in edit mode:
+
+- Double-click to change text; click to select, then drag to move, arrow keys to nudge, Delete to hide.
+- Drag a corner to scale the whole block (text and images together, images keep their ratio; hold Shift to scale from the top-left corner); hold Alt while dragging to resize the box.
+- A small toolbar floats next to the selection: font size (32–120 px or the style's size steps), colour (the style's palette), bold, alignment, which beat the block appears on, and reset this block. Font size and colour only show up when you select text; while editing text you can also mark the selected words as key words. Alt+↑ selects the enclosing block.
+- Ctrl+Z to undo, Ctrl+Y to redo, many steps deep; "Reset all" at the top clears every change not merged yet.
+- Changed text or notes are merged as-is first, then the AI offers a few wording suggestions and only applies the ones you pick.
+- Press S for the presenter view and click a beat's notes to edit them.
+- Everything saves automatically. Click "Notify AI" at the top: the AI merges the changes into the source, re-runs the self-check, and the page reloads on the same slide so you can keep going. Edits you make while the AI is merging are kept for the next round.
+- A deck opened by double-click (no service) can still enter edit mode with E; click "Copy changes for AI" and paste the text into the chat.
+
 ## How quality is checked
 
 The AI writes each slide by hand, and the hard part is knowing whether it looks right. So after each batch it runs two checks:
@@ -173,9 +217,11 @@ No. This skill only makes HTML decks.
 
 A screen pen, a shortcut help panel, line-by-line code highlighting, a before/after slider, video, charts, more slide templates, packing a deck for sharing, and upgrading existing decks are not built yet. See [docs/roadmap.md](docs/roadmap.md) (in Chinese).
 
-## Credits and license
+## License and attribution
 
-Released under the [MIT](LICENSE) license. Third-party components keep their own licenses, which sit next to them in `skills/li-talk-skills/template/vendor/`:
+Licensed under the [Apache License 2.0](LICENSE): free to use, modify and use commercially. **If you redistribute, fork or build on this project, keep the attribution in [NOTICE](NOTICE)** (based on li-talk-skills by xiaoli1999) and mark the files you changed.
+
+Third-party components keep their own licenses, which sit next to them in `skills/li-talk-skills/template/vendor/`:
 
 - [GSAP](https://gsap.com): animation, GreenSock Standard License
 - [rough.js](https://roughjs.com): hand-drawn lines, MIT

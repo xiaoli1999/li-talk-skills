@@ -1,0 +1,36 @@
+li-talk-skills
+Copyright 2026 xiaoli1999
+https://github.com/xiaoli1999/li-talk-skills
+
+本项目以 Apache License 2.0 发布（全文见 LICENSE）。
+
+转载、再分发本项目，或基于它二次开发（包括 fork、修改、集成进你的产品、商用）时，按协议第 4 条须：
+  1. 原样保留本 NOTICE 文件中的署名与出处；
+  2. 附上 Apache License 2.0 全文；
+  3. 在你修改过的文件里注明「已修改」。
+并请在作品的说明文档、关于页或界面中（这类说明通常出现的地方）注明：
+  基于 li-talk-skills（https://github.com/xiaoli1999/li-talk-skills），作者 xiaoli1999
+
+----------------------------------------------------------------------
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+If you redistribute this project or build on it (including forks, modified
+versions, products that embed it, and commercial use), Section 4 of the
+license requires you to:
+  1. keep the attribution in this NOTICE file intact;
+  2. include a copy of the Apache License 2.0;
+  3. mark the files you changed as modified.
+Please also credit the project in your documentation, about page or UI,
+wherever such notices normally appear:
+  Based on li-talk-skills (https://github.com/xiaoli1999/li-talk-skills) by xiaoli1999
+
+----------------------------------------------------------------------
+
+第三方组件保留各自的许可证，许可证文件和组件放在一起：
+Third-party components keep their own licenses, stored next to them:
+
+- GSAP（skills/li-talk-skills/template/vendor/gsap.min.js）：GreenSock Standard License，见 LICENSE-gsap.txt
+- rough.js（skills/li-talk-skills/template/vendor/rough.min.js）：MIT，见 LICENSE-roughjs.txt
+- 霞鹜文楷 LXGW WenKai（skills/li-talk-skills/template/vendor/fonts/）：SIL Open Font License 1.1，见 OFL-LXGW-WenKai.txt
+- 缝合像素字体 Fusion Pixel Font（skills/li-talk-skills/template/vendor/fonts/pixel/）：SIL Open Font License 1.1，见 OFL-Fusion-Pixel-Font.txt 及旁边的上游许可证
