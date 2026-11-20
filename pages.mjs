@@ -67,14 +67,32 @@ export function buildPages(out = join(ROOT, '.pages')) {
   copyDir(join(TPL, 'samples'), join(out, 'samples'));
   writeFileSync(join(out, 'gallery.html'), gallery);
 
-  buildSite(out);
+  buildSite(out, take);
   writeFileSync(join(out, '.nojekyll'), '');
   return [...done].sort();
 }
 
-/** 介绍页：填风格清单，复制图片（每种风格一张样板截图 docs/images/styles/<键名>.jpg，缺了就报错） */
-function buildSite(out) {
-  const page = readFileSync(join(SITE, 'index.html'), 'utf8');
+// 介绍页用的水彩素材：从 scenes/watercolor.css 的变量里取（色块遮罩、笔触、铅笔框；纸纹那条 --scene-bg 改名 --wc-paper-bg）
+const WC_VARS = ['--wc-pad1', '--wc-pad2', '--wc-blob', '--wc-brush1', '--wc-pencil', '--scene-bg'];
+export function watercolorAssets(css) {
+  const out = WC_VARS.map(name => {
+    const at = css.indexOf(name + ':');
+    if (at < 0) throw new Error('scenes/watercolor.css 里找不到 ' + name);
+    const end = css.indexOf(';\n', at);
+    const value = css.slice(at + name.length + 1, end).trim();
+    return `  ${name === '--scene-bg' ? '--wc-paper-bg' : name}:${value};`;
+  });
+  return ':root{\n' + out.join('\n') + '\n}';
+}
+
+/** 介绍页：填风格清单和水彩素材，带上它引用的模板文件（楷体、朵朵），复制图片（每种风格一张样板截图 docs/images/styles/<键名>.jpg，缺了就报错） */
+function buildSite(out, take) {
+  let page = readFileSync(join(SITE, 'index.html'), 'utf8');
+  for (const m of page.matchAll(/(?:href|src)="((?:vendor|mascots|engine|scenes)\/[^"?#]+)"/g)) take(m[1]);
+  const ASSETS = '/*WC_ASSETS*/';
+  if (!page.includes(ASSETS)) throw new Error('site/index.html 里找不到水彩素材的占位 ' + ASSETS);
+  const assets = watercolorAssets(readFileSync(join(TPL, 'scenes', 'watercolor.css'), 'utf8'));
+  page = page.replace(ASSETS, () => assets);
   const styles = JSON.parse(readFileSync(join(TPL, 'scenes', 'index.json'), 'utf8')).map(s => {
     let mascotLabel = '';
     const mf = join(TPL, 'mascots', s.mascot + '.js');

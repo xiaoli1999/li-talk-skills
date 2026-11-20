@@ -42,6 +42,8 @@ test('介绍页：在根目录，链到教程和样册，风格清单从 scenes/
   assert.match(html, /href="tour\/"/);
   assert.match(html, /href="gallery\.html"/);
   assert.doesNotMatch(html, /\/\*LT_STYLES\*\/\[\]/, '占位要换成真的清单');
+  assert.doesNotMatch(html, /\/\*WC_ASSETS\*\//, '水彩素材的占位要换掉');
+  for (const v of ['--wc-pad1:url(', '--wc-blob:url(', '--wc-brush1:url(', '--wc-paper-bg:']) assert.ok(html.includes(v), '缺水彩素材 ' + v);
   const m = /window\.LT_STYLES = (\[.*?\]);<\/script>/s.exec(html);
   assert.ok(m, '找到风格清单');
   const styles = JSON.parse(m[1]);

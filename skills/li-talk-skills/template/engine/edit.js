@@ -273,7 +273,12 @@
   }
   function isLeafText(n) {
     if (!(n instanceof HTMLElement) || n instanceof SVGElement || !norm(n.textContent) || n.closest(EXCLUDE)) return false;
-    return [...n.querySelectorAll('*')].every(inlineChild);
+    const all = [...n.querySelectorAll('*')];
+    if (all.every(inlineChild)) return true;
+    // 自己直接带着字（比如 <b><i class="wc-no">2</i>投茶</b>）：里面的行内标签排成小块（编号圆牌、图标）也算这段字的一部分，
+    // 只要标签都是行内标签；自己没有直接的字、只是装着几块的（讲者 <b> 和日期 <span> 各占一行）不算
+    const direct = [...n.childNodes].some(c => c.nodeType === 3 && norm(c.textContent));
+    return direct && all.every(c => INLINE.test(c.tagName));
   }
   /* n 里面最外层的那几段叶子文字（n 自己是叶子文字就只有它） */
   function textsIn(n) {
@@ -1484,6 +1489,7 @@
     'body.lt-editing .slide .mascot,body.lt-editing .slide .mascot *{visibility:hidden!important}',
     'body.lt-editing .slide .past,body.lt-editing svg.marks g.past{opacity:1!important}',
     'body.lt-editing #stage *,body.lt-editing #stage *::before,body.lt-editing #stage *::after,body.lt-editing .bg *{animation-play-state:paused!important}',
+    'body.lt-editing #stage .chrome *{animation-play-state:running!important}',   // 页码、拍号不是课件内容：翻页时新生成的数字照常播出场动画，不然停在第一帧（透明）
     'body.lt-editing [data-lt-hover]{outline:calc(2px * var(--lt-ik,1)) dashed var(--lt-accent,#2563eb)!important;outline-offset:calc(2px * var(--lt-ik,1));cursor:move}',
     'body.lt-editing [data-lt-moved],body.lt-editing [data-lt-w],body.lt-editing [data-lt-h],body.lt-editing [data-lt-scale],body.lt-editing [data-lt-fs],body.lt-editing [data-lt-color],body.lt-editing [data-lt-fw],body.lt-editing [data-lt-ta],body.lt-editing [data-lt-fsk],body.lt-editing [data-lt-mb]{transition:none!important}',   // 风格给 scale、字号写了过渡的：编辑时直接到位，选中框才量得准
     '[data-lt-moved]{translate:var(--lt-tx,0px) var(--lt-ty,0px)!important}',

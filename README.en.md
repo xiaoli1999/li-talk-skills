@@ -39,7 +39,7 @@ Hand your topic, notes or script to the AI and get an HTML deck you can present 
 - **Offline, zero dependencies**: plain HTML; double-click `index.html` to present, no network, nothing to install. Phones switch to a vertical reading mode automatically.
 - **Works with many agents**: Claude Code, Codex, Cursor, and Chinese tools such as DeepSeek and WorkBuddy; anything that can run commands and read and write local files.
 
-![Live editing: a number on a bar chart is selected, with a floating toolbar for font size, colour, alignment and beat; the top bar has undo, redo and "Notify AI"](docs/images/edit.jpg)
+![Live editing: double-click a signpost label in the watercolor style to edit it and recolour it sky blue, with a floating toolbar for font size, colour and alignment; the top bar shows the change count, undo, redo and "Notify AI"](docs/images/edit.jpg)
 
 <sub>Live editing: font size and colour only appear when you select text, and changing one block doesn't move the others; the top bar shows the change count, undo and redo, reset all, and "Notify AI".</sub>
 

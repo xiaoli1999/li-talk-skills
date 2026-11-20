@@ -8,199 +8,247 @@
 <meta property="og:title" content="li-talk-skills · 支持在线编辑的 AI 演讲课件 Skill">
 <meta property="og:description" content="一句话生成专业 HTML 演讲课件：16 种风格，在线编辑，离线放映，演讲者视图。">
 <meta property="og:image" content="img/hero.jpg">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%232f6bff'/%3E%3Cpath d='M20 18h24a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H32l-9 7v-7h-3a4 4 0 0 1-4-4V22a4 4 0 0 1 4-4z' fill='%23fff'/%3E%3C/svg%3E">
-<!-- 介绍页：GitHub Pages 的首页（node pages.mjs 打包时放到根目录）。
-     图片在 img/（打包时从 docs/images 复制），教程在 tour/，样册在 gallery.html。
-     风格清单 window.LT_STYLES 由 pages.mjs 从 scenes/index.json 填进来，加了风格不用改这里 -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='30' r='16' fill='%23FFFEFA' stroke='%235E564D' stroke-width='3'/%3E%3Ccircle cx='18' cy='38' r='11' fill='%23FFFEFA' stroke='%235E564D' stroke-width='3'/%3E%3Ccircle cx='46' cy='38' r='11' fill='%23FFFEFA' stroke='%235E564D' stroke-width='3'/%3E%3Crect x='16' y='34' width='32' height='15' rx='7' fill='%23FFFEFA'/%3E%3Cpath d='M12 49h40' stroke='%235E564D' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='26' cy='36' r='2.4' fill='%233A322B'/%3E%3Ccircle cx='38' cy='36' r='2.4' fill='%233A322B'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="vendor/fonts/wenkai-lite.css">
+<!-- 介绍页：GitHub Pages 的首页（node pages.mjs 打包时放到根目录），水彩田园风格。
+     - 图片在 img/（打包时从 docs/images 复制），教程在 tour/，样册在 gallery.html，楷体和朵朵来自模板目录（打包时一起复制）
+     - 风格清单 window.LT_STYLES、水彩素材（色块遮罩、笔触、铅笔框、纸纹）由 pages.mjs 从 scenes/index.json、scenes/watercolor.css 填进来，
+       加了风格、改了水彩素材都不用改这里 -->
 <style>
+/*WC_ASSETS*/
 :root{
-  --bg:#f7f8fc;--bg2:#ffffff;--ink:#0f172a;--ink2:#475569;--ink3:#94a3b8;--line:rgba(15,23,42,.08);
-  --brand:#2f6bff;--brand2:#7c5cff;--brand3:#00b4d8;--card:#ffffff;--shadow:0 1px 2px rgba(15,23,42,.04),0 12px 32px rgba(15,23,42,.08);
-  --r:20px;--wrap:1200px;
+  --paper:#FBF7EE;--card:#FFFEFA;--ink:#3A322B;--ink2:#4F463E;--ink3:#8A7E71;--line:#5E564D;
+  --sky:#8EC3E6;--skyd:#4F8DBF;--sun:#F4C35A;--grass:#9CCB7E;--pink:#F29C8F;--peach:#F5B98A;
+  --wrap:1180px;
+  --hand:"WK","LXGW WenKai","霞鹜文楷",KaiTi,STKaiti,"楷体",serif;
   --f:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei UI","Microsoft YaHei",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:ui-monospace,"Cascadia Code",Consolas,"SF Mono",monospace;
+  --pop:cubic-bezier(.3,1.5,.5,1);
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.65 var(--f);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body{margin:0;background:var(--wc-paper-bg,var(--paper));color:var(--ink);font:400 16px/1.7 var(--f);-webkit-font-smoothing:antialiased;overflow-x:hidden}
 a{color:inherit;text-decoration:none}
 img{display:block;max-width:100%}
 .wrap{width:min(var(--wrap),100% - 32px);margin:0 auto}
-.grad{background:linear-gradient(100deg,var(--brand) 0%,var(--brand2) 55%,var(--brand3) 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
-.eyebrow{display:inline-flex;align-items:center;gap:8px;margin:0 0 14px;font-size:13px;font-weight:600;letter-spacing:.14em;color:var(--brand);text-transform:uppercase}
-.eyebrow::before{content:"";width:18px;height:2px;border-radius:2px;background:currentColor}
-h2.sec{margin:0 0 14px;font-size:clamp(28px,4vw,44px);line-height:1.2;letter-spacing:-.01em}
-p.lead{margin:0;max-width:44em;font-size:clamp(16px,1.6vw,18px);color:var(--ink2)}
-section{padding:clamp(72px,10vw,120px) 0}
+section{position:relative;padding:clamp(72px,10vw,120px) 0}
 [id]{scroll-margin-top:72px}
+h1,h2,h3,.hand{font-family:var(--hand);font-weight:700;letter-spacing:.02em}
+
+/* 水彩小工具：.wash 在元素后面洇一块颜料（--tint 颜色，--pad 形状，--o 浓淡）；.brush 是重点词后面那一笔暖阳黄 */
+.wash{position:relative;isolation:isolate}
+.wash::before{content:"";position:absolute;inset:var(--in,-8px -14px);z-index:-1;background:var(--tint,var(--sky));opacity:var(--o,.38);
+  -webkit-mask:var(--pad,var(--wc-pad1)) 0 0/100% 100% no-repeat;mask:var(--pad,var(--wc-pad1)) 0 0/100% 100% no-repeat}
+.brush{position:relative;isolation:isolate;white-space:nowrap}
+.brush::after{content:"";position:absolute;left:-.12em;right:-.12em;bottom:.02em;height:.46em;z-index:-1;background:var(--wc-brush1) 0 0/100% 100% no-repeat}
+.pencil{position:relative}
+.pencil::after{content:"";position:absolute;inset:0;pointer-events:none;border:1.6px solid rgba(94,86,77,.42);border-radius:8px 14px 9px 16px/14px 8px 16px 9px}
+.pencil{box-shadow:0 1px 2px rgba(58,50,43,.05),0 10px 22px -14px rgba(58,50,43,.3);border-radius:8px 14px 9px 16px/14px 8px 16px 9px}
+.eyebrow{display:inline-block;margin:0 0 12px;font:700 15px/1.4 var(--hand);letter-spacing:.2em;color:var(--skyd)}
+.eyebrow::before{content:"～ "}
+.eyebrow::after{content:" ～"}
+h2.sec{margin:0 0 14px;font-size:clamp(30px,4.2vw,48px);line-height:1.25;color:var(--ink)}
+p.lead{margin:0;max-width:44em;font-size:clamp(16px,1.6vw,18px);color:var(--ink2)}
 
 /* 顶栏 */
-.nav{position:sticky;top:0;z-index:50;background:rgba(247,248,252,.72);-webkit-backdrop-filter:saturate(1.6) blur(14px);backdrop-filter:saturate(1.6) blur(14px);border-bottom:1px solid transparent;transition:border-color .2s}
-.nav.scrolled{border-bottom-color:var(--line)}
-.nav .wrap{display:flex;align-items:center;gap:24px;height:64px}
-.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;letter-spacing:-.01em}
-.logo i{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--brand),var(--brand2));box-shadow:0 4px 12px rgba(47,107,255,.35)}
-.logo i svg{width:16px;height:16px}
-.nav nav{display:flex;gap:4px;margin-left:auto}
-.nav nav a{padding:8px 12px;border-radius:10px;font-size:15px;color:var(--ink2);transition:background .15s,color .15s}
-.nav nav a:hover{background:rgba(15,23,42,.05);color:var(--ink)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 20px;border-radius:12px;font-size:15px;font-weight:600;white-space:nowrap;transition:transform .15s,box-shadow .15s,background .15s}
+.nav{position:sticky;top:0;z-index:50;background:rgba(251,247,238,.82);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.nav::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;opacity:0;transition:opacity .2s;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 6' preserveAspectRatio='none'%3E%3Cpath d='M0 3.2Q100 1.6 200 3.4T400 2.8' fill='none' stroke='%235E564D' stroke-opacity='.35' stroke-width='1.6'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat}
+.nav.scrolled::after{opacity:1}
+.nav .wrap{display:flex;align-items:center;gap:20px;height:66px}
+.logo{display:flex;align-items:center;gap:10px;font:700 20px/1 var(--hand);letter-spacing:.01em}
+.logo svg{width:34px;height:32px}
+.nav nav{display:flex;gap:2px;margin-left:auto}
+.nav nav a{padding:8px 12px;border-radius:10px;font:500 17px/1 var(--hand);color:var(--ink2);transition:color .15s,background .15s}
+.nav nav a:hover{color:var(--ink);background:rgba(142,195,230,.18)}
+.btn{position:relative;isolation:isolate;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:48px;padding:0 24px;border:0;background:none;
+  font:700 18px/1 var(--hand);letter-spacing:.04em;color:var(--ink);white-space:nowrap;cursor:pointer;transition:transform .2s var(--pop)}
+.btn::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--tint,var(--sky));opacity:var(--o,.55);
+  -webkit-mask:var(--wc-pad2) 0 0/100% 100% no-repeat;mask:var(--wc-pad2) 0 0/100% 100% no-repeat;transition:opacity .2s}
+.btn:hover{transform:translateY(-2px) rotate(-1deg)}
+.btn:hover::before{opacity:calc(var(--o,.55) + .15)}
 .btn svg{width:18px;height:18px}
-.btn-pri{background:var(--ink);color:#fff;box-shadow:0 6px 18px rgba(15,23,42,.18)}
-.btn-pri:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(15,23,42,.22)}
-.btn-sec{background:var(--card);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line),0 1px 2px rgba(15,23,42,.04)}
-.btn-sec:hover{transform:translateY(-1px);box-shadow:inset 0 0 0 1px rgba(15,23,42,.14),0 6px 16px rgba(15,23,42,.08)}
-.nav .btn{height:38px;padding:0 14px;font-size:14px}
+.btn-sun{--tint:var(--sun);--o:.7}
+.btn-paper{--tint:#fff;--o:1}
+.btn-paper::after{content:"";position:absolute;inset:2px;border:1.6px solid rgba(94,86,77,.5);border-radius:10px 14px 9px 15px/14px 9px 15px 10px;pointer-events:none}
+.nav .btn{height:40px;padding:0 16px;font-size:16px}
 
-/* 首屏 */
-.hero{position:relative;padding:clamp(56px,8vw,96px) 0 clamp(64px,8vw,104px);overflow:hidden}
-.hero::before{content:"";position:absolute;inset:-20% -10% auto;height:120%;z-index:-1;
-  background:radial-gradient(40% 50% at 18% 20%,rgba(47,107,255,.16),transparent 70%),radial-gradient(36% 44% at 82% 10%,rgba(124,92,255,.14),transparent 70%),radial-gradient(40% 40% at 60% 80%,rgba(0,180,216,.10),transparent 70%)}
-.hero::after{content:"";position:absolute;inset:0;z-index:-1;opacity:.5;
-  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:48px 48px;
-  -webkit-mask-image:radial-gradient(60% 60% at 50% 30%,#000,transparent);mask-image:radial-gradient(60% 60% at 50% 30%,#000,transparent)}
-.hero .wrap{text-align:center}
-.badge{display:inline-flex;align-items:center;gap:10px;margin-bottom:26px;padding:6px 14px 6px 6px;border-radius:999px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line),0 4px 14px rgba(15,23,42,.06);font-size:14px;color:var(--ink2)}
-.badge b{padding:3px 10px;border-radius:999px;background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;font-size:12px;font-weight:600;letter-spacing:.04em}
-.hero h1{margin:0 auto;max-width:15em;font-size:clamp(38px,6.6vw,76px);line-height:1.08;letter-spacing:-.025em;font-weight:800}
-.hero .sub{margin:24px auto 0;max-width:40em;font-size:clamp(16px,1.9vw,20px);color:var(--ink2)}
-.cta{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-top:34px}
-.install{display:flex;align-items:center;gap:12px;width:min(640px,100%);margin:28px auto 0;padding:8px 8px 8px 18px;border-radius:14px;background:#0f172a;color:#e2e8f0;font:500 14px/1.5 var(--mono);box-shadow:0 10px 30px rgba(15,23,42,.18);text-align:left}
+/* 首屏：水彩天空、暖阳、草坡 */
+.hero{padding:clamp(48px,7vw,84px) 0 0;overflow:hidden}
+.sky{position:absolute;inset:0 0 auto;height:78%;z-index:-2;pointer-events:none;
+  background:radial-gradient(60% 70% at 20% 0%,rgba(142,195,230,.55),transparent 70%),radial-gradient(50% 60% at 85% 10%,rgba(142,195,230,.38),transparent 70%)}
+.sun{position:absolute;left:clamp(16px,8vw,120px);top:40px;width:clamp(120px,14vw,200px);aspect-ratio:1;z-index:-1;background:var(--sun);opacity:.55;
+  -webkit-mask:var(--wc-blob) 0 0/100% 100% no-repeat;mask:var(--wc-blob) 0 0/100% 100% no-repeat;animation:sun 9s ease-in-out infinite alternate}
+@keyframes sun{to{transform:translate(8px,6px) scale(1.04)}}
+.cloud{position:absolute;z-index:-1;width:220px;height:90px;background:#fff;opacity:.9;-webkit-mask:var(--wc-blob) 0 0/100% 100% no-repeat;mask:var(--wc-blob) 0 0/100% 100% no-repeat;animation:drift 26s linear infinite alternate}
+.cloud.c1{right:8%;top:70px}.cloud.c2{right:30%;top:150px;width:150px;height:60px;opacity:.7;animation-duration:32s}
+@keyframes drift{to{transform:translateX(-40px)}}
+.hero .wrap{position:relative;text-align:center}
+.badge{display:inline-flex;align-items:center;gap:10px;margin-bottom:24px;padding:7px 18px;font:500 16px/1.4 var(--hand);color:var(--ink2)}
+.badge b{padding:2px 10px;font:700 13px/1.6 var(--f);letter-spacing:.06em;color:var(--ink);background:rgba(244,195,90,.6);border-radius:12px 9px 13px 8px}
+.hero h1{margin:0 auto;max-width:14em;font-size:clamp(40px,6.8vw,80px);line-height:1.2;color:var(--ink)}
+.hero .sub{margin:22px auto 0;max-width:40em;font-size:clamp(16px,1.9vw,19px);color:var(--ink2)}
+.duo{position:absolute;right:clamp(0px,4vw,60px);top:clamp(70px,9vw,120px);width:clamp(96px,11vw,150px);cursor:pointer;animation:bob 3.6s ease-in-out infinite}
+.duo svg{width:100%;height:auto;overflow:visible}
+.duo .say{position:absolute;right:30%;bottom:100%;margin-bottom:10px;padding:8px 14px;white-space:nowrap;font:700 15px/1.3 var(--hand);color:var(--ink);background:var(--card);border-radius:16px 16px 4px 16px;
+  box-shadow:0 0 0 1.6px rgba(94,86,77,.55);opacity:0;transform:translateY(6px) scale(.9);transition:opacity .25s,transform .35s var(--pop)}
+.duo.talk .say{opacity:1;transform:none}
+@keyframes bob{50%{transform:translateY(-8px)}}
+.cta{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;margin-top:32px}
+.install{position:relative;display:flex;align-items:center;gap:12px;width:min(660px,100%);margin:28px auto 0;padding:10px 10px 10px 20px;background:var(--card);font:500 14px/1.5 var(--mono);color:var(--ink);text-align:left}
 .install span{flex:1;min-width:0;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
 .install span::-webkit-scrollbar{display:none}
-.install em{font-style:normal;color:#7dd3fc}
-.install button{flex:none;height:34px;padding:0 12px;border:0;border-radius:9px;background:rgba(255,255,255,.1);color:#fff;font:600 13px var(--f);cursor:pointer;transition:background .15s}
-.install button:hover{background:rgba(255,255,255,.18)}
-.agents{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px 10px;margin-top:22px;font-size:13px;color:var(--ink3)}
-.agents span{padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.7);box-shadow:inset 0 0 0 1px var(--line);color:var(--ink2);font-weight:500}
+.install em{font-style:normal;color:var(--skyd)}
+.install .btn{height:36px;padding:0 14px;font-size:15px}
+.agents{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px 10px;margin-top:20px;font:500 15px/1.4 var(--hand);color:var(--ink3)}
+.agents span{position:relative;isolation:isolate;padding:4px 14px;color:var(--ink2)}
+.agents span::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--tint,var(--sky));opacity:.3;-webkit-mask:var(--wc-pad1) 0 0/100% 100% no-repeat;mask:var(--wc-pad1) 0 0/100% 100% no-repeat}
+.agents span:nth-child(2n){--tint:var(--sun)}
+.agents span:nth-child(3n){--tint:var(--grass)}
 
-/* 首屏下的作品墙：三张课件叠放，轻微倾斜 */
-.stage{position:relative;width:min(1080px,100%);margin:clamp(48px,7vw,80px) auto 0;aspect-ratio:16/6.1}
-.stage figure{position:absolute;margin:0;border-radius:16px;overflow:hidden;background:#fff;box-shadow:0 2px 6px rgba(15,23,42,.06),0 30px 60px -12px rgba(15,23,42,.28);transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+/* 作品墙：三张课件像画纸一样夹在晾绳上 */
+.stage{position:relative;width:min(1080px,100%);margin:clamp(44px,6vw,72px) auto 0;aspect-ratio:16/5.9}
+.stage::before{content:"";position:absolute;left:-2%;right:-2%;top:2%;height:30px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 30' preserveAspectRatio='none'%3E%3Cpath d='M0 4Q500 30 1000 4' fill='none' stroke='%235E564D' stroke-opacity='.5' stroke-width='2'/%3E%3C/svg%3E") 0 0/100% 100% no-repeat}
+.stage figure{position:absolute;margin:0;padding:10px 10px 34px;background:var(--card);box-shadow:0 1px 2px rgba(58,50,43,.08),0 18px 40px -14px rgba(58,50,43,.35);transition:transform .5s var(--pop)}
+.stage figure::before{content:"";position:absolute;left:50%;top:-14px;width:16px;height:30px;margin-left:-8px;border-radius:4px;background:#d9b98a;box-shadow:inset 0 0 0 1.5px rgba(94,86,77,.5)}
 .stage figure img{width:100%;height:auto}
-.stage .s1{left:0;top:10%;width:44%;transform:rotate(-5deg);z-index:1}
-.stage .s3{right:0;top:10%;width:44%;transform:rotate(5deg);z-index:1}
-.stage .s2{left:50%;top:0;width:62%;transform:translateX(-50%);z-index:2;box-shadow:0 2px 6px rgba(15,23,42,.06),0 40px 80px -12px rgba(47,107,255,.35)}
-.stage:hover .s1{transform:rotate(-7deg) translate(-12px,6px)}
-.stage:hover .s3{transform:rotate(7deg) translate(12px,6px)}
-.stage figcaption{position:absolute;left:12px;bottom:12px;padding:3px 10px;border-radius:8px;background:rgba(15,23,42,.66);color:#fff;font-size:12px;font-weight:600;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.stage figcaption{position:absolute;left:0;right:0;bottom:6px;text-align:center;font:700 16px/1.4 var(--hand);color:var(--ink2)}
+.stage .s1{left:0;top:14%;width:38%;transform:rotate(-4deg);z-index:1}
+.stage .s3{right:0;top:14%;width:38%;transform:rotate(4deg);z-index:1}
+.stage .s2{left:50%;top:6%;width:46%;transform:translateX(-50%) rotate(-.6deg);z-index:2}
+.stage:hover .s1{transform:rotate(-6deg) translateY(4px)}
+.stage:hover .s3{transform:rotate(6deg) translateY(4px)}
+/* 草坡：两层水彩草绿，边缘不规则 */
+.hills{display:block;width:100%;height:clamp(90px,12vw,170px);margin-top:-70px;overflow:hidden}
 
-/* 数字 */
-.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;margin-top:clamp(40px,5vw,64px);border-radius:var(--r);overflow:hidden;background:var(--line);box-shadow:inset 0 0 0 1px var(--line)}
-.stats div{padding:26px 16px;background:var(--card);text-align:center}
-.stats b{display:block;font-size:clamp(28px,3.4vw,40px);line-height:1.1;font-weight:800;letter-spacing:-.02em}
-.stats span{display:block;margin-top:6px;font-size:13px;color:var(--ink2)}
+/* 数字：一排水彩色块上的大字 */
+.stats-band{margin-top:-1px;padding:0 0 clamp(64px,8vw,96px);background:linear-gradient(#A8D48C,rgba(220,236,201,.75) 45%,rgba(251,247,238,0) 100%)}
+.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:14px}
+.stats div{position:relative;isolation:isolate;padding:22px 10px 18px;text-align:center}
+.stats div::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--card);-webkit-mask:var(--wc-pad1) 0 0/100% 100% no-repeat;mask:var(--wc-pad1) 0 0/100% 100% no-repeat;opacity:.95}
+.stats b{display:block;font:700 clamp(34px,4vw,48px)/1.1 var(--hand);color:var(--skyd)}
+.stats div:nth-child(2n) b{color:#C98A12}
+.stats span{display:block;margin-top:6px;font-size:14px;color:var(--ink2)}
 
 /* 风格 */
-.head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:20px 40px;margin-bottom:36px}
-.tabs{display:flex;flex-wrap:wrap;gap:6px;padding:5px;border-radius:14px;background:var(--card);box-shadow:inset 0 0 0 1px var(--line)}
-.tabs button{height:36px;padding:0 14px;border:0;border-radius:10px;background:transparent;color:var(--ink2);font:600 14px var(--f);cursor:pointer;transition:background .15s,color .15s}
-.tabs button:hover{color:var(--ink)}
-.tabs button[aria-pressed="true"]{background:var(--ink);color:#fff}
-.styles{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
-.st{position:relative;display:flex;flex-direction:column;border-radius:16px;overflow:hidden;background:var(--card);box-shadow:inset 0 0 0 1px var(--line),0 1px 2px rgba(15,23,42,.04);transition:transform .2s,box-shadow .2s}
-.st:hover{transform:translateY(-4px);box-shadow:inset 0 0 0 1px rgba(47,107,255,.35),0 18px 40px -10px rgba(15,23,42,.22)}
+.head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:20px 40px;margin-bottom:34px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}
+.tabs button{position:relative;isolation:isolate;height:38px;padding:0 14px;border:0;background:none;color:var(--ink2);font:700 16px var(--hand);cursor:pointer}
+.tabs button::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--sky);opacity:0;-webkit-mask:var(--wc-pad2) 0 0/100% 100% no-repeat;mask:var(--wc-pad2) 0 0/100% 100% no-repeat;transition:opacity .2s}
+.tabs button:hover::before{opacity:.25}
+.tabs button[aria-pressed="true"]{color:var(--ink)}
+.tabs button[aria-pressed="true"]::before{opacity:.55}
+.styles{display:grid;grid-template-columns:repeat(4,1fr);gap:26px 22px}
+.st{position:relative;display:flex;flex-direction:column;padding:9px 9px 12px;background:var(--card);box-shadow:0 1px 2px rgba(58,50,43,.06),0 10px 24px -12px rgba(58,50,43,.3);transition:transform .35s var(--pop),box-shadow .2s}
+.st:nth-child(3n+1){transform:rotate(-.8deg)}.st:nth-child(3n+2){transform:rotate(.6deg)}.st:nth-child(3n){transform:rotate(-.3deg)}
+.st:hover{transform:translateY(-6px) rotate(0);box-shadow:0 1px 2px rgba(58,50,43,.06),0 22px 40px -14px rgba(58,50,43,.42)}
 .st[hidden]{display:none}
-.st .pv{aspect-ratio:16/9;overflow:hidden;background:#eef1f7}
+.st .pv{aspect-ratio:16/9;overflow:hidden;background:#eee6d6}
 .st .pv img{width:100%;height:100%;object-fit:cover;transition:transform .5s}
 .st:hover .pv img{transform:scale(1.04)}
-.st .meta{padding:14px 16px 16px}
-.st h3{display:flex;align-items:center;gap:8px;margin:0;font-size:16px}
-.st h3 code{margin-left:auto;padding:1px 7px;border-radius:6px;background:rgba(15,23,42,.05);color:var(--ink3);font:500 12px/1.6 var(--mono)}
-.st p{margin:6px 0 0;font-size:13px;line-height:1.55;color:var(--ink2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.fam{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--fc)}
-.f-corp{--fc:#ef4f64}.f-hand{--fc:#e7a43c}.f-modern{--fc:#2f6bff}.f-pixel{--fc:#3bb273}
-.more{display:flex;justify-content:center;margin-top:36px}
+.st .meta{padding:10px 6px 0}
+.st h3{display:flex;align-items:center;gap:8px;margin:0;font-size:19px}
+.st h3 code{margin-left:auto;font:500 12px/1.6 var(--mono);color:var(--ink3)}
+.st p{margin:4px 0 0;font-size:13px;line-height:1.55;color:var(--ink2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.fam{display:inline-block;width:10px;height:10px;border-radius:50% 45% 55% 50%;background:var(--fc)}
+.f-corp{--fc:#E07A6A}.f-hand{--fc:var(--sun)}.f-modern{--fc:var(--sky)}.f-pixel{--fc:var(--grass)}
+.more{display:flex;justify-content:center;margin-top:40px}
 
-/* 在线编辑 */
-.edit{background:#0b1020;color:#e2e8f0;position:relative;overflow:hidden}
-.edit::before{content:"";position:absolute;inset:0;background:radial-gradient(50% 60% at 85% 20%,rgba(124,92,255,.25),transparent 70%),radial-gradient(40% 50% at 10% 90%,rgba(47,107,255,.22),transparent 70%)}
-.edit .wrap{position:relative}
-.edit .eyebrow{color:#93c5fd}
-.edit h2.sec{color:#fff}
-.edit p.lead{color:#a5b0c4}
-.edit-grid{display:grid;grid-template-columns:1.25fr 1fr;gap:clamp(32px,5vw,64px);align-items:center;margin-top:48px}
-.browser{border-radius:14px;overflow:hidden;background:#1e2433;box-shadow:0 0 0 1px rgba(255,255,255,.08),0 40px 80px -20px rgba(0,0,0,.6)}
-.browser .bar{display:flex;align-items:center;gap:7px;height:36px;padding:0 14px;background:#161b27}
-.browser .bar i{width:11px;height:11px;border-radius:50%;background:#3a4256}
-.browser .bar i:nth-child(1){background:#ff5f57}.browser .bar i:nth-child(2){background:#febc2e}.browser .bar i:nth-child(3){background:#28c840}
-.browser .bar span{margin-left:12px;padding:3px 12px;border-radius:7px;background:#0f1420;color:#7c879d;font:500 12px var(--mono)}
-.feats{display:grid;gap:14px;margin:0;padding:0;list-style:none}
-.feats li{display:grid;grid-template-columns:40px 1fr;gap:14px;padding:16px;border-radius:14px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07)}
-.feats li i{display:grid;place-items:center;width:40px;height:40px;border-radius:11px;background:linear-gradient(135deg,rgba(47,107,255,.28),rgba(124,92,255,.28));color:#c7d2fe}
-.feats li i svg{width:20px;height:20px}
-.feats b{display:block;color:#fff;font-size:16px}
-.feats span{display:block;margin-top:2px;font-size:14px;color:#a5b0c4}
-.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:56px;counter-reset:f}
-.flow div{position:relative;padding:18px 16px;border-radius:14px;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07);counter-increment:f}
-.flow div::before{content:counter(f,decimal-leading-zero);display:block;font:700 13px var(--mono);color:#93c5fd}
-.flow div b{display:block;margin-top:6px;color:#fff;font-size:15px}
-.flow div span{display:block;margin-top:2px;font-size:13px;color:#8e9ab0}
-.flow div:not(:last-child)::after{content:"";position:absolute;top:50%;right:-9px;width:6px;height:6px;border-top:2px solid #4b5875;border-right:2px solid #4b5875;transform:translateY(-50%) rotate(45deg)}
+/* 在线编辑：一大块淡蓝水彩 */
+.edit{background:linear-gradient(rgba(234,243,249,0),rgba(234,243,249,.9) 18%,rgba(234,243,249,.9) 82%,rgba(234,243,249,0))}
+.edit-grid{display:grid;grid-template-columns:1.25fr 1fr;gap:clamp(32px,5vw,60px);align-items:center;margin-top:44px}
+.frame{position:relative;padding:12px;background:var(--card);transform:rotate(-1deg);box-shadow:0 1px 2px rgba(58,50,43,.08),0 30px 60px -20px rgba(58,50,43,.4)}
+.frame::before{content:"";position:absolute;left:12%;top:-12px;width:90px;height:26px;background:rgba(244,195,90,.55);transform:rotate(-4deg)}
+.frame::after{content:"";position:absolute;right:10%;top:-10px;width:80px;height:24px;background:rgba(142,195,230,.55);transform:rotate(5deg)}
+.frame figcaption{margin-top:8px;text-align:center;font:500 15px/1.4 var(--hand);color:var(--ink3)}
+.feats{display:grid;gap:12px;margin:0;padding:0;list-style:none}
+.feats li{position:relative;display:grid;grid-template-columns:44px 1fr;gap:14px;padding:16px 18px;background:var(--card)}
+.feats li i{position:relative;isolation:isolate;display:grid;place-items:center;width:44px;height:44px;color:var(--ink)}
+.feats li i::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--tint,var(--sky));opacity:.5;-webkit-mask:var(--wc-blob) 0 0/100% 100% no-repeat;mask:var(--wc-blob) 0 0/100% 100% no-repeat}
+.feats li:nth-child(2) i{--tint:var(--sun)}.feats li:nth-child(3) i{--tint:var(--grass)}.feats li:nth-child(4) i{--tint:var(--pink)}
+.feats li i svg{width:22px;height:22px}
+.feats b{display:block;font:700 18px/1.4 var(--hand);color:var(--ink)}
+.feats span{display:block;margin-top:2px;font-size:14px;color:var(--ink2)}
+/* 五步：一条小路上的路牌 */
+.flow{position:relative;display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:60px;counter-reset:f}
+.flow::before{content:"";position:absolute;left:4%;right:4%;top:22px;height:12px;z-index:0;background:rgba(232,213,176,.8);-webkit-mask:var(--wc-pad2) 0 0/100% 100% no-repeat;mask:var(--wc-pad2) 0 0/100% 100% no-repeat}
+.flow div{position:relative;z-index:1;text-align:center;counter-increment:f}
+.flow div::before{content:counter(f);display:grid;place-items:center;width:44px;height:44px;margin:0 auto 10px;font:700 20px var(--hand);color:var(--ink);background:var(--card);border-radius:52% 48% 50% 50%;box-shadow:0 0 0 1.8px rgba(94,86,77,.6)}
+.flow div b{display:block;font:700 17px/1.4 var(--hand);color:var(--ink)}
+.flow div span{display:block;margin-top:2px;font-size:13px;color:var(--ink2)}
 
 /* 功能 */
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px}
-.fc{padding:26px;border-radius:var(--r);background:var(--card);box-shadow:inset 0 0 0 1px var(--line),0 1px 2px rgba(15,23,42,.04);transition:transform .2s,box-shadow .2s}
-.fc:hover{transform:translateY(-3px);box-shadow:inset 0 0 0 1px var(--line),var(--shadow)}
-.fc i{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;background:var(--tint,rgba(47,107,255,.1));color:var(--tc,var(--brand))}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:44px}
+.fc{position:relative;padding:26px 26px 24px;background:var(--card);transition:transform .35s var(--pop)}
+.fc:hover{transform:translateY(-4px) rotate(-.5deg)}
+.fc i{position:relative;isolation:isolate;display:grid;place-items:center;width:52px;height:46px;color:var(--ink)}
+.fc i::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--tint,var(--sky));opacity:.55;-webkit-mask:var(--wc-blob) 0 0/100% 100% no-repeat;mask:var(--wc-blob) 0 0/100% 100% no-repeat}
 .fc i svg{width:22px;height:22px}
-.fc h3{margin:16px 0 6px;font-size:18px}
+.fc h3{margin:14px 0 6px;font-size:21px}
 .fc p{margin:0;font-size:14.5px;color:var(--ink2)}
 
 /* 三步 */
-.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px;counter-reset:s}
-.step{position:relative;padding:28px;border-radius:var(--r);background:var(--card);box-shadow:inset 0 0 0 1px var(--line);counter-increment:s}
-.step::before{content:counter(s);display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:var(--ink);color:#fff;font-weight:700}
-.step h3{margin:16px 0 6px;font-size:18px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:44px;counter-reset:s}
+.step{position:relative;padding:26px;background:var(--card);counter-increment:s}
+.step::before{content:counter(s);position:relative;display:grid;place-items:center;width:42px;height:42px;font:700 22px var(--hand);color:var(--ink);background:rgba(244,195,90,.65);border-radius:55% 45% 52% 48%}
+.step h3{margin:14px 0 6px;font-size:21px}
 .step p{margin:0;font-size:14.5px;color:var(--ink2)}
-.step blockquote{margin:14px 0 0;padding:12px 14px;border-radius:12px;background:var(--bg);font-size:14px;color:var(--ink);border-left:3px solid var(--brand)}
+.step blockquote{margin:14px 0 0;padding:12px 14px;font:500 15px/1.6 var(--hand);color:var(--ink);background:rgba(142,195,230,.16);border-left:3px solid var(--skyd)}
 
-/* 教程入口 */
-.tour{position:relative;display:grid;grid-template-columns:1fr auto;gap:32px;align-items:center;padding:clamp(32px,5vw,56px);border-radius:28px;overflow:hidden;color:#fff;
-  background:linear-gradient(120deg,#2f6bff 0%,#6a5cff 55%,#9a5cff 100%);box-shadow:0 30px 60px -20px rgba(47,107,255,.55)}
-.tour::after{content:"";position:absolute;right:-80px;top:-80px;width:320px;height:320px;border-radius:50%;background:rgba(255,255,255,.12)}
-.tour h2{margin:0;font-size:clamp(26px,3.4vw,38px);line-height:1.25}
-.tour p{margin:10px 0 0;max-width:36em;color:rgba(255,255,255,.85)}
-.tour .btn{position:relative;z-index:1;background:#fff;color:var(--ink)}
+/* 教程入口：一大块天空蓝水彩 */
+.tour{position:relative;isolation:isolate;display:grid;grid-template-columns:auto 1fr auto;gap:28px;align-items:center;padding:clamp(34px,5vw,56px) clamp(28px,5vw,64px)}
+.tour::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--sky);opacity:.5;-webkit-mask:var(--wc-pad1) 0 0/100% 100% no-repeat;mask:var(--wc-pad1) 0 0/100% 100% no-repeat}
+.tour .duo2{width:110px}
+.tour .duo2 svg{width:100%;height:auto;overflow:visible}
+.tour h2{margin:0;font-size:clamp(26px,3.4vw,38px);line-height:1.3}
+.tour p{margin:8px 0 0;max-width:36em;color:var(--ink2)}
 
-footer{padding:40px 0 56px;border-top:1px solid var(--line);font-size:14px;color:var(--ink2)}
+footer{padding:36px 0 52px;font-size:14px;color:var(--ink2)}
 footer .wrap{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center;justify-content:space-between}
-footer nav{display:flex;flex-wrap:wrap;gap:6px 20px}
+footer nav{display:flex;flex-wrap:wrap;gap:6px 20px;font:500 16px var(--hand)}
 footer a:hover{color:var(--ink)}
 
-/* 出场 */
-.rv{opacity:0;transform:translateY(18px);transition:opacity .7s cubic-bezier(.2,.8,.2,1),transform .7s cubic-bezier(.2,.8,.2,1)}
-.rv.in{opacity:1;transform:none}
-@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}.rv{opacity:1;transform:none}}
+/* 出场：像颜料洇开一样淡入 */
+.rv{opacity:0;transform:translateY(16px);filter:blur(3px);transition:opacity .8s ease,transform .8s var(--pop),filter .8s ease}
+.rv.in{opacity:1;transform:none;filter:none}
+.st.rv.in:nth-child(3n+1){transform:rotate(-.8deg)}.st.rv.in:nth-child(3n+2){transform:rotate(.6deg)}.st.rv.in:nth-child(3n){transform:rotate(-.3deg)}
+.st.rv.in:hover{transform:translateY(-6px) rotate(0)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}.rv{opacity:1;transform:none;filter:none}}
 
 @media (max-width:1000px){
   .styles{grid-template-columns:repeat(3,1fr)}
   .stats{grid-template-columns:repeat(3,1fr)}
   .edit-grid{grid-template-columns:1fr}
-  .flow{grid-template-columns:repeat(2,1fr)}
-  .flow div::after{display:none}
+  .flow{grid-template-columns:repeat(3,1fr);row-gap:28px}
+  .flow::before{display:none}
   .grid3{grid-template-columns:repeat(2,1fr)}
+  .duo{display:none}
 }
 @media (max-width:720px){
   .nav nav a:not(.keep){display:none}
-  .styles{grid-template-columns:repeat(2,1fr);gap:12px}
-  .st .meta{padding:10px 12px 12px}
+  .styles{grid-template-columns:repeat(2,1fr);gap:16px 12px}
   .st p{display:none}
   .stats{grid-template-columns:repeat(2,1fr)}
   .grid3,.steps{grid-template-columns:1fr}
-  .tour{grid-template-columns:1fr}
+  .tour{grid-template-columns:1fr;text-align:center}
+  .tour .duo2{margin:0 auto}
   .stage{aspect-ratio:16/10}
-  .stage .s1,.stage .s3{width:52%;top:16%}
-  .stage .s2{width:78%}
+  .stage .s1,.stage .s3{width:46%;top:22%}
+  .stage .s2{width:62%}
+  .flow{grid-template-columns:repeat(2,1fr)}
 }
-@media (max-width:420px){.flow{grid-template-columns:1fr}.styles{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs id="duo-defs"></defs>
+  <filter id="hill-edge" x="-5%" y="-30%" width="110%" height="160%"><feTurbulence type="fractalNoise" baseFrequency=".012 .06" numOctaves="3" seed="7"/><feDisplacementMap in="SourceGraphic" scale="14" xChannelSelector="R" yChannelSelector="G"/></filter>
+</svg>
 
 <header class="nav" id="nav">
   <div class="wrap">
-    <a class="logo" href="#top" aria-label="li-talk-skills 首页"><i><svg viewBox="0 0 24 24" fill="#fff"><path d="M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-7l-5 4v-4H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg></i>li-talk-skills</a>
+    <a class="logo" href="#top" aria-label="li-talk-skills 首页"><svg viewBox="0 0 64 60" aria-hidden="true"><g fill="#FFFEFA" stroke="#5E564D" stroke-width="2.6"><circle cx="32" cy="24" r="15"/><circle cx="18" cy="33" r="11"/><circle cx="46" cy="33" r="11"/></g><rect x="17" y="30" width="30" height="14" rx="7" fill="#FFFEFA"/><path d="M8 44h48" stroke="#5E564D" stroke-width="2.6" stroke-linecap="round"/><ellipse cx="22" cy="36" rx="4" ry="2.4" fill="#F29C8F" opacity=".7"/><ellipse cx="42" cy="36" rx="4" ry="2.4" fill="#F29C8F" opacity=".7"/><circle cx="26" cy="31" r="2.2" fill="#3A322B"/><circle cx="38" cy="31" r="2.2" fill="#3A322B"/><path d="M15 50q6-4 12 0" stroke="#8EC3E6" stroke-width="2.6" fill="none" stroke-linecap="round"/></svg>li-talk-skills</a>
     <nav aria-label="页面导航">
       <a href="#styles">风格</a>
       <a href="#edit">在线编辑</a>
@@ -208,73 +256,84 @@ footer a:hover{color:var(--ink)}
       <a href="#start">上手</a>
       <a class="keep" href="tour/">教程</a>
     </nav>
-    <a class="btn btn-sec" href="https://github.com/xiaoli1999/li-talk-skills" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.42c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.69 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg>GitHub</a>
+    <a class="btn btn-paper" href="https://github.com/xiaoli1999/li-talk-skills" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.42c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.33-1.28-1.69-1.28-1.69-1.05-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.71 1.26 3.37.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.42-2.69 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5z"/></svg>GitHub</a>
   </div>
 </header>
 
 <main id="top">
   <section class="hero">
+    <div class="sky"></div><div class="sun"></div><div class="cloud c1"></div><div class="cloud c2"></div>
     <div class="wrap">
-      <div class="badge rv"><b>NEW</b>在线编辑：浏览器里直接改，改完一键交给 AI</div>
-      <h1 class="rv">一句话，生成一份<br><span class="grad">能直接上台讲</span>的课件</h1>
+      <div class="duo" id="duo" title="朵朵"><span class="say" id="say">你专心讲，课件交给我～</span></div>
+      <div class="badge wash rv" style="--tint:#fff;--o:.95">
+        <b>NEW</b>在线编辑：浏览器里直接改，改完一键交给 AI</div>
+      <h1 class="rv">一句话，生成一份<br><span class="brush">能直接上台讲</span>的课件</h1>
       <p class="sub rv">支持在线编辑、16 种风格的 AI 演讲课件 Skill。把主题、笔记或讲稿交给 AI，它写讲稿、选风格、排版、加动效，做成像幻灯片一样一拍一拍翻的 HTML 课件：双击离线打开，带演讲者视图与计时彩排。</p>
       <div class="cta rv">
-        <a class="btn btn-pri" href="tour/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 4 20 12 6 20 6 4"/></svg>五分钟上手教程</a>
-        <a class="btn btn-sec" href="gallery.html">看全部 <span data-count="styles">16</span> 种风格</a>
+        <a class="btn btn-sun" href="tour/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="7 4 20 12 7 20 7 4"/></svg>五分钟上手教程</a>
+        <a class="btn" href="gallery.html">看全部 <span data-count="styles">16</span> 种风格</a>
       </div>
-      <div class="install rv" role="group" aria-label="安装命令">
+      <div class="install pencil rv" role="group" aria-label="安装命令">
         <span id="cmd"><em>$</em> npx skills add xiaoli1999/li-talk-skills -g -a claude-code -y</span>
-        <button type="button" id="copy">复制</button>
+        <button type="button" class="btn" id="copy">复制</button>
       </div>
       <div class="agents rv">支持<span>Claude Code</span><span>Codex</span><span>Cursor</span><span>DeepSeek</span><span>WorkBuddy</span>等能读写本地文件的 AI 智能体</div>
 
       <div class="stage rv" aria-hidden="true">
-        <figure class="s1"><img src="img/styles/watercolor.jpg" alt="" loading="lazy"><figcaption>水彩田园</figcaption></figure>
-        <figure class="s2"><img src="img/styles/fangguo.jpg" alt=""><figcaption>方果 · 企业风</figcaption></figure>
-        <figure class="s3"><img src="img/styles/glass.jpg" alt="" loading="lazy"><figcaption>液态玻璃</figcaption></figure>
-      </div>
-
-      <div class="stats rv">
-        <div><b class="grad" data-count="styles">16</b><span>种风格</span></div>
-        <div><b class="grad" data-count="styles">16</b><span>个专属形象</span></div>
-        <div><b class="grad">4</b><span>大风格家族</span></div>
-        <div><b class="grad">5</b><span>种屏幕尺寸自检</span></div>
-        <div><b class="grad">0</b><span>依赖 · 双击离线放映</span></div>
-        <div><b class="grad">1</b><span>句话开始</span></div>
+        <figure class="s1"><img src="img/styles/ink.jpg" alt="" loading="lazy"><figcaption>水墨国风</figcaption></figure>
+        <figure class="s2"><img src="img/styles/watercolor.jpg" alt=""><figcaption>水彩田园</figcaption></figure>
+        <figure class="s3"><img src="img/styles/flat.jpg" alt="" loading="lazy"><figcaption>扁平插画</figcaption></figure>
       </div>
     </div>
+    <svg class="hills" viewBox="0 0 1440 170" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M-60 70C180 30 330 40 520 72S880 110 1060 70 1340 30 1500 50V240H-60Z" fill="#C3E2AC" filter="url(#hill-edge)"/>
+      <path d="M-60 110C220 80 420 96 640 118S1040 140 1240 108 1400 92 1500 98V240H-60Z" fill="#A8D48C" filter="url(#hill-edge)"/>
+    </svg>
   </section>
 
-  <section id="styles">
+  <div class="stats-band">
+    <div class="wrap">
+      <div class="stats rv">
+        <div><b data-count="styles">16</b><span>种风格</span></div>
+        <div><b data-count="styles">16</b><span>个专属形象</span></div>
+        <div><b>4</b><span>大风格家族</span></div>
+        <div><b>5</b><span>种屏幕尺寸自检</span></div>
+        <div><b>0</b><span>依赖 · 双击离线放映</span></div>
+        <div><b>1</b><span>句话开始</span></div>
+      </div>
+    </div>
+  </div>
+
+  <section id="styles" style="padding-top:clamp(40px,6vw,72px)">
     <div class="wrap">
       <div class="head">
         <div>
-          <p class="eyebrow">Styles</p>
-          <h2 class="sec rv"><span data-count="styles">16</span> 种风格，每种都有自己的形象</h2>
+          <p class="eyebrow">风格</p>
+          <h2 class="sec rv"><span data-count="styles">16</span> 种风格，每种都有<span class="brush">自己的形象</span></h2>
           <p class="lead rv">不是换个配色：每种风格有自己的版式、组件、翻页动作和一个会走动、会说话的小形象。点一张就能从第一页开始翻看。</p>
         </div>
         <div class="tabs rv" role="group" aria-label="按风格家族筛选" id="tabs"></div>
       </div>
       <div class="styles" id="grid"></div>
-      <div class="more"><a class="btn btn-sec" href="gallery.html">打开样册，一屏看完全部风格 →</a></div>
+      <div class="more"><a class="btn btn-paper" href="gallery.html">打开样册，一屏看完全部风格 →</a></div>
     </div>
   </section>
 
   <section class="edit" id="edit">
     <div class="wrap">
-      <p class="eyebrow">Live Editing</p>
-      <h2 class="sec rv">在浏览器里改，<span class="grad">AI 帮你合进源码</span></h2>
+      <p class="eyebrow">在线编辑</p>
+      <h2 class="sec rv">在浏览器里改，<span class="brush">AI 帮你合进源码</span></h2>
       <p class="lead rv">不用懂代码，也不用来回描述「把那个往左挪一点」。打开编辑模式，像用 PPT 一样直接改；改完点一下「通知 AI 修改」，AI 按你的改动写回源码、跑完自检，页面自动刷新。</p>
       <div class="edit-grid">
-        <div class="browser rv">
-          <div class="bar"><i></i><i></i><i></i><span>127.0.0.1 · 编辑模式</span></div>
-          <img src="img/edit.jpg" alt="在线编辑界面：选中柱状图上的数字，浮出字号、颜色、对齐、拍号工具条，顶部是撤销重做和「通知 AI 修改」" loading="lazy">
-        </div>
+        <figure class="frame rv" style="margin:0">
+          <img src="img/edit.jpg" alt="在线编辑界面：选中一段文字，旁边浮出字号、颜色、对齐、拍号工具条，顶部是撤销重做和「通知 AI 修改」" loading="lazy">
+          <figcaption>选到文字才出现字号和颜色，改一处不牵动别处</figcaption>
+        </figure>
         <ul class="feats">
-          <li class="rv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></i><div><b>双击改字，单击选中</b><span>改文字、设重点词；选到文字才出现字号和颜色，改一处不牵动别处。</span></div></li>
-          <li class="rv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></svg></i><div><b>拖动、缩放、隐藏</b><span>拖角整块等比缩放，按住 Alt 改框大小；转过角度的块也一样准。</span></div></li>
-          <li class="rv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></i><div><b>撤销重做、改拍号、改讲词</b><span>Ctrl+Z / Ctrl+Y，调整第几拍出现；演讲者视图里点讲词就能改。</span></div></li>
-          <li class="rv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg></i><div><b>一键交给 AI</b><span>改动自动保存；AI 用类名和章节样式写回源码，不堆行内样式，文案还会给优化建议。</span></div></li>
+          <li class="pencil rv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></i><div><b>双击改字，单击选中</b><span>改文字、设重点词；选到文字才出现字号和颜色。</span></div></li>
+          <li class="pencil rv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/></svg></i><div><b>拖动、缩放、隐藏</b><span>拖角整块等比缩放，按住 Alt 改框大小；转过角度的块也一样准。</span></div></li>
+          <li class="pencil rv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></i><div><b>撤销重做、改拍号、改讲词</b><span>Ctrl+Z / Ctrl+Y；调整第几拍出现；演讲者视图里点讲词就能改。</span></div></li>
+          <li class="pencil rv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg></i><div><b>一键交给 AI</b><span>改动自动保存；AI 用类名和章节样式写回源码，文案还会给优化建议。</span></div></li>
         </ul>
       </div>
       <div class="flow">
@@ -289,32 +348,33 @@ footer a:hover{color:var(--ink)}
 
   <section id="features">
     <div class="wrap">
-      <p class="eyebrow">Features</p>
-      <h2 class="sec rv">从一句话到上台，全流程都替你想好了</h2>
+      <p class="eyebrow">功能</p>
+      <h2 class="sec rv">从一句话到上台，<span class="brush">全流程</span>都替你想好了</h2>
       <p class="lead rv">不只是模板：AI 按九步流程推进，在提纲、讲稿、风格、试做、过稿五处停下来等你确认；每一步都有自检兜底。</p>
       <div class="grid3">
-        <div class="fc rv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></i><h3>一句话生成</h3><p>只有一个主题、零散笔记和截图、或现成讲稿，三种起点都能开工；AI 只问缺的部分。</p></div>
-        <div class="fc rv" style="--tint:rgba(124,92,255,.1);--tc:#7c5cff"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></i><h3>五处确认，你说了算</h3><p>提纲、讲稿、风格、先做 3 页、过稿，每一处都等你说「可以」；换对话、换模型也能接着做。</p></div>
-        <div class="fc rv" style="--tint:rgba(0,180,216,.1);--tc:#0891b2"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></i><h3>演讲者视图</h3><p>按 S 打开：当前拍、下一拍、讲词、计时、彩排；黑屏、激光笔、总览跳页，翻页笔直接用。</p></div>
-        <div class="fc rv" style="--tint:rgba(239,79,100,.1);--tc:#e11d48"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></i><h3>5 种尺寸自检</h3><p>真浏览器逐页逐拍检查溢出、遮挡、对比度、字号；看不了图的模型也能照报告把问题改干净。</p></div>
-        <div class="fc rv" style="--tint:rgba(231,164,60,.12);--tc:#d97706"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg></i><h3>一拍一拍的动效</h3><p>每页拆成几拍，点一下出一块；讲过的自动变淡，形象会走到正在讲的地方，听众始终跟得上。</p></div>
-        <div class="fc rv" style="--tint:rgba(59,178,115,.12);--tc:#16a34a"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></i><h3>离线、零依赖</h3><p>纯 HTML，双击就能打开，不联网、不装软件；手机上自动变成竖屏阅读模式，发给别人也能看。</p></div>
+        <div class="fc pencil rv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></i><h3>一句话生成</h3><p>只有一个主题、零散笔记和截图、或现成讲稿，三种起点都能开工；AI 只问缺的部分。</p></div>
+        <div class="fc pencil rv" style="--tint:var(--sun)"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></i><h3>五处确认，你说了算</h3><p>提纲、讲稿、风格、先做 3 页、过稿，每一处都等你说「可以」；换对话、换模型也能接着做。</p></div>
+        <div class="fc pencil rv" style="--tint:var(--grass)"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></i><h3>演讲者视图</h3><p>按 S 打开：当前拍、下一拍、讲词、计时、彩排；黑屏、激光笔、总览跳页，翻页笔直接用。</p></div>
+        <div class="fc pencil rv" style="--tint:var(--pink)"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></i><h3>5 种尺寸自检</h3><p>真浏览器逐页逐拍检查溢出、遮挡、对比度、字号；看不了图的模型也能照报告把问题改干净。</p></div>
+        <div class="fc pencil rv" style="--tint:var(--peach)"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg></i><h3>一拍一拍的动效</h3><p>每页拆成几拍，点一下出一块；讲过的自动变淡，形象会走到正在讲的地方，听众始终跟得上。</p></div>
+        <div class="fc pencil rv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></i><h3>离线、零依赖</h3><p>纯 HTML，双击就能打开，不联网、不装软件；手机上自动变成竖屏阅读模式，发给别人也能看。</p></div>
       </div>
     </div>
   </section>
 
   <section id="start" style="padding-top:0">
     <div class="wrap">
-      <p class="eyebrow">Get Started</p>
+      <p class="eyebrow">上手</p>
       <h2 class="sec rv">三步开始</h2>
       <div class="steps">
-        <div class="step rv"><h3>装上</h3><p>直接对 AI 说一句，它会自己装好；没有 Node 也会先帮你装。</p><blockquote>从 GitHub 仓库 xiaoli1999/li-talk-skills 安装到全局，装好后打开新手教程带我过一遍</blockquote></div>
-        <div class="step rv"><h3>说一句话</h3><p>在任意文件夹里告诉 AI 你要讲什么，剩下的它一步步带你做。</p><blockquote>用 li-talk-skills 帮我做一个关于「……」的课件</blockquote></div>
-        <div class="step rv"><h3>上台讲</h3><p>双击 index.html 放映，按 S 打开演讲者视图；想改哪里，说「我要在线改」。</p><blockquote>我要在线改这份课件</blockquote></div>
+        <div class="step pencil rv"><h3>装上</h3><p>直接对 AI 说一句，它会自己装好；没有 Node 也会先帮你装。</p><blockquote>从 GitHub 仓库 xiaoli1999/li-talk-skills 安装到全局，装好后打开新手教程带我过一遍</blockquote></div>
+        <div class="step pencil rv"><h3>说一句话</h3><p>在任意文件夹里告诉 AI 你要讲什么，剩下的它一步步带你做。</p><blockquote>用 li-talk-skills 帮我做一个关于「……」的课件</blockquote></div>
+        <div class="step pencil rv"><h3>上台讲</h3><p>双击 index.html 放映，按 S 打开演讲者视图；想改哪里，说「我要在线改」。</p><blockquote>我要在线改这份课件</blockquote></div>
       </div>
-      <div class="tour rv" style="margin-top:56px">
-        <div><h2>先花五分钟，跟着教程走一遍</h2><p>教程本身就是一份用 li-talk-skills 做的课件：安装、九步流程、选风格、翻页和演讲者视图、常用命令，边看边体验。</p></div>
-        <a class="btn" href="tour/">打开新手教程 →</a>
+      <div class="tour rv" style="margin-top:60px">
+        <div class="duo2" id="duo2" aria-hidden="true"></div>
+        <div><h2>先花五分钟，跟着教程走一遍</h2><p>教程本身就是一份用 li-talk-skills 做的水彩田园课件：安装、九步流程、选风格、翻页和演讲者视图、常用命令，边看边体验。</p></div>
+        <a class="btn btn-sun" href="tour/">打开新手教程 →</a>
       </div>
     </div>
   </section>
@@ -333,12 +393,17 @@ footer a:hover{color:var(--ink)}
 </footer>
 
 <script>window.LT_STYLES = /*LT_STYLES*/[];</script>
+<!-- 朵朵：形象文件按引擎的接口注册（Deck.mascot），这里给一个最小的接口接住它，只用它的 svg(pose, opts) 和 defs -->
+<script>window.Deck = { mascot: function (k, def) { window.LT_DUO = def; } };</script>
+<script src="mascots/duoduo.js"></script>
 <script>
 (function () {
   'use strict';
   var S = window.LT_STYLES || [];
-  var FAMS = [['all', '全部'], ['corp', '企业风'], ['hand', '手绘风'], ['modern', '现代风'], ['pixel', '像素风']];
-  // 风格数：清单里有几种就写几种
+  // 风格按家族排：手绘风、现代风、像素风、企业风（开源介绍以通用风格为主）
+  var ORDER = ['hand', 'modern', 'pixel', 'corp'];
+  S = S.slice().sort(function (a, b) { return ORDER.indexOf(a.family) - ORDER.indexOf(b.family); });
+  var FAMS = [['all', '全部'], ['hand', '手绘风'], ['modern', '现代风'], ['pixel', '像素风'], ['corp', '企业风']];
   if (S.length) document.querySelectorAll('[data-count=styles]').forEach(function (n) { n.textContent = S.length; });
 
   // 风格卡片
@@ -364,6 +429,27 @@ footer a:hover{color:var(--ink)}
     tabs.appendChild(b);
   });
 
+  // 朵朵：首屏一只（会眨眼，点一下或悬停就开心地举手说话），教程入口一只
+  var D = window.LT_DUO;
+  if (D && D.svg) {
+    if (D.defs) document.getElementById('duo-defs').innerHTML = D.defs;
+    var duo = document.getElementById('duo'), say = document.getElementById('say'), duo2 = document.getElementById('duo2');
+    var holder = document.createElement('span');
+    duo.insertBefore(holder, say);
+    var pose = 'idle', put = function (p, o) { holder.innerHTML = D.svg(p, o || {}); };
+    put('idle');
+    duo2.innerHTML = D.svg('point', {});
+    var lines = ['你专心讲，课件交给我～', '想改哪里，直接在页面上改', '16 种风格，挑一个喜欢的', '先看看五分钟教程吧'], li = 0, timer = 0;
+    var cheer = function () {
+      pose = 'happy'; put('happy'); say.textContent = lines[li++ % lines.length]; duo.classList.add('talk');
+      clearTimeout(timer); timer = setTimeout(function () { pose = 'idle'; put('idle'); duo.classList.remove('talk'); }, 2600);
+    };
+    duo.addEventListener('mouseenter', cheer);
+    duo.addEventListener('click', cheer);
+    setTimeout(cheer, 1600);
+    (function blink() { setTimeout(function () { if (pose === 'idle') { put('idle', { blink: true }); setTimeout(function () { if (pose === 'idle') put('idle'); }, 140); } blink(); }, 2500 + Math.random() * 3500); })();
+  }
+
   // 复制安装命令
   var copy = document.getElementById('copy');
   copy.addEventListener('click', function () {
@@ -372,12 +458,12 @@ footer a:hover{color:var(--ink)}
     if (navigator.clipboard) navigator.clipboard.writeText(t).then(done, function () {}); else done();
   });
 
-  // 顶栏滚动后加分隔线
+  // 顶栏滚动后下面出一道铅笔线
   var nav = document.getElementById('nav');
   var onScroll = function () { nav.classList.toggle('scrolled', scrollY > 8); };
   addEventListener('scroll', onScroll, { passive: true }); onScroll();
 
-  // 进入视口时淡入
+  // 进入视口时洇开
   var items = document.querySelectorAll('.rv');
   if (!('IntersectionObserver' in window)) { items.forEach(function (n) { n.classList.add('in'); }); return; }
   var io = new IntersectionObserver(function (es) {
