@@ -8,7 +8,7 @@
 
 [![在线体验](https://img.shields.io/badge/在线体验-xiaoli1999.github.io-2f6bff?style=flat-square&logo=githubpages&logoColor=white)](https://xiaoli1999.github.io/li-talk-skills/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-22c55e?style=flat-square)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.4.3-111827?style=flat-square)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.4.4-111827?style=flat-square)](CHANGELOG.md)
 [![Styles](https://img.shields.io/badge/风格-16_种-7c5cff?style=flat-square)](#16-种风格)
 [![Mascots](https://img.shields.io/badge/形象-16_个-ef4f64?style=flat-square)](#16-种风格)
 [![Live Editing](https://img.shields.io/badge/在线编辑-支持-00b4d8?style=flat-square)](#在线编辑)
