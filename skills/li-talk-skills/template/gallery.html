@@ -63,69 +63,64 @@
   .gl-bar .gl-hint{display:none}
 }
 
-/* 风格总览：直接打开样册时的首页，铺满窗口、盖在课件上面；每种风格一张卡片，按类分组（手绘风、现代风、像素风、企业风）。
-   卡片套 data-scene，风格的 CSS 变量（底色、墨色、强调色、字体）直接生效；上半截是缩小的 1920×1080 舞台，
-   放这种风格的背景层（从引擎建好的背景层复制）、风格名和形象；下半截写「样子」和「适合讲什么」。
+/* 风格总览：直接打开样册时的首页，铺满窗口、盖在课件上面；每种风格一张卡片，按类排（手绘风、现代风、像素风、企业风）。
+   整页是水彩田园的样子：水彩纸底、上方淡淡的天空蓝和暖阳、下方一条草坡，标题用楷体；
+   总览本身套 data-scene="watercolor"，借用水彩田园的颜料遮罩（--wc-pad1、--wc-pad2、--wc-blob、--wc-brush1）和纸纹（--scene-bg）。
+   卡片套自己风格的 data-scene，上半截是缩小的 1920×1080 舞台（这种风格的背景层、风格名、形象），下半截是一张纸，写「样子」和「适合讲什么」。
+   卡片铺满整个窗口（四周留安全距离），列数由脚本按窗口挑：让卡片尽量大、一屏放下（16 种在 1920×1080 上是 6 列 3 行，最后一行居中）。
    类名用 sv- 开头，免得撞上风格自己的类名（液态玻璃用了 gl-） */
-.sv-home{position:fixed;inset:0;z-index:1000;overflow:auto;overscroll-behavior:contain;background:#15171B;color:#E9EBEE;
-  font:400 15px/1.55 system-ui,-apple-system,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+.sv-home{position:fixed;inset:0;z-index:1000;overflow:auto;overscroll-behavior:contain;color:#3A322B;background:var(--scene-bg,#FBF7EE);
+  font:400 15px/1.6 "PingFang SC","Microsoft YaHei UI","Microsoft YaHei",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 .sv-home:focus{outline:none}
-.sv-wrap{--gap:16px;--cols:8;max-width:2400px;margin:0 auto;padding:34px 40px 48px;container-type:inline-size}
-.sv-eyebrow{margin:0 0 4px;font-size:13px;letter-spacing:.08em;color:rgba(233,235,238,.55)}
-.sv-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 20px;margin:0 0 24px}
-.sv-head h1{margin:0;font-size:30px;font-weight:700;line-height:1.2;color:#fff}
-.sv-head p{margin:0;max-width:62em;color:rgba(233,235,238,.72)}
-/* 卡片宽度 --cw：一排放 --cols 张；每类占 min(张数, --cols) 张的宽度，排不下就换行（宽屏时现代风和像素风排在同一行） */
-.sv-fams{--cw:calc((100vw - 80px - 17px - (var(--cols) - 1) * var(--gap)) / var(--cols));display:flex;flex-wrap:wrap;align-items:flex-start;gap:28px calc(var(--gap) * 2)}
-@supports (width:1cqw){.sv-fams{--cw:calc((100cqw - (var(--cols) - 1) * var(--gap)) / var(--cols))}}
-.sv-fam{--k:min(var(--n),var(--cols));width:calc(var(--k) * var(--cw) + (var(--k) - 1) * var(--gap));max-width:100%}
-.sv-fam h2{display:flex;align-items:baseline;gap:10px;margin:0 0 10px;font-size:19px;font-weight:700;line-height:1.3;color:#fff;white-space:nowrap}
-.sv-fam h2 span{overflow:hidden;text-overflow:ellipsis;font-size:13px;font-weight:400;color:rgba(233,235,238,.55)}
-.sv-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(0,var(--cw)));gap:var(--gap)}
-.sv-card{position:relative;display:flex;flex-direction:column;min-width:0;overflow:hidden;border-radius:12px;text-decoration:none;
-  color:var(--ink);background:var(--bg);font-family:var(--f-hand);
-  box-shadow:0 0 0 1px rgba(255,255,255,.12),0 8px 22px rgba(0,0,0,.35);transition:transform .18s ease,box-shadow .18s ease}
-.sv-card:hover{transform:translateY(-4px);box-shadow:0 0 0 2px var(--accent),0 16px 30px rgba(0,0,0,.5)}
-.sv-card:focus-visible{outline:3px solid #9CC3F5;outline-offset:3px}
-.sv-pv{position:relative;flex:none;aspect-ratio:16/9;overflow:hidden}
+/* 天空、暖阳、草坡：铺在最底下，不挡点击 */
+.sv-home::before{content:"";position:fixed;inset:0 0 auto;height:60vh;pointer-events:none;
+  background:radial-gradient(55% 75% at 12% 0%,rgba(244,195,90,.30),transparent 70%),radial-gradient(60% 80% at 70% -10%,rgba(142,195,230,.45),transparent 72%)}
+.sv-hills{position:fixed;left:0;right:0;bottom:0;width:100%;height:clamp(70px,11vh,130px);pointer-events:none}
+.sv-wrap{position:relative;--pad:clamp(20px,3.6vw,72px);--gap:clamp(18px,1.7vw,34px);margin:0 auto;padding:clamp(22px,3.2vh,44px) var(--pad) clamp(60px,9vh,110px)}
+.sv-eyebrow{margin:0 0 2px;font:700 15px/1.4 var(--f-hand,"WK",KaiTi,serif);letter-spacing:.2em;color:#4F8DBF}
+.sv-eyebrow::before{content:"～ "}.sv-eyebrow::after{content:" ～"}
+.sv-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 22px;margin:0 0 clamp(16px,2.6vh,30px)}
+.sv-head h1{position:relative;isolation:isolate;margin:0;font:700 clamp(28px,2.6vw,44px)/1.2 "WK","LXGW WenKai",KaiTi,STKaiti,serif;letter-spacing:.04em;color:#3A322B}
+.sv-head h1::after{content:"";position:absolute;z-index:-1;left:-.1em;right:-.1em;bottom:.04em;height:.42em;background:var(--wc-brush1) 0 0/100% 100% no-repeat}
+.sv-head p{margin:0;max-width:62em;font-size:clamp(14px,1vw,16px);color:#4F463E}
+.sv-legend{display:flex;flex-wrap:wrap;gap:10px;width:100%}
+.sv-chip{position:relative;isolation:isolate;display:inline-flex;align-items:center;gap:8px;padding:4px 16px 5px;font:500 14px/1.4 "WK","LXGW WenKai",KaiTi,serif;color:#4F463E}
+.sv-chip::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--fc);opacity:.4;-webkit-mask:var(--wc-pad2) 0 0/100% 100% no-repeat;mask:var(--wc-pad2) 0 0/100% 100% no-repeat}
+.sv-chip b{font-weight:700;color:#3A322B}
+.sv-f-hand{--fc:#F4C35A}.sv-f-modern{--fc:#8EC3E6}.sv-f-pixel{--fc:#9CCB7E}.sv-f-corp{--fc:#C9BFB2}
+/* 卡片：像一张张夹在画板上的画纸，微微歪一点，鼠标移上去抬起来摆正 */
+.sv-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:var(--gap)}
+.sv-card{position:relative;display:flex;flex-direction:column;flex:none;width:var(--cw,300px);min-width:0;padding:8px 8px 0;text-decoration:none;
+  background:#FFFEFA;box-shadow:0 1px 2px rgba(58,50,43,.08),0 12px 26px -12px rgba(58,50,43,.36);border-radius:4px 6px 5px 7px;
+  transition:transform .3s cubic-bezier(.3,1.5,.5,1),box-shadow .2s}
+.sv-card:nth-child(3n+1){transform:rotate(-.7deg)}.sv-card:nth-child(3n+2){transform:rotate(.5deg)}.sv-card:nth-child(3n){transform:rotate(-.25deg)}
+.sv-card:hover{transform:translateY(-6px) rotate(0);box-shadow:0 1px 2px rgba(58,50,43,.08),0 24px 40px -14px rgba(58,50,43,.45)}
+.sv-card:focus-visible{outline:3px solid #4F8DBF;outline-offset:4px}
+.sv-pv{position:relative;flex:none;aspect-ratio:16/9;overflow:hidden;border-radius:2px}
 .sv-mini{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;pointer-events:none}
-.sv-mini>.bg{visibility:visible}
+.sv-mini>.bg{display:block!important;visibility:visible}   /* 手机上引擎进阅读模式会把背景层藏起来，缩略舞台里照样显示 */
 .sv-mini-title{position:absolute;left:150px;top:330px;isolation:isolate;margin:0;font:700 192px/1.2 var(--f-hand);color:var(--ink);white-space:nowrap}
 .sv-mini-title::after{content:"";position:absolute;z-index:-1;left:-.06em;right:-.06em;bottom:.1em;height:.3em;background:var(--hl);border-radius:.06em}
 .sv-mini-art{position:absolute;right:120px;bottom:120px}
 .sv-mini-art svg{display:block;width:100%;height:100%;overflow:visible}
 .sv-mini-art.sv-px svg{shape-rendering:crispEdges}
-.sv-info{flex:1;display:flex;flex-direction:column;gap:5px;padding:10px 13px 13px;font-size:13px;line-height:1.5}
-.sv-look{color:var(--ink-2)}
-.sv-fit{color:var(--ink)}
-.sv-fit b{margin-right:.2em;font-weight:700;color:var(--accent)}
-.sv-key{position:absolute;right:8px;top:8px;padding:1px 7px 2px;border-radius:6px;background:rgba(20,22,26,.62);color:#F1F3F5;
+/* 下半截是纸，统一用水彩田园的墨色，不跟着各风格变 */
+.sv-info{flex:1;display:flex;flex-direction:column;gap:3px;padding:9px 6px 11px;font-size:13px;line-height:1.5;font-family:"PingFang SC","Microsoft YaHei UI","Microsoft YaHei",sans-serif}
+.sv-look{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#6B6157}
+.sv-fit{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#3A322B}
+.sv-fit b{margin-right:.3em;font-weight:700;color:#4F8DBF}
+.sv-key{position:absolute;right:8px;top:8px;padding:1px 8px 2px;border-radius:7px 5px 8px 4px;background:rgba(255,254,250,.86);color:#6B6157;
   font:500 11px/1.5 ui-monospace,Consolas,"Cascadia Mono",monospace;letter-spacing:.02em}
-/* 像素字体 12px 一格才清楚 */
-[data-scene="pixel"] .sv-info{font-size:12px;line-height:18px}
-/* 一屏放下全部风格：一个网格，列数由脚本按窗口算（.sv-fit）；放不下时退回下面按宽度定的列数、可以滚动 */
-.sv-home.sv-fit{overflow:hidden}
-.sv-wrap{padding:22px 32px 20px}
-.sv-head{margin:0 0 14px;gap:6px 18px}
-.sv-head h1{font-size:26px}
-.sv-head p{font-size:14px}
-.sv-legend{display:flex;flex-wrap:wrap;gap:8px;width:100%}
-.sv-chip{display:inline-flex;align-items:center;gap:8px;padding:3px 12px 4px;border-radius:999px;background:rgba(255,255,255,.07);font-size:12.5px;color:rgba(233,235,238,.7)}
-.sv-chip b{font-weight:700;color:#fff}
-.sv-chip::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--fc)}
-.sv-f-corp{--fc:#ED5E6E}.sv-f-hand{--fc:#E9B86B}.sv-f-modern{--fc:#6BA6FF}.sv-f-pixel{--fc:#8BD57A}
-.sv-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
-.sv-grid .sv-info{gap:2px;padding:7px 11px 9px;font-size:12.5px;line-height:1.45}
-.sv-grid .sv-look,.sv-grid .sv-fit{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.sv-tag{position:absolute;left:8px;top:8px;padding:1px 8px 2px;border-radius:6px;background:rgba(20,22,26,.62);color:#F1F3F5;font:600 11px/1.5 system-ui,"Microsoft YaHei",sans-serif}
-.sv-tag::before{content:"";display:inline-block;width:6px;height:6px;margin-right:5px;border-radius:50%;background:var(--fc);vertical-align:1px}
-@media (max-width:999px){.sv-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media (max-width:699px){.sv-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:420px){.sv-grid{grid-template-columns:1fr}}
-@media (max-width:1599px){.sv-wrap{--cols:4}}
-@media (max-width:999px){.sv-wrap{--cols:3;padding:26px 24px 40px}}
-@media (max-width:699px){.sv-wrap{--cols:2;padding:22px 16px 32px}.sv-head h1{font-size:24px}}
-@media (max-width:420px){.sv-wrap{--cols:1}}
+.sv-tag{position:absolute;left:8px;top:8px;display:inline-flex;align-items:center;gap:6px;padding:2px 10px 3px 8px;border-radius:9px 6px 10px 5px;background:rgba(255,254,250,.92);
+  box-shadow:0 1px 3px rgba(58,50,43,.18);font:700 12px/1.5 "WK","LXGW WenKai",KaiTi,serif;color:#3A322B}
+.sv-tag::before{content:"";width:9px;height:9px;border-radius:52% 48% 55% 45%;background:var(--fc);box-shadow:0 0 0 1px rgba(58,50,43,.18)}
+/* 放不下一屏时（手机、很矮的窗口）：按宽度排列数，可以滚动 */
+.sv-home:not(.sv-fit) .sv-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.sv-home:not(.sv-fit) .sv-card{width:auto}
+@media (max-width:999px){.sv-home:not(.sv-fit) .sv-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:699px){.sv-home:not(.sv-fit) .sv-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.sv-head h1{font-size:26px}}
+@media (max-width:420px){.sv-home:not(.sv-fit) .sv-grid{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.sv-card{transition:none}.sv-card:hover{transform:none}}
 @media (prefers-reduced-motion:reduce){.sv-card{transition:none}.sv-card:hover{transform:none}}
 </style>
 </head>
@@ -265,7 +260,13 @@ window.LI_TALK_STYLES = [
     });
 
     var box = el('div', 'sv-home');
+    box.dataset.scene = 'watercolor';   // 借水彩田园的颜料遮罩和纸纹（变量），整页是水彩田园的样子
     box.setAttribute('role', 'main');
+    // 下方一条水彩草坡（两层，边缘用滤镜抖一抖）
+    box.insertAdjacentHTML('beforeend', '<svg class="sv-hills" viewBox="0 0 1440 130" preserveAspectRatio="none" aria-hidden="true">' +
+      '<filter id="sv-hill-edge" x="-5%" y="-30%" width="110%" height="160%"><feTurbulence type="fractalNoise" baseFrequency=".012 .06" numOctaves="3" seed="7"/><feDisplacementMap in="SourceGraphic" scale="12" xChannelSelector="R" yChannelSelector="G"/></filter>' +
+      '<path d="M-60 52C200 22 380 30 600 56S980 86 1180 54 1400 34 1500 42V200H-60Z" fill="#C3E2AC" opacity=".85" filter="url(#sv-hill-edge)"/>' +
+      '<path d="M-60 86C240 62 460 74 700 92S1100 108 1280 84 1420 72 1500 76V200H-60Z" fill="#A8D48C" opacity=".9" filter="url(#sv-hill-edge)"/></svg>');
     box.tabIndex = -1;
     var wrap = el('div', 'sv-wrap');
     wrap.appendChild(el('p', 'sv-eyebrow', 'li-talk-skills 样册'));
@@ -298,25 +299,34 @@ window.LI_TALK_STYLES = [
     document.body.appendChild(box);
     try { box.focus({ preventScroll: true }); } catch (e) { /* 老浏览器不认参数 */ }
 
-    // 缩小的舞台按卡片宽度缩放
-    // 排成方阵：16 种就是 4 列 4 行，整块居中，方便一张图截下全部风格。
-    // 卡片宽度取「按窗口宽度能放多宽」和「按窗口高度能放多宽」里小的那个，保证一屏放下；
-    // 算出来太小（手机、很矮的窗口）就退回 CSS 的列数，允许滚动
+    // 卡片铺满整个窗口：在 3 到 8 列里挑一个让卡片最大、又一屏放得下的列数（16 种在 1920×1080 上是 6 列 3 行），
+    // 每行居中，整块在标题下面的空间里上下居中；算出来太小（手机、很矮的窗口）就退回 CSS 按宽度排的列数，允许滚动
     var layout = function () {
-      var n = grid.children.length, gap = 14, info = 52, pad = 64;
-      var c = Math.ceil(Math.sqrt(n)), rows = Math.ceil(n / c);
-      wrap.style.maxWidth = '';
-      for (var pass = 0; pass < 2; pass++) {   // 第二遍：标题区宽度变了可能换行，高度跟着变，再算一次
-        var top = grid.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop;
-        var avail = box.clientHeight - top - 32;
-        var byW = (box.clientWidth - pad - (c - 1) * gap) / c;
-        var byH = ((avail - (rows - 1) * gap) / rows - info) * 16 / 9;
-        var cw = Math.floor(Math.min(byW, byH));
-        if (cw < 170) { grid.style.gridTemplateColumns = ''; wrap.style.maxWidth = ''; box.classList.remove('sv-fit'); return; }
-        grid.style.gridTemplateColumns = 'repeat(' + c + ', ' + cw + 'px)';
-        wrap.style.maxWidth = (c * cw + (c - 1) * gap + pad) + 'px';
-      }
+      var cards = grid.children, n = cards.length;
+      if (!n) return;
       box.classList.add('sv-fit');
+      grid.style.setProperty('--cw', '300px');
+      grid.style.maxWidth = ''; grid.style.marginTop = '';
+      var ws = getComputedStyle(wrap), gap = parseFloat(getComputedStyle(grid).columnGap) || 24;
+      var frame = 16;   // 卡片左右的纸边（8px × 2）
+      var extra = cards[0].offsetHeight - (cards[0].offsetWidth - frame) * 9 / 16;   // 卡片里舞台以外的高度：纸边和两行字
+      var top = grid.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop;
+      var availH = box.clientHeight - top - parseFloat(ws.paddingBottom);
+      var availW = wrap.clientWidth - parseFloat(ws.paddingLeft) - parseFloat(ws.paddingRight);
+      var best = 0, bestC = 0;
+      for (var c = 3; c <= Math.min(8, n); c++) {
+        var rows = Math.ceil(n / c);
+        var byW = (availW - (c - 1) * gap) / c;
+        var byH = ((availH - (rows - 1) * gap) / rows - extra) * 16 / 9 + frame;
+        var cw = Math.floor(Math.min(byW, byH));
+        if (cw > best) { best = cw; bestC = c; }
+      }
+      if (best < 200) { box.classList.remove('sv-fit'); grid.style.removeProperty('--cw'); return; }
+      grid.style.setProperty('--cw', best + 'px');
+      grid.style.maxWidth = (bestC * best + (bestC - 1) * gap + 1) + 'px';
+      grid.style.marginLeft = grid.style.marginRight = 'auto';
+      var used = grid.offsetHeight;
+      if (availH > used) grid.style.marginTop = Math.floor((availH - used) / 2) + 'px';
     };
     var fit = function () { layout(); minis.forEach(function (m) { var w = m.parentNode.clientWidth; if (w) m.style.transform = 'scale(' + (w / 1920) + ')'; }); };
     fit();
