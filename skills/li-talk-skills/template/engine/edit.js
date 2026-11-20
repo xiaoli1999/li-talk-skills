@@ -44,6 +44,9 @@
   const SS_KEY = 'li-talk-edit-resume:' + document.title;
   // 离线编辑提示：引导用户对 AI 说这句，AI 照 SKILL.md 开编辑服务；点「知道了」后这次打开不再出
   const OFFLINE_SAY = '我要在线改这份课件';
+  // 合并方式：上次选的（没选过是「照我改的」）
+  let mode0 = 'exact';
+  try { mode0 = localStorage.getItem('li-talk-merge-mode') || 'exact'; } catch (e) { mode0 = 'exact'; }
   const HINT_KEY = 'li-talk-edit-offline-hint';
   const BOX = ['left', 'top', 'width', 'height'];
   const STYLE = ['fontSize', 'color', 'fontWeight', 'textAlign'];
@@ -64,7 +67,7 @@
   const INLINE = /^(B|STRONG|EM|I|SMALL|SPAN|CODE|U|MARK|SUB|SUP|BR|S|DEL|INS|KBD|ABBR|Q|CITE|TIME|WBR|A)$/;
 
   const E = {
-    on: false, loaded: false, items: [],
+    on: false, loaded: false, items: [], mode: ['exact', 'polish', 'ai'].indexOf(mode0) >= 0 ? mode0 : 'exact',
     sel: null, inner: [], hover: null, text: null, drag: null, lastDown: null,
     saveT: 0, dirty: false, notifying: false, reloading: false, inflight: null, again: false, saving: false, failed: false, notified: false,
     bar: null, tools: null, pop: null, acc: '', selBox: null, beats: null, style: null, es: null,
@@ -205,6 +208,7 @@
     i.ot = ownTranslate(n);
     const pos = getComputedStyle(n).position;
     i.position = pos === 'absolute' || pos === 'fixed' ? 'absolute' : 'flow';
+    if (pos === 'relative') { const cs = getComputedStyle(n); i.rel0 = { l: parseFloat(cs.left) || 0, t: parseFloat(cs.top) || 0 }; }
     const op = n.offsetParent;
     if (i.position === 'absolute' && op && op !== i.slide && i.slide.contains(op)) {
       const ob = boxOf(op, i.slide);
@@ -322,13 +326,35 @@
   }
   function recordBox(n) {
     const i = n._lt;
-    const extra = Object.assign({ position: i.position }, keepOf(i));
+    const after = Object.assign({}, i.box || i.base);
+    const extra = Object.assign({ position: i.position, css: cssFor(n, i, after) }, keepOf(i));
     if (i.origin) extra.origin = i.origin;
-    upsert(i, 'box', Object.assign({}, i.base), Object.assign({}, i.box || i.base), extra);
+    upsert(i, 'box', Object.assign({}, i.base), after, extra);
+  }
+  /* 「照写」的 CSS：把舞台坐标换算成元素自己的坐标，AI 照抄就能落到用户拖的位置。
+     absolute 的减掉定位容器和外边距；排版流里的写 position:relative 加相对原位的偏移（原来就有的 left/top 加上去）；
+     宽高按盒模型换算（content-box 要减掉内边距和边框） */
+  function cssFor(n, i, a) {
+    const b = i.base, cs = getComputedStyle(n), px = v => parseFloat(v) || 0, r = Math.round, out = [];
+    if (a.left !== b.left || a.top !== b.top) {
+      if (i.position === 'absolute') {
+        const o = i.origin || { left: 0, top: 0 };
+        out.push('left:' + r(a.left - o.left - px(cs.marginLeft)) + 'px', 'top:' + r(a.top - o.top - px(cs.marginTop)) + 'px');
+      } else {
+        const r0 = i.rel0 || { l: 0, t: 0 };
+        out.push('position:relative', 'left:' + r(r0.l + a.left - b.left) + 'px', 'top:' + r(r0.t + a.top - b.top) + 'px');
+      }
+    }
+    const content = cs.boxSizing !== 'border-box';
+    if (a.width !== b.width) out.push('width:' + r(a.width - (content ? px(cs.paddingLeft) + px(cs.paddingRight) + px(cs.borderLeftWidth) + px(cs.borderRightWidth) : 0)) + 'px');
+    if (a.height !== b.height) out.push('height:' + r(a.height - (content ? px(cs.paddingTop) + px(cs.paddingBottom) + px(cs.borderTopWidth) + px(cs.borderBottomWidth) : 0)) + 'px');
+    return out.join(';');
   }
   function recordScale(n) {
     const i = n._lt;
-    upsert(i, 'scale', Object.assign({}, i.sc0), i.sc.scale === 1 ? Object.assign({}, i.sc0) : Object.assign({}, i.sc));
+    const on = i.sc.scale !== 1;
+    const extra = on ? { css: 'scale:' + +(i.os * i.sc.scale).toFixed(3) + ';transform-origin:' + i.sc.origin } : {};
+    upsert(i, 'scale', Object.assign({}, i.sc0), on ? Object.assign({}, i.sc) : Object.assign({}, i.sc0), extra);
   }
 
   /* 一条修改写成一行（和 scripts/lib/edits.mjs 的 itemLine 一致） */
@@ -344,7 +370,7 @@
     }
     if (it.kind === 'hide') return where + '：隐藏（删掉这个元素）';
     const b = it.before, a = it.after;
-    if (it.kind === 'scale') return where + '：整块缩放 ' + Math.round(b.scale * 100) + '%→' + Math.round(a.scale * 100) + '%（原点 ' + (a.origin === 'top left' ? '左上角 top left' : '中心 center') + '）';
+    if (it.kind === 'scale') return where + '：整块缩放 ' + Math.round(b.scale * 100) + '%→' + Math.round(a.scale * 100) + '%（原点 ' + (a.origin === 'top left' ? '左上角 top left' : '中心 center') + '）' + cssNote(it);
     if (it.kind === 'style') return where + '：样式 ' + (STYLE.filter(k => b[k] !== a[k]).map(k => STYLE_NAMES[k] + ' ' + b[k] + '→' + a[k]).join('、') || '没有变化') + keepNote(it);
     if (it.kind === 'beat') {
       const notes = [];
@@ -364,18 +390,26 @@
     } else if (it.origin) {
       s += '（定位容器在舞台 (' + it.origin.left + ', ' + it.origin.top + ')，CSS 里的 left/top 要减去它）';
     }
-    return s + keepNote(it);
+    return s + keepNote(it) + cssNote(it);
   }
+  /* 浏览器换算好的 CSS，合并时照抄（和 edits.mjs 的 cssNote 一字不差） */
+  const cssNote = it => (it.css ? '；照写：' + it.css : '');
   /* 排版流里的块变高变矮时，预览是用 margin-bottom 抵掉的（后面的内容没动），合并时照写；和 edits.mjs 的 keepNote 一字不差 */
   const keepNote = it => (Number.isInteger(it.keep) ? '（后面的内容保持原位：给它写 margin-bottom:' + it.keep + 'px）' : '');
-  const RULES = [
+  /* 合并方式和按方式不同的两条规则：和 scripts/lib/edits.mjs 的 MODES、rulesFor 一字不差 */
+  const MODES = {"exact":"① 照我改的（原样）：位置、大小、文字、样式一律照清单原样落进源码，不对齐、不取整、不重排、不顺手美化；自检报了重叠、越界、溢出，只告诉用户是哪处、为什么，不擅自挪（写错代码报的错照常修）；用户说要调再调。合并后 check --browser 会核对位置，对不上的照提示改到对上为止。","polish":"② 照我改的，AI 帮着润色：先照清单原样落位（同①），再做小幅调整：对齐、留边、修重叠、统一间距；每一处调整都写给用户：哪一块、用户改的是多少、改成了多少、为什么。用户改过的文字照原样（文案只给建议），不整页重排。","ai":"③ 交给 AI 重新优化：用户的改动当作方向参考（想放大哪块、挪到哪边、强调什么），可以按风格的版式规则重新排这一页；改完告诉用户做了哪些调整、和他改的哪里不一样。用户改过的文字照样原样合并，再给建议。"};
+  const MODE_LABEL = { exact: '照我改的', polish: '我改的 + AI 润色', ai: 'AI 重新优化' };
+  const MODE_DESC = { exact: '原样落进源码，不对齐、不美化；有冲突只提醒你', polish: '以你改的为准，AI 小幅收尾（对齐、留边、修重叠），每处调整都告诉你', ai: '你的改动只当方向，AI 按版式重新排这一页' };
+  const MODE_KEY = 'li-talk-merge-mode';
+  const POS_RULE = "- 位置、大小：每条都写了「照写：…」，是浏览器换算好的 CSS（已经是元素自己的坐标：减掉了定位容器、排版流里的元素是相对原位的偏移、宽高按盒模型算好），照抄进对应章节 chN.css 里这个元素的那条规则（[data-id=\"页号\"] <能定位到它的类名>{…}）；元素本来有行内 style=\"left:…;top:…;width:…\" 的，直接改成照写的值。原来用 right / bottom 定位的，改成照写的 left / top 并去掉 right / bottom。用户改过的宽和高都照写，不要只写宽度、丢掉高度，也不要为了合并去改容器的排法。不要在 JS 里加一堆行内 transform。";
+  const CHECK_RULE = {"exact":"- 自检报了重叠、越界、溢出：用户亲手摆的位置不擅自挪，只告诉用户哪处、为什么，问他要不要调；报「合并后位置和用户拖的不一样」的，照提示改到对上为止。","polish":"- 自检报了重叠、越界、溢出：可以小幅调整，调了的每一处都告诉用户（原来、改成、为什么）。","ai":"- 自检报了重叠、越界、溢出：照版式规则调好，告诉用户调了哪些。"};
+  const rulesFor = mode => BASE_RULES.map(r => (r === '@POS' ? POS_RULE : r === '@CHECK' ? CHECK_RULE[mode] || CHECK_RULE.exact : r));
+  const BASE_RULES = [
     '合并规则：',
     '- 找元素：路径从页面根往下写，:nth-of-type(n) 按 Deck.add 的 html 里的兄弟数，用来在源码里找到它，「」里是它开头的字。写 CSS 时不要照抄 nth-of-type（页面上引擎会多加元素，数出来对不上），给元素加一个类名（比如 p05-tip）再用它定位。',
     '- 文字：在 slides/ 的章节文件里按「」里的原文找到这一处，换成新文字（页面大标题在 Deck.add 的 title 里，截图说明在 data-caption 里）；讲稿.md 里同一句也改掉。' +
       '写了「改后的 HTML」的照那段换：<em class="key">…</em> 是用户设的重点词（标题里的重点词写进 titleHtml，title 照样写纯文字）。',
-    '- 位置、大小：数值是舞台坐标（1920×1080，px，含内边距）。元素本来有行内 style="left:…;top:…;width:…" 的，直接改这几个值；' +
-      '没有的，在对应章节的 chN.css 里加一条 [data-id="页号"] <能定位到它的选择器>{left:…;top:…;width:…}（必要时加 position:absolute）。' +
-      '在排版流里的元素，用 position:relative 加 left/top 偏移，或改所在容器的排法。文字块一般只改 width，height 只在本来就写了固定高度、或者是图片和截图时才写。不要在 JS 里加一堆行内 transform。',
+    '@POS',
     '- 隐藏：删掉这个元素，后面的拍号顺移，notes 里对应的讲词一起调整。',
     '- 整块缩放：文字、图片、间距一起等比放大缩小。在源码里给这一块加个类名（比如 p05-shot），在章节 chN.css 里写 [data-id="页号"] .p05-shot{scale:1.2;transform-origin:center}' +
       '（原点是左上角的写 top left），不改原来的宽高和字号，也不要写 transform（会和出场动画打架）。',
@@ -386,7 +420,7 @@
       '写了「后面的内容保持原位：给它写 margin-bottom:Npx」的，把这个 margin-bottom 一起写进同一条 CSS（浏览器里就是这样预览的，不写的话后面的行会被推开）。',
     '- 拍号：改这个元素的 data-beat（本来没写的就加上）；同一个元素上的 data-mascot 拍号一起改；notes 里对应拍的讲词跟着挪。改完拍数超出范围的话，check 会提醒，照提醒调。',
     '- 讲词：页面 notes 里对应拍的 say 和 讲稿.md 里这一页对应拍的讲词一起改成新的。',
-    '- 自检报了溢出、被挡住：先自己调，调不了就告诉用户。',
+    '@CHECK',
   ];
   /* 清单末尾的提醒：文案先原样合并，再给建议（edits.mjs 的 COPY_TIP 同一句） */
   const COPY_TIP = '这一批里有文字或讲词改动的：先照用户改的原样合并；跑完自检、清掉批次以后，再逐条看这些文案，给用户优化建议（原文、用户改的、建议改成什么、为什么：更口语、更短、后排看得清、像误输入、和讲词对不上……），问用户采纳哪几条，用户没说就不动。';
@@ -400,7 +434,8 @@
     const out = copy ? ['【课件修改】' + document.title] : [];
     out.push('用户在浏览器里改了 ' + items.length + ' 处（' + per + '）：');
     items.forEach((it, i) => out.push('  ' + (i + 1) + '. ' + itemLine(it)));
-    out.push(...RULES);
+    out.push('合并方式（用户选的，照它来）：' + MODES[E.mode]);
+    out.push(...rulesFor(E.mode));
     if (items.some(it => it.kind === 'text' || it.kind === 'notes')) out.push(COPY_TIP);
     if (copy) out.push('改完跑 check --browser 清零，再请用户刷新页面看效果（刷新后浏览器会自己清掉已经合进源码的修改）。');
     return out.join('\n');
@@ -752,7 +787,7 @@
     if (!E.items.length) { I.toast('还没有改动'); return; }
     if (!SERVER) { copyForAi(); return; }
     E.notifying = true; updateBar();
-    flush().then(ok => { if (!ok) throw new Error('save'); return post('notify', '{}'); })
+    flush().then(ok => { if (!ok) throw new Error('save'); return post('notify', JSON.stringify({ mode: E.mode })); })
       .then(() => { E.notifying = false; E.notified = true; updateBar(); I.toast('已通知 AI。AI 改好源码后页面会自动刷新，你可以接着改', 5000); })
       .catch(() => { E.notifying = false; E.failed = true; updateBar(); I.toast('通知没发出去：在线编辑的服务可能已经关了。请回到对话里说一声「改好了」', 8000); });
   }
@@ -1165,7 +1200,7 @@
   /* =================================================================
      指针
      ================================================================= */
-  function inUi(t) { return !!(t && t.closest && t.closest('.lt-edit-bar, .lt-edit-hint, .lt-edit-tools, .lt-edit-pop, .lt-edit-copy, #toast, #lightbox')); }
+  function inUi(t) { return !!(t && t.closest && t.closest('.lt-edit-bar, .lt-edit-hint, .lt-edit-mpop, .lt-edit-tools, .lt-edit-pop, .lt-edit-copy, #toast, #lightbox')); }
   function onDown(e) {
     if (!E.on || e.button !== 0) return;
     const t = e.target;
@@ -1301,6 +1336,7 @@
     if (G) G.globalTimeline.resume();
     if (E.bar) E.bar.hidden = true;
     if (E.hint) E.hint.hidden = true;
+    if (E.mpop) E.mpop.hidden = true;
     updateTools(); drawBeats();
     if (!S.reading) I.go(S.cur.p, PAGES[S.cur.p].total, { anim: false });
     if (I.syncPresenter) I.syncPresenter();
@@ -1372,6 +1408,8 @@
     $('.lt-edit-stxt', st).textContent = E.failed ? '保存失败' : n ? n + ' 处改动' : '未改动';
     st.dataset.tip = { fail: '保存失败，点一下重试', saving: '正在保存…', saved: '已自动保存', idle: '还没改动' }[state];
     st.classList.toggle('lt-edit-fail', E.failed);
+    const mv = $('.lt-edit-modev', E.bar);
+    if (mv) mv.textContent = MODE_LABEL[E.mode];
     $('.lt-edit-gotxt', btn).textContent = SERVER ? (E.notifying ? '正在通知…' : E.notified ? 'AI 正在改…' : '通知 AI 修改') : '复制修改给 AI';
     btn.disabled = !n || E.notifying || E.notified;
     $('.lt-edit-undo', E.bar).disabled = !E.undo.length;
@@ -1385,6 +1423,7 @@
     E.bar = el('div', 'lt-edit-bar lt-edit-glass',
       '<button type="button" class="lt-edit-status" data-tip="还没改动"><i class="lt-edit-dot"></i><span class="lt-edit-stxt">未改动</span></button>' + sep +
       ibtn('lt-edit-undo', 'undo', '撤销 Ctrl+Z') + ibtn('lt-edit-redo', 'redo', '重做 Ctrl+Shift+Z / Ctrl+Y') + ibtn('lt-edit-all', 'resetAll', '全部还原（清掉还没合并的改动）') + sep +
+      '<button type="button" class="lt-edit-mode" data-tip="改完怎么合进源码"><span class="lt-edit-modev"></span>' + icon('down') + '</button>' +
       '<button type="button" class="lt-edit-go" data-tip="' + (SERVER ? '把改动交给 AI 合进源码' : '复制改动清单，贴给 AI') + '">' + icon(SERVER ? 'send' : 'copy') + '<span class="lt-edit-gotxt"></span></button>' +
       ibtn('lt-edit-exit', 'exit', '退出编辑 E'));
     E.bar.setAttribute('role', 'toolbar');
@@ -1413,6 +1452,29 @@
     E.bar.addEventListener('mousedown', e => e.preventDefault());   // 点按钮不抢焦点：免得之后按空格又点一次按钮
     $('.lt-edit-status', E.bar).addEventListener('click', () => { if (E.failed) save(); });
     $('.lt-edit-go', E.bar).addEventListener('click', notify);
+    // 合并方式菜单
+    E.mpop = el('div', 'lt-edit-pop lt-edit-mpop lt-edit-glass', '<div class="lt-edit-poph">改完怎么合进源码</div>' +
+      Object.keys(MODES).map(k => '<button type="button" data-mode="' + k + '"><b>' + MODE_LABEL[k] + '</b><small>' + MODE_DESC[k] + '</small></button>').join(''));
+    E.mpop.hidden = true;
+    E.mpop.setAttribute('data-noclick', '');
+    E.mpop.addEventListener('mousedown', e => e.preventDefault());
+    E.mpop.addEventListener('click', e => {
+      const b = e.target.closest('[data-mode]');
+      if (!b) return;
+      E.mode = b.dataset.mode;
+      try { localStorage.setItem(MODE_KEY, E.mode); } catch (err) { /* 存不了就只管这次 */ }
+      E.mpop.hidden = true; updateBar();
+      I.toast('合并方式：' + MODE_LABEL[E.mode], 1800);
+    });
+    document.body.appendChild(E.mpop);
+    $('.lt-edit-mode', E.bar).addEventListener('click', () => {
+      if (!E.mpop.hidden) { E.mpop.hidden = true; return; }
+      E.mpop.querySelectorAll('[data-mode]').forEach(x => x.classList.toggle('lt-edit-on', x.dataset.mode === E.mode));
+      E.mpop.hidden = false;
+      const r = $('.lt-edit-mode', E.bar).getBoundingClientRect(), pw = E.mpop.offsetWidth;
+      E.mpop.style.left = Math.round(clamp(r.left + r.width / 2 - pw / 2, 6, innerWidth - pw - 6)) + 'px';
+      E.mpop.style.top = Math.round(r.bottom + 8) + 'px';
+    });
     $('.lt-edit-undo', E.bar).addEventListener('click', undo);
     $('.lt-edit-redo', E.bar).addEventListener('click', redo);
     $('.lt-edit-all', E.bar).addEventListener('click', resetAll);
@@ -1466,6 +1528,13 @@
       'box-shadow:0 12px 32px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.08)}',
     '.lt-edit-glass[hidden],.lt-edit-glass [hidden]{display:none!important}',
     '.lt-edit-bar{left:50%;top:12px;transform:translateX(-50%)}',
+    '.lt-edit-mode{gap:4px!important;padding:0 8px!important;font-size:12.5px;color:var(--lt-sub)!important}',
+    '.lt-edit-mode svg{width:13px;height:13px}',
+    '.lt-edit-glass.lt-edit-mpop{display:flex;flex-direction:column;align-items:stretch;gap:2px;width:300px;padding:6px}',
+    '.lt-edit-mpop button{display:flex!important;flex-direction:column;align-items:flex-start!important;gap:1px!important;height:auto!important;padding:8px 10px!important;text-align:left;border-radius:10px!important}',
+    '.lt-edit-mpop button b{font-weight:600;font-size:13px}',
+    '.lt-edit-mpop button small{color:var(--lt-sub);font-size:12px;line-height:1.45;white-space:normal}',
+    '.lt-edit-mpop button.lt-edit-on{background:var(--lt-on)!important;box-shadow:inset 3px 0 0 var(--lt-acc)}',
     '.lt-edit-glass.lt-edit-hint{left:50%;bottom:24px;transform:translateX(-50%);display:flex;align-items:center;gap:10px;width:max-content;max-width:calc(100vw - 24px);padding:6px 6px 6px 8px;font-size:13px;line-height:1.5}',
     '.lt-edit-hint-tag{flex:none;padding:2px 8px;border-radius:8px;background:var(--lt-acc);color:var(--lt-on-accent,#fff);font-weight:600;font-size:12px}',
     '.lt-edit-hint-txt{color:var(--lt-fg)}',
@@ -1583,6 +1652,39 @@
   I.toggleEdit = () => (E.on ? exit() : enter());
   I.editKey = editKey;
   I.editsText = editsText;
+  /* 核对：items 是一批修改记录；逐页翻到最后一拍，找到每个元素，量现在的位置、大小、缩放、样式、文字，和用户改的比。
+     返回对不上的：{ no, page, path, hint, kind, what }；找不到元素的 missing: true（合并时加了类名、改了结构，路径变了，没法核对） */
+  I.editVerify = function (items) {
+    const out = [], near = (x, y, t) => Math.abs(x - y) <= t;
+    const byPage = new Map();
+    (items || []).forEach(it => { if (/^(box|scale|style|text)$/.test(it.kind)) { if (!byPage.has(it.page)) byPage.set(it.page, []); byPage.get(it.page).push(it); } });
+    byPage.forEach((list, pid) => {
+      const p = PAGES.find(x => x.id === pid);
+      if (!p) return;
+      try { I.go(p.i, p.total, { anim: false }); } catch (e) { /* 翻不过去就按现在的样子量 */ }
+      list.forEach(it => {
+        const n = resolve(p, it.path), base = { no: it.no, page: it.page, path: it.path, hint: it.hint, kind: it.kind };
+        if (!n) { out.push(Object.assign(base, { missing: true })); return; }
+        const a = it.after, b = it.before;
+        if (it.kind === 'box') {
+          const now = boxOf(n, p.el), bad = BOX.filter(k => a[k] !== b[k] && !near(now[k], a[k], 3));
+          if (bad.length) out.push(Object.assign(base, { what: bad.map(k => k + ' 应是 ' + a[k] + '，现在 ' + now[k]).join('、') }));
+        } else if (it.kind === 'scale') {
+          const m = /scale:([\d.]+)/.exec(it.css || ''), want = m ? +m[1] : a.scale, cur = parseFloat(getComputedStyle(n).scale) || 1;
+          if (!near(cur, want, .02)) out.push(Object.assign(base, { what: 'scale 应是 ' + want + '，现在 ' + cur }));
+        } else if (it.kind === 'style') {
+          const cs = getComputedStyle(n), bad = [];
+          if (a.fontSize !== b.fontSize && probe(n, 'fontSize', a.fontSize) !== cs.fontSize) bad.push('字号应是 ' + a.fontSize + '，现在 ' + cs.fontSize);
+          if (a.color !== b.color && probe(n, 'color', a.color) !== cs.color) bad.push('颜色应是 ' + a.color + '，现在 ' + cs.color);
+          if (a.fontWeight !== b.fontWeight && String(parseInt(cs.fontWeight, 10)) !== a.fontWeight) bad.push('粗细应是 ' + a.fontWeight + '，现在 ' + parseInt(cs.fontWeight, 10));
+          if (bad.length) out.push(Object.assign(base, { what: bad.join('、') }));
+        } else if (it.kind === 'text' && norm(n.textContent) !== norm(a.text)) {
+          out.push(Object.assign(base, { what: '文字应是「' + short(a.text, 40) + '」，现在「' + short(n.textContent, 40) + '」' }));
+        }
+      });
+    });
+    return out;
+  };
   I.notesEditable = () => E.on;
   I.noteText = (pi, b) => (PAGES[pi] ? noteText(PAGES[pi], b) : '');
   I.editNote = editNote;

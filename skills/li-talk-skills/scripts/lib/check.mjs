@@ -9,6 +9,44 @@ import { readDeck, deckEntry } from './deck.mjs';
 import { findBrowser } from './browser.mjs';
 import { openBrowser } from './selftest-run.mjs';
 import { formatReport, mergeIssues } from './report.mjs';
+import { MODES, modeOf, readEdits } from './edits.mjs';
+
+/* 合并核对：AI 正在合并在线编辑的一批修改（打印过清单、还没 edits --done）时，在浏览器里逐处量合并后的样子，和用户改的比。
+   合并方式是「照我改的」时对不上的算错误（必须改到对上）；「AI 润色」时算提醒（AI 要逐条告诉用户调了什么）；「AI 重新优化」不核对。
+   用户还在改、还没打印清单的修改不核对（那些本来就还没合进源码） */
+const VERIFY_KINDS = ['box', 'scale', 'style', 'text'];
+export async function verifyMerge(b, dir) {
+  const d = readEdits(dir);
+  const items = d.batch && d.batch.items ? d.batch.items.filter(it => VERIFY_KINDS.includes(it.kind)) : [];
+  if (!items.length) return null;
+  const mode = modeOf(d);
+  if (mode === 'ai') return { mode, skipped: true };
+  const expression = `(window.Deck && Deck._ && Deck._.editVerify) ? Deck._.editVerify(${JSON.stringify(items)}) : null`;
+  let list = null;
+  try { list = await b.peek(dir, { w: 1920, h: 1080, entry: 'index.html', expression }); } catch { list = null; }
+  return { mode, list, count: items.length };
+}
+export function formatVerify(v) {
+  if (!v) return { text: '', errors: 0, warnings: 0 };
+  const head = '合并核对（合并方式：' + MODES[v.mode].split('：')[0] + '）：';
+  if (v.skipped) return { text: head + '用户选了交给 AI 重新优化，不核对位置；改完告诉用户做了哪些调整。', errors: 0, warnings: 0 };
+  if (!Array.isArray(v.list)) return { text: head + '这份课件没有引入在线编辑脚本（engine/edit.js），没法核对；照清单里的「照写」逐条对一遍。', errors: 0, warnings: 0 };
+  const bad = v.list.filter(x => !x.missing), lost = v.list.filter(x => x.missing);
+  const where = x => `第 ${x.no || '?'} 页（${x.page}）${x.path}${x.hint ? '「' + String(x.hint).slice(0, 30) + '」' : ''}`;
+  const lines = [];
+  if (!bad.length) lines.push(head + `${v.count} 处都和用户改的一致。`);
+  else {
+    lines.push(head + (v.mode === 'exact'
+      ? `${bad.length} 处和用户改的不一样（用户选了照他改的，必须改到对上；照清单里的「照写」写）：`
+      : `${bad.length} 处和用户改的不一样（用户选了润色：每一处都要告诉用户原来、改成、为什么）：`));
+    for (const x of bad) lines.push(`  - ${where(x)}：${x.what}`);
+  }
+  if (lost.length) {
+    lines.push(`  另有 ${lost.length} 处在页面上按原来的路径找不到（合并时加了类名或改了结构），没法自动核对，自己照清单对一遍：`);
+    for (const x of lost) lines.push(`  - ${where(x)}`);
+  }
+  return { text: lines.join('\n'), errors: v.mode === 'exact' ? bad.length : 0, warnings: v.mode === 'exact' ? 0 : bad.length };
+}
 
 // 自检的尺寸：常见的横屏，加手机竖屏（阅读模式）
 export const SIZES = [[1920, 1080], [1440, 900], [1280, 720], [1024, 768], [390, 844]];
@@ -63,6 +101,7 @@ export async function run(args = {}, opts = {}) {
   const runs = [];
   let shotDir = null;
   let shotCount = 0;
+  let verify = null;
   try {
     for (let i = 0; i < SIZES.length; i++) {
       const [w, h] = SIZES[i];
@@ -89,13 +128,17 @@ export async function run(args = {}, opts = {}) {
         await b.screenshot(dir, file, { w: SHOT[0], h: SHOT[1], page: p.no, beat: p.total || 0, scene, entry });
       }
     }
+    // 4. 合并核对（只查整份、用课件入口时）
+    if (entry === 'index.html' && !pages && !scene) verify = await verifyMerge(b, dir);
   } finally {
     await b.close();
   }
 
   log('');
   log(formatReport(runs));
-  const { errors, warnings } = mergeIssues(runs);
+  const merged = mergeIssues(runs), vr = formatVerify(verify);
+  if (vr.text) log('\n' + vr.text);
+  const errors = [...merged.errors, ...Array(vr.errors).fill('合并核对')], warnings = [...merged.warnings, ...Array(vr.warnings).fill('合并核对')];
   if (st.errors) log(`\n另外，最上面不开浏览器的检查还有 ${st.errors} 个错误，也要改完。`);
   if (shotDir) log(`\n截图存在：${shotDir}（每页最后一拍，${SHOT[0]}×${SHOT[1]}，共 ${shotCount} 张）`);
 

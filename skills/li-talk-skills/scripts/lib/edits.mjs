@@ -28,11 +28,22 @@ import { SKILL_DIR } from './paths.mjs';
 
 export const EDITS_FILE = join('.li-talk', 'edits.json');
 export const KINDS = ['text', 'box', 'hide', 'style', 'beat', 'notes', 'scale'];
+/* 合并方式：用户点「通知 AI 修改」（或复制修改）时选的，写在 edits.json 的 mode 里；没选过按 exact。engine/edit.js 的 MODES 是同一套 */
+export const MODES = {
+  exact: '① 照我改的（原样）：位置、大小、文字、样式一律照清单原样落进源码，不对齐、不取整、不重排、不顺手美化；' +
+    '自检报了重叠、越界、溢出，只告诉用户是哪处、为什么，不擅自挪（写错代码报的错照常修）；用户说要调再调。合并后 check --browser 会核对位置，对不上的照提示改到对上为止。',
+  polish: '② 照我改的，AI 帮着润色：先照清单原样落位（同①），再做小幅调整：对齐、留边、修重叠、统一间距；' +
+    '每一处调整都写给用户：哪一块、用户改的是多少、改成了多少、为什么。用户改过的文字照原样（文案只给建议），不整页重排。',
+  ai: '③ 交给 AI 重新优化：用户的改动当作方向参考（想放大哪块、挪到哪边、强调什么），可以按风格的版式规则重新排这一页；' +
+    '改完告诉用户做了哪些调整、和他改的哪里不一样。用户改过的文字照样原样合并，再给建议。',
+};
+export const MODE_KEYS = Object.keys(MODES);
+export const modeOf = d => (d && MODE_KEYS.includes(d.mode) ? d.mode : 'exact');
 const BOX_KEYS = ['left', 'top', 'width', 'height'];
 const STYLE_KEYS = ['fontSize', 'color', 'fontWeight', 'textAlign'];
 
 export const editsPath = dir => join(dir, EDITS_FILE);
-const blank = () => ({ version: 1, updated: null, notified: null, merged: null, batch: null, done: [], items: [] });
+const blank = () => ({ version: 1, updated: null, notified: null, merged: null, mode: null, batch: null, done: [], items: [] });
 
 // 命令里的路径：正斜杠、加引号（和 guide 的写法一样，这里单写一份，免得引入 guide 一大串模块）
 const fwd = p => String(p).replace(/\\/g, '/');
@@ -50,6 +61,7 @@ export function readEdits(dir) {
     updated: typeof d.updated === 'string' ? d.updated : null,
     notified: typeof d.notified === 'string' ? d.notified : null,
     merged: typeof d.merged === 'string' ? d.merged : null,
+    mode: MODE_KEYS.includes(d.mode) ? d.mode : null,
     batch: b ? { id: b.id, at: typeof b.at === 'string' ? b.at : null, items: Array.isArray(b.items) ? b.items.map(cleanItem).filter(Boolean) : [] } : null,
     done: Array.isArray(d.done) ? d.done.filter(x => x && typeof x.id === 'string').slice(-500) : [],
     items: Array.isArray(d.items) ? d.items.map(cleanItem).filter(Boolean) : [],
@@ -112,6 +124,8 @@ export function cleanItem(it) {
   }
   // keep：排版流里的块改了字号、宽高以后，预览时给它加的 margin-bottom（px），后面的内容才没被推开
   if ((kind === 'style' || kind === 'box') && int(it.keep) !== null) out.keep = int(it.keep);
+  // css：浏览器换算好的「照写」CSS（元素自己的坐标），挪位置、改大小、整块缩放才有
+  if ((kind === 'box' || kind === 'scale') && typeof it.css === 'string' && it.css.trim()) out.css = it.css.replace(/[{}<>]/g, '').slice(0, 300);
   if (kind === 'beat') { out.own = it.own !== false; if (it.mascot === true) out.mascot = true; }
   if (kind === 'notes') out.beat = Math.max(0, int(it.beat) || 0);
   if (out.no === null) delete out.no;
@@ -164,7 +178,7 @@ export function itemLine(it) {
   }
   if (it.kind === 'hide') return `${where}：隐藏（删掉这个元素）`;
   const b = it.before, a = it.after;
-  if (it.kind === 'scale') return `${where}：整块缩放 ${Math.round(b.scale * 100)}%→${Math.round(a.scale * 100)}%（原点 ${a.origin === 'top left' ? '左上角 top left' : '中心 center'}）`;
+  if (it.kind === 'scale') return `${where}：整块缩放 ${Math.round(b.scale * 100)}%→${Math.round(a.scale * 100)}%（原点 ${a.origin === 'top left' ? '左上角 top left' : '中心 center'}）${cssNote(it)}`;
   if (it.kind === 'style') {
     const parts = STYLE_KEYS.filter(k => b[k] !== a[k]).map(k => `${STYLE_NAMES[k]} ${b[k]}→${a[k]}`);
     return `${where}：样式 ${parts.join('、') || '没有变化'}${keepNote(it)}`;
@@ -189,8 +203,11 @@ export function itemLine(it) {
   } else if (it.origin) {
     s += `（定位容器在舞台 (${it.origin.left}, ${it.origin.top})，CSS 里的 left/top 要减去它）`;
   }
-  return s + keepNote(it);
+  return s + keepNote(it) + cssNote(it);
 }
+
+// 浏览器换算好的 CSS：照抄进章节 css（engine/edit.js 的 cssNote 同一句）
+export const cssNote = it => (it.css ? `；照写：${it.css}` : '');
 
 // 排版流里的块变高变矮时，浏览器里是用 margin-bottom 抵掉的（后面的内容没动），合并时照写
 export const keepNote = it => (Number.isInteger(it.keep) ? `（后面的内容保持原位：给它写 margin-bottom:${it.keep}px）` : '');
@@ -202,15 +219,24 @@ function perPage(items) {
   return [...m].map(([k, n]) => (typeof k === 'number' ? `第 ${k} 页 ${n} 处` : `${k} ${n} 处`)).join('、');
 }
 
-/** 合并规则（edits、wait 的末尾，SKILL.md 的「在线编辑」一节写的是同一套） */
-export const RULES = [
+/** 合并规则（edits、wait 的末尾，SKILL.md 的「在线编辑」一节写的是同一套）；位置一条和最后一条按合并方式不同 */
+export function rulesFor(mode) {
+  return BASE_RULES.map(r => (r === '@POS' ? POS_RULE : r === '@CHECK' ? CHECK_RULE[mode] || CHECK_RULE.exact : r));
+}
+const POS_RULE = '- 位置、大小：每条都写了「照写：…」，是浏览器换算好的 CSS（已经是元素自己的坐标：减掉了定位容器、排版流里的元素是相对原位的偏移、宽高按盒模型算好），' +
+  '照抄进对应章节 chN.css 里这个元素的那条规则（[data-id="页号"] <能定位到它的类名>{…}）；元素本来有行内 style="left:…;top:…;width:…" 的，直接改成照写的值。' +
+  '原来用 right / bottom 定位的，改成照写的 left / top 并去掉 right / bottom。用户改过的宽和高都照写，不要只写宽度、丢掉高度，也不要为了合并去改容器的排法。不要在 JS 里加一堆行内 transform。';
+const CHECK_RULE = {
+  exact: '- 自检报了重叠、越界、溢出：用户亲手摆的位置不擅自挪，只告诉用户哪处、为什么，问他要不要调；报「合并后位置和用户拖的不一样」的，照提示改到对上为止。',
+  polish: '- 自检报了重叠、越界、溢出：可以小幅调整，调了的每一处都告诉用户（原来、改成、为什么）。',
+  ai: '- 自检报了重叠、越界、溢出：照版式规则调好，告诉用户调了哪些。',
+};
+const BASE_RULES = [
   '合并规则：',
   '- 找元素：路径从页面根往下写，:nth-of-type(n) 按 Deck.add 的 html 里的兄弟数，用来在源码里找到它，「」里是它开头的字。写 CSS 时不要照抄 nth-of-type（页面上引擎会多加元素，数出来对不上），给元素加一个类名（比如 p05-tip）再用它定位。',
   '- 文字：在 slides/ 的章节文件里按「」里的原文找到这一处，换成新文字（页面大标题在 Deck.add 的 title 里，截图说明在 data-caption 里）；讲稿.md 里同一句也改掉。' +
     '写了「改后的 HTML」的照那段换：<em class="key">…</em> 是用户设的重点词（标题里的重点词写进 titleHtml，title 照样写纯文字）。',
-  '- 位置、大小：数值是舞台坐标（1920×1080，px，含内边距）。元素本来有行内 style="left:…;top:…;width:…" 的，直接改这几个值；' +
-    '没有的，在对应章节的 chN.css 里加一条 [data-id="页号"] <能定位到它的选择器>{left:…;top:…;width:…}（必要时加 position:absolute）。' +
-    '在排版流里的元素，用 position:relative 加 left/top 偏移，或改所在容器的排法。文字块一般只改 width，height 只在本来就写了固定高度、或者是图片和截图时才写。不要在 JS 里加一堆行内 transform。',
+  '@POS',
   '- 隐藏：删掉这个元素，后面的拍号顺移，notes 里对应的讲词一起调整。',
   '- 整块缩放：文字、图片、间距一起等比放大缩小。在源码里给这一块加个类名（比如 p05-shot），在章节 chN.css 里写 [data-id="页号"] .p05-shot{scale:1.2;transform-origin:center}' +
     '（原点是左上角的写 top left），不改原来的宽高和字号，也不要写 transform（会和出场动画打架）。',
@@ -221,8 +247,9 @@ export const RULES = [
     '写了「后面的内容保持原位：给它写 margin-bottom:Npx」的，把这个 margin-bottom 一起写进同一条 CSS（浏览器里就是这样预览的，不写的话后面的行会被推开）。',
   '- 拍号：改这个元素的 data-beat（本来没写的就加上）；同一个元素上的 data-mascot 拍号一起改；notes 里对应拍的讲词跟着挪。改完拍数超出范围的话，check 会提醒，照提醒调。',
   '- 讲词：页面 notes 里对应拍的 say 和 讲稿.md 里这一页对应拍的讲词一起改成新的。',
-  '- 自检报了溢出、被挡住：先自己调，调不了就告诉用户。',
+  '@CHECK',
 ];
+export const RULES = rulesFor('exact');
 
 /** 清单末尾的提醒：文案先原样合并，再给建议（engine/edit.js 的 COPY_TIP 同一句） */
 export const COPY_TIP = '这一批里有文字或讲词改动的：先照用户改的原样合并；跑完自检、清掉批次以后，再逐条看这些文案，给用户优化建议（原文、用户改的、建议改成什么、为什么：更口语、更短、后排看得清、像误输入、和讲词对不上……），问用户采纳哪几条，用户没说就不动。';
@@ -230,9 +257,11 @@ export const COPY_TIP = '这一批里有文字或讲词改动的：先照用户�
 /** 整份清单；opts.dir 有值时末尾写上接下来要运行的命令；opts.batch 是批次号 */
 export function formatEdits(d, opts = {}) {
   if (!d.items.length) return '没有待合并的修改。';
+  const mode = modeOf(d);
   const out = [`用户在浏览器里改了 ${d.items.length} 处（${perPage(d.items)}）${opts.batch ? `，批次 ${opts.batch}` : ''}：`];
   d.items.forEach((it, i) => out.push(`  ${i + 1}. ${itemLine(it)}`));
-  out.push(...RULES);
+  out.push('合并方式（用户选的，照它来）：' + MODES[mode]);
+  out.push(...rulesFor(mode));
   if (d.items.some(it => it.kind === 'text' || it.kind === 'notes')) out.push(COPY_TIP);
   if (opts.dir) {
     out.push('改完以后：', `  ${cliLine('check', q(opts.dir), '--browser')}    （清零为止）`,

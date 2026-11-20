@@ -132,10 +132,21 @@ test('serve：POST edits 要口令、只收 JSON、限 1MB；带口令写进 edi
     assert.equal(n.status, 200);
     const after1 = readEdits(dir);
     assert.ok(after1.notified && Date.now() - Date.parse(after1.notified) < 5000);
-    assert.deepEqual(logs, ['用户点了「通知 AI 修改」：3 处']);
-    // 浏览器再存一次：notified 保留
+    assert.deepEqual(logs, ['用户点了「通知 AI 修改」：3 处，合并方式 exact']);
+    assert.equal(after1.mode, 'exact', '没选合并方式按「照我改的」');
+    // 带上合并方式：写进 edits.json，清单开头写明；认不得的按 exact
+    await http(s.port, 'POST', '/__li-talk/notify?token=tok', { body: '{"mode":"polish"}', type: 'application/json' });
+    assert.equal(readEdits(dir).mode, 'polish');
+    assert.match(formatEdits(readEdits(dir)), /合并方式（用户选的，照它来）：② 照我改的，AI 帮着润色/);
+    await http(s.port, 'POST', '/__li-talk/notify?token=tok', { body: '{"mode":"乱写"}', type: 'application/json' });
+    assert.equal(readEdits(dir).mode, 'exact');
+    assert.match(formatEdits(readEdits(dir)), /合并方式（用户选的，照它来）：① 照我改的（原样）/);
+    assert.doesNotMatch(formatEdits(readEdits(dir)), /先自己调/, '照我改的不让 AI 擅自调');
+    // 浏览器再存一次：notified、合并方式保留
+    const last = readEdits(dir);
     await http(s.port, 'POST', '/__li-talk/edits?token=tok', { body, type: 'application/json' });
-    assert.equal(readEdits(dir).notified, after1.notified);
+    assert.equal(readEdits(dir).notified, last.notified);
+    assert.equal(readEdits(dir).mode, last.mode);
   } finally { await s.close(); }
 });
 
@@ -755,4 +766,19 @@ test('真实浏览器：旋转过的块，选中框跟着转、和元素重合�
     assert.equal((await b.evaluate('Deck._.editState()')).sel, 'div.grid>div.card:nth-of-type(2)');
     assert.equal((await b.evaluate('Deck._.editState()')).tools, true);
   } finally { await b.close(); }
+});
+
+test('合并核对的报告：照我改的对不上算错误，润色算提醒，AI 重新优化不核对，找不到的单列', async () => {
+  const { formatVerify } = await import('../skills/li-talk-skills/scripts/lib/check.mjs');
+  const bad = { no: 2, page: 'g2', path: 'div.card', hint: '第二张', kind: 'box', what: 'left 应是 800，现在 920' };
+  const lost = { no: 3, page: 'g3', path: 'p.x', hint: '一句话', kind: 'text', missing: true };
+  const ex = formatVerify({ mode: 'exact', list: [bad, lost], count: 2 });
+  assert.equal(ex.errors, 1); assert.equal(ex.warnings, 0);
+  assert.match(ex.text, /必须改到对上/); assert.match(ex.text, /left 应是 800，现在 920/); assert.match(ex.text, /找不到/);
+  const po = formatVerify({ mode: 'polish', list: [bad], count: 1 });
+  assert.equal(po.errors, 0); assert.equal(po.warnings, 1); assert.match(po.text, /告诉用户/);
+  assert.equal(formatVerify({ mode: 'ai', skipped: true }).errors, 0);
+  assert.match(formatVerify({ mode: 'exact', list: [], count: 3 }).text, /3 处都和用户改的一致/);
+  assert.match(formatVerify({ mode: 'exact', list: null, count: 3 }).text, /没法核对/);
+  assert.equal(formatVerify(null).text, '');
 });

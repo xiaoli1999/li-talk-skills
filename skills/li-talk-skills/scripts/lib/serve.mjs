@@ -18,7 +18,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, unlinkSync,
 import { extname, join, resolve, sep } from 'node:path';
 import { UserError } from './cli.mjs';
 import { TPL_DIR } from './paths.mjs';
-import { applyDone, cleanItem, deckDir, readEdits, writeEdits } from './edits.mjs';
+import { applyDone, cleanItem, deckDir, MODE_KEYS, readEdits, writeEdits } from './edits.mjs';
 import { openPath } from './open.mjs';
 
 export const MAX_BODY = 1024 * 1024;
@@ -107,8 +107,10 @@ export async function startServer(dir, opts = {}) {
       writeEdits(root, { ...cur, updated: now, items });
       return json(res, 200, { ok: true, count: items.length, updated: now });
     }
-    writeEdits(root, { ...cur, notified: now });
-    log(`用户点了「通知 AI 修改」：${cur.items.length} 处`);
+    // 合并方式：用户在页面上选的（exact 照我改的、polish 润色、ai 重新优化），不认得的按 exact
+    const mode = MODE_KEYS.includes(data.mode) ? data.mode : 'exact';
+    writeEdits(root, { ...cur, notified: now, mode });
+    log(`用户点了「通知 AI 修改」：${cur.items.length} 处，合并方式 ${mode}`);
     return json(res, 200, { ok: true, count: cur.items.length, notified: now });
   }
 
