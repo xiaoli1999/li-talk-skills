@@ -181,6 +181,10 @@ Licensed under the [Apache License 2.0](LICENSE): free to use, modify and use co
 
 Third-party components keep their own licenses (see `skills/li-talk-skills/template/vendor/`): [GSAP](https://gsap.com) (GreenSock Standard License), [rough.js](https://roughjs.com) (MIT), [LXGW WenKai](https://github.com/lxgw/LxgwWenKai) (OFL 1.1), [Fusion Pixel Font](https://github.com/TakWolf/fusion-pixel-font) (OFL 1.1).
 
----
+## Friends
 
-<sub>Looking for more curated skills? Take a look at [skillhey.com](https://skillhey.com).</sub>
+<sub>
+
+- [skillhey.com](https://skillhey.com): more curated skills
+
+</sub>

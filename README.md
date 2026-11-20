@@ -181,6 +181,10 @@ Chrome、Edge 全部功能正常；Safari、Firefox 可以看，个别效果会�
 
 第三方组件保留各自的许可证（见 `skills/li-talk-skills/template/vendor/`）：[GSAP](https://gsap.com)（GreenSock Standard License）、[rough.js](https://roughjs.com)（MIT）、[霞鹜文楷](https://github.com/lxgw/LxgwWenKai)（OFL 1.1）、[缝合像素字体](https://github.com/TakWolf/fusion-pixel-font)（OFL 1.1）。
 
----
+## 友情推荐
 
-<sub>想找更多精选 skills，可以去 [skillhey.com](https://skillhey.com) 看看。</sub>
+<sub>
+
+- [skillhey.com](https://skillhey.com)：更多精选 skills
+
+</sub>
