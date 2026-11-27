@@ -8,7 +8,7 @@ Hand your topic, notes or script to the AI and get an HTML deck you can present 
 
 [![Live site](https://img.shields.io/badge/Live_site-xiaoli1999.github.io-2f6bff?style=flat-square&logo=githubpages&logoColor=white)](https://xiaoli1999.github.io/li-talk-skills/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-22c55e?style=flat-square)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.4.4-111827?style=flat-square)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.4.5-111827?style=flat-square)](CHANGELOG.md)
 [![Styles](https://img.shields.io/badge/Styles-16-7c5cff?style=flat-square)](#16-styles)
 [![Mascots](https://img.shields.io/badge/Mascots-16-ef4f64?style=flat-square)](#16-styles)
 [![Live Editing](https://img.shields.io/badge/Live_editing-yes-00b4d8?style=flat-square)](#live-editing)
@@ -80,6 +80,7 @@ Tell the AI "I want to edit it in the browser" and the page opens in edit mode:
 - **Pacing**: change which beat a block appears on; edit notes right in the presenter view
 - **Undo anything**: Ctrl+Z / Ctrl+Y, or reset in one click
 - **Hand it to the AI**: changes save automatically; click "Notify AI" and it writes them back into the source, re-runs the self-check, and the page reloads
+- **Edit a double-clicked file too**: press E to edit; if live editing is running, the page switches over and brings your offline changes along. The tutorial and the style gallery can be edited the same way
 
 ## 16 styles
 

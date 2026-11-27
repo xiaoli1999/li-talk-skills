@@ -8,7 +8,7 @@
 
 [![在线体验](https://img.shields.io/badge/在线体验-xiaoli1999.github.io-2f6bff?style=flat-square&logo=githubpages&logoColor=white)](https://xiaoli1999.github.io/li-talk-skills/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-22c55e?style=flat-square)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.4.4-111827?style=flat-square)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.4.5-111827?style=flat-square)](CHANGELOG.md)
 [![Styles](https://img.shields.io/badge/风格-16_种-7c5cff?style=flat-square)](#16-种风格)
 [![Mascots](https://img.shields.io/badge/形象-16_个-ef4f64?style=flat-square)](#16-种风格)
 [![Live Editing](https://img.shields.io/badge/在线编辑-支持-00b4d8?style=flat-square)](#在线编辑)
@@ -80,6 +80,7 @@ AI 从你手上有的东西出发（只有主题、有笔记截图、有讲稿�
 - **改节奏**：调整每块第几拍出现；演讲者视图里点讲词就能改
 - **随时反悔**：Ctrl+Z / Ctrl+Y 撤销重做，一键还原
 - **交给 AI**：改动自动保存，点「通知 AI 修改」，AI 写回源码、跑完自检，页面自动刷新
+- **双击打开也能改**：按 E 进入编辑；在线编辑开着时直接切过去，离线改的一起带上。新手教程和样册也能这样改
 
 ## 16 种风格
 

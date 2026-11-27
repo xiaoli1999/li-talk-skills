@@ -1,9 +1,9 @@
 {
-  "version": "0.4.4",
+  "version": "0.4.5",
   "files": {
     "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
     "NOTICE": "b80310f961b75c35260f64df94c26ecf5f8d025b132f912089a58a9843872e4b",
-    "SKILL.md": "eb8ce72778c4f11e4fc0702f6b547f213015a199c4a8fdd0ea31b0c2b0db4f9c",
+    "SKILL.md": "2a2df5e0a77e3fba1f853ed489b482efeaa8ce8a34403d1b86c3b76e59d932b9",
     "fonts/wenkai.json": "1df3f00d2ef1218f9e4991fedb8925ea97154f581a4bed248ca18c39a8910bb3",
     "references/authoring.md": "4386ba3ec100a84b372e2915059ddc3be0b67f8df0532adaa855247febc61ec6",
     "references/checklist.md": "65d892184eba830c0b848d2a1c64126998536e63521ffcfbf5d7d65b399353a6",
@@ -17,7 +17,7 @@
     "scripts/lib/check.mjs": "716ce1e925bd44ef91ccf96d940682a0f66e9eba2ff030ae58479a24912806d8",
     "scripts/lib/cli.mjs": "08a2400f8b0291bba1fecd2477a2d1bd2ec7789d2cf1b1bcd892b37e0f5ac31b",
     "scripts/lib/deck.mjs": "0f30187465f35d9fa7791143f1497e81aa6d6dd5a2bbafb25156c326e3b46db4",
-    "scripts/lib/edits.mjs": "1b8c72a7aa0883b30e542867e65425f51b6d8db8e0c696e4c51645fc937203c4",
+    "scripts/lib/edits.mjs": "aa8db64c5a5cd77718ca7ef602f4b757a3e039b22f93c5efd6b6d90406a79274",
     "scripts/lib/fonts.mjs": "a8187c029af284d547d4ab02b94c124c860ce532d9467afa88680844079e3963",
     "scripts/lib/guide.mjs": "88b6f4203cabdd72839b188efb91d8a6a80cb287e08d982e93bb7172112eeeae",
     "scripts/lib/imagesize.mjs": "09be9d2da34853e5480070c59bd5ed91584b50968a2f52dbe2bc3e4d0ddef77d",
@@ -29,7 +29,7 @@
     "scripts/lib/paths.mjs": "c3afdba17aea968f3370a93c76d19400a2311843e3e0d5230a7b09675096e5d5",
     "scripts/lib/report.mjs": "d6ff494d3d17f42e4b341fbbd369536d310bcf8538ab1045fee60e803748395c",
     "scripts/lib/selftest-run.mjs": "4113e4e891ea3d4cc0f3861e37cd8e4b0bbbc3ccbe4a3c7f5f059fa5781312d8",
-    "scripts/lib/serve.mjs": "c415a543f0360707e994ec975dd3e8672e916ded7a414e4a578a10349830ff87",
+    "scripts/lib/serve.mjs": "9f13ef43701f3454f3faf626428cd24d8923f4d7905f1b111ecd72ee31ccd701",
     "scripts/lib/styles.mjs": "aee4acefdbf3d2da804cbd7337b4b21725cc9ee9acfde4d07fb2c18b7bf31ced",
     "scripts/lib/tour.mjs": "3c90607c3309c3245d88a1654a63a7788d3226c31fbcb360a43f7d559d1defe7",
     "scripts/lib/update.mjs": "698ba50d09367e4b26f068c03cf0e5470932ab7be149a9ceeeee5f8c92dcf686",
@@ -38,7 +38,7 @@
     "template/engine/beats.js": "9c8f570b97b100131000a9495c86bca4c37e3e2389894d00de9786e8b1f0aca5",
     "template/engine/build.js": "fc53ccf7039b179c674575d3f3526becde8c110fac0b781629d0d86ce7d9cd7a",
     "template/engine/core.js": "f80fe9ad253c3dace255550120ad150ad9fd71fbe91ac94af401191ddad7c5f7",
-    "template/engine/edit.js": "85166357f2159f6f82ef8016a41e77824e8b14c7b84b5ad090acaf36ed3805fe",
+    "template/engine/edit.js": "75c5138f4f006976d7b2991cd020fca127e0114d97ce92e066d5ef5c011c05e5",
     "template/engine/engine.css": "6a9891e496f6db28b316f646a5c49738b2e910860ecc1ad2e3caa0debd579a28",
     "template/engine/mascot.js": "2aaf2f926bcfe2ad4f2c8da0315ef934ab61510e3f061f0ce3ed1693e7f5a63a",
     "template/engine/pages.js": "367f3156fe00eadcf0a50f0e0d205efafcd984ae8b874abad5f7d778a27e1048",
@@ -46,7 +46,7 @@
     "template/engine/selftest.js": "2324f220bb55e10ddc8aebec91325f4099c06307ced60fee32ed1a842b5b5a99",
     "template/engine/tools.js": "5c977d1777f7840e203e56dbb9f16c2e5fbc2f1da190fa01962a94e16354667c",
     "template/engine/ui.js": "6ccdf4e8443f37d61adc0cb7470d66b06ebd36869412019adfb95f645051609e",
-    "template/gallery.html": "df04a3569d09a73200f3928460441ee11f1f6a34fed1712d9279140ce1c68483",
+    "template/gallery.html": "ae5520a9847f2b304bd37b009e328e97a61f7d047157aad6cdf7dd0608a21f2c",
     "template/index.html": "b667b3a345fe556cf363d9625be33cc380aa4f98249b12ff6c490c5d6f500c30",
     "template/mascots/daodao.js": "715019c27d48079d1f0f46307e248e4eb5a10b5d9ff6eaaa9c30204a50d77aa6",
     "template/mascots/diandian.js": "ef9c81c96b942d2ce0aeba5acd870412abf53f71b0962ecb92f7fa8b828b2bfd",
@@ -134,7 +134,7 @@
     "template/scenes/watercolor.js": "62c45b277089bcab7cfdcb065e4e0735bb845aaee5c6d3fb3b5c92ab96798c61",
     "template/starter/ch1.css": "c7c6013897ec062ec7b74a4da4c2247ca232c9e99da6b93f94c12e27e9c14bfc",
     "template/starter/ch1.js": "91c92f1eec149b5d03b04651027c458171f03c0b2847d79697f85f0700265803",
-    "template/tour/index.html": "672dffd29204da747e62cfb66e648e1fa0326ef0d10d56f6e1b930a58c782f57",
+    "template/tour/index.html": "25fac32de41dc78d069b8548ee61d55ce8fde9221748b72713019bbfd30781e1",
     "template/tour/slides/ch1.css": "212b9d509ee274958d5d2d6a21937d1a3ad869d9238b79c925a587f451f6f2da",
     "template/tour/slides/ch1.js": "a1f74aff95b84966901845f243cebb7817c5408d563f0c37d30cfa61dfc158e1",
     "template/tour/slides/ch2.css": "208ecce0b6cc826158101e9b33c53ae3ff4060945e92590d9dcbfb807028d089",
@@ -176,6 +176,6 @@
     "template/vendor/fonts/wenkai-lite.css": "b15e0d0662543155920c9244fbf3636fa3c6bce7dad6e4f33ad258656c9f5b04",
     "template/vendor/gsap.min.js": "96c01b81f44a3290e2b4532f55e2c9534b2adc43273a19f3756b2cb41f0fd0b6",
     "template/vendor/rough.min.js": "6853af8619532f3939b156cd16824d2e14f31e71d3df306ad5558eeafacab194",
-    "version.txt": "175307e07ac7f0bdc0f3dba371ba3a202aaf3c0117368a93d2331e1bea4af4f3"
+    "version.txt": "345a551b61a5dc33388b9bf40df339c9a0d9446ced7eeaeb576e3dbf4321918e"
   }
 }
