@@ -144,9 +144,17 @@ export function keepShares(out, run) {
   const names = readdirSync(root).filter(n => existsSync(join(root, n, 'index.html')));
   for (const n of names) {
     const page = join(root, n, 'index.html');
-    writeFileSync(page, demoEdit(readFileSync(page, 'utf8')));
+    let html = demoEdit(readFileSync(page, 'utf8'));
     const eng = join(root, n, 'engine');
-    if (!existsSync(join(eng, 'edit.js'))) continue;
+    if (!existsSync(join(eng, 'edit.js'))) { writeFileSync(page, html); continue; }
+    // 早期做的课件页面没引入 edit.js：照模板的位置补一行（自检脚本后面；找不到就放在 </body> 前）
+    if (!html.includes('engine/edit.js')) {
+      const tag = '<script src="engine/edit.js"></script>';
+      html = html.includes('<script src="engine/selftest.js"></script>')
+        ? html.replace('<script src="engine/selftest.js"></script>', m => m + '\n' + tag)
+        : html.replace(/<\/body>/i, m => tag + '\n' + m);
+    }
+    writeFileSync(page, html);
     const same = readdirSync(join(TPL, 'engine')).filter(f => f !== 'edit.js')
       .every(f => existsSync(join(eng, f)) && readFileSync(join(eng, f)).equals(readFileSync(join(TPL, 'engine', f))));
     if (same) copyFileSync(join(TPL, 'engine', 'edit.js'), join(eng, 'edit.js'));
