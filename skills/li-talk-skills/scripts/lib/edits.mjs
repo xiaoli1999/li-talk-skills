@@ -157,6 +157,20 @@ export function applyDone(items, done) {
   return out;
 }
 
+/**
+ * 把别处来的修改（双击打开的页面离线时做的，切到在线编辑时带过来）并进现有的：
+ * 同一个元素的同一种修改（同页、同路径、同类，讲词再加同一拍）只留一条，留最后改的（at 大的，一样大留现有的）
+ */
+const itemKey = it => [it.page, it.path, it.kind, it.kind === 'notes' ? it.beat : ''].join('\n');
+export function mergeItems(cur, incoming) {
+  const out = cur.slice(), at = new Map(out.map((it, i) => [itemKey(it), i]));
+  for (const it of incoming) {
+    const k = itemKey(it), i = at.get(k);
+    if (i === undefined) { at.set(k, out.length); out.push(it); } else if ((it.at || 0) > (out[i].at || 0)) out[i] = it;
+  }
+  return out.sort((a, b) => (a.no || 0) - (b.no || 0));
+}
+
 /* ------------------------------------------------------------------
    摘要：每条一行。engine/edit.js 的 itemLine 和这里写法一致
    ------------------------------------------------------------------ */

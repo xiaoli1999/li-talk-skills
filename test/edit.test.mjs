@@ -2,14 +2,14 @@
 // 以及真实浏览器里的编辑模式（engine/edit.js）
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { request } from 'node:http';
+import { createServer, request } from 'node:http';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { injectEdit, run as runServe, startServer } from '../skills/li-talk-skills/scripts/lib/serve.mjs';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { injectEdit, run as runServe, serveJsText, startServer, webRoot } from '../skills/li-talk-skills/scripts/lib/serve.mjs';
 import { run as runWait } from '../skills/li-talk-skills/scripts/lib/wait.mjs';
-import { applyDone, formatEdits, itemLine, readEdits, run as runEdits, writeEdits } from '../skills/li-talk-skills/scripts/lib/edits.mjs';
+import { applyDone, formatEdits, itemLine, mergeItems, readEdits, run as runEdits, writeEdits } from '../skills/li-talk-skills/scripts/lib/edits.mjs';
 import { guideText } from '../skills/li-talk-skills/scripts/lib/guide.mjs';
 import { confirmStep } from '../skills/li-talk-skills/scripts/lib/meta.mjs';
 import { readDeck } from '../skills/li-talk-skills/scripts/lib/deck.mjs';
@@ -57,6 +57,19 @@ function http(port, method, path, { body, type, host } = {}) {
   });
 }
 const sleep = ms => new Promise(ok => setTimeout(ok, ms));
+// 连上服务的 SSE，收到的事件名记进返回的数组；close() 断开
+function sse(port, client, token = 'tok') {
+  const got = [];
+  const req = request({ host: '127.0.0.1', port, path: `/__li-talk/events?token=${token}&client=${client}`, headers: { Host: `127.0.0.1:${port}` } }, res => {
+    res.setEncoding('utf8');
+    res.on('data', c => { for (const m of c.matchAll(/event: (\w+)/g)) got.push(m[1]); });
+  });
+  req.on('error', () => { /* 服务关了 */ });
+  req.end();
+  got.close = () => req.destroy();
+  return got;
+}
+const FORM = 'application/x-www-form-urlencoded';
 
 const ITEMS = [
   { page: 'g2', no: 2, path: 'div.grid>div.card:nth-of-type(2)>h3', hint: '第二张', kind: 'text', before: { text: '第二张' }, after: { text: '第 2 张' } },
@@ -192,6 +205,140 @@ test('serve 命令：写 serve.json（端口、口令、pid），结束时删掉
   assert.equal(opened, null, '--no-open 不打开浏览器');
   await assert.rejects(runServe({ _: [join(dir, '没有')] }, { log: () => {} }), /找不到课件目录/);
   await assert.rejects(runServe({ _: [dir], port: 'abc' }, { log: () => {} }), /--port/);
+});
+
+test('skill 里的课件都带在线编辑：入口模板（新做的课件都从它来）、新手教程、样册都引入了 edit.js，放在 selftest.js 后面', () => {
+  for (const [file, pre] of [['index.html', ''], ['gallery.html', ''], [join('tour', 'index.html'), '../']]) {
+    const html = readFileSync(join(TPL, file), 'utf8');
+    const esc = pre.replace(/\./g, '\\.').replace(/\//g, '\\/');
+    assert.match(html, new RegExp(`<script src="${esc}engine/selftest\\.js"></script>\\r?\\n<script src="${esc}engine/edit\\.js"></script>`), `${file} 要引入 ${pre}engine/edit.js`);
+  }
+});
+
+test('edit.js 不挂 beforeunload（挂着时，页面加载完一秒内跳走，自动化里的跳转会隔一次卡一次）；离开页面前用 pagehide 保存', () => {
+  const js = readFileSync(join(TPL, 'engine', 'edit.js'), 'utf8');
+  assert.doesNotMatch(js, /addEventListener\(\s*['"]beforeunload/);
+  assert.match(js, /addEventListener\('pagehide', \(\) => \{ if \(E\.on \|\| E\.saveT\) flush\(\); \}\)/);
+});
+
+test('webRoot：skill 自带的教程（引用 ../engine）从模板目录给，样册（模板目录本身）和普通课件从课件目录给', () => {
+  assert.equal(webRoot(join(TPL, 'tour'), TPL), TPL);
+  assert.equal(webRoot(TPL, TPL), TPL);
+  assert.equal(webRoot(GOOD, TPL), GOOD);
+  assert.equal(webRoot(deck(), TPL).endsWith('课件'), true);
+});
+
+test('serve 教程：页面地址是 /tour/index.html，引擎从模板目录给，不重复插入编辑脚本，.li-talk 照样不给', async () => {
+  const tour = join(TPL, 'tour');
+  const s = await startServer(tour, { token: 'tok', web: webRoot(tour, TPL) });
+  try {
+    assert.match(s.url, new RegExp(`^http://127\\.0\\.0\\.1:${s.port}/tour/index\\.html\\?edit=tok$`));
+    const page = await http(s.port, 'GET', '/tour/index.html');
+    assert.equal(page.status, 200);
+    assert.match(page.body, /<script src="\.\.\/engine\/edit\.js"><\/script>/);
+    assert.doesNotMatch(page.body, /__li-talk\/edit\.js/, '教程自己引入了 edit.js，不再插一份');
+    assert.equal((await http(s.port, 'GET', '/')).body, page.body, '/ 指向教程');
+    for (const p of ['/engine/core.js', '/engine/edit.js', '/scenes/watercolor.js', '/mascots/duoduo.js', '/tour/slides/ch1.js']) assert.equal((await http(s.port, 'GET', p)).status, 200, p);
+    assert.equal((await http(s.port, 'GET', '/tour/.li-talk/serve.json')).status, 403);
+    assert.equal((await http(s.port, 'GET', '/.li-talk/edits.json')).status, 403);
+    // 双击打开的教程切过来：跳到 /tour/index.html，停在同一页
+    const r = await http(s.port, 'POST', '/__li-talk/carry?token=tok', { body: 'items=%5B%5D&to=index.html%233', type: FORM });
+    assert.equal(r.headers.location, '/tour/index.html?edit=tok&carried=0#3');
+  } finally { await s.close(); }
+});
+
+test('mergeItems：同一处的修改只留最后改的（at 大的），讲词按拍分开', () => {
+  const n = (beat, at, text) => ({ page: 'g1', no: 1, path: 'notes', kind: 'notes', beat, at, before: { text: '' }, after: { text } });
+  const out = mergeItems([n(1, 10, '甲'), n(2, 10, '乙')], [n(1, 20, '甲新'), n(2, 5, '乙旧'), n(3, 1, '丙')]);
+  assert.deepEqual(out.map(i => i.after.text), ['甲新', '乙', '丙']);
+});
+
+test('serve：carry（双击打开的页面切过来）要口令、只收表单；离线修改并进修改记录，303 跳到在线编辑的同一页；推 edits', async () => {
+  const dir = deck();
+  const logs = [];
+  const s = await startServer(dir, { token: 'tok', log: l => logs.push(l) });
+  const got = sse(s.port, 'other');
+  try {
+    await sleep(300);
+    writeEdits(dir, { version: 1, items: [{ ...ITEMS[0], id: 'a', at: 100 }, { ...ITEMS[1], id: 'b', at: 300 }] });
+    const offline = [
+      { ...ITEMS[0], id: 'x', at: 200, after: { text: '离线改的' } },                     // 同一处、离线的更新：换成离线的
+      { ...ITEMS[1], id: 'y', at: 50, after: { left: 1, top: 1, width: 900, height: 60 } }, // 同一处、离线的更旧：留服务上的
+      { ...ITEMS[2], id: 'z', at: 400 },                                                    // 新的一处
+      { kind: 'bad' },
+    ];
+    const body = new URLSearchParams({ items: JSON.stringify(offline), to: 'index.html?foo=1&edit=old#3', mode: 'polish' }).toString();
+    assert.equal((await http(s.port, 'POST', '/__li-talk/carry', { body, type: FORM })).status, 403);
+    assert.equal((await http(s.port, 'POST', '/__li-talk/carry?token=tok', { body, type: 'application/json' })).status, 415);
+    assert.equal(readEdits(dir).items.length, 2, '口令不对、不是表单的不动修改记录');
+    const r = await http(s.port, 'POST', '/__li-talk/carry?token=tok', { body, type: FORM });
+    assert.equal(r.status, 303);
+    assert.equal(r.headers.location, '/index.html?foo=1&edit=tok&carried=3&mode=polish#3');
+    const items = readEdits(dir).items;
+    assert.deepEqual(items.map(i => i.id).sort(), ['b', 'x', 'z']);
+    assert.equal(items.find(i => i.id === 'x').after.text, '离线改的');
+    for (let i = 0; i < 30 && !got.includes('edits'); i++) await sleep(100);
+    assert.ok(got.includes('edits'), '在线编辑的页面收到 edits，刷新读回最新的');
+    assert.match(logs.join('\n'), /切到了在线编辑，带来离线时的 3 处修改/);
+    // 跳去哪：别的网站、不存在的页面一律换成 index.html；带回 #页号
+    const to = async t => (await http(s.port, 'POST', '/__li-talk/carry?token=tok', { body: new URLSearchParams({ to: t }).toString(), type: FORM })).headers.location;
+    assert.equal(await to('//evil.example/x.html#2'), '/index.html?edit=tok&carried=0');
+    assert.equal(await to('http://evil.example/index.html#2'), '/index.html?edit=tok&carried=0');
+    assert.equal(await to('nope.html#2'), '/index.html?edit=tok&carried=0');
+    assert.equal(await to('../index.html#p05/2'), '/index.html?edit=tok&carried=0#p05/2');
+    assert.equal(await to(''), '/index.html?edit=tok&carried=0');
+  } finally { got.close(); await s.close(); }
+});
+
+test('serve：一页保存了修改，给别的页面推 edits，不推给它自己', async () => {
+  const dir = deck();
+  const s = await startServer(dir, { token: 'tok' });
+  const a = sse(s.port, 'pageA'), b = sse(s.port, 'pageB');
+  try {
+    await sleep(300);
+    const r = await http(s.port, 'POST', '/__li-talk/edits?token=tok', { body: JSON.stringify({ client: 'pageA', items: ITEMS }), type: 'application/json' });
+    assert.equal(r.status, 200);
+    for (let i = 0; i < 30 && !b.includes('edits'); i++) await sleep(100);
+    assert.ok(b.includes('edits'), '别的页面收到 edits');
+    await sleep(200);
+    assert.ok(!a.includes('edits'), '保存的那一页自己不收');
+  } finally { a.close(); b.close(); await s.close(); }
+});
+
+test('serve 命令：心跳写 .li-talk/serve.js，结束时删掉；开浏览器前等一会儿，有双击打开的页面切过来就不另开', async () => {
+  const read = file => { const m = /^window\.__liTalkServe = (\{.*\});\n$/.exec(readFileSync(file, 'utf8')); return m && JSON.parse(m[1]); };
+  // 没有页面切过来：等完再打开浏览器
+  let dir = deck(), opened = null;
+  const logs = [];
+  const ac = new AbortController();
+  let p = runServe({ _: [dir] }, { env: {}, log: l => logs.push(l), signal: ac.signal, heartbeat: 100, openWait: 400, opener: async u => { opened = u; return true; } });
+  const js = join(dir, '.li-talk', 'serve.js');
+  for (let i = 0; i < 50 && !existsSync(js); i++) await sleep(50);
+  const r1 = read(js);
+  assert.ok(r1 && r1.port > 0 && r1.token.length >= 16 && Math.abs(Date.now() - r1.at) < 2000, readFileSync(js, 'utf8'));
+  assert.equal(opened, null, '还在等');
+  await sleep(300);
+  assert.ok(read(js).at > r1.at, '心跳：时刻一直在更新');
+  for (let i = 0; i < 40 && !opened; i++) await sleep(50);
+  assert.match(String(opened), new RegExp(`\\?edit=${r1.token}$`));
+  ac.abort();
+  assert.equal(await p, 0);
+  assert.ok(!existsSync(js), '结束时删掉 serve.js');
+
+  // 等的时候有页面切过来（carry）：不另开浏览器
+  dir = deck(); opened = null; logs.length = 0;
+  const ac2 = new AbortController();
+  p = runServe({ _: [dir] }, { env: {}, log: l => logs.push(l), signal: ac2.signal, openWait: 5000, opener: async u => { opened = u; return true; } });
+  const info = join(dir, '.li-talk', 'serve.json');
+  for (let i = 0; i < 50 && !existsSync(info); i++) await sleep(50);
+  const rec = JSON.parse(readFileSync(info, 'utf8'));
+  const r = await http(rec.port, 'POST', `/__li-talk/carry?token=${rec.token}`, { body: 'items=%5B%5D&to=index.html%232', type: FORM });
+  assert.equal(r.status, 303);
+  for (let i = 0; i < 40 && !logs.some(l => /没有另开浏览器/.test(l)); i++) await sleep(50);
+  assert.ok(logs.some(l => /没有另开浏览器/.test(l)), logs.join('\n'));
+  assert.equal(opened, null);
+  ac2.abort();
+  assert.equal(await p, 0);
 });
 
 /* ------------------------------------------------------------------
@@ -443,6 +590,8 @@ test('真实浏览器：双击 file:// 打开时按 E 进编辑，修改存进 l
     const st = await b.evaluate('Deck._.editState()');
     assert.equal(st.server, false);
     assert.match(st.bar, /复制修改给 AI/);
+    // 按 E 时去读 .li-talk/serve.js（没开服务，读不到）：课件的报错记录里不能留下这条
+    assert.equal(await b.evaluate(`(window.__deckErrors || []).filter(e => /serve\\.js/.test(e)).length`), 0, '读不到 serve.js 不算课件报错');
     // 离线编辑：底部一条提示，引导用户对 AI 说「我要在线改这份课件」
     assert.equal(await b.evaluate(`(() => { const h = document.querySelector('.lt-edit-hint'); return !!h && !h.hidden && h.textContent.includes('我要在线改这份课件'); })()`), true, '离线编辑要出引导提示');
     // 选中第 3 页的副标题，按 Delete 隐藏、方向键挪 10px
@@ -461,6 +610,255 @@ test('真实浏览器：双击 file:// 打开时按 E 进编辑，修改存进 l
     assert.match(copy, /^【课件修改】/);
     assert.match(copy, /隐藏（删掉这个元素）/);
   } finally { await b.close(); }
+});
+
+// 轮询页面上的一个表达式，页面跳转、刷新时读不到就接着试
+const poller = b => async (expr, ms = 15000) => {
+  const start = Date.now();
+  for (;;) {
+    const v = await b.evaluate(expr, 3000).catch(() => null);
+    if (v || Date.now() - start > ms) return v;
+    await sleep(100);
+  }
+};
+const pressE = b => b.call('Input.dispatchKeyEvent', { type: 'keyDown', key: 'e', code: 'KeyE', windowsVirtualKeyCode: 69 });
+const ONLINE = `location.protocol === 'http:' && window.Deck && Deck._.editState && Deck._.editState().on && Deck._.editState().server`;
+
+test('真实浏览器：双击打开的页面，服务开着时按 E 切到在线编辑（同一页、离线的修改带过去）；心跳停了的 serve.js 不算；别的页面存了修改，这页刷新读回来', { skip: !browser && '本机没找到 Edge / Chrome', timeout: 120000 }, async () => {
+  const dir = deck();
+  const b = await openBrowser(browser);
+  const ev = poller(b);
+  const ac = new AbortController();
+  let p = null;
+  try {
+    // serve 被强行结束时留下的 serve.js：时刻停在一分钟前，按 E 还是离线编辑
+    mkdirSync(join(dir, '.li-talk'), { recursive: true });
+    writeFileSync(join(dir, '.li-talk', 'serve.js'), serveJsText(1, 'old', Date.now() - 60000));
+    await b.goto(pathToFileURL(join(dir, 'index.html')).href + '#3', { w: 1280, h: 720 });
+    assert.ok(await ev(`window.Deck && Deck.page && Deck.page.no === 3 && !document.body.classList.contains('loading')`));
+    await pressE(b);
+    assert.ok(await ev('Deck._.editState().on'));
+    assert.equal(await b.evaluate(`location.protocol + Deck._.editState().server`), 'file:false', '心跳停了：离线编辑');
+    // 离线改一处：选中第 3 页的引语，Delete 隐藏；再按 E 退出
+    const q = await b.evaluate(`(() => { const r = document.querySelector('#slide-g3 .g3-quote').getBoundingClientRect(); return { x: r.left + 20, y: r.top + r.height / 2 }; })()`);
+    await b.call('Input.dispatchMouseEvent', { type: 'mousePressed', x: q.x, y: q.y, button: 'left', buttons: 1, clickCount: 1 });
+    await b.call('Input.dispatchMouseEvent', { type: 'mouseReleased', x: q.x, y: q.y, button: 'left', buttons: 0, clickCount: 1 });
+    await b.call('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Delete', code: 'Delete', windowsVirtualKeyCode: 46 });
+    await sleep(600);
+    await pressE(b);
+    assert.ok(await ev('!Deck._.editState().on'));
+    assert.equal(await b.evaluate(`JSON.parse(localStorage.getItem('li-talk-edits:' + document.title)).items.length`), 1);
+
+    // AI 开了服务（不打开浏览器）；用户在这页翻到第 2 页再按 E：直接切到在线编辑
+    p = runServe({ _: [dir], 'no-open': true }, { log: () => {}, signal: ac.signal });
+    const info = join(dir, '.li-talk', 'serve.json');
+    for (let i = 0; i < 50 && !existsSync(info); i++) await sleep(50);
+    const rec = JSON.parse(readFileSync(info, 'utf8'));
+    await b.evaluate('Deck.go(2)');
+    assert.equal(await b.evaluate('Deck.page.no'), 2);
+    await pressE(b);
+    assert.ok(await ev(ONLINE), '切到了在线编辑');
+    assert.equal(await b.evaluate('Deck.page.no'), 2, '停在切过来时那一页');
+    assert.equal(await b.evaluate('location.search'), `?edit=${rec.token}`, '地址里的 carried、mode 读完就去掉');
+    assert.match(await b.evaluate(`document.querySelector('.toast, #toast, [class*="toast"]') ? document.querySelector('.toast, #toast, [class*="toast"]').textContent : document.body.textContent`), /离线时的 1 处改动也带过来了/);
+    const items = readEdits(dir).items;
+    assert.deepEqual(items.map(i => [i.page, i.kind]), [['g3', 'hide']], '离线的修改进了修改记录');
+    assert.equal(await b.evaluate(`document.querySelector('#slide-g3 .g3-quote').hasAttribute('data-lt-hide')`), true, '带过来的修改摆在页面上');
+    assert.match(await b.evaluate('Deck._.editState().bar'), /1 处改动.*通知 AI 修改/);
+
+    // 另一个标签页存了修改（服务推 edits）：这页刷新读回最新的，不拿手里的旧记录盖回去
+    await b.evaluate('window.__before = 1');
+    const both = items.concat([{ ...ITEMS[0], id: 'other', at: Date.now() }]);
+    await http(rec.port, 'POST', `/__li-talk/edits?token=${rec.token}`, { body: JSON.stringify({ client: 'other', items: both }), type: 'application/json' });
+    assert.ok(await ev(`!window.__before && ${ONLINE} && Deck._.editState().items.length === 2`), '刷新读回了另一页存的');
+    assert.equal(await b.evaluate('Deck.page.no'), 2, '刷新后停在原来那页');
+    await sleep(800);
+    assert.equal(readEdits(dir).items.length, 2, '没有被这页盖回去');
+  } finally {
+    await b.close();
+    ac.abort();
+    if (p) await p;
+  }
+});
+
+test('真实浏览器：从网站上打开的课件（不是本机、不带口令）按 E 不进编辑；本机预览（127.0.0.1）照样能离线编辑', { skip: !browser && '本机没找到 Edge / Chrome', timeout: 60000 }, async () => {
+  const dir = deck();
+  // 普通的静态网站：一个在 127.0.0.2 上（主机名不是 localhost / 127.0.0.1，当成别人的网站），一个在 127.0.0.1 上（本机预览）
+  const site = host => new Promise(ok => {
+    const srv = createServer((req, res) => {
+      const rel = decodeURIComponent(new URL(req.url, 'http://x').pathname).replace(/^\/+/, '') || 'index.html';
+      try { const body = readFileSync(join(dir, rel)); res.writeHead(200, { 'Content-Type': /\.html$/.test(rel) ? 'text/html; charset=utf-8' : /\.js$/.test(rel) ? 'text/javascript' : /\.css$/.test(rel) ? 'text/css' : 'application/octet-stream' }); res.end(body); }
+      catch { res.writeHead(404); res.end(); }
+    });
+    srv.listen(0, host, () => ok(srv));
+  });
+  const web = await site('127.0.0.2'), local = await site('127.0.0.1');
+  const b = await openBrowser(browser);
+  const ev = poller(b);
+  try {
+    for (const [srv, host, want] of [[web, '127.0.0.2', false], [local, '127.0.0.1', true]]) {
+      await b.goto(`http://${host}:${srv.address().port}/index.html#2`, { w: 1280, h: 720 });
+      assert.ok(await ev(`window.Deck && Deck.page && !document.body.classList.contains('loading')`));
+      await pressE(b);
+      await sleep(600);
+      assert.equal(await b.evaluate('Deck._.editState().on'), want, `${host}：按 E ${want ? '要' : '不要'}进编辑`);
+      assert.equal(await b.evaluate(`!!document.querySelector('.lt-edit-bar')`), want);
+    }
+  } finally {
+    await b.close();
+    web.close(); local.close();
+  }
+});
+
+test('真实浏览器：离线改完马上离开页面（还没到自动保存的时候），改动照样存进 localStorage', { skip: !browser && '本机没找到 Edge / Chrome', timeout: 60000 }, async () => {
+  const dir = deck();
+  const b = await openBrowser(browser);
+  try {
+    const url = pathToFileURL(join(dir, 'index.html')).href;
+    await b.goto(url + '#3', { w: 1280, h: 720 });
+    const ev = poller(b);
+    assert.ok(await ev(`window.Deck && Deck.page && Deck.page.no === 3 && !document.body.classList.contains('loading')`));
+    await pressE(b);
+    assert.ok(await ev('Deck._.editState().on'));
+    const p = await b.evaluate(`(() => { const r = document.querySelector('#slide-g3 .g3-quote').getBoundingClientRect(); return { x: r.left + 20, y: r.top + r.height / 2 }; })()`);
+    await b.call('Input.dispatchMouseEvent', { type: 'mousePressed', x: p.x, y: p.y, button: 'left', buttons: 1, clickCount: 1 });
+    await b.call('Input.dispatchMouseEvent', { type: 'mouseReleased', x: p.x, y: p.y, button: 'left', buttons: 0, clickCount: 1 });
+    await b.call('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Delete', code: 'Delete', windowsVirtualKeyCode: 46 });
+    // 改完立刻跳走（自动保存要等 400 毫秒）
+    await b.call('Page.navigate', { url: 'about:blank' });
+    await b.goto(url + '#3', { w: 1280, h: 720 });
+    const saved = await b.evaluate(`JSON.parse(localStorage.getItem('li-talk-edits:' + document.title) || '{"items":[]}').items.map(i => i.kind)`);
+    assert.deepEqual(saved, ['hide'], '离开页面时（pagehide）把还没存的存掉了');
+  } finally { await b.close(); }
+});
+
+test('真实浏览器：风格写了 :hover 上浮、:active 按下缩小时，悬停不影响量位置；缩小后再拖动，拖的过程中倍数不变', { skip: !browser && '本机没找到 Edge / Chrome', timeout: 90000 }, async () => {
+  const dir = deck();
+  const s = await startServer(dir, { token: 'tok' });
+  const b = await openBrowser(browser);
+  const ev = poller(b);
+  const mouse = (type, x, y, buttons = type === 'mouseReleased' ? 0 : 1) => b.call('Input.dispatchMouseEvent', { type, x, y, button: type === 'mouseMoved' && !buttons ? 'none' : 'left', buttons, clickCount: 1 });
+  const rect = sel => b.evaluate(`(() => { const r = document.querySelector(${JSON.stringify(sel)}).getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, l: r.left, t: r.top, w: r.width, h: r.height }; })()`);
+  const CARD = '#slide-g2 .card:nth-of-type(3)';
+  try {
+    await b.goto(`http://127.0.0.1:${s.port}/index.html?edit=tok#2`, { w: 1280, h: 720 });
+    assert.ok(await ev(ONLINE));
+    // 照水彩风格的写法：悬停上浮、转一下，按下去缩一点（优先级比编辑器的预览高）
+    await b.evaluate(`document.head.insertAdjacentHTML('beforeend', '<style>[data-scene] .card:hover{translate:0 -6px;rotate:3deg} [data-scene] :is(.card,.cell,.steps>li):active{scale:.985}</style>')`);
+    const r0 = await rect(CARD);
+    await mouse('mouseMoved', r0.x, r0.y, 0);
+    await sleep(300);
+    const r1 = await rect(CARD);
+    assert.deepEqual([r1.l, r1.t, r1.w, r1.h].map(Math.round), [r0.l, r0.t, r0.w, r0.h].map(Math.round), '悬停时卡片不上浮、不转');
+    // 选中，拖右下角把手往里收：整块缩小
+    await mouse('mousePressed', r0.x, r0.y); await mouse('mouseReleased', r0.x, r0.y);
+    const h = await rect('.lt-edit-sel .lt-edit-h[data-c="se"]');
+    await mouse('mousePressed', h.x, h.y);
+    for (let i = 1; i <= 5; i++) await mouse('mouseMoved', h.x - (h.x - r0.x) * 0.1 * i, h.y - (h.y - r0.y) * 0.1 * i);
+    await mouse('mouseReleased', h.x - (h.x - r0.x) * 0.5, h.y - (h.y - r0.y) * 0.5);
+    const want = await b.evaluate(`getComputedStyle(document.querySelector(${JSON.stringify(CARD)})).getPropertyValue('--lt-scale').trim()`);
+    assert.ok(+want > 0.3 && +want < 0.8, '缩小了：' + want);
+    const scaleNow = () => b.evaluate(`getComputedStyle(document.querySelector(${JSON.stringify(CARD)})).scale`);
+    assert.equal(await scaleNow(), want);
+    // 按住卡片拖动：拖的过程中（:active 生效时）倍数不变，松手后也不变
+    const c = await rect(CARD);
+    await mouse('mousePressed', c.x, c.y);
+    for (let i = 1; i <= 4; i++) await mouse('mouseMoved', c.x + 10 * i, c.y + 5 * i);
+    assert.equal(await scaleNow(), want, '拖动中倍数不变（不被 :active 盖掉）');
+    await mouse('mouseReleased', c.x + 40, c.y + 20);
+    assert.equal(await scaleNow(), want, '松手后倍数不变');
+    const st = await b.evaluate('Deck._.editState()');
+    assert.deepEqual(st.items.map(i => i.kind).sort(), ['box', 'scale']);
+    // 改字照常：双击卡片里的标题，挡板让开，能放光标打字
+    const t = await rect(CARD + ' h3');
+    for (let k = 1; k <= 2; k++) { await mouse('mousePressed', t.x, t.y); await mouse('mouseReleased', t.x, t.y); }
+    assert.ok(await ev(`!!document.querySelector('.lt-edit-text') && document.querySelector('.lt-edit-shield').hidden`), '双击改字，挡板让开');
+    await b.call('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+    assert.ok(await ev(`!document.querySelector('.lt-edit-text') && !document.querySelector('.lt-edit-shield').hidden`), '改完字挡板回来');
+  } finally {
+    await b.close();
+    await s.close();
+  }
+});
+
+test('真实浏览器：行内元素（带类名的 <b>）能挪动，照写里带 display:inline-block、撤销后换回行内；很小的块选中后按在中间是拖动不是缩放', { skip: !browser && '本机没找到 Edge / Chrome', timeout: 90000 }, async () => {
+  const dir = deck();
+  const s = await startServer(dir, { token: 'tok' });
+  const b = await openBrowser(browser);
+  const ev = poller(b);
+  const mouse = (type, x, y, buttons = type === 'mouseReleased' ? 0 : 1) => b.call('Input.dispatchMouseEvent', { type, x, y, button: type === 'mouseMoved' && !buttons ? 'none' : 'left', buttons, clickCount: 1 });
+  const rect = sel => b.evaluate(`(() => { const r = document.querySelector(${JSON.stringify(sel)}).getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, l: r.left, t: r.top, w: r.width, h: r.height }; })()`);
+  const drag = async (x, y, dx, dy) => { await mouse('mousePressed', x, y); for (let i = 1; i <= 6; i++) await mouse('mouseMoved', x + dx * i / 6, y + dy * i / 6); await mouse('mouseReleased', x + dx, y + dy); };
+  const HL = '#slide-g2 .g2-hl', DOT = '#slide-g2 .g2-dot';
+  try {
+    await b.goto(`http://127.0.0.1:${s.port}/index.html?edit=tok#2`, { w: 1280, h: 720 });
+    assert.ok(await ev(ONLINE));
+    // 刚进编辑模式，提示条还盖在顶部：点它下面的大标题照样能选中（提示条不接鼠标）
+    const tt = await rect('#slide-g2 .s-title');
+    const toast = await b.evaluate(`(() => { const t = document.getElementById('toast'), r = t.getBoundingClientRect(); return { show: t.classList.contains('show'), l: r.left, t: r.top, r: r.right, b: r.bottom }; })()`);
+    assert.ok(toast.show && tt.y > toast.t && tt.y < toast.b, `提示条正盖在大标题上（这一步才测得到）：${JSON.stringify([toast, tt])}`);
+    const tx = Math.max(tt.l + 10, Math.min(tt.l + tt.w - 10, (toast.l + toast.r) / 2));
+    await mouse('mousePressed', tx, tt.y); await mouse('mouseReleased', tx, tt.y);
+    assert.ok(await ev(`Deck._.editSel() === document.querySelector('#slide-g2 .s-title')`), '提示条下面的大标题点得中');
+    await b.call('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+    await sleep(550);
+    await b.evaluate(`(() => {
+      document.querySelector('#slide-g2 .card:nth-of-type(1) p').innerHTML = '按页写下<b class="g2-hl">要讲的话</b>';
+      document.querySelector('#slide-g2').insertAdjacentHTML('beforeend', '<i class="abs g2-dot" style="left:300px;top:900px;width:10px;height:10px;background:#c00"></i>');
+    })()`);
+    assert.equal(await b.evaluate(`getComputedStyle(document.querySelector(${JSON.stringify(HL)})).display`), 'inline');
+
+    // 行内的 <b>：按住拖，跟着鼠标走（以前 translate 对行内元素不起作用，选中框动了字不动）
+    const h0 = await rect(HL);
+    await drag(h0.x, h0.y, 30, 18);
+    const h1 = await rect(HL);
+    assert.ok(Math.abs(h1.l - h0.l - 30) <= 1.5 && Math.abs(h1.t - h0.t - 18) <= 2.5, `行内元素跟着鼠标挪了：${JSON.stringify([h0, h1])}`);
+    const box = (await b.evaluate('Deck._.editState()')).items.find(i => i.kind === 'box');
+    assert.ok(box, '记下了挪位置');
+    assert.match(box.css, /^display:inline-block;/, '照写里带 display:inline-block：' + box.css);
+    await b.call('Input.dispatchKeyEvent', { type: 'keyDown', key: 'z', code: 'KeyZ', windowsVirtualKeyCode: 90, modifiers: 2 });
+    assert.ok(await ev(`!Deck._.editState().items.length && getComputedStyle(document.querySelector(${JSON.stringify(HL)})).display === 'inline'`), '撤销后换回行内');
+    await b.call('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 });
+
+    // 10px 的小块：选中后四个把手在框外面，按在它中间是拖动
+    const d0 = await rect(DOT);
+    await mouse('mousePressed', d0.x, d0.y); await mouse('mouseReleased', d0.x, d0.y);
+    assert.ok(await ev(`!!document.querySelector('.lt-edit-sel.lt-edit-small:not([hidden])')`), '小块的选中框把手放在外面');
+    assert.equal(await b.evaluate(`!!document.elementFromPoint(${d0.x}, ${d0.y}).closest('.lt-edit-h')`), false, '小块中间没被把手盖住');
+    await sleep(550);   // 和刚才的单击隔开，免得算成双击
+    await drag(d0.x, d0.y, 30, 18);
+    const d1 = await rect(DOT), items = (await b.evaluate('Deck._.editState()')).items;
+    assert.ok(Math.abs(d1.l - d0.l - 30) <= 1.5 && Math.abs(d1.t - d0.t - 18) <= 1.5, `小块跟着鼠标挪了：${JSON.stringify([d0, d1])}`);
+    assert.deepEqual(items.map(i => i.kind), ['box'], '是挪位置，不是缩放');
+  } finally {
+    await b.close();
+    await s.close();
+  }
+});
+
+test('真实浏览器：离线编辑时 AI 开了服务，这一页自己切到在线编辑，serve 不另开浏览器', { skip: !browser && '本机没找到 Edge / Chrome', timeout: 90000 }, async () => {
+  const dir = deck();
+  const b = await openBrowser(browser);
+  const ev = poller(b);
+  const ac = new AbortController();
+  const logs = [];
+  let opened = null, p = null;
+  try {
+    await b.goto(pathToFileURL(join(dir, 'index.html')).href + '#2', { w: 1280, h: 720 });
+    assert.ok(await ev(`window.Deck && Deck.page && Deck.page.no === 2 && !document.body.classList.contains('loading')`));
+    await pressE(b);
+    assert.ok(await ev('Deck._.editState().on'));
+    assert.equal(await b.evaluate('Deck._.editState().server'), false);
+    p = runServe({ _: [dir] }, { env: {}, log: l => logs.push(l), signal: ac.signal, openWait: 8000, opener: async u => { opened = u; return true; } });
+    assert.ok(await ev(`${ONLINE} && Deck.page.no === 2`, 15000), '自己切到了在线编辑，停在同一页');
+    for (let i = 0; i < 50 && !logs.some(l => /没有另开浏览器/.test(l)); i++) await sleep(100);
+    assert.ok(logs.some(l => /没有另开浏览器/.test(l)), logs.join('\n'));
+    assert.equal(opened, null, '不另开浏览器');
+  } finally {
+    await b.close();
+    ac.abort();
+    if (p) await p;
+  }
 });
 
 test('真实浏览器：样式工具栏（字号、颜色、加粗）、重点词、改拍号、选外层、演讲者视图里改讲词', { skip: !browser && '本机没找到 Edge / Chrome', timeout: 120000 }, async () => {

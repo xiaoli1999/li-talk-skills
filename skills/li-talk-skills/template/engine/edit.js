@@ -11,9 +11,13 @@
      · 有服务：AI 运行 serve 打开 http://127.0.0.1:端口/index.html?edit=口令，自动进入编辑模式；
        自动保存 POST 到 /__li-talk/edits，「通知 AI 修改」POST /__li-talk/notify；
        /__li-talk/events（SSE）推 reload（AI 改了源码）、merged（AI 合并完清掉了一批修改），收到就刷新，停在原来那页、仍在编辑模式；
-       刷新后从服务读回还没合并的修改（服务按 done 去掉已经合并的那批，见 scripts/lib/edits.mjs 的 applyDone）
-     · 没服务（双击 file:// 打开）：按 E 进入 / 退出，修改存在 localStorage（键名带课件标题），
-       按钮换成「复制修改给 AI」，复制一段以「【课件修改】」开头的文字贴进对话
+       刷新后从服务读回还没合并的修改（服务按 done 去掉已经合并的那批，见 scripts/lib/edits.mjs 的 applyDone）；
+       同时开着几个在线编辑的标签页时，一页保存了，服务给别的页推 edits，它们刷新读回最新的（不会用手里的旧记录盖掉）
+     · 双击 file:// 打开：按 E 先看 AI 有没有给这份课件开着服务（serve 每 2 秒写一次 .li-talk/serve.js，serveInfo 读它）——
+       开着就切到在线编辑（handoff：离线的修改用表单交给服务的 /__li-talk/carry，跳到在线编辑的页面，停在同一页）；
+       没开才离线编辑：修改存在 localStorage（键名带课件标题），按钮换成「复制修改给 AI」，复制一段以「【课件修改】」开头的文字贴进对话。
+       离线编辑时每 2 秒看一次服务开了没有，开了就自己切过去（用户照提示对 AI 说「我要在线改这份课件」以后）
+     · 从网站上打开（GitHub Pages、发成在线链接，不带口令、也不是 localhost）：按 E 不进编辑（EDITABLE）
    - 进入编辑模式：当前页摆到最后一拍、不播动画、暂停 CSS 动画和 gsap、形象藏起来、讲过的拍不变淡，每个节拍块的角上标出拍号；
      ← → 只翻整页（每页都摆到最后一拍），点击不进拍；自检模式（?selftest）完全不启用，阅读模式下不能进
    - 修改记录（和 scripts/lib/edits.mjs 的格式一致）：{ id, at, page, no, path, hint, kind, before, after }，
@@ -39,14 +43,32 @@
 
   const TOKEN = QS.get('edit') || '';
   const SERVER = !!TOKEN && /^https?:$/.test(location.protocol);
+  const FILE = location.protocol === 'file:';   // 双击打开的：按 E 先看在线编辑的服务开没开（serveInfo）
+  // 能不能编辑：本机双击打开、AI 开的在线编辑（带口令）、本机预览（localhost）可以；从网站上打开的（GitHub Pages 上的教程和样册、
+  // 用户发成在线链接的课件）按 E 不进编辑：看的人改了也只存在自己浏览器里，底部还会提示他去找 AI，莫名其妙
+  const EDITABLE = SERVER || FILE || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
   const API = name => '/__li-talk/' + name + '?token=' + encodeURIComponent(TOKEN);
   const LS_KEY = 'li-talk-edits:' + document.title;
   const SS_KEY = 'li-talk-edit-resume:' + document.title;
+  // 切到在线编辑时离线修改的备份：万一没切过去（服务刚好关了）又回到这页，从这里找回来
+  const CARRY_KEY = 'li-talk-edit-carried:' + document.title;
+  const CARRY_KEEP = 10 * 60 * 1000;
+  const SERVE_FRESH = 6000;   // serve 每 2 秒写一次 .li-talk/serve.js，超过 6 秒没更新就当服务关了
+  const POLL = 2000;          // 离线编辑时多久看一次服务开了没有
+  const HANDOFF_WAIT = 5000;  // 切到在线编辑：过了这么久还在这页，就当没切过去
+  // 这一页的编号：保存时带上，服务推 edits（别的页面改了修改记录）时跳过自己
+  const CID = 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  // 从双击打开的页面切过来的（serve 的 carry 跳过来时带着）：carried 是带来的离线修改条数，mode 是那边选的合并方式
+  const CARRIED = SERVER && QS.has('carried') ? Math.max(0, parseInt(QS.get('carried'), 10) || 0) : -1;
   // 离线编辑提示：引导用户对 AI 说这句，AI 照 SKILL.md 开编辑服务；点「知道了」后这次打开不再出
   const OFFLINE_SAY = '我要在线改这份课件';
   // 合并方式：上次选的（没选过是「照我改的」）
   let mode0 = 'exact';
   try { mode0 = localStorage.getItem('li-talk-merge-mode') || 'exact'; } catch (e) { mode0 = 'exact'; }
+  if (CARRIED >= 0 && /^(exact|polish|ai)$/.test(QS.get('mode') || '')) {
+    mode0 = QS.get('mode');
+    try { localStorage.setItem('li-talk-merge-mode', mode0); } catch (e) { /* 存不了就只管这次 */ }
+  }
   const HINT_KEY = 'li-talk-edit-offline-hint';
   const BOX = ['left', 'top', 'width', 'height'];
   const STYLE = ['fontSize', 'color', 'fontWeight', 'textAlign'];
@@ -72,9 +94,14 @@
     saveT: 0, dirty: false, notifying: false, reloading: false, inflight: null, again: false, saving: false, failed: false, notified: false,
     bar: null, tools: null, pop: null, acc: '', selBox: null, beats: null, style: null, es: null,
     undo: [], redo: [], snap: '[]', touched: new Set(),   // 撤销、重做：每一步之前的修改记录（JSON），碰过的元素
+    // 双击打开时：checking 正在看服务开没开，pollT 离线编辑时定时看，leaving 正在离开这一页（切到在线编辑、刷新读回最新的），不再保存；
+    // 有服务时：stale 别的页面改了修改记录、这页还没读回来（没在编辑，下次按 E 时刷新）
+    // skip 是切过去没成功的那个服务的口令（不再自动切）
+    checking: false, pollT: 0, leaving: false, stale: false, skip: '',
   };
   /* 字号直接选数字：常用的几档（px），不给小于 32 的 */
   const PX = [32, 40, 48, 64, 80, 96, 120];
+  const SMALL_PX = 48;   // 选中的块在屏幕上窄于这么多 px：把手挪到框外面（把手 14px，放在角上会把块盖满）
   const HISTORY = 200;
   /* 字号给人看的名字：风格档位写档位名，px 照写 */
   const label = v => { const f = SIZES.find(([k]) => v === 'var(' + k + ')'); return f ? f[1] : String(v); };
@@ -203,6 +230,14 @@
   function ensureBase(n) {
     const i = info(n);
     if (i.base) return i;
+    // 行内元素（display:inline 的 <b>、<span>）：translate、scale、宽高对它都不起作用，挪、缩放、改大小时当成 inline-block
+    // （applyBox、applyScale 加 data-lt-ib），照写的 CSS 里也带上 display:inline-block（cssFor、recordScale），合进源码以后一样生效。
+    // 原来的盒子按 inline-block 量（临时换一下，量完换回去：光选中不改版面）
+    if (getComputedStyle(n).display === 'inline' && !(n instanceof SVGElement)) { i.inline = true; n.setAttribute('data-lt-ib', ''); }
+    try { measureBase(n, i); } finally { if (i.inline) n.removeAttribute('data-lt-ib'); }
+    return i;
+  }
+  function measureBase(n, i) {
     flowBase(n);
     i.base = boxOf(n, i.slide);
     i.ot = ownTranslate(n);
@@ -214,7 +249,6 @@
       const ob = boxOf(op, i.slide);
       i.origin = { left: ob.left + (op.clientLeft || 0), top: ob.top + (op.clientTop || 0) };
     }
-    return i;
   }
   /* 元素现在的样式，字号、颜色对上风格变量的写变量名（var(--fs-lg)），对不上的写算出来的值 */
   function probe(n, prop, v) {
@@ -348,12 +382,13 @@
     const content = cs.boxSizing !== 'border-box';
     if (a.width !== b.width) out.push('width:' + r(a.width - (content ? px(cs.paddingLeft) + px(cs.paddingRight) + px(cs.borderLeftWidth) + px(cs.borderRightWidth) : 0)) + 'px');
     if (a.height !== b.height) out.push('height:' + r(a.height - (content ? px(cs.paddingTop) + px(cs.paddingBottom) + px(cs.borderTopWidth) + px(cs.borderBottomWidth) : 0)) + 'px');
+    if (out.length && i.inline) out.unshift('display:inline-block');   // 行内元素：不换成 inline-block，宽高不起作用
     return out.join(';');
   }
   function recordScale(n) {
     const i = n._lt;
     const on = i.sc.scale !== 1;
-    const extra = on ? { css: 'scale:' + +(i.os * i.sc.scale).toFixed(3) + ';transform-origin:' + i.sc.origin } : {};
+    const extra = on ? { css: (i.inline ? 'display:inline-block;' : '') + 'scale:' + +(i.os * i.sc.scale).toFixed(3) + ';transform-origin:' + i.sc.origin } : {};
     upsert(i, 'scale', Object.assign({}, i.sc0), on ? Object.assign({}, i.sc) : Object.assign({}, i.sc0), extra);
   }
 
@@ -451,6 +486,7 @@
   function applyBox(n, box) {
     const i = n._lt;
     i.box = box;
+    if (i.inline) n.setAttribute('data-lt-ib', '');   // 行内元素：挪、改大小时当成 inline-block（撤销后 revertAll 去掉）
     setVar(n, 'data-lt-w', '--lt-w', box.width !== i.base.width ? box.width + 'px' : null);
     setVar(n, 'data-lt-h', '--lt-h', box.height !== i.base.height ? box.height + 'px' : null);
     keepFlow(n);
@@ -465,6 +501,7 @@
   function applyScale(n, sc) {
     const i = ensureScale(n);
     i.sc = sc;
+    if (i.inline && sc.scale !== 1) n.setAttribute('data-lt-ib', '');   // 还原成 1 倍（撤销时 revertAll 调到这里）不加
     if (sc.scale === 1) { n.removeAttribute('data-lt-scale'); n.style.removeProperty('--lt-scale'); n.style.removeProperty('--lt-origin'); return; }
     n.setAttribute('data-lt-scale', '');
     n.style.setProperty('--lt-scale', String(+(i.os * sc.scale).toFixed(4)));
@@ -669,7 +706,7 @@
       const i = n._lt;
       if (!i) return;
       if (i.html0 != null && cleanHtml(n) !== i.html0) { n.innerHTML = i.html0; fixKeys(n); }
-      if (i.base) { ['data-lt-w', 'data-lt-h', 'data-lt-moved', 'data-lt-mb'].forEach(a => n.removeAttribute(a)); ['--lt-w', '--lt-h', '--lt-tx', '--lt-ty', '--lt-mb'].forEach(v => n.style.removeProperty(v)); i.box = null; i.keep = null; }
+      if (i.base) { ['data-lt-w', 'data-lt-h', 'data-lt-moved', 'data-lt-mb', 'data-lt-ib'].forEach(a => n.removeAttribute(a)); ['--lt-w', '--lt-h', '--lt-tx', '--lt-ty', '--lt-mb'].forEach(v => n.style.removeProperty(v)); i.box = null; i.keep = null; }
       if (i.style0) applyStyle(n, Object.assign({}, i.style0));
       if (i.beat0) setBeat(n, i.beat0.beat);
       if (i.sc0) applyScale(n, Object.assign({}, i.sc0));
@@ -758,6 +795,7 @@
   }
   function save() {
     clearTimeout(E.saveT); E.saveT = 0;
+    if (E.leaving) return Promise.resolve(true);   // 正在离开：修改已经交出去了（或者要从服务读回最新的），这一页的不再存
     E.items.sort((a, b) => (a.no || 0) - (b.no || 0));
     if (!SERVER) {
       try { localStorage.setItem(LS_KEY, JSON.stringify({ version: 1, updated: new Date().toISOString(), items: E.items })); E.failed = false; E.dirty = false; }
@@ -766,7 +804,7 @@
       return Promise.resolve(!E.failed);
     }
     if (E.inflight) { E.again = true; return E.inflight; }
-    const body = JSON.stringify({ version: 1, items: E.items });
+    const body = JSON.stringify({ version: 1, client: CID, items: E.items });
     E.dirty = false; E.saving = true; updateBar();
     E.inflight = post('edits', body).then(() => { E.failed = false; }, () => { E.failed = true; E.dirty = true; })
       .then(() => {
@@ -815,6 +853,7 @@
     const i = info(n);
     if (i.text0 == null) { i.text0 = norm(n.textContent); i.html0 = cleanHtml(n); }
     E.text = { el: n, html: n.innerHTML };
+    if (E.shield) E.shield.hidden = true;   // 挡板让开：放光标（caretRangeFromPoint）、选字要点到字上
     n.setAttribute('contenteditable', 'true');
     n.setAttribute('spellcheck', 'false');
     n.classList.add('lt-edit-text');
@@ -828,6 +867,7 @@
   function endText() {
     const n = E.text.el;
     E.text = null;
+    if (E.shield) E.shield.hidden = false;
     n.removeAttribute('contenteditable');
     n.removeAttribute('spellcheck');
     n.classList.remove('lt-edit-text');
@@ -948,6 +988,8 @@
         b.hidden = false;
         b.style.left = (g.cx - g.w / 2) + 'px'; b.style.top = (g.cy - g.h / 2) + 'px';
         b.style.width = g.w + 'px'; b.style.height = g.h + 'px';
+        // 屏幕上很小的块（编号圆点、小图标）：四个把手挪到框外面，不然把手把块整个盖住，按哪儿都是缩放，拖不动它
+        b.classList.toggle('lt-edit-small', Math.min(g.w, g.h) * scale() < SMALL_PX);
         b.style.transform = Math.abs(g.a) > .01 ? 'rotate(' + g.a + 'deg)' : '';
         const sc = i.sc ? i.sc.scale : 1, pct = Math.round(sc * 100) + '%', size = bx.width + '×' + bx.height;
         const mode = E.drag && E.drag.moved ? E.drag.mode : '';
@@ -1233,7 +1275,9 @@
     e.preventDefault();
     // 点在已选中的块里（包括选了外层以后点它里面的小块）：保持选中，拖的是选中的这一块
     // 点在已选中的块里（包括选了里面的一段字以后点这段字）：保持选中，拖的是选中的这一块
-    const inside = !!(E.sel && (E.sel.contains(b) || E.sel.contains(t)));
+    // （e.target 是挡板，鼠标下面最上层的内容元素要自己找）
+    const under = document.elementsFromPoint(e.clientX, e.clientY).find(n => n !== E.shield) || t;
+    const inside = !!(E.sel && (E.sel.contains(b) || E.sel.contains(under)));
     if (!inside) select(b);
     startDrag(e, 'move');
     // 已经选中的块里再单击（没拖动）：松手时改成选中鼠标下面的那段字（先选组、再选里面），见 onDragEnd
@@ -1243,6 +1287,7 @@
     if (!E.on || E.drag || E.text || inUi(e.target)) { if (E.on && !E.drag) setHover(null); return; }
     const b = blockAt(e.clientX, e.clientY);
     setHover(b && b !== E.sel && !(E.sel && E.sel.contains(b)) ? b : null);
+    if (E.shield) E.shield.style.cursor = b ? 'move' : '';   // 鼠标落在挡板上：能选的块上面显示移动光标
   }
   /* 链接、表单这类元素的默认动作（跳转、提交）在编辑模式下拦掉 */
   function onClick(e) {
@@ -1309,8 +1354,9 @@
     drawBeats();
   }
   function enter() {
-    if (E.on || !PAGES.length) return;
+    if (E.on || !PAGES.length || E.leaving) return;
     if (S.reading) { I.toast('阅读模式下不能编辑：把窗口拉宽（横屏）再按 E'); return; }
+    if (E.stale) { refresh('edits'); return; }   // 别的页面改过修改记录：刷新读回最新的，再进编辑
     I.finishRunning(); I.finishPageTl();
     if (I.closeTools) I.closeTools();
     if (dom.lb && !dom.lb.hidden) I.closeShot();
@@ -1338,9 +1384,11 @@
     if (first) I.toast('编辑模式：单击选中，拖动挪位置，拖四个角整块缩放（按住 Alt 改框的大小）；Ctrl+Z 撤销；双击改文字；旁边的工具栏改字号、颜色、拍号；Alt+↑ 选外层；← → 翻页，E 退出', 7000);
     updateBar();
     if (I.syncPresenter) I.syncPresenter();
+    startPoll();
   }
   function exit() {
     if (!E.on) return;
+    stopPoll();
     if (E.text) commitText();
     deselect(); setHover(null);
     flush();
@@ -1360,17 +1408,25 @@
       return fetch(API('edits'), { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).catch(() => null)
         .then(d => { E.items = d && Array.isArray(d.items) ? d.items : []; });
     }
-    let d = null;
-    try { d = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); } catch (e) { d = null; }
-    E.items = d && Array.isArray(d.items) ? d.items : [];
+    E.items = offlineItems();
     return Promise.resolve();
+  }
+  /* 离线的修改：localStorage 里的；那里是空的、又有刚切去在线编辑时留的备份（没切过去又回来了），就用备份 */
+  function offlineItems() {
+    let d = null, bk = null;
+    try { d = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); } catch (e) { d = null; }
+    const items = d && Array.isArray(d.items) ? d.items : [];
+    try { bk = JSON.parse(sessionStorage.getItem(CARRY_KEY) || 'null'); } catch (e) { bk = null; }
+    if (items.length || !bk || !Array.isArray(bk.items) || !(Date.now() - bk.at < CARRY_KEEP)) return items;
+    try { localStorage.setItem(LS_KEY, JSON.stringify({ version: 1, updated: new Date().toISOString(), items: bk.items })); sessionStorage.removeItem(CARRY_KEY); } catch (e) { /* 存不了就只用这一次 */ }
+    return bk.items;
   }
   function setScale() { if (dom.stage) dom.stage.style.setProperty('--lt-ik', String(1 / scale())); }
 
   /* 有服务时：源码改了（reload）或一批修改合并完（merged）就刷新，停在原来那页，编辑模式照旧 */
   function connect() {
     if (!window.EventSource) return;
-    const es = new EventSource(API('events'));
+    const es = new EventSource(API('events') + '&client=' + CID);
     E.es = es;
     const go = why => () => {
       if (E.reloading) return;
@@ -1383,7 +1439,106 @@
     };
     es.addEventListener('reload', go('reload'));
     es.addEventListener('merged', go('merged'));
+    // 别的页面改了修改记录（另一个标签页保存了、双击打开的页面带来了离线修改）：这页手里的是旧的，
+    // 不能再存（会盖掉别人的），在编辑就马上刷新读回最新的，没在编辑就等下次按 E 再刷新
+    es.addEventListener('edits', () => {
+      if (E.reloading) return;
+      if (E.on) refresh('edits'); else E.stale = true;
+    });
   }
+  /* 刷新这一页、读回服务上最新的修改，停在这一页、进编辑模式；手里还没存的不存了（会盖掉别人的） */
+  function refresh(why) {
+    E.reloading = true; E.leaving = true;
+    try { sessionStorage.setItem(SS_KEY, JSON.stringify({ p: S.cur.p, edit: true, why })); } catch (e) { /* 存不了就回到地址里的页 */ }
+    location.reload();
+  }
+
+  /* -----------------------------------------------------------------
+     双击打开（file://）的页面：在线编辑的服务开着就切过去，没开才离线编辑
+     ----------------------------------------------------------------- */
+  /* 服务开没开：serve 每 2 秒把端口、口令和时刻写进课件目录的 .li-talk/serve.js。file:// 页面访问不了本机服务，
+     只能用 <script> 读这个文件；读得到、时刻是最近几秒的就是开着（serve 被强行结束时文件可能来不及删，时刻会停住） */
+  function serveInfo() {
+    if (!FILE || SERVER) return Promise.resolve(null);
+    return new Promise(done => {
+      const s = document.createElement('script');
+      let t = 0;
+      const end = v => { clearTimeout(t); s.remove(); done(v); };
+      try { delete window.__liTalkServe; } catch (e) { window.__liTalkServe = undefined; }
+      s.onload = () => {
+        const v = window.__liTalkServe;
+        end(v && typeof v === 'object' && v.port > 0 && typeof v.token === 'string' && v.token && Math.abs(Date.now() - (+v.at || 0)) < SERVE_FRESH ? v : null);
+      };
+      // 没开服务时文件不存在，加载失败：课件开头的报错记录（window.__deckErrors，自检用）会记下一条，这条不是课件的问题，去掉
+      s.onerror = () => {
+        const log = window.__deckErrors;
+        if (Array.isArray(log)) for (let k = log.length - 1; k >= 0; k--) if (String(log[k]).indexOf('.li-talk/serve.js') >= 0) log.splice(k, 1);
+        end(null);
+      };
+      t = setTimeout(() => end(null), 1500);
+      s.src = '.li-talk/serve.js?t=' + Date.now();
+      document.head.appendChild(s);
+    });
+  }
+  /* 切到在线编辑：离线的修改用表单交给服务（file:// 页面只能这样把东西交过去），服务并进修改记录，
+     再跳到在线编辑的页面，停在同一页。离线记录随即清掉（免得下次又带一遍），在 sessionStorage 留一份备份：
+     万一没跳过去（服务刚好关了）又回到这页，从备份找回来（offlineItems） */
+  function handoff(info, auto) {
+    if (E.leaving) return;
+    if (E.text) commitText();
+    const items = E.loaded ? E.items : offlineItems();
+    E.leaving = true; clearTimeout(E.saveT); E.saveT = 0; stopPoll();
+    try {
+      sessionStorage.setItem(CARRY_KEY, JSON.stringify({ at: Date.now(), items }));
+      localStorage.removeItem(LS_KEY);
+    } catch (e) { /* 存不了就不留备份 */ }
+    const f = document.createElement('form');
+    f.method = 'post';
+    f.acceptCharset = 'UTF-8';
+    f.hidden = true;
+    f.action = 'http://127.0.0.1:' + (info.port | 0) + '/__li-talk/carry?token=' + encodeURIComponent(info.token);
+    const add = (k, v) => { const i = document.createElement('input'); i.type = 'hidden'; i.name = k; i.value = v; f.appendChild(i); };
+    add('items', JSON.stringify(items));
+    add('to', (location.pathname.split('/').pop() || 'index.html') + location.search + '#' + (S.cur.p + 1));
+    add('mode', E.mode);
+    document.body.appendChild(f);
+    I.toast(auto ? 'AI 开好了在线编辑，这一页切过去了' : '在线编辑的服务开着，切到在线编辑', 3000);
+    f.submit();
+    // 过了几秒还在这页（表单没发出去、服务刚好关了）：离线记录从备份放回去，这个服务不再自动切；
+    // 是按 E 切的，就照样进离线编辑（按了 E 总得进编辑模式）
+    setTimeout(() => {
+      if (!E.leaving) return;
+      E.leaving = false; E.skip = info.token; f.remove();
+      offlineItems();
+      if (E.on) startPoll(); else enter();
+      I.toast('没能切到在线编辑，先离线改；改完点「复制修改给 AI」', 5000);
+    }, HANDOFF_WAIT);
+  }
+  /* 离线编辑时定时看服务开了没有：用户对 AI 说「我要在线改」以后，AI 开好服务，这一页自己切过去（不在拖动、改字的时候切） */
+  function startPoll() { if (FILE && !SERVER && !E.pollT) E.pollT = setInterval(pollServe, POLL); }
+  function stopPoll() { clearInterval(E.pollT); E.pollT = 0; }
+  function pollServe() {
+    if (!E.on || E.leaving || E.checking || E.drag || E.text) return;
+    E.checking = true;
+    serveInfo().then(info => {
+      E.checking = false;
+      if (info && info.token !== E.skip && E.on && !E.drag && !E.text) handoff(info, true);
+    });
+  }
+  /* 按 E：在编辑就退出；双击打开的页面先看服务开没开，开着就切到在线编辑，没开才进离线编辑 */
+  function toggle() {
+    if (E.on) { exit(); return; }
+    if (!EDITABLE) return;   // 从网站上打开的：按 E 什么都不做
+    if (!FILE || SERVER || S.reading || !PAGES.length) { enter(); return; }
+    if (E.checking || E.leaving) return;
+    E.checking = true;
+    serveInfo().then(info => {
+      E.checking = false;
+      if (info) handoff(info, false); else enter();
+    });
+  }
+  // 从浏览器的往返缓存里回来（切到在线编辑以后按了后退）：页面还停在「正在离开」，刷新一下重新开始
+  window.addEventListener('pageshow', e => { if (e.persisted && E.leaving) location.reload(); });
 
   /* =================================================================
      界面
@@ -1445,7 +1600,7 @@
     if (!SERVER) {
       E.hint = el('div', 'lt-edit-hint lt-edit-glass',
         '<span class="lt-edit-hint-tag">离线编辑</span>' +
-        '<span class="lt-edit-hint-txt">改完点「复制修改给 AI」贴进对话。想改完<b>一键交给 AI</b>？把这句话发给 AI，它会开在线编辑：</span>' +
+        '<span class="lt-edit-hint-txt">改完点「复制修改给 AI」贴进对话。想改完<b>一键交给 AI</b>？把这句话发给 AI，它开好在线编辑后，这一页会自己切过去，改动一起带上：</span>' +
         '<button type="button" class="lt-edit-hint-say" data-tip="复制这句话">' + icon('copy') + '<span>' + OFFLINE_SAY + '</span></button>' +
         '<button type="button" class="lt-edit-hint-x" data-tip="知道了" aria-label="知道了">' + icon('exit') + '</button>');
       E.hint.hidden = true;
@@ -1527,10 +1682,16 @@
     E.selBox = el('div', 'lt-edit-sel', '<span class="lt-edit-size"></span>' + ['nw', 'ne', 'sw', 'se'].map(c => '<i class="lt-edit-h" data-c="' + c + '"></i>').join(''));
     E.selBox.hidden = true;
     E.beats = el('div', 'lt-edit-beats');
-    dom.stage.append(E.beats, E.selBox);
+    // 挡板：透明的一层盖在页面内容上（选中框、拍号角标在它上面）。鼠标的悬停、按下都落在它身上，
+    // 风格写的 :hover、:active 效果（卡片上浮、转一下、按下去缩一点）编辑时不会出来，不会盖掉预览、量错位置。
+    // 编辑器自己用 elementsFromPoint 找鼠标下面的元素，看得穿它；改字时让开（放光标、选字要交给浏览器）
+    E.shield = el('div', 'lt-edit-shield');
+    dom.stage.append(E.shield, E.beats, E.selBox);
   }
   const CSS_TEXT = [
-    'body.lt-editing #toast{top:70px}',
+    // 编辑时提示条不接鼠标：它显示时（engine.css 的 #toast.show 是 pointer-events:auto，放映时为了能复制里面的命令）
+    // 正好盖在页面大标题上，刚进编辑模式那 7 秒点标题会没反应；编辑时的提示都是纯文字，不用点
+    'body.lt-editing #toast,body.lt-editing #toast.show{top:70px;pointer-events:none}',
     /* 液态玻璃面板：浅色风格是半透明白，深色风格（body.lt-darkui）是半透明深色；强调色取风格的 --accent */
     '.lt-edit-glass{--lt-bg:rgba(255,255,255,.32);--lt-fg:#1d2330;--lt-sub:#5b6474;--lt-line:rgba(255,255,255,.8);--lt-sep:rgba(20,30,50,.12);--lt-hov:rgba(20,30,50,.07);--lt-on:rgba(20,30,50,.1);--lt-acc:var(--lt-accent,#2563eb);' +
       'position:fixed;z-index:960;display:flex;align-items:center;gap:2px;padding:5px;border-radius:16px;background:var(--lt-bg);color:var(--lt-fg);' +
@@ -1612,7 +1773,10 @@
     'body.lt-editing #stage *,body.lt-editing #stage *::before,body.lt-editing #stage *::after,body.lt-editing .bg *{animation-play-state:paused!important}',
     'body.lt-editing #stage .chrome *{animation-play-state:running!important}',   // 页码、拍号不是课件内容：翻页时新生成的数字照常播出场动画，不然停在第一帧（透明）
     'body.lt-editing [data-lt-hover]{outline:calc(2px * var(--lt-ik,1)) dashed var(--lt-accent,#2563eb)!important;outline-offset:calc(2px * var(--lt-ik,1));cursor:move}',
-    'body.lt-editing [data-lt-moved],body.lt-editing [data-lt-w],body.lt-editing [data-lt-h],body.lt-editing [data-lt-scale],body.lt-editing [data-lt-fs],body.lt-editing [data-lt-color],body.lt-editing [data-lt-fw],body.lt-editing [data-lt-ta],body.lt-editing [data-lt-fsk],body.lt-editing [data-lt-mb]{transition:none!important}',   // 风格给 scale、字号写了过渡的：编辑时直接到位，选中框才量得准
+    // 编辑时页面内容一律不过渡：风格给位置、scale、字号写了过渡的，改了、撤销了都直接到位，选中框才量得准、跟得上
+    // （只关改过的元素不够：撤销时预览属性去掉了，元素会按风格的过渡慢慢滑回去，选中框却已经画在终点）
+    'body.lt-editing #stage .slide *,body.lt-editing #stage .slide *::before,body.lt-editing #stage .slide *::after{transition:none!important}',
+    '[data-lt-ib]{display:inline-block!important}',   // 行内元素挪、缩放、改大小时当成 inline-block（ensureBase）
     '[data-lt-moved]{translate:var(--lt-tx,0px) var(--lt-ty,0px)!important}',
     '[data-lt-w]{width:var(--lt-w)!important;max-width:none!important}',
     // 改高度用 min-height：框不能比内容还矮（不然内容跑出框，整块缩放的原点也会偏）
@@ -1624,8 +1788,12 @@
     '[data-lt-color]{color:var(--lt-color)!important}',
     '[data-lt-fw]{font-weight:var(--lt-fw)!important}',
     '[data-lt-ta]{text-align:var(--lt-ta)!important}',
-    // 缩放的预览不加 !important：出场动画时 gsap 会在行内写 scale:none、把倍数并进 transform（beats.js 的 scaleOf），要让它盖得住
+    // 缩放的预览放映时不加 !important：出场动画时 gsap 会在行内写 scale:none、把倍数并进 transform（beats.js 的 scaleOf），要让它盖得住；
+    // 编辑时不播动画，加 !important，风格里优先级更高的 scale（比如 :active 按下去缩一点）盖不掉它
     'html body [data-lt-scale][data-lt-scale]{scale:var(--lt-scale);transform-origin:var(--lt-origin)}',
+    'body.lt-editing [data-lt-scale]{scale:var(--lt-scale)!important;transform-origin:var(--lt-origin)!important}',
+    '.lt-edit-shield{display:none}',
+    'body.lt-editing .lt-edit-shield:not([hidden]){display:block;position:absolute;inset:0;z-index:60}',
     'body:not(.lt-editing) [data-lt-hide]{visibility:hidden!important}',
     'body.lt-editing [data-lt-hide]{opacity:.3!important;outline:calc(2px * var(--lt-ik,1)) dashed #e5484d!important}',
     '.lt-edit-text{user-select:text!important;-webkit-user-select:text!important;cursor:text!important;outline:calc(2px * var(--lt-ik,1)) solid var(--lt-accent,#2563eb)!important;outline-offset:calc(4px * var(--lt-ik,1));background:rgba(127,127,127,.08)}',
@@ -1637,6 +1805,10 @@
     '.lt-edit-h[data-c=ne]{right:0;top:0;transform:translate(50%,-50%);cursor:nesw-resize}',
     '.lt-edit-h[data-c=sw]{left:0;bottom:0;transform:translate(-50%,50%);cursor:nesw-resize}',
     '.lt-edit-h[data-c=se]{right:0;bottom:0;transform:translate(50%,50%);cursor:nwse-resize}',
+    '.lt-edit-small .lt-edit-h[data-c=nw]{transform:translate(-100%,-100%)}',
+    '.lt-edit-small .lt-edit-h[data-c=ne]{transform:translate(100%,-100%)}',
+    '.lt-edit-small .lt-edit-h[data-c=sw]{transform:translate(-100%,100%)}',
+    '.lt-edit-small .lt-edit-h[data-c=se]{transform:translate(100%,100%)}',
     '.lt-edit-size{position:absolute;right:0;top:100%;margin-top:calc(8px * var(--lt-ik,1));padding:calc(3px * var(--lt-ik,1)) calc(7px * var(--lt-ik,1));border-radius:calc(6px * var(--lt-ik,1));background:var(--lt-accent,#2563eb);color:var(--lt-on-accent,#fff);font:600 calc(12px * var(--lt-ik,1))/1.2 system-ui,sans-serif;white-space:nowrap;font-variant-numeric:tabular-nums}',
     '.lt-edit-beats{position:absolute;inset:0;z-index:69;pointer-events:none}',
     '.lt-edit-badge{position:absolute;transform:translate(-30%,-60%);padding:calc(1px * var(--lt-ik,1)) calc(5px * var(--lt-ik,1));border-radius:calc(8px * var(--lt-ik,1));background:rgba(29,36,51,.72);color:#fff;font:600 calc(11px * var(--lt-ik,1))/1.3 system-ui,sans-serif;white-space:nowrap}',
@@ -1662,7 +1834,7 @@
       if (S.booted && !document.body.classList.contains('loading')) { clearInterval(t); cb(); }
     }, 50);
   }
-  I.toggleEdit = () => (E.on ? exit() : enter());
+  I.toggleEdit = toggle;
   I.editKey = editKey;
   I.editsText = editsText;
   /* 核对：items 是一批修改记录；逐页翻到最后一拍，找到每个元素，量现在的位置、大小、缩放、样式、文字，和用户改的比。
@@ -1698,6 +1870,13 @@
     });
     return out;
   };
+  /* 巡检用（dev/edit-sweep.mjs）：这一页能单独选中的块（和单击选中用同一套判断）、鼠标在 (x, y) 会选中哪一块 */
+  I.editBlocks = () => {
+    const p = curPage();
+    return p && E.on ? [...p.el.querySelectorAll('*')].filter(n => blockOf(n, p.el) === n && n.getClientRects().length) : [];
+  };
+  I.editBlockAt = (x, y) => blockAt(x, y);
+  I.editSel = () => E.sel;
   I.notesEditable = () => E.on;
   I.noteText = (pi, b) => (PAGES[pi] ? noteText(PAGES[pi], b) : '');
   I.editNote = editNote;
@@ -1712,17 +1891,28 @@
     if (S.reading) { exit(); I.toast('窗口变成竖屏阅读模式，已退出编辑'); return; }
     setScale(); drawSel();
   });
-  window.addEventListener('beforeunload', () => { if (E.on || E.saveT) flush(); });
+  // 离开页面（关标签页、跳走、刷新）前把没存的存掉：用 pagehide 不用 beforeunload。
+  // 页面挂着 beforeunload 时，浏览器跳走要多一道手续，自动化（自检、测试、dev/edit-sweep.mjs）里会隔一次卡一次（等 30 秒超时）；
+  // pagehide 不拦跳转，保存用的 fetch 带 keepalive，页面没了也会发完
+  window.addEventListener('pagehide', () => { if (E.on || E.saveT) flush(); });
 
   whenReady(() => {
     if (!PAGES.length) return;
     let resume = null;
     try { resume = JSON.parse(sessionStorage.getItem(SS_KEY) || 'null'); sessionStorage.removeItem(SS_KEY); } catch (e) { resume = null; }
     if (SERVER) connect();
+    // 从双击打开的页面切过来的：地址里的 carried、mode 读过了，去掉（刷新时不再提示）
+    if (CARRIED >= 0) {
+      const q = new URLSearchParams(location.search);
+      q.delete('carried'); q.delete('mode');
+      try { history.replaceState(null, '', location.pathname + '?' + q + location.hash); } catch (e) { /* 改不了地址不要紧 */ }
+    }
     if (S.reading) return;
     if (resume && typeof resume.p === 'number') I.go(clamp(resume.p, 0, PAGES.length - 1), 0, { anim: false });
     if (resume ? resume.edit : SERVER) enter();
     if (resume && resume.why === 'merged') I.toast('AI 已经把修改合进源码，页面已刷新', 5000);
     else if (resume && resume.why === 'reload') I.toast('源码改过了，页面已刷新', 3000);
+    else if (resume && resume.why === 'edits') I.toast('别的页面改过，已经同步过来', 3000);
+    else if (CARRIED >= 0) I.toast('已切到在线编辑' + (CARRIED ? '，离线时的 ' + CARRIED + ' 处改动也带过来了' : '') + '。改完点「通知 AI 修改」', 6000);
   });
 })();
