@@ -1,4 +1,4 @@
-/* li-talk-skills 教程 · 第二部分：九步流程、接着做、选风格（两页图墙）、样册、形象、质量把关、「关于我」页（p09–p16）
+/* li-talk-skills 教程 · 第二部分：九步流程、接着做、选风格（两页图墙）、样册、形象、质量把关、「关于我」页（p09–p16b，p16b 是「自己改」：按 E 编辑）
    风格是水彩田园 watercolor：九步流程是招牌的「小路路牌」（一条乡间小路边立起五块木路牌），「关于我」页是「绘本跨页」（一幅画加一句旁白）。
    选风格那两页：每种风格一张真图（这种风格的招牌页），贴在一张张水彩纸上，点一下在新窗口打开样册看这种风格（../gallery.html?scene=键名，不进拍） */
 
@@ -286,5 +286,40 @@ Deck.add({
     { beat: 0, key: '分享一下你自己', say: '过稿之前，AI 会转告一句话：小黎的愿景，希望你在分享知识和经验的最后，也分享一下你自己。' },
     { beat: 1, key: '关于我', say: '然后问你要不要在结尾前加一页关于我，让听众认识讲这堂课的人。' },
     { beat: 2, key: '关于我们', say: '用方果风格时，问的是要不要加一页关于我们。' },
+  ],
+});
+
+/* p16b 自己改：左边三步（按 E 进编辑 → 双击改字 → 交给 AI），右边一张水彩纸画着编辑模式的样子
+   （顶部改动条、浮在上面的工具条、带四个把手的选中框），最后一拍一块水彩卡说在线、离线两种都能改 */
+Deck.add({
+  id: 'p16b',
+  chapter: '三、做一份课件',
+  chapterShort: '做课件',
+  topic: '自己改',
+  scene: 'watercolor',
+  title: '想改哪里？按 E 直接改',
+  html: `
+    <ol class="abs steps p16b-flow" style="left:120px;top:270px;width:780px;--gap:40px">
+      <li><b>按 E 进编辑</b><span data-beat="1">单击选中，拖动挪位置，拖角放大缩小</span></li>
+      <li><b>双击改字</b><span data-beat="2">旁边的工具条改字号、颜色、对齐</span></li>
+      <li data-mascot="3" data-mascot-side="bottom" data-mascot-x=".3" data-mascot-pose="happy"><b>一键交给 AI</b><span data-beat="3">AI 照你的改动写回课件</span></li>
+    </ol>
+    <div class="wc-paper abs p16b-win" data-beat="0" data-recede="off" style="left:1000px;top:270px;width:800px;--r:.5deg">
+      <p class="p16b-bar"><span class="p16b-n" data-small>3 处改动</span><span class="p16b-ic" data-small>撤销 · 重做</span><span class="tag t-yellow p16b-send" data-small>通知 AI 修改</span></p>
+      <p class="p16b-tools" data-small><span>A−</span><span>A+</span><i class="p16b-c1"></i><i class="p16b-c2"></i><i class="p16b-c3"></i><span>居中</span></p>
+      <div class="p16b-sel"><p>怎么泡好一杯茶</p><i class="p16b-h" style="left:-11px;top:-11px"></i><i class="p16b-h" style="right:-11px;top:-11px"></i><i class="p16b-h" style="left:-11px;bottom:-11px"></i><i class="p16b-h" style="right:-11px;bottom:-11px"></i></div>
+    </div>
+    <div class="abs card t-mint p16b-card" data-beat="4" style="left:1000px;top:700px;width:800px;--r:-.6deg">
+      <p><span class="tag t-blue">在线</span>说「我要在线改」，改完一点就合进去</p>
+      <p><span class="tag t-yellow">离线</span>双击打开就能改，改完复制给 AI</p>
+    </div>
+    <p class="abs p-capt" data-beat="0" data-small style="left:120px;top:924px"><span class="tag">示意</span>编辑模式下的样子</p>
+    <div class="mascot guide" style="left:1660px;top:100px"></div>`,
+  notes: [
+    { beat: 0, say: '课件做好了，哪里不顺眼，不用跟 AI 描述半天，自己动手改。' },
+    { beat: 1, key: '按 E', say: '在课件页面上按 E 进编辑：单击选中一块，拖动挪位置，拖四个角放大缩小。' },
+    { beat: 2, key: '双击', say: '双击就能改文字，旁边的工具条能改字号、颜色、对齐；改错了 Ctrl+Z 撤销。' },
+    { beat: 3, key: '交给 AI', say: '改完一键交给 AI，它照你的改动写回课件，改了文字的还会给几条文案建议。' },
+    { beat: 4, key: '在线', say: '有两种改法。对 AI 说我要在线改，改完点通知 AI 修改，它就合进去，页面跟着刷新；直接双击打开的课件也能按 E 离线改，改完点复制修改给 AI，贴进对话。在线编辑开着的时候，按 E 会自动走在线。' },
   ],
 });

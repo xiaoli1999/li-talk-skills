@@ -107,7 +107,7 @@ function buildSite(out, take) {
     if (!existsSync(img)) throw new Error('介绍页缺这种风格的截图：' + posix(relative(ROOT, img)));
     copy(img, join(out, 'img', 'styles', s.key + '.jpg'));
   }
-  for (const n of ['hero.jpg', 'edit.jpg']) copy(join(IMAGES, n), join(out, 'img', n));
+  for (const n of ['hero.jpg', 'edit.jpg', 'edit.gif']) copy(join(IMAGES, n), join(out, 'img', n));
   const SLOT = '/*LT_STYLES*/[]';
   if (!page.includes(SLOT)) throw new Error('site/index.html 里找不到风格清单的占位 ' + SLOT);
   // JSON 里的 < 写成 <：说明文字里万一有 </script> 也不会提前结束脚本

@@ -177,6 +177,15 @@ p.lead{margin:0;max-width:44em;font-size:clamp(16px,1.6vw,18px);color:var(--ink2
 .flow div::before{content:counter(f);display:grid;place-items:center;width:44px;height:44px;margin:0 auto 10px;font:700 20px var(--hand);color:var(--ink);background:var(--card);border-radius:52% 48% 50% 50%;box-shadow:0 0 0 1.8px rgba(94,86,77,.6)}
 .flow div b{display:block;font:700 17px/1.4 var(--hand);color:var(--ink)}
 .flow div span{display:block;margin-top:2px;font-size:13px;color:var(--ink2)}
+/* 两种编辑方式：两张并排的卡，标题前一滴水彩 */
+.modes{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;margin-top:44px}
+.mode{position:relative;padding:24px 26px;background:var(--card)}
+.mode h3{position:relative;isolation:isolate;display:flex;align-items:center;gap:10px;margin:0 0 8px;font-size:22px}
+.mode h3::before{content:"";width:18px;height:18px;flex:none;background:var(--tint,var(--sky));opacity:.7;-webkit-mask:var(--wc-blob) 0 0/100% 100% no-repeat;mask:var(--wc-blob) 0 0/100% 100% no-repeat}
+.mode h3 em{font:600 12px/1 var(--f);font-style:normal;padding:4px 8px;color:var(--ink);background:rgba(244,195,90,.6);border-radius:999px}
+.mode p{margin:0;font-size:14.5px;color:var(--ink2)}
+.mode blockquote{margin:14px 0 0;padding:10px 14px;font:500 15px/1.6 var(--hand);color:var(--ink);background:rgba(142,195,230,.16);border-left:3px solid var(--skyd)}
+.mode-tip{margin:18px 0 0;font-size:14px;color:var(--ink3);text-align:center}
 
 /* 功能 */
 .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:44px}
@@ -230,7 +239,7 @@ footer a:hover{color:var(--ink)}
   .styles{grid-template-columns:repeat(2,1fr);gap:16px 12px}
   .st p{display:none}
   .stats{grid-template-columns:repeat(2,1fr)}
-  .grid3,.steps{grid-template-columns:1fr}
+  .grid3,.steps,.modes{grid-template-columns:1fr}
   .tour{grid-template-columns:1fr;text-align:center}
   .tour .duo2{margin:0 auto}
   .stage{aspect-ratio:16/10}
@@ -266,7 +275,7 @@ footer a:hover{color:var(--ink)}
     <div class="wrap">
       <div class="duo" id="duo" title="朵朵"><span class="say" id="say">你专心讲，课件交给我～</span></div>
       <div class="badge wash rv" style="--tint:#fff;--o:.95">
-        <b>NEW</b>在线编辑：浏览器里直接改，改完一键交给 AI</div>
+        <b>NEW</b>按 E 就能改：离线、在线都行，改完一键交给 AI</div>
       <h1 class="rv">一句话，生成一份<br><span class="brush">能直接上台讲</span>的课件</h1>
       <p class="sub rv">支持在线编辑、16 种风格的 AI 演讲课件 Skill。把主题、笔记或讲稿交给 AI，它写讲稿、选风格、排版、加动效，做成像幻灯片一样一拍一拍翻的 HTML 课件：双击离线打开，带演讲者视图与计时彩排。</p>
       <div class="cta rv">
@@ -322,12 +331,12 @@ footer a:hover{color:var(--ink)}
   <section class="edit" id="edit">
     <div class="wrap">
       <p class="eyebrow">在线编辑</p>
-      <h2 class="sec rv">在浏览器里改，<span class="brush">AI 帮你合进源码</span></h2>
-      <p class="lead rv">不用懂代码，也不用来回描述「把那个往左挪一点」。打开编辑模式，像用 PPT 一样直接改；改完点一下「通知 AI 修改」，AI 按你的改动写回源码、跑完自检，页面自动刷新。</p>
+      <h2 class="sec rv">按 E 直接改，<span class="brush">AI 帮你合进源码</span></h2>
+      <p class="lead rv">不用懂代码，也不用来回描述「把那个往左挪一点」。打开课件按 E，像用 PPT 一样直接改；改完一键交给 AI，它照你的改动写回源码、跑完自检。离线、在线都能改。</p>
       <div class="edit-grid">
         <figure class="frame rv" style="margin:0">
-          <img src="img/edit.jpg" alt="在线编辑界面：选中一段文字，旁边浮出字号、颜色、对齐、拍号工具条，顶部是撤销重做和「通知 AI 修改」" loading="lazy">
-          <figcaption>选到文字才出现字号和颜色，改一处不牵动别处</figcaption>
+          <img src="img/edit.gif" alt="编辑演示：选中插画拖到左边、拖角放大，双击标题把「……」改成「泡茶」，最后指向「通知 AI 修改」" loading="lazy">
+          <figcaption>选中、拖动、拖角放大、双击改字，一气呵成</figcaption>
         </figure>
         <ul class="feats">
           <li class="pencil rv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></i><div><b>双击改字，单击选中</b><span>改文字、设重点词；选到文字才出现字号和颜色。</span></div></li>
@@ -336,12 +345,17 @@ footer a:hover{color:var(--ink)}
           <li class="pencil rv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg></i><div><b>一键交给 AI</b><span>改动自动保存；AI 用类名和章节样式写回源码，文案还会给优化建议。</span></div></li>
         </ul>
       </div>
+      <div class="modes">
+        <div class="mode pencil rv"><h3>在线编辑<em>推荐</em></h3><p>对 AI 说一句，浏览器打开就是编辑模式。改完点「通知 AI 修改」，AI 自动合进源码，页面跟着刷新。</p><blockquote>我要在线改这份课件</blockquote></div>
+        <div class="mode pencil rv" style="--tint:var(--sun)"><h3>离线编辑</h3><p>双击打开课件按 E 就能改，不用开任何服务。改完点「复制修改给 AI」，贴进对话就行。</p><blockquote>双击 index.html，按 E</blockquote></div>
+      </div>
+      <p class="mode-tip rv">在线编辑开着的时候，双击打开的课件按 E 也会直接切过去，离线改了一半的一起带上。网页上的教程和样册只能看，装好后在本机打开就能改。</p>
       <div class="flow">
-        <div class="rv"><b>说「我要在线改」</b><span>AI 开本机服务、打开页面</span></div>
+        <div class="rv"><b>按 E 进编辑</b><span>在线编辑开着就自动走在线</span></div>
         <div class="rv"><b>在页面上直接改</b><span>改字、拖动、缩放、改样式</span></div>
         <div class="rv"><b>自动保存</b><span>每一步都记下来，可撤销</span></div>
-        <div class="rv"><b>点「通知 AI 修改」</b><span>AI 被唤醒，读到修改清单</span></div>
-        <div class="rv"><b>合进源码并自检</b><span>页面自动刷新，接着改</span></div>
+        <div class="rv"><b>交给 AI</b><span>点「通知 AI 修改」或复制给 AI</span></div>
+        <div class="rv"><b>合进源码并自检</b><span>在线时页面自动刷新，接着改</span></div>
       </div>
     </div>
   </section>
@@ -369,11 +383,11 @@ footer a:hover{color:var(--ink)}
       <div class="steps">
         <div class="step pencil rv"><h3>装上</h3><p>直接对 AI 说一句，它会自己装好；没有 Node 也会先帮你装。</p><blockquote>从 GitHub 仓库 xiaoli1999/li-talk-skills 安装到全局，装好后打开新手教程带我过一遍</blockquote></div>
         <div class="step pencil rv"><h3>说一句话</h3><p>在任意文件夹里告诉 AI 你要讲什么，剩下的它一步步带你做。</p><blockquote>用 li-talk-skills 帮我做一个关于「……」的课件</blockquote></div>
-        <div class="step pencil rv"><h3>上台讲</h3><p>双击 index.html 放映，按 S 打开演讲者视图；想改哪里，说「我要在线改」。</p><blockquote>我要在线改这份课件</blockquote></div>
+        <div class="step pencil rv"><h3>上台讲</h3><p>双击 index.html 放映，按 S 打开演讲者视图；想改哪里，按 E 直接改，或者对 AI 说：</p><blockquote>我要在线改这份课件</blockquote></div>
       </div>
       <div class="tour rv" style="margin-top:60px">
         <div class="duo2" id="duo2" aria-hidden="true"></div>
-        <div><h2>先花五分钟，跟着教程走一遍</h2><p>教程本身就是一份用 li-talk-skills 做的水彩田园课件：安装、九步流程、选风格、翻页和演讲者视图、常用命令，边看边体验。</p></div>
+        <div><h2>先花五分钟，跟着教程走一遍</h2><p>教程本身就是一份用 li-talk-skills 做的水彩田园课件：安装、九步流程、选风格、按 E 自己动手改、翻页和演讲者视图、常用命令，边看边体验。</p></div>
         <a class="btn btn-sun" href="tour/">打开新手教程 →</a>
       </div>
     </div>
@@ -439,7 +453,7 @@ footer a:hover{color:var(--ink)}
     var pose = 'idle', put = function (p, o) { holder.innerHTML = D.svg(p, o || {}); };
     put('idle');
     duo2.innerHTML = D.svg('point', {});
-    var lines = ['你专心讲，课件交给我～', '想改哪里，直接在页面上改', '16 种风格，挑一个喜欢的', '先看看五分钟教程吧'], li = 0, timer = 0;
+    var lines = ['你专心讲，课件交给我～', '想改哪里，按 E 直接改', '16 种风格，挑一个喜欢的', '先看看五分钟教程吧'], li = 0, timer = 0;
     var cheer = function () {
       pose = 'happy'; put('happy'); say.textContent = lines[li++ % lines.length]; duo.classList.add('talk');
       clearTimeout(timer); timer = setTimeout(function () { pose = 'idle'; put('idle'); duo.classList.remove('talk'); }, 2600);

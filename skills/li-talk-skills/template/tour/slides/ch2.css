@@ -56,3 +56,22 @@
 [data-id="p16"] .p16-q{font-size:64px}
 [data-id="p16"] .p16-by{margin:0;font:400 38px/1.3 var(--f-hand);color:var(--ink-2);text-align:center}
 [data-id="p16"] .p16-note{margin:0;text-align:center}
+
+/* ---------- p16b 自己改：右边一张水彩纸画着编辑模式（顶部改动条、浮着的工具条、选中框和四个把手） ---------- */
+[data-id="p16b"] .p-capt{display:flex;align-items:center;gap:16px;margin:0;font:400 30px/1.3 var(--f-hand);color:var(--ink-2);white-space:nowrap}
+[data-id="p16b"] .p16b-flow>li>span{font-size:34px}
+[data-id="p16b"] .p16b-win{padding:26px 34px 44px}
+[data-id="p16b"] .p16b-bar{display:flex;align-items:center;gap:22px;margin:0 0 34px;font:400 28px/1.3 var(--f-hand);color:var(--ink-2)}
+[data-id="p16b"] .p16b-n{display:flex;align-items:center;gap:10px}
+[data-id="p16b"] .p16b-n::before{content:"";width:16px;height:16px;border-radius:50% 45% 55% 50%;background:var(--wc-grass)}
+[data-id="p16b"] .p16b-send{margin-left:auto;font-size:28px}
+[data-id="p16b"] .p16b-tools{display:flex;align-items:center;gap:18px;width:max-content;margin:0 0 26px 40px;padding:10px 20px;border:2px solid var(--ink-3);border-radius:10px 12px 9px 11px;font:500 26px/1.2 var(--f-hand);color:var(--ink-2);background:var(--paper)}
+[data-id="p16b"] .p16b-tools i{display:block;width:26px;height:26px;border-radius:50% 46% 54% 50%}
+[data-id="p16b"] .p16b-c1{background:var(--ink)}
+[data-id="p16b"] .p16b-c2{background:var(--wc-sky-d)}
+[data-id="p16b"] .p16b-c3{background:var(--wc-sun)}
+[data-id="p16b"] .p16b-sel{position:relative;width:max-content;margin-left:40px;padding:14px 26px;border:2.4px dashed var(--wc-sky-d)}
+[data-id="p16b"] .p16b-sel>p{margin:0;font:700 52px/1.3 var(--f-hand);color:var(--ink)}
+[data-id="p16b"] .p16b-h{position:absolute;width:20px;height:20px;border:2.4px solid var(--wc-sky-d);border-radius:4px;background:var(--paper)}
+[data-id="p16b"] .p16b-card{display:flex;flex-direction:column;gap:16px;padding:26px 34px}
+[data-id="p16b"] .p16b-card p{display:flex;align-items:center;gap:18px;margin:0;font-size:34px;line-height:1.4;color:var(--card-ink)}

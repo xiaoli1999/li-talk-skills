@@ -1528,7 +1528,8 @@
   /* 按 E：在编辑就退出；双击打开的页面先看服务开没开，开着就切到在线编辑，没开才进离线编辑 */
   function toggle() {
     if (E.on) { exit(); return; }
-    if (!EDITABLE) return;   // 从网站上打开的：按 E 什么都不做
+    // 从网站上打开的：不进编辑，提示一句，免得看的人以为按坏了
+    if (!EDITABLE) { I.toast('网页上打开的课件只能看，在本机双击打开才能按 E 编辑', 3500); return; }
     if (!FILE || SERVER || S.reading || !PAGES.length) { enter(); return; }
     if (E.checking || E.leaving) return;
     E.checking = true;

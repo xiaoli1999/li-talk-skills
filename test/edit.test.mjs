@@ -703,6 +703,8 @@ test('真实浏览器：从网站上打开的课件（不是本机、不带口�
       await sleep(600);
       assert.equal(await b.evaluate('Deck._.editState().on'), want, `${host}：按 E ${want ? '要' : '不要'}进编辑`);
       assert.equal(await b.evaluate(`!!document.querySelector('.lt-edit-bar')`), want);
+      // 网站上按 E 不是没反应：底部提示一句「只能看，在本机打开才能改」，免得看的人以为坏了
+      if (!want) assert.match(await b.evaluate(`(document.getElementById('toast') || {}).textContent || ''`), /只能看.*本机/);
     }
   } finally {
     await b.close();
