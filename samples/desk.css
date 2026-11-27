@@ -1,0 +1,28 @@
+/* 工位桌面自己的样板页的页面样式（和 samples/desk.js 配套）
+   - 每条选择器都以 [data-id="t-desk-…"] 开头，只管那一页；抄样板时连同这里的规则一起抄，[data-id="…"] 换成新页面的 id
+   - 只写大小、位置和字号；颜色用风格的变量（--ink、--dsk-ink2 这些在 scenes/desk.css 里），组件的样子都在 scenes/desk.css 末尾
+   - 纸里的 p 默认 margin 是 0（风格里的规则），要留空就写三段的选择器（[data-id] .纸 .字），比风格那条更具体 */
+
+/* ---------- 封面 ---------- */
+/* 讲稿纸：大标题 160px 两行，副题 48px 墨灰 */
+[data-id="t-desk-cover"] .cv-sheet{min-height:600px;padding:70px 76px 64px}
+[data-id="t-desk-cover"] .cv-sheet .cv-title{font:700 160px/1.15 var(--f-hand);letter-spacing:.02em;white-space:nowrap}
+[data-id="t-desk-cover"] .cv-sheet .cv-sub{margin-top:34px;font:400 48px/1.3 var(--f-hand);color:var(--dsk-ink2);white-space:nowrap}
+
+/* ---------- 桌面俯视 ---------- */
+/* 三张便签一样高 */
+[data-id="t-desk-items"] .it-note{min-height:232px}
+
+/* ---------- 回形针便签 ---------- */
+/* 打印纸：坑 64px，字下面正中一个铅笔小图（宽 140，在 y 132–290）；再往下 110px 留给便签压住 */
+[data-id="t-desk-pits"] .pt-memo{min-height:400px;padding:44px 44px}
+[data-id="t-desk-pits"] .pt-memo .pt-bad{font:700 64px/1.25 var(--f-hand);white-space:nowrap}
+[data-id="t-desk-pits"] .pt-memo .pt-ic{position:absolute;left:50%;top:132px;width:140px;margin-left:-70px}
+/* 改法：48px 墨色粗字 */
+[data-id="t-desk-pits"] .pt-fix p{font:700 48px/1.3 var(--f-hand);color:#2A2521;white-space:nowrap}
+
+/* ---------- 贴在电脑上的便签 ---------- */
+/* 大便签：金句 116px 两行；粉便签：致谢 46px */
+[data-id="t-desk-end"] .ed-note{padding:58px 64px 66px}
+[data-id="t-desk-end"] .ed-note .ed-q{font:700 116px/1.25 var(--f-hand);color:#2A2521;white-space:nowrap}
+[data-id="t-desk-end"] .ed-thx .ed-thanks{font:700 46px/1.3 var(--f-hand);color:#2A2521;white-space:nowrap}

@@ -1,0 +1,25 @@
+/* 第一部分的页面样式 */
+[data-id="p01"] .p01-h{font-size:108px;line-height:1.14}
+
+[data-id="p02"] .p02-tags{display:flex;gap:24px}
+[data-id="p02"] .p02-tags span{padding:14px 34px 16px;border-radius:999px;background:#fff;box-shadow:0 10px 26px rgba(30,60,110,.1),inset 0 0 0 2px #D6E4FC;color:var(--fg-blue-ink);font:600 44px/1.2 var(--f-hand)}
+
+[data-id="p03"] .fg-fc{min-height:470px}
+
+[data-id="p04"] .p04-clock{font-size:300px;letter-spacing:-.02em}
+[data-id="p04"] .fg-cap{margin-top:20px;font-size:44px;color:var(--ink)}
+[data-id="p04"] .p04-tl{display:flex;flex-direction:column}
+[data-id="p04"] .p04-tl p{position:relative;display:flex;align-items:baseline;gap:30px;padding:34px 0 34px 46px;border-left:3px solid #DCE6F5}
+[data-id="p04"] .p04-tl p::before{content:"";position:absolute;left:-12px;top:52px;width:21px;height:21px;border-radius:50%;background:#fff;border:5px solid #8DB4F5}
+[data-id="p04"] .p04-tl p b{font-size:56px;color:var(--ink)}
+[data-id="p04"] .p04-tl p span{font-size:40px;color:var(--ink-2)}
+
+[data-id="p06"] .p06-n{font-size:380px}
+[data-id="p06"] .p06-n small{font-size:.42em}
+[data-id="p06"] .fg-cap{margin-top:24px}
+[data-id="p06"] .p06-side>:nth-child(2){margin-left:-50px}
+[data-id="p06"] .p06-side>:nth-child(3){margin-left:-100px}
+
+[data-id="p07"] .p07-no{font-size:400px}
+[data-id="p07"] .p07-list{display:flex;flex-direction:column;gap:22px}
+[data-id="p07"] .p07-list p{display:flex;align-items:center;gap:28px;padding:20px 30px;border-radius:26px;background:#fff;box-shadow:var(--fg-card);font:700 44px/1.2 var(--f-hand);color:var(--ink)}

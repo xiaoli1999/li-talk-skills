@@ -1,0 +1,20 @@
+/* 扁平插画 flat 自己的样板页的页面样式（和 samples/flat.js 配套）
+   - 每条选择器都以 [data-id="t-flat-…"] 开头，只管那一页；抄样板时连同这里的规则一起抄，[data-id="…"] 换成新页面的 id
+   - 版式组件（.fl-*）的样子在 scenes/flat.css 末尾，这里只补这几页自己的字号、间距；颜色用风格的变量（--ink、--fl-coral 这些） */
+
+/* ---------- 插画封面 ---------- */
+/* 副题：44px 次一级的墨蓝；讲者胶囊前面一颗珊瑚小圆片（右下暗、左上亮） */
+[data-id="t-flat-cover"] .t-flat-cover-sub{margin:0;font:600 44px/1.3 var(--f-sans);color:var(--ink-2);white-space:nowrap}
+[data-id="t-flat-cover"] .t-flat-cover-dot{flex:none;width:20px;height:20px;border-radius:50%;background:var(--fl-coral);box-shadow:inset -3px -4px 0 var(--fl-coral-d),inset 2px 2px 0 var(--fl-coral-l)}
+
+/* ---------- 坑和办法的翻面横条 ---------- */
+/* 办法的胶囊：大一号（46px），在白色横条上用明黄浅色面；三颗一样宽、字居中，三条箭头一样长 */
+[data-id="t-flat-flip"] .fl-pill{min-width:340px;padding:16px 38px 20px;font-size:46px;text-align:center}
+
+/* ---------- 数字大卡 ---------- */
+/* 三张卡一样高 */
+[data-id="t-flat-nums"] .fl-num{min-height:450px;box-sizing:border-box}
+
+/* ---------- 茶碗说的话 ---------- */
+/* 致谢胶囊：44px */
+[data-id="t-flat-end"] .t-flat-end-thanks{padding:16px 40px 20px;font-size:44px}

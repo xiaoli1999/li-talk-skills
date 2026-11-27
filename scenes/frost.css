@@ -1,0 +1,532 @@
+/* =====================================================================
+   风格 · 毛玻璃 frost 的样子（行为在 frost.js）
+   静止的彩色光斑底（淡薰衣草底上紫、粉、蓝、杏四团柔光，两颗边缘清楚的小球），
+   薄的乳白磨砂卡片（半透明白底 + 细亮白边 + 极淡颗粒 + 柔和靛紫投影 + 背后重模糊），
+   重点词是一枚玻璃胶囊、字从墨色刷成紫→品红的渐变。所有选择器的第一段都带 [data-scene="frost"]
+   - 配色只有：底色 #EEEAFB、深靛墨（三级）、强调色紫 #6B4CF6 → 品红 #C8307F 的渐变；
+     光斑和卡片颜色只用紫、粉、蓝、杏四种柔色
+   - 磨砂（backdrop-filter）只用在卡片、小格、步骤的每一行、截图位和右上角的节拍胶囊上；
+     不支持时（文件末尾的 @supports）退成 84% 白底卡片，字照样清楚
+   - 磨砂组件的装饰（颗粒、跟着鼠标的柔光、出场时掠过的一道光）都画在同一个伪元素上，
+     卡片、小格、截图位、终端、命令用 ::before（顺手盖掉卡片的胶带、图钉和截图位的胶带），
+     步骤的 ::before 是序号圈，所以用 ::after
+   - 几个状态量写成 CSS 变量：--fr-h 悬停（0–1，悬停时过渡到 1）、--mx / --my 鼠标在组件里的位置、
+     --fr-rx / --fr-ry 悬停时的轻微倾斜（这三样由 frost.js 跟着鼠标写）、
+     --fr-sh 出场时那道光的位置、--fr-gl 复制成功时命令上那道反光的位置（frost.js 推动）
+   - 注意：外层元素一旦半透明（opacity < 1），里面卡片的磨砂就只能模糊外层自己，看起来像没磨砂。
+     所以讲过的拍变淡时，装着磨砂组件的外层不整体变淡，改成它的每个孩子各自变淡（见「讲过的拍」一节）；
+     出场时外层也只做极短的淡入，孩子各自浮上来（frost.js）
+   - --recede（讲过的拍变到多淡）由 frost.js 的 recede 写入：.8，这里不写
+   ===================================================================== */
+
+/* 悬停量注册成数字才能平滑过渡；伪元素要读到，所以可继承（每个磨砂组件自己再写一遍初值，不会从外层漏进来） */
+@property --fr-h{syntax:"<number>";inherits:true;initial-value:0}
+
+/* 变量 */
+[data-scene="frost"]{
+  --f-hand:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --f-sans:"PingFang SC","HarmonyOS Sans SC","Microsoft YaHei","Noto Sans SC",sans-serif;
+  /* 等宽字后面补上黑体：命令里的中文不至于落到宋体 */
+  --f-mono:"JetBrains Mono","Cascadia Mono",Consolas,"SF Mono",Menlo,"PingFang SC","Microsoft YaHei","Noto Sans SC",monospace;
+  --rough-r:24px;
+  --bg:#EEEAFB; --ink:#1D1A38; --ink-2:#47436A; --ink-3:#5B5780; --line:#6F62C9;
+  --mark:#6B4CF6; --key-ink:#1D1A38; --hl:rgba(107,76,246,.18); --accent:#6B4CF6;
+  --card-ink:#1D1A38; --card-ink-2:#47436A; --paper:#FFFFFF;
+  /* 卡片颜色只用光斑那几种柔色：杏、紫、粉、蓝（t-mint 没有绿，给紫） */
+  --t-yellow:#FFD08A; --t-mint:#A78BFA; --t-pink:#F9A8D4; --t-blue:#93C5FD; --t-white:#FFFFFF; --t-peach:#FDBA8C;
+  --term-bg:#231F45; --term-ink:#EEEAFB;
+  --human:#D6338A; --ai:#6B4CF6; --idle:#9893B8;
+  --sign-color:rgba(71,67,106,.62);
+  --scene-bg:#EEEAFB;
+  /* 强调色：紫 → 品红 */
+  --fr-a1:#6B4CF6; --fr-a2:#C8307F;
+  --fr-grad:linear-gradient(110deg,#6B4CF6,#C8307F);
+  /* 玻璃：乳白半透明 + 细亮边 + 柔和阴影 + 重模糊 */
+  --fr-glass:linear-gradient(140deg,rgba(255,255,255,.68),rgba(255,255,255,.40));
+  --fr-edge:rgba(255,255,255,.78);
+  --fr-shadow:0 26px 50px -22px rgba(52,30,140,.34),inset 1px 1px 0 rgba(255,255,255,.92);
+  --fr-blur:blur(22px) saturate(150%);
+  /* 极淡的颗粒（深靛色噪点）：背景用的一份透明度 .08，卡片上「磨砂」手感用的一份 .11 */
+  --fr-noise:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .18 0 0 0 0 .14 0 0 0 0 .34 0 0 0 .08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --fr-grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .18 0 0 0 0 .14 0 0 0 0 .34 0 0 0 .11 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --fr-ease:cubic-bezier(.2,.8,.2,1);
+}
+
+/* =====================================================================
+   背景层（frost.js 的 backdrop 放进去）：四团静止的柔光斑、两颗边缘清楚的小球（磨砂的效果靠它们看出来），
+   最上面压一层极淡的颗粒。坐标按舞台写（--fr-x --fr-y 圆心，--fr-rad 半径；不能用 --r，引擎把它注册成了倾斜角）；舞台在背景层里居中，背景层铺满整个窗口
+   小球贴着左右两边（左下一颗只露到 x 118，右边一颗在 x 1778 以外），不压正文，也让开右下角的署名和左下角的计时
+   ===================================================================== */
+[data-scene="frost"] :is(.fr-blob,.fr-orb){position:absolute;border-radius:50%;pointer-events:none;
+  left:calc(50% - 960px + var(--fr-x) - var(--fr-rad));top:calc(50% - 540px + var(--fr-y) - var(--fr-rad));width:calc(var(--fr-rad) * 2);height:calc(var(--fr-rad) * 2)}
+[data-scene="frost"] .fr-blob{background:radial-gradient(circle closest-side,var(--fr-c) 0%,var(--fr-c) 56%,transparent 100%)}
+[data-scene="frost"] .fr-b1{--fr-x:250px;--fr-y:900px;--fr-rad:470px;--fr-c:rgba(167,139,250,.82)}
+[data-scene="frost"] .fr-b2{--fr-x:1660px;--fr-y:170px;--fr-rad:430px;--fr-c:rgba(249,168,212,.88)}
+[data-scene="frost"] .fr-b3{--fr-x:1190px;--fr-y:990px;--fr-rad:450px;--fr-c:rgba(147,197,253,.85)}
+[data-scene="frost"] .fr-b4{--fr-x:720px;--fr-y:650px;--fr-rad:240px;--fr-c:rgba(253,186,140,.78)}
+[data-scene="frost"] .fr-o1{--fr-x:1878px;--fr-y:430px;--fr-rad:100px;background:radial-gradient(circle at 34% 30%,#fff 0,#FBD3EA 14%,#E58CC8 50%,#8E6CF7 100%)}
+[data-scene="frost"] .fr-o2{--fr-x:58px;--fr-y:760px;--fr-rad:60px;background:radial-gradient(circle at 34% 30%,#fff 0,#DCD3FF 16%,#A08AFA 56%,#6B4CF6 100%)}
+.bg[data-scene="frost"]::after{content:"";position:absolute;inset:0;pointer-events:none;background-image:var(--fr-noise)}
+
+/* 阅读模式里没有背景层：每页自己画光斑（舞台坐标，和背景层一样的位置和颜色；小球省掉） */
+[data-scene="frost"].slide:is(.reading *){background:
+  var(--fr-noise),
+  radial-gradient(circle 240px at 720px 650px,rgba(253,186,140,.78) 0,rgba(253,186,140,.78) 56%,rgba(253,186,140,0) 100%),
+  radial-gradient(circle 450px at 1190px 990px,rgba(147,197,253,.85) 0,rgba(147,197,253,.85) 56%,rgba(147,197,253,0) 100%),
+  radial-gradient(circle 430px at 1660px 170px,rgba(249,168,212,.88) 0,rgba(249,168,212,.88) 56%,rgba(249,168,212,0) 100%),
+  radial-gradient(circle 470px at 250px 900px,rgba(167,139,250,.82) 0,rgba(167,139,250,.82) 56%,rgba(167,139,250,0) 100%),
+  #EEEAFB}
+
+/* 正文：黑体，字距拉开一点 */
+[data-scene="frost"].slide{letter-spacing:.01em}
+
+/* =====================================================================
+   主题行、标题、解释句
+   ===================================================================== */
+[data-scene="frost"] .s-topic{gap:14px;letter-spacing:.04em}
+[data-scene="frost"] .s-topic::before{content:"";flex:none;width:12px;height:12px;border-radius:50%;background:var(--fr-grad)}
+[data-scene="frost"] .s-topic .tc{padding:0;font:500 26px/1.2 var(--f-hand);color:var(--ink-3)}
+[data-scene="frost"] .s-topic .ts{font:500 26px/1 var(--f-hand);color:var(--fr-a1)}
+[data-scene="frost"] .s-topic .tt{font:500 30px/1.2 var(--f-hand);color:var(--ink-2)}
+
+[data-scene="frost"] .s-title{font-weight:700;letter-spacing:.02em;color:var(--ink)}
+[data-scene="frost"] .explain{padding-left:26px;color:var(--ink-2)}
+[data-scene="frost"] .explain::before{width:5px;top:.18em;bottom:.12em;border-radius:3px;background:linear-gradient(180deg,#6B4CF6,#C8307F)}
+[data-scene="frost"] .explain b{color:var(--ink)}
+[data-scene="frost"] .muted{color:var(--ink-2)}
+[data-scene="frost"] .quote{font-weight:700;letter-spacing:.02em;color:var(--ink)}
+
+/* 现代风格不歪：页面里写的 --r 倾斜在这里不用 */
+[data-scene="frost"] :is(.card,.cell,.tag,.quote,.term,.copy,.shot){rotate:none}
+
+/* =====================================================================
+   重点词：一枚玻璃胶囊从雾里凝出来、一道反光从胶囊里掠过（::before）→ 字从墨色刷成紫→品红的渐变（::after）
+   引擎在那一拍把 --k 从 0 推到 1，几样都跟着 --k 走（反光按 --k×(1−k) 先亮后收）
+   渐变字另用 ::after 照着 data-k（引擎抄进去的重点词原文）再写一遍、压在最上面：
+   要是直接把重点词自己的底色裁成字形，胶囊（z-index -1）会画在这层「字」上面，把字盖淡
+   ===================================================================== */
+[data-scene="frost"] .key{padding:0 .16em;margin:0 .04em;color:var(--fr-a1);line-height:1.2}
+[data-scene="frost"] .key::before{content:"";position:absolute;inset:.02em 0;z-index:-1;border-radius:999px;pointer-events:none;
+  opacity:var(--k);transform:scale(calc(.35 + .65 * var(--k)),calc(.7 + .3 * var(--k)));
+  background:
+    linear-gradient(100deg,rgba(255,255,255,0) calc(var(--k) * 150% - 50%),rgba(255,255,255,calc(var(--k) * (1 - var(--k)) * 3.8)) calc(var(--k) * 150% - 30%),rgba(255,255,255,0) calc(var(--k) * 150% - 10%)),
+    linear-gradient(100deg,rgba(107,76,246,.17),rgba(200,48,127,.17)),rgba(255,255,255,.55);
+  border:1.5px solid #fff;box-shadow:0 10px 22px -10px rgba(107,76,246,.6)}
+@supports ((-webkit-background-clip:text) or (background-clip:text)){
+  [data-scene="frost"] .key{color:transparent}
+  /* 「/ ""」：这层字只是画出来的，读屏不再念一遍 */
+  [data-scene="frost"] .key::after{content:attr(data-k);content:attr(data-k) / "";position:absolute;left:0;top:0;right:0;bottom:0;padding:inherit;white-space:nowrap;text-align:left;pointer-events:none;
+    color:var(--key-ink);-webkit-text-fill-color:transparent;-webkit-background-clip:text;background-clip:text;
+    background-image:linear-gradient(90deg,#6B4CF6 0%,#C8307F 46%,var(--key-ink) 54%,var(--key-ink) 100%);
+    background-size:220% 100%;background-repeat:no-repeat;background-position:calc((1 - var(--k)) * 100%) 0}
+}
+
+/* =====================================================================
+   磨砂组件：卡片、小格、步骤的每一行、截图位
+   薄的乳白玻璃 + 细亮白边 + 柔和靛紫投影 + 背后重模糊；isolation 让装饰伪元素压在玻璃上、字下面
+   （不在这里写 position：卡片、小格、截图位本来就是相对定位，写了会盖掉页面的 .abs）
+   ===================================================================== */
+[data-scene="frost"] :is(.card,.cell,.steps>li,.shot){--fr-h:0;isolation:isolate;
+  background:var(--fr-glass);border:1.5px solid var(--fr-edge);box-shadow:var(--fr-shadow);
+  -webkit-backdrop-filter:var(--fr-blur);backdrop-filter:var(--fr-blur);
+  transition:opacity .45s ease,translate .35s var(--fr-ease),transform .6s var(--fr-ease),scale .2s ease,box-shadow .35s ease,border-color .35s ease,--fr-h .35s}
+[data-scene="frost"] .steps>li{position:relative}
+
+/* 装饰层：跟着鼠标的一团柔光 + 出场时掠过的一道光 + 磨砂颗粒（卡片的胶带、图钉，截图位的胶带在这里一并盖掉） */
+[data-scene="frost"] :is(.card,.cell,.shot,.term)::before,
+[data-scene="frost"] .steps>li::after{content:"";position:absolute;inset:0;z-index:-1;width:auto;height:auto;margin:0;rotate:none;box-shadow:none;
+  border-radius:inherit;pointer-events:none;
+  background:
+    radial-gradient(440px circle at var(--mx,50%) var(--my,0%),rgba(255,255,255,calc(var(--fr-ga,.62) * var(--fr-h))),rgba(255,255,255,0) 62%),
+    linear-gradient(100deg,rgba(255,255,255,0) 38%,rgba(255,255,255,var(--fr-sa,.58)) 50%,rgba(255,255,255,0) 62%) var(--fr-sh,110%) 0/260% 100% no-repeat,
+    var(--fr-grain)}
+
+/* 悬停：轻轻浮起、白边更亮、阴影更深、柔光跟着鼠标走，再朝鼠标那侧极轻地一斜（倾斜角由 frost.js 写）；按下时压一下 */
+@media (hover:hover){
+  [data-scene="frost"] :is(.card,.cell,.steps>li,.shot):hover{--fr-h:1;translate:0 -6px;border-color:rgba(255,255,255,.98);
+    box-shadow:0 34px 60px -24px rgba(52,30,140,.42),inset 1px 1px 0 #fff;
+    transform:perspective(1400px) rotateX(var(--fr-rx,0deg)) rotateY(var(--fr-ry,0deg))}
+}
+[data-scene="frost"] :is(.card,.cell,.steps>li,.shot):active{scale:.985}
+
+/* 卡片的颜色（t-yellow 等）：左上角透出一团对应的柔色（不支持 color-mix 的浏览器就是白玻璃） */
+@supports (background:color-mix(in srgb,red 50%,transparent)){
+  [data-scene="frost"] :is(.card,.cell):is(.t-yellow,.t-mint,.t-pink,.t-blue,.t-white,.t-peach){
+    background:radial-gradient(120% 110% at 0% 0%,color-mix(in srgb,var(--tint) 46%,transparent) 0%,transparent 72%),var(--fr-glass)}
+}
+
+/* ---------- 卡片 ---------- */
+[data-scene="frost"] .card{padding:38px 42px 40px;border-radius:32px;color:var(--card-ink)}
+[data-scene="frost"] .card h3{font-weight:700;letter-spacing:.01em;color:var(--ink)}
+[data-scene="frost"] .card :is(p,li){color:var(--ink-2)}
+[data-scene="frost"] .card li::before{left:.15em;top:.62em;width:10px;height:10px;border-radius:50%;rotate:none;opacity:1;background:var(--fr-grad)}
+/* 卡片上沿的标签：一枚白色小胶囊，紫字 */
+[data-scene="frost"] .lab{top:-28px;left:30px;padding:4px 22px 6px;border:1.5px solid #fff;border-radius:999px;background:rgba(255,255,255,.92);
+  color:var(--fr-a1);font-weight:600;letter-spacing:.04em;box-shadow:0 10px 22px -12px rgba(52,30,140,.45)}
+
+/* ---------- 带序号的步骤：每一行是一张磨砂小卡，序号是白底渐变细圈里的紫色数字 ---------- */
+[data-scene="frost"] .steps>li{padding:28px 32px 30px 28px;border-radius:30px}
+[data-scene="frost"] .steps>li::before{width:60px;height:60px;font:700 30px/1 var(--f-hand);color:var(--fr-a1);border:2px solid transparent;border-radius:50%;
+  background:linear-gradient(rgba(255,255,255,.92),rgba(255,255,255,.92)) padding-box,linear-gradient(135deg,#6B4CF6,#C8307F) border-box;
+  box-shadow:0 10px 20px -12px rgba(52,30,140,.5)}
+[data-scene="frost"] .steps>li>b{font-weight:700;color:var(--ink)}
+[data-scene="frost"] .steps>li>span{color:var(--ink-2)}
+
+/* ---------- 左右对比：中间一个细的渐变符号 ---------- */
+[data-scene="frost"] .vs::before{font:300 64px/1 var(--f-hand);color:var(--fr-a1)}
+@supports ((-webkit-background-clip:text) or (background-clip:text)){
+  [data-scene="frost"] .vs::before{color:transparent;-webkit-background-clip:text;background-clip:text;background-image:var(--fr-grad)}
+}
+
+/* ---------- 一排小格：磨砂小卡；AI 和需要人的格子顶上一道彩色唇边，需要人的右上角一颗小圆点 ---------- */
+[data-scene="frost"] .cell{padding:24px 16px 22px;border-radius:24px}
+[data-scene="frost"] .cell>i{color:var(--ink-3);font-weight:600}
+[data-scene="frost"] .cell>b{font-weight:700;color:var(--ink)}
+[data-scene="frost"] .cell>span{color:var(--ink-2)}
+[data-scene="frost"] .cell.ai{border-color:var(--fr-edge);box-shadow:var(--fr-shadow),inset 0 4px 0 var(--ai)}
+[data-scene="frost"] .cell.human{border-color:var(--fr-edge);box-shadow:var(--fr-shadow),inset 0 4px 0 var(--human)}
+[data-scene="frost"] .cell.human::after{top:16px;right:16px;width:12px;height:12px;background:var(--human);box-shadow:0 0 0 3px rgba(255,255,255,.75)}
+[data-scene="frost"] .cell.idle{border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.26);color:var(--idle)}
+[data-scene="frost"] .cell.idle>:is(b,span,i){color:var(--idle)}
+[data-scene="frost"] .cell.idle>b{text-decoration-thickness:3px;text-decoration-color:var(--ink-3)}
+@media (hover:hover){
+  [data-scene="frost"] .cell:is(.ai,.human):hover{border-color:rgba(255,255,255,.98)}
+  [data-scene="frost"] .cell.ai:hover{box-shadow:0 34px 60px -24px rgba(52,30,140,.42),inset 1px 1px 0 #fff,inset 0 4px 0 var(--ai)}
+  [data-scene="frost"] .cell.human:hover{box-shadow:0 34px 60px -24px rgba(52,30,140,.42),inset 1px 1px 0 #fff,inset 0 4px 0 var(--human)}
+}
+
+/* ---------- 标签：白色玻璃小胶囊，紫字（不做磨砂，省性能） ---------- */
+[data-scene="frost"] .tag{padding:6px 24px 8px;border:1.5px solid #fff;border-radius:999px;background:linear-gradient(140deg,rgba(255,255,255,.82),rgba(255,255,255,.56));
+  color:var(--fr-a1);font-weight:600;letter-spacing:.04em;box-shadow:0 10px 22px -12px rgba(52,30,140,.45)}
+
+/* ---------- 图例圆点 ---------- */
+[data-scene="frost"] .dot{box-shadow:0 0 0 2px rgba(255,255,255,.8)}
+
+/* ---------- 终端：深靛玻璃窗（和命令同一种深色胶囊玻璃），三个点用紫、粉、蓝 ---------- */
+[data-scene="frost"] .term{--fr-h:0;--fr-ga:.12;--fr-sa:.22;isolation:isolate;padding:0 0 26px;border-radius:26px;color:var(--term-ink);font-weight:500;
+  background:linear-gradient(135deg,rgba(29,26,56,.94),rgba(58,44,112,.92));
+  box-shadow:0 26px 50px -22px rgba(29,26,56,.62),inset 0 1px 0 rgba(255,255,255,.18);
+  transition:opacity .45s ease,translate .35s var(--fr-ease),box-shadow .35s ease,--fr-h .35s}
+[data-scene="frost"] .term-bar{height:54px;margin-bottom:18px;padding:0 24px;background:rgba(255,255,255,.06);box-shadow:inset 0 -1px 0 rgba(255,255,255,.08);font:500 24px/1 var(--f-mono);color:#A49FCB}
+[data-scene="frost"] .term-bar i{width:13px;height:13px;background:#A78BFA}
+[data-scene="frost"] .term-bar i:nth-child(2){background:#F9A8D4}
+[data-scene="frost"] .term-bar i:nth-child(3){background:#93C5FD}
+[data-scene="frost"] .term p{padding:0 32px}
+[data-scene="frost"] .term .in::before{color:#C4B5FD}
+[data-scene="frost"] .term .cc::before{color:#F9A8D4}
+[data-scene="frost"] .term .dim{color:#A49FCB}
+[data-scene="frost"] .term .ok{color:#A9D4FF}
+[data-scene="frost"] .term .warn{color:#FFB4D6}
+[data-scene="frost"] .term .hi{color:#FFFFFF}
+@media (hover:hover){
+  [data-scene="frost"] .term:hover{--fr-h:1;translate:0 -4px;box-shadow:0 32px 56px -22px rgba(29,26,56,.66),inset 0 1px 0 rgba(255,255,255,.2)}
+}
+
+/* ---------- 一行可复制的命令：深靛玻璃胶囊；柔光跟着鼠标走，悬停时浮起、外面一圈淡紫光；按下压一下 ---------- */
+[data-scene="frost"] .copy{--fr-h:0;isolation:isolate;padding:18px 30px 18px 30px;border-radius:999px;color:#FFFFFF;font:500 var(--fs-min)/1.2 var(--f-mono);letter-spacing:0;
+  background:linear-gradient(135deg,rgba(29,26,56,.93),rgba(58,44,112,.9));
+  box-shadow:0 14px 28px -14px rgba(29,26,56,.65),inset 0 1px 0 rgba(255,255,255,.2);
+  transition:opacity .45s ease,translate .25s var(--fr-ease),box-shadow .25s ease,scale .15s ease,--fr-h .3s}
+/* 柔光 + 复制成功时扫过的一道反光（frost.js 的 copied 推动 --fr-gl） */
+[data-scene="frost"] .copy::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;
+  background:
+    radial-gradient(170px circle at var(--mx,50%) var(--my,50%),rgba(255,255,255,calc(.22 * var(--fr-h))),rgba(255,255,255,0) 70%),
+    linear-gradient(100deg,rgba(255,255,255,0) calc(var(--fr-gl,-40%) - 18%),rgba(255,255,255,.5) var(--fr-gl,-40%),rgba(255,255,255,0) calc(var(--fr-gl,-40%) + 18%))}
+[data-scene="frost"] .copy .ps{color:#A49FCB;opacity:1}
+[data-scene="frost"] .copy .ic{width:26px;height:26px;background:#DCD0FF;opacity:.9;transition:background-color .25s}
+@media (hover:hover){
+  [data-scene="frost"] .copy:hover{--fr-h:1;translate:0 -3px;box-shadow:0 18px 32px -14px rgba(29,26,56,.6),0 0 0 6px rgba(107,76,246,.2),inset 0 1px 0 rgba(255,255,255,.2)}
+  [data-scene="frost"] .copy:hover .ic{background:#FFFFFF}
+}
+[data-scene="frost"] .copy:active{scale:.96}
+[data-scene="frost"] .copy:focus-visible{outline:3px solid rgba(107,76,246,.6);outline-offset:5px}
+/* 复制成功：复制图标换成对勾 */
+[data-scene="frost"] .copy.is-copied .ic{background:#FFFFFF;opacity:1;
+  -webkit-mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+          mask-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E")}
+
+/* 「已复制」：一枚从雾里凝出来的白玻璃小提示，左边一颗渐变圆里描出白色对勾（出场见 frost.js 的 copied） */
+[data-scene="frost"] .copied-tip{height:64px;padding:0 28px 0 11px;gap:14px;border:1.5px solid #fff;border-radius:999px;background:rgba(255,255,255,.9);
+  box-shadow:0 16px 30px -16px rgba(52,30,140,.5);color:var(--ink);font:700 28px/1 var(--f-hand)}
+[data-scene="frost"] .copied-tip svg{width:42px;height:42px;padding:11px 10px 10px;border-radius:50%;background:var(--fr-grad);overflow:visible}
+[data-scene="frost"] .copied-tip path{stroke:#fff;stroke-width:5.4}
+
+/* 复制成功时从命令上冒起来的磨砂小泡泡（frost.js 放进页面，--t 是泡泡带的那点颜色） */
+[data-scene="frost"] .fr-bub{position:absolute;z-index:26;border-radius:50%;pointer-events:none;opacity:0;--t:rgba(167,139,250,.55);
+  background:radial-gradient(circle at 34% 30%,#fff 0,#fff 13%,rgba(255,255,255,.42) 36%,var(--t) 100%);
+  border:1.5px solid rgba(255,255,255,.95);box-shadow:0 0 0 1px rgba(107,76,246,.16),0 6px 12px -6px rgba(80,50,180,.45)}
+
+/* ---------- 截图位：磨砂相框、圆角图，不贴胶带 ---------- */
+[data-scene="frost"] .shot{padding:12px;border-radius:30px}
+[data-scene="frost"] .shot-img{border-radius:20px;background:#E4DEF7}
+[data-scene="frost"] .shot figcaption{padding:14px 8px 8px;font:500 30px/1.3 var(--f-hand);color:var(--ink-2)}
+[data-scene="frost"] .shot-miss{font:500 30px/1.4 var(--f-hand);color:var(--ink-3);background:repeating-linear-gradient(-45deg,rgba(255,255,255,.55) 0 14px,rgba(255,255,255,.28) 14px 28px)}
+[data-scene="frost"] .shot-miss small{color:var(--ink-3)}
+[data-scene="frost"] .shot-zoom{right:26px;top:26px;background:rgba(255,255,255,.86);box-shadow:0 8px 18px -10px rgba(52,30,140,.5);color:var(--ink);font-family:var(--f-hand)}
+
+/* ---------- 线稿与圈注：线几乎是直的（frost.js 的 rough 把粗糙度压得很低），圈注是紫色细线，底下一点柔光 ---------- */
+.slide.active[data-scene="frost"] svg.marks g{filter:drop-shadow(0 4px 8px rgba(107,76,246,.28))}
+
+/* ---------- 形象：一点靛紫色的柔和投影（小雾自带白色亮边，深色底也不用描边） ---------- */
+[data-scene="frost"] .mascot{--mascot-outline:#FFFFFF;--mascot-shadow:drop-shadow(0 10px 12px rgba(60,40,150,.22))}
+
+/* ---------- 形象说的话：和「已复制」同一种白玻璃小提示 ---------- */
+[data-scene="frost"] .mascot-say{padding:9px 22px 11px;border:1.5px solid #fff;border-radius:22px;background:rgba(255,255,255,.92);color:var(--ink);font-family:var(--f-hand);font-weight:700;
+  box-shadow:0 14px 28px -14px rgba(52,30,140,.5)}
+[data-scene="frost"] .mascot-say::after{background:rgba(255,255,255,.92);border-right:1.5px solid #fff;border-bottom:1.5px solid #fff}
+
+/* 点击处漾开一圈淡光（frost.js 的 ripple 放进内容下面的涟漪层：点在卡片上时隔着磨砂只看到一团柔光） */
+[data-scene="frost"] .fr-ring{position:absolute;left:0;top:0;width:240px;height:240px;margin:-120px 0 0 -120px;border-radius:50%;pointer-events:none;
+  border:2px solid rgba(255,255,255,.9);background:radial-gradient(circle,rgba(255,255,255,0) 50%,rgba(255,255,255,.4) 68%,rgba(255,255,255,0) 71%);
+  box-shadow:0 0 0 1px rgba(107,76,246,.1),0 0 26px rgba(255,255,255,.55)}
+
+/* =====================================================================
+   讲过的拍：装着磨砂组件的外层（一排卡片、步骤、左右对比……）不整体变淡（会让里面的磨砂失效），
+   改成它的每个孩子各自变淡、中间的符号一起变淡；鼠标移到哪个孩子上，哪个亮回来。
+   不支持 :has 的浏览器照引擎的做法整体变淡，只是那几张卡片暂时看不出磨砂
+   ===================================================================== */
+[data-scene="frost"] .past:has(.card,.cell,.shot,.steps>li){opacity:1}
+[data-scene="frost"] .past:has(.card,.cell,.shot,.steps>li)>*{opacity:var(--recede);transition:opacity .45s ease}
+[data-scene="frost"] .past:has(.card,.cell,.shot,.steps>li)::before{opacity:var(--recede)}
+@media (hover:hover){
+  [data-scene="frost"] .past:has(.card,.cell,.shot,.steps>li)>:hover{opacity:.95}
+}
+/* 阅读模式里所有拍都直接显示，不变淡 */
+[data-scene="frost"].slide:is(.reading *) .past:has(.card,.cell,.shot,.steps>li)>*,
+[data-scene="frost"].slide:is(.reading *) .past:has(.card,.cell,.shot,.steps>li)::before{opacity:1}
+
+/* =====================================================================
+   常驻信息：章节、页码、节拍指示（右上一枚磨砂胶囊：圆点像系统的分页点，当前拍拉长成渐变短条；
+   换拍时数字从雾里换上来、一道光从胶囊上掠过）、计时
+   页码和节拍胶囊挪到 top 22，和左上的主题行同一条中线
+   ===================================================================== */
+#stage[data-scene="frost"] .chap span{font:500 26px/1.2 var(--f-hand);color:var(--ink-3);letter-spacing:.04em}
+#stage[data-scene="frost"] .meta{top:22px;gap:24px;font:500 24px/1 var(--f-hand);color:var(--ink-3);letter-spacing:.02em}
+#stage[data-scene="frost"] .pageno{color:var(--ink-3)}
+#stage[data-scene="frost"] .pageno b{color:var(--ink-2);font-weight:700}
+#stage[data-scene="frost"] .meter{position:relative;height:52px;padding:0 24px 0 20px;gap:16px;border-radius:26px;overflow:hidden;
+  background:var(--fr-glass);border:1.5px solid var(--fr-edge);box-shadow:0 14px 30px -18px rgba(52,30,140,.4),inset 1px 1px 0 rgba(255,255,255,.9);
+  -webkit-backdrop-filter:var(--fr-blur);backdrop-filter:var(--fr-blur)}
+#stage[data-scene="frost"] .meter .dots{gap:8px}
+#stage[data-scene="frost"] .dots i{display:block;width:12px;height:12px;border-radius:6px;background-color:rgba(29,26,56,.18);
+  transition:width .4s cubic-bezier(.3,1.5,.5,1),background-color .3s,opacity .3s}
+#stage[data-scene="frost"] .dots i.on{background-color:var(--fr-a1);opacity:.55}
+#stage[data-scene="frost"] .dots i.now{width:36px;opacity:1;background-image:var(--fr-grad)}
+#stage[data-scene="frost"] .meter .ml{display:none}
+#stage[data-scene="frost"] .meter .ms{display:inline-flex;align-items:baseline;gap:2px;font:500 24px/1 var(--f-hand);color:var(--ink-2)}
+/* 换拍时引擎会重写数字：新数字从雾里换上来（只播一次） */
+#stage[data-scene="frost"] .meter .ms b{display:inline-block;font:700 28px/1 var(--f-hand);color:var(--ink);font-variant-numeric:tabular-nums;animation:fr-roll .42s cubic-bezier(.34,1.56,.64,1)}
+/* 同时一道光从胶囊上掠过（挂在每次重写的 .ms 上，所以每换一拍播一次） */
+#stage[data-scene="frost"] .meter .ms::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;
+  background:linear-gradient(100deg,rgba(255,255,255,0) 40%,rgba(255,255,255,.85) 50%,rgba(255,255,255,0) 60%) no-repeat;background-size:300% 100%;
+  animation:fr-glint .7s ease-in-out}
+@keyframes fr-roll{from{opacity:0;transform:translateY(70%);filter:blur(4px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes fr-glint{from{opacity:1;background-position:100% 0}to{opacity:1;background-position:0% 0}}
+#stage[data-scene="frost"] .timer{font:500 24px/1 var(--f-mono);color:var(--ink-3)}
+
+/* =====================================================================
+   毛玻璃自己的版式组件（.fr-*）：用法见 frost.js 开头的说明，样板页见 samples/frost.js
+   - 结束时的样子都写在这里，跟着 .on（到拍）、:has()、data-now 走；动起来的过渡也写在这里：卡片摊开、光斑挪过去、
+     开关拨过去、滑块推上去、旋钮转过去、沙漏翻过来。frost.js 只管字从磨砂后面聚焦出来、掠过的一道光、从上一块底下滑出来
+   - 位置变化一律用 translate、scale，不改 left、top；控件读数用注册过的 --fr-v（0 → 1）：
+     版面位置一直是最后的位置，形象的落脚点、自检量到的都对；退一拍、跳页时过渡自己倒回去
+   - 可读性：字都写在乳白磨砂上、实色横排；小球（.fr-ball）和光斑（.fr-spot）只垫在玻璃后面；
+     讲过的块不另外调淡，「当前」靠光斑挪过来、当前一行亮一道淡紫
+   ===================================================================== */
+@property --fr-v{syntax:"<number>";inherits:true;initial-value:0}
+
+/* 磨砂材质：和卡片同一种（乳白半透明 + 细亮边 + 靛紫投影 + 背后重模糊）；::before 是颗粒、跟着鼠标的柔光、掠过的一道光 */
+[data-scene="frost"] :is(.fr-pane,.fr-cap,.fr-leaf,.fr-note,.fr-set,.fr-tile){--fr-h:0;isolation:isolate;
+  background:var(--fr-glass);border:1.5px solid var(--fr-edge);box-shadow:var(--fr-shadow);
+  -webkit-backdrop-filter:var(--fr-blur);backdrop-filter:var(--fr-blur)}
+[data-scene="frost"] :is(.fr-pane,.fr-cap,.fr-leaf,.fr-note,.fr-set,.fr-tile)::before{content:"";position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;
+  background:
+    radial-gradient(440px circle at var(--mx,50%) var(--my,0%),rgba(255,255,255,calc(.62 * var(--fr-h))),rgba(255,255,255,0) 62%),
+    linear-gradient(100deg,rgba(255,255,255,0) 38%,rgba(255,255,255,.58) 50%,rgba(255,255,255,0) 62%) var(--fr-sh,110%) 0/260% 100% no-repeat,
+    var(--fr-grain)}
+@media (hover:hover){
+  [data-scene="frost"] :is(.fr-pane,.fr-cap,.fr-leaf,.fr-note,.fr-set,.fr-tile):hover{--fr-h:1;border-color:rgba(255,255,255,.98)}
+}
+
+/* ---------- 玻璃板 .fr-pane：封面、结尾放大字的一大块；.fr-back 是后面垫的一块空玻璃 ---------- */
+[data-scene="frost"] .fr-pane{z-index:2;padding:64px 76px 70px;border-radius:52px;transition:border-color .35s,--fr-h .35s}
+[data-scene="frost"] .fr-pane.fr-back{z-index:1;border-radius:44px;background:linear-gradient(140deg,rgba(255,255,255,.52),rgba(255,255,255,.22))}
+
+/* ---------- 小球 .fr-ball：边缘清楚的渐变球，一半藏在玻璃后面（藏着的一半被磨砂成一团柔色） ---------- */
+[data-scene="frost"] .fr-ball{z-index:0;display:block;aspect-ratio:1;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle at 34% 30%,#fff 0,#FBD3EA 14%,#E58CC8 50%,#8E6CF7 100%);box-shadow:0 40px 70px -30px rgba(80,40,170,.45)}
+[data-scene="frost"] .fr-ball[data-fr-tone="violet"]{background:radial-gradient(circle at 34% 30%,#fff 0,#DCD3FF 16%,#A08AFA 56%,#6B4CF6 100%)}
+[data-scene="frost"] .fr-ball[data-fr-tone="blue"]{background:radial-gradient(circle at 34% 30%,#fff 0,#D7E9FF 16%,#93C5FD 54%,#6C7CF5 100%)}
+[data-scene="frost"] .fr-ball[data-fr-tone="peach"]{background:radial-gradient(circle at 34% 30%,#fff 0,#FFE6D2 16%,#FDBA8C 54%,#EE6FA0 100%)}
+
+/* ---------- 胶囊 .fr-cap：一句话（讲者、致谢），左边一颗渐变圆点；z-index 比玻璃板低，出场时从玻璃板底下滑出来 ---------- */
+[data-scene="frost"] .fr-cap{z-index:1;display:inline-flex;align-items:center;gap:18px;padding:20px 42px 22px 28px;border-radius:999px;
+  font:500 40px/1.2 var(--f-hand);color:var(--ink);white-space:nowrap;transition:border-color .35s,--fr-h .35s}
+[data-scene="frost"] .fr-cap:not(.abs){position:relative}
+[data-scene="frost"] .fr-cap::after{content:"";order:-1;flex:none;width:18px;height:18px;border-radius:50%;background:var(--fr-grad);box-shadow:0 0 0 6px rgba(107,76,246,.14)}
+
+/* ---------- 图标 .fr-ico：渐变圆角小方块 + 白色线稿（颜色按图标分） ---------- */
+[data-scene="frost"] .fr-ico{--fr-i1:#8E6CF7;--fr-i2:#C8307F;display:grid;place-items:center;flex:none;width:112px;height:112px;border-radius:32px;
+  background:linear-gradient(140deg,var(--fr-i1),var(--fr-i2));
+  box-shadow:0 18px 30px -16px rgba(80,40,160,.55),inset 0 1.5px 0 rgba(255,255,255,.5),inset 0 -12px 20px -10px rgba(40,20,110,.3)}
+[data-scene="frost"] .fr-ico svg{width:64%;height:64%;stroke:#fff;stroke-width:6.5}
+[data-scene="frost"] .fr-ico[data-fr-ico="leaf"]{--fr-i1:#F8A262;--fr-i2:#E0548C}
+[data-scene="frost"] .fr-ico[data-fr-ico="kettle"]{--fr-i1:#5A9CF6;--fr-i2:#7D5CF6}
+[data-scene="frost"] .fr-ico[data-fr-ico="thermo"]{--fr-i1:#F07AA0;--fr-i2:#B23A9E}
+[data-scene="frost"] .fr-ico[data-fr-ico="clock"]{--fr-i1:#6FA8FF;--fr-i2:#8B5CF6}
+
+/* ---------- 光斑 .fr-spot（建页时放进 .fr-fan、.fr-cc）：一团柔光垫在当前那一块后面，隔着磨砂透出颜色 ----------
+   --fr-n 是「几块到拍了」（下面按 :has 数出来），光斑在第 --fr-n 栏后面，颜色跟着换；一块都没到拍时卡片展开停在那一摞后面，控制中心不亮 */
+[data-scene="frost"] :is(.fr-fan,.fr-cc){--cols:3;--gap:60px;--fr-n:0;--fr-stack:1;--fr-sc:rgba(253,186,140,.78);
+  --fr-cw:calc((100% - (var(--cols) - 1) * var(--gap)) / var(--cols));
+  display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));column-gap:var(--gap)}
+[data-scene="frost"] :is(.fr-fan,.fr-cc):has(> :nth-child(1) > :is(.fr-face,.fr-read).on){--fr-n:1;--fr-sc:rgba(167,139,250,.82)}
+[data-scene="frost"] :is(.fr-fan,.fr-cc):has(> :nth-child(2) > :is(.fr-face,.fr-read).on){--fr-n:2;--fr-sc:rgba(249,168,212,.88)}
+[data-scene="frost"] :is(.fr-fan,.fr-cc):has(> :nth-child(3) > :is(.fr-face,.fr-read).on){--fr-n:3;--fr-sc:rgba(147,197,253,.88)}
+[data-scene="frost"] :is(.fr-fan,.fr-cc):has(> :nth-child(4) > :is(.fr-face,.fr-read).on){--fr-n:4;--fr-sc:rgba(253,186,140,.82)}
+[data-scene="frost"] :is(.fr-fan,.fr-cc):has(> :nth-child(5) > :is(.fr-face,.fr-read).on){--fr-n:5;--fr-sc:rgba(167,139,250,.82)}
+[data-scene="frost"] .fr-spot{--fr-at:calc(var(--fr-n) - 1);position:absolute;z-index:0;top:-80px;bottom:-80px;width:var(--fr-cw);
+  left:calc(var(--fr-at) * (var(--fr-cw) + var(--gap)));border-radius:50%;pointer-events:none;color:var(--fr-sc);
+  background:radial-gradient(closest-side,currentColor 0%,currentColor 36%,transparent 100%);
+  transition:left .8s var(--fr-ease),color .8s ease,opacity .6s ease}
+[data-scene="frost"] .fr-fan:not(:has(> * > .fr-face.on))>.fr-spot{--fr-at:var(--fr-stack)}
+[data-scene="frost"] .fr-cc:not(:has(> * > .fr-read.on))>.fr-spot{--fr-at:0;opacity:0}
+
+/* ---------- 卡片展开 .fr-fan > .fr-leaf ----------
+   版面上每张卡片一直在自己那一栏（第 i 栏）；没到拍的叠在第 --fr-stack 栏：横着挪过去（translate），
+   往下错开、缩小一点（--fr-d 是它在这一摞里的深度：0 是最上面一张；那一栏已经摊开了一张时，剩下的整摞再往下压一层）。
+   到拍（里面的 .fr-face 有了 .on）就滑回自己那一栏、变回原大 */
+[data-scene="frost"] .fr-fan>.fr-leaf:nth-child(1){--i:0;grid-column:1}
+[data-scene="frost"] .fr-fan>.fr-leaf:nth-child(2){--i:1;grid-column:2}
+[data-scene="frost"] .fr-fan>.fr-leaf:nth-child(3){--i:2;grid-column:3}
+[data-scene="frost"] .fr-fan>.fr-leaf:nth-child(4){--i:3;grid-column:4}
+[data-scene="frost"] .fr-fan>.fr-leaf:nth-child(5){--i:4;grid-column:5}
+[data-scene="frost"] .fr-fan>.fr-leaf{position:relative;grid-row:1;z-index:calc(20 - var(--i));
+  --fr-occ:clamp(0,calc(var(--fr-n) - var(--fr-stack)),1);
+  --fr-d:max(0,calc(var(--i) - var(--fr-n) + var(--fr-occ)));
+  translate:calc((var(--fr-stack) - var(--i)) * (100% + var(--gap))) calc(var(--fr-d) * 34px);
+  scale:calc(1 - var(--fr-d) * .07);transform-origin:50% 100%;
+  display:flex;flex-direction:column;align-items:flex-start;padding:46px 48px 52px;border-radius:44px;
+  transition:translate .75s var(--fr-ease),scale .75s var(--fr-ease),border-color .35s,--fr-h .35s}
+[data-scene="frost"] .fr-fan>.fr-leaf:has(> .fr-face.on){translate:0 0;scale:1}
+/* 卡片里的图标：没摊开时隔着磨砂是模糊的一团，摊开后变清楚 */
+[data-scene="frost"] .fr-leaf>.fr-ico{width:136px;height:136px;border-radius:38px;margin-bottom:34px;transition:filter .6s ease,opacity .6s ease,scale .6s var(--fr-ease)}
+[data-scene="frost"] .fr-fan>.fr-leaf:not(:has(> .fr-face.on))>.fr-ico{filter:blur(10px);opacity:.55;scale:.9}
+/* 没摊开时字的位置上是三道磨砂的占位条（不放字），摊开时淡掉、真字聚焦出来 */
+[data-scene="frost"] .fr-fan>.fr-leaf::after{content:"";position:absolute;left:48px;right:48px;bottom:58px;height:132px;pointer-events:none;
+  background:
+    linear-gradient(rgba(91,87,128,.3),rgba(91,87,128,.3)) 0 0/22% 24px no-repeat,
+    linear-gradient(rgba(91,87,128,.24),rgba(91,87,128,.24)) 0 44px/58% 34px no-repeat,
+    linear-gradient(rgba(91,87,128,.18),rgba(91,87,128,.18)) 0 100px/86% 26px no-repeat;
+  filter:blur(7px);transition:opacity .45s ease}
+[data-scene="frost"] .fr-fan>.fr-leaf:has(> .fr-face.on)::after{opacity:0}
+/* 卡片上的字：序号（渐变紫小字）、名字、一句说明 */
+[data-scene="frost"] .fr-face{width:100%}
+[data-scene="frost"] .fr-face small{display:block;font:700 28px/1 var(--f-hand);letter-spacing:.14em;color:var(--fr-a1)}
+[data-scene="frost"] .fr-face h3{margin:16px 0 12px;font:700 50px/1.25 var(--f-hand);letter-spacing:.01em;color:var(--ink);white-space:nowrap}
+[data-scene="frost"] .fr-face p{margin:0;font:400 36px/1.45 var(--f-hand);color:var(--ink-2)}
+
+/* ---------- 通知横幅 .fr-notes > .fr-note：越早的一条压在越上面（新的一条从它底下滑出来） ---------- */
+[data-scene="frost"] .fr-notes{display:flex;flex-direction:column;gap:var(--gap,30px)}
+[data-scene="frost"] .fr-notes>:nth-child(1){z-index:9}
+[data-scene="frost"] .fr-notes>:nth-child(2){z-index:8}
+[data-scene="frost"] .fr-notes>:nth-child(3){z-index:7}
+[data-scene="frost"] .fr-notes>:nth-child(4){z-index:6}
+[data-scene="frost"] .fr-notes>:nth-child(5){z-index:5}
+[data-scene="frost"] .fr-note{position:relative;display:flex;align-items:center;gap:32px;padding:28px 44px 30px 30px;border-radius:42px;
+  transition:opacity .45s ease,border-color .35s,--fr-h .35s}
+[data-scene="frost"] .fr-note>.fr-ico{width:104px;height:104px;border-radius:30px}
+[data-scene="frost"] .fr-nt{min-width:0}
+[data-scene="frost"] .fr-src{display:block;font:600 28px/1.2 var(--f-hand);letter-spacing:.1em;color:var(--ink-3)}
+[data-scene="frost"] .fr-nt>p{margin:8px 0 0;font:400 38px/1.3 var(--f-hand);color:var(--ink-2);white-space:nowrap}
+[data-scene="frost"] .fr-nt>p>b{margin-right:.5em;font-weight:700;font-size:50px;letter-spacing:.02em;color:var(--ink)}
+
+/* ---------- 设置面板 .fr-set > .fr-row：一大块磨砂，一行一项（细分隔线），行尾一个开关 .fr-sw ---------- */
+[data-scene="frost"] .fr-set{padding:12px 46px;border-radius:46px;transition:border-color .35s,--fr-h .35s}
+[data-scene="frost"] .fr-row{position:relative;display:flex;align-items:center;gap:34px;padding:36px 0}
+[data-scene="frost"] .fr-row+.fr-row{box-shadow:0 -1.5px 0 rgba(91,87,128,.18)}
+[data-scene="frost"] .fr-row>.fr-ico{width:92px;height:92px;border-radius:26px}
+/* 错的做法：粉色小胶囊，前面一个叉；一直留着、不划掉 */
+[data-scene="frost"] .fr-bad{flex:none;display:inline-flex;align-items:center;gap:14px;padding:9px 26px 11px 14px;border-radius:999px;
+  background:rgba(214,51,138,.1);box-shadow:inset 0 0 0 1.5px rgba(214,51,138,.3);font:500 38px/1.2 var(--f-hand);color:#8A1E5B;white-space:nowrap}
+[data-scene="frost"] .fr-bad::before{content:"";flex:none;width:32px;height:32px;border-radius:50%;
+  background:#D6338A url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round'%3E%3Cpath d='M7 7l10 10M17 7 7 17'/%3E%3C/svg%3E") center/18px no-repeat}
+/* 对的做法：前面一支渐变箭头，大一号实色字 */
+[data-scene="frost"] .fr-fix{flex:1;min-width:0;margin:0;font:700 48px/1.2 var(--f-hand);letter-spacing:.01em;color:var(--ink);white-space:nowrap}
+[data-scene="frost"] .fr-fix::before{content:"";display:inline-block;vertical-align:.06em;margin-right:24px;width:58px;height:30px;background:var(--fr-grad);
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 58 30' fill='none' stroke='black' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 15h48M40 4l12 11-12 11'/%3E%3C/svg%3E") center/contain no-repeat;
+          mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 58 30' fill='none' stroke='black' stroke-width='4.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 15h48M40 4l12 11-12 11'/%3E%3C/svg%3E") center/contain no-repeat}
+/* 开关：关着是浅灰的槽，到拍（这一行的 .fr-fix 有了 .on）拨到右边、槽里铺开渐变 */
+[data-scene="frost"] .fr-sw{position:relative;flex:none;margin-left:auto;width:128px;height:70px;border-radius:35px;background:rgba(29,26,56,.14);box-shadow:inset 0 2px 6px rgba(29,26,56,.18)}
+[data-scene="frost"] .fr-sw::before{content:"";position:absolute;inset:0;border-radius:inherit;background:var(--fr-grad);opacity:0;transition:opacity .35s ease .08s}
+[data-scene="frost"] .fr-sw>i{position:absolute;left:6px;top:6px;width:58px;height:58px;border-radius:50%;background:#fff;
+  box-shadow:0 6px 12px -4px rgba(29,26,56,.42),inset 0 -2px 4px rgba(107,76,246,.12);transition:translate .55s cubic-bezier(.34,1.56,.64,1)}
+[data-scene="frost"] .fr-row:has(> .fr-fix.on)>.fr-sw::before{opacity:1}
+[data-scene="frost"] .fr-row:has(> .fr-fix.on)>.fr-sw>i{translate:58px 0}
+/* 当前这一行底下亮一道淡紫（按页面的 data-now 对上这一行的拍号，写到第 6 拍） */
+[data-scene="frost"] .fr-row::before{content:"";position:absolute;top:8px;bottom:8px;left:-26px;right:-26px;z-index:-1;border-radius:28px;pointer-events:none;opacity:0;
+  background:linear-gradient(90deg,rgba(167,139,250,.26),rgba(249,168,212,.14) 62%,rgba(249,168,212,0));transition:opacity .45s ease}
+[data-scene="frost"][data-now="1"] .fr-row:has(> [data-beat="1"])::before,
+[data-scene="frost"][data-now="2"] .fr-row:has(> [data-beat="2"])::before,
+[data-scene="frost"][data-now="3"] .fr-row:has(> [data-beat="3"])::before,
+[data-scene="frost"][data-now="4"] .fr-row:has(> [data-beat="4"])::before,
+[data-scene="frost"][data-now="5"] .fr-row:has(> [data-beat="5"])::before,
+[data-scene="frost"][data-now="6"] .fr-row:has(> [data-beat="6"])::before{opacity:1}
+
+/* ---------- 控制中心 .fr-cc > .fr-tile：一排磨砂方块，每块一个控件 .fr-ctl（建页时补上）和一块读数 .fr-read ----------
+   读数到拍时 --fr-v 从 0 过渡到 1（略过冲再回），三种控件都按它画：滑块的液柱、旋钮的角度和亮起的刻度点、沙漏翻转的角度 */
+[data-scene="frost"] .fr-tile{--fr-v:0;--fr-to:1;position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;padding:32px 36px 40px;border-radius:46px;
+  transition:--fr-v .95s cubic-bezier(.3,1.32,.5,1),border-color .35s,--fr-h .35s}
+[data-scene="frost"] .fr-tile:has(> .fr-read.on){--fr-v:1}
+[data-scene="frost"] .fr-lab{align-self:stretch;display:flex;align-items:center;gap:14px;font:600 36px/1.2 var(--f-hand);letter-spacing:.06em;color:var(--ink-2)}
+[data-scene="frost"] .fr-lab::before{content:"";flex:none;width:14px;height:14px;border-radius:50%;background:var(--fr-grad)}
+[data-scene="frost"] .fr-ctl{position:relative;display:grid;place-items:center;width:100%;height:250px;margin:16px 0 20px;transition:filter .5s ease,opacity .5s ease}
+/* 还没调的控件：灰一点、淡一点的磨砂样子（控件里没有字） */
+[data-scene="frost"] .fr-tile:not(:has(> .fr-read.on))>.fr-ctl{filter:saturate(.3);opacity:.72}
+[data-scene="frost"] .fr-read{text-align:center}
+[data-scene="frost"] .fr-read>b{display:block;font:700 104px/1.08 var(--f-hand);letter-spacing:-.01em;color:var(--ink);white-space:nowrap}
+[data-scene="frost"] .fr-read>b small{margin-left:.08em;font-size:.44em;font-weight:600;letter-spacing:.02em;color:var(--ink-2)}
+[data-scene="frost"] .fr-read>span{display:block;margin-top:14px;font:400 36px/1.4 var(--f-hand);color:var(--ink-2);white-space:nowrap}
+/* slider：竖着的磨砂槽，渐变液柱从底下推到 --fr-to，顶上一道白色握把；底部一个温度计 */
+[data-scene="frost"] .fr-track{position:relative;width:132px;height:100%;border-radius:66px;overflow:hidden;background:rgba(255,255,255,.42);
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.9),inset 0 10px 20px -10px rgba(52,30,140,.28)}
+[data-scene="frost"] .fr-fill{position:absolute;left:0;right:0;bottom:0;height:calc((.16 + (var(--fr-to) - .16) * var(--fr-v)) * 100%);
+  background:linear-gradient(0deg,#6B4CF6,#C8307F);box-shadow:inset 0 2px 0 rgba(255,255,255,.55)}
+[data-scene="frost"] .fr-fill::after{content:"";position:absolute;left:50%;top:14px;width:48px;height:8px;margin-left:-24px;border-radius:4px;background:rgba(255,255,255,.88)}
+[data-scene="frost"] .fr-track svg{position:absolute;left:50%;bottom:12px;width:52px;height:52px;margin-left:-26px;stroke:#fff;stroke-width:7}
+/* knob：一圈刻度点（亮到第 --fr-to × --fr-steps 颗）+ 一个凸起的磨砂旋钮，指示点转到读数 */
+[data-scene="frost"] .fr-dial{--fr-r:114px;position:relative;width:250px;height:250px}
+[data-scene="frost"] .fr-dial::before{content:"";position:absolute;inset:-6px;border-radius:50%;background:rgba(255,255,255,.3);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.75)}
+[data-scene="frost"] .fr-dot{position:absolute;left:50%;top:50%;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;background:rgba(29,26,56,.16);
+  transform:rotate(var(--a)) translateY(calc(var(--fr-r) * -1))}
+[data-scene="frost"] .fr-dot::after{content:"";position:absolute;inset:-3px;border-radius:50%;background:var(--fr-grad);box-shadow:0 0 14px rgba(107,76,246,.55);
+  opacity:clamp(0,calc(var(--fr-v) * var(--fr-to) * var(--fr-steps,5) - var(--k)),1)}
+[data-scene="frost"] .fr-disc{position:absolute;inset:36px;border-radius:50%;
+  background:radial-gradient(circle at 36% 28%,#fff 0,rgba(255,255,255,.82) 55%,rgba(232,224,255,.86) 100%);
+  box-shadow:0 20px 32px -14px rgba(52,30,140,.48),inset 0 -8px 14px rgba(107,76,246,.14),0 0 0 1.5px #fff;
+  rotate:calc(-135deg + var(--fr-v) * (var(--fr-to) * var(--fr-steps,5) - 1) * 270deg / (var(--fr-steps,5) - 1))}
+[data-scene="frost"] .fr-pin{position:absolute;left:50%;top:16px;width:24px;height:24px;margin-left:-12px;border-radius:50%;background:var(--fr-grad);box-shadow:0 0 0 5px rgba(255,255,255,.9)}
+/* timer：磨砂沙漏，沙子在底下；到拍翻过来（转 180°），沙子到了上面，开始计时 */
+[data-scene="frost"] .fr-hg{width:170px;height:234px;overflow:visible;rotate:calc(var(--fr-v) * 180deg);filter:drop-shadow(0 16px 20px rgba(52,30,140,.26))}
+[data-scene="frost"] .fr-hg .gl{fill:rgba(255,255,255,.4);stroke:#fff;stroke-width:4;stroke-linejoin:round}
+[data-scene="frost"] .fr-hg .sd{fill:url(#fr-sand)}
+[data-scene="frost"] .fr-hg .cap{fill:rgba(255,255,255,.95);stroke:rgba(107,76,246,.25);stroke-width:1.5}
+
+/* 阅读模式（所有拍直接摆好）和减少动态：这些过渡都不播，直接到位 */
+[data-scene="frost"].slide:is(.reading *) :is(.fr-leaf,.fr-leaf>.fr-ico,.fr-spot,.fr-tile,.fr-ctl,.fr-sw>i,.fr-sw),
+[data-scene="frost"].slide:is(.reading *) .fr-leaf::after,[data-scene="frost"].slide:is(.reading *) .fr-sw::before,
+[data-scene="frost"].slide:is(.reading *) .fr-row::before{transition:none}
+@media (prefers-reduced-motion:reduce){
+  [data-scene="frost"] :is(.fr-leaf,.fr-leaf>.fr-ico,.fr-spot,.fr-tile,.fr-ctl,.fr-sw>i,.fr-sw){transition:none}
+  [data-scene="frost"] .fr-leaf::after,[data-scene="frost"] .fr-sw::before,[data-scene="frost"] .fr-row::before{transition:none}
+}
+
+/* =====================================================================
+   不支持 backdrop-filter 的浏览器：玻璃退成 84% 白底，字照样清楚
+   ===================================================================== */
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  [data-scene="frost"] :is(.fr-pane,.fr-cap,.fr-leaf,.fr-note,.fr-set,.fr-tile),
+  [data-scene="frost"] :is(.card,.cell,.steps>li,.shot),
+  [data-scene="frost"] :is(.card,.cell):is(.t-yellow,.t-mint,.t-pink,.t-blue,.t-white,.t-peach){background:rgba(255,255,255,.84)}
+  #stage[data-scene="frost"] .meter{background:rgba(255,255,255,.84)}
+}

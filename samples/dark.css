@@ -1,0 +1,16 @@
+/* 科技暗黑 dark 自己的样板页的页面样式（和 samples/dark.js 配套）
+   - 每条选择器都以 [data-id="t-dark-…"] 开头，只管那一页；抄样板时连同这里的规则一起抄，[data-id="…"] 换成新页面的 id
+   - 版式组件（.dk-*）的样子在 scenes/dark.css 里，这里只补这几页自己的间距、字号；颜色用风格变量（--ink、--accent……）
+   - 不给讲过的块另加透明度、不调灰：讲过的只由引擎退到 .8 */
+
+/* 封面：讲者胶囊比默认的大一号，和副标题拉开层次 */
+[data-id="t-dark-cover"] .dk-cap{font-size:38px}
+
+/* 物件识别：取景框矮一点，给下面的标签和微光留出地方 */
+[data-id="t-dark-scan"] .dk-view{height:320px}
+
+/* 流水线控制台：命令栏和第一步之间多空一点，像「输入」和「输出」分开 */
+[data-id="t-dark-pipe"] .dk-pipe > .copy{margin-bottom:26px}
+
+/* 结尾：致谢胶囊大一号，和金句之间是这一页唯一的第二层 */
+[data-id="t-dark-end"] .dk-cap{font-size:40px;padding:18px 40px 19px 32px}

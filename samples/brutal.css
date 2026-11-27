@@ -1,0 +1,29 @@
+/* 新粗野主义自己的样板页的页面样式（和 samples/brutal.js 配套）
+   - 每条选择器都以 [data-id="t-brutal-…"] 开头，只管那一页；抄样板时连同这里的规则一起抄，[data-id="…"] 换成新页面的 id
+   - 只写大小和位置；颜色、描边、硬投影都在组件里（scenes/brutal.css 末尾的 .bz-*），这里不写死颜色 */
+
+/* ---------- 封面：价签上的字（坐标相对价签左上角；左边 0–150 是尖角和孔，字从 170 起） ---------- */
+/* 大标题 132px 一行；下面一道粗墨线（页面里写的 .bz-rule），再下面是副标题 */
+[data-id="t-brutal-cover"] .cv-title{left:168px;top:74px;margin:0;font:900 132px/1.12 var(--f-hand);letter-spacing:.01em;white-space:nowrap}
+[data-id="t-brutal-cover"] .cv-sub{left:172px;top:302px;margin:0;font:800 52px/1.3 var(--f-hand);white-space:nowrap}
+
+/* ---------- 三样东西：色块格里的字排在格子底部，编号图章和插画是绝对定位的 ---------- */
+[data-id="t-brutal-list"] .bz-tile{display:flex;flex-direction:column;justify-content:flex-end}
+[data-id="t-brutal-list"] .bz-tile p{white-space:nowrap}
+
+/* ---------- 泡茶三步：步骤块的说明不换行（一块 400 宽放 9 个字） ---------- */
+[data-id="t-brutal-steps"] .bz-step p{white-space:nowrap}
+
+/* ---------- 海报大字：两块海报字的字号决定色块大小（色块跟着字走，不写死宽高） ---------- */
+/* 「先晾到」210px；「80℃」440px，℃ 缩到一半挂在右上角 */
+[data-id="t-brutal-poster"] .ps-a{padding:36px 60px 44px 56px;font-size:210px;line-height:1;letter-spacing:.02em}
+[data-id="t-brutal-poster"] .ps-b{padding:22px 64px 36px 60px;font-size:440px;line-height:.86;letter-spacing:-.03em}
+[data-id="t-brutal-poster"] .ps-b small{font-size:.5em;line-height:1;vertical-align:top;letter-spacing:0}
+/* 右边的副文：64px 三行横排 */
+[data-id="t-brutal-poster"] .ps-c p{font:900 64px/1.3 var(--f-hand)}
+
+/* ---------- 禁止清单：对的做法 56px（牌子 500 宽，对勾 + 6 个字放得下） ---------- */
+[data-id="t-brutal-donts"] .bz-fix{font-size:56px}
+
+/* ---------- 结尾：金句左对齐、160px 两行 ---------- */
+[data-id="t-brutal-end"] .ed-quote{font-size:160px;line-height:1.15;text-align:left}

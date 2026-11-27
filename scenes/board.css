@@ -1,0 +1,156 @@
+/* =====================================================================
+   风格 · 黑板 board 的样子（行为在 board.js）
+   干净的深绿板面，白粉笔 + 一支黄粉笔，底下一条粉笔槽；所有选择器的第一段都带 [data-scene="board"]
+   粉笔毛边用 board.js 的 defs 里的滤镜 #chalk-text
+   ===================================================================== */
+
+/* 变量：深绿板面，只有白、黄两色粉笔（--recede 由 board.js 的 recede 写入：.8，讲过的字仍要看得清） */
+[data-scene="board"]{
+  --bg:#223D33; --ink:#F6F4EE; --ink-2:#C3CDC6; --ink-3:#8FA197; --line:#F6F4EE;
+  --mark:#FFDC6A; --key-ink:#F6F4EE; --hl:#FFDC6A; --accent:#FFDC6A;
+  --card-ink:#F6F4EE; --card-ink-2:#C3CDC6; --paper:#F6F4EE;
+  --t-yellow:#FFDC6A; --t-mint:#C3CDC6; --t-pink:#C3CDC6; --t-blue:#C3CDC6; --t-white:#F6F4EE; --t-peach:#C3CDC6;  /* 只有白、黄两色粉笔 */
+  --term-bg:#0F1713; --term-ink:#E9EEE6;
+  --human:#FFB38A; --ai:#9FE0A8; --idle:#8FA197;
+  --scene-bg:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .035 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse 1300px 760px at 46% 44%,#223D33,#1B3229);
+}
+
+/* 黑板底下的粉笔槽（board.js 的 backdrop 放进背景层）：一条木边、一白一黄两支粉笔、一块板擦 */
+[data-scene="board"] .bd-ledge{position:absolute;left:0;right:0;bottom:36px;height:26px;background:linear-gradient(180deg,#A06A3C 0 3px,#7A4A27 3px,#4A2A12);box-shadow:0 10px 18px rgba(0,0,0,.5)}
+[data-scene="board"] .bd-ledge::after{content:"";position:absolute;left:0;right:0;top:26px;height:40px;background:linear-gradient(180deg,#0E1411,#0C100E)}
+[data-scene="board"] .bd-ledge i{position:absolute;top:-11px;height:15px;border-radius:6px;background:linear-gradient(180deg,rgba(255,255,255,.65),var(--c) 40%,var(--c) 70%,rgba(0,0,0,.2));box-shadow:0 2px 3px rgba(0,0,0,.35)}
+[data-scene="board"] .bd-ledge b{position:absolute;top:-40px;width:150px;height:46px;border-radius:6px;background:linear-gradient(180deg,#9D6539 0 52%,#3B2B20 52% 58%,#D4D0C5 58%);box-shadow:0 5px 9px rgba(0,0,0,.45)}
+/* 飞起来擦板的板擦（board.js 的 mount 放上舞台；元素自己带 data-scene="board"） */
+[data-scene="board"].bd-eraser{position:absolute;left:0;top:0;width:150px;height:46px;margin:-23px 0 0 -75px;border-radius:6px;z-index:46;opacity:0;pointer-events:none;
+  background:linear-gradient(180deg,#9D6539 0 52%,#3B2B20 52% 58%,#D4D0C5 58%);box-shadow:0 8px 14px rgba(0,0,0,.45)}
+
+/* 粉笔字粗一点 */
+[data-scene="board"].slide{font-weight:700}
+
+/* 主题行：章节是白粉笔框，主题用黄粉笔写 */
+[data-scene="board"] .s-topic .tc{color:#C3CDC6;border:3px solid rgba(246,244,238,.75);border-radius:var(--rough-r)}
+[data-scene="board"] .s-topic .ts{color:#8FA197}
+[data-scene="board"] .s-topic .tt{color:#FFDC6A;text-shadow:0 0 1px rgba(255,220,106,.5)}
+[data-scene="board"] .explain{color:#C3CDC6;font-weight:700}
+[data-scene="board"] .explain b{color:#F6F4EE}
+[data-scene="board"] :is(.c-yellow,.c-mark){color:#FFDC6A}
+
+/* 重点词：先白粉笔写，再黄粉笔描一遍、底下划一道 */
+[data-scene="board"] .key{font-size:1.06em;padding-bottom:.14em;color:#F6F4EE;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20' preserveAspectRatio='none'%3E%3Cpath d='M3 7 C45 4 95 9 140 6 S185 5 197 7 M12 15 C60 13 120 16 188 14' fill='none' stroke='%23FFDC6A' stroke-width='3.2' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
+  background-position:0 100%;background-size:calc(var(--k)*100%) .3em}
+[data-scene="board"] .key::after{content:attr(data-k);content:attr(data-k) / "";position:absolute;left:.1em;top:0;color:#FFDC6A;white-space:nowrap;pointer-events:none;
+  -webkit-mask-image:linear-gradient(90deg,#000 calc(var(--k) * 110% - 10%),transparent calc(var(--k) * 110%));mask-image:linear-gradient(90deg,#000 calc(var(--k) * 110% - 10%),transparent calc(var(--k) * 110%))}
+
+/* 组件：粉笔框 */
+[data-scene="board"] .card{background:transparent;border:3.5px solid var(--tint,var(--t-white));border-radius:var(--rough-r)}
+[data-scene="board"] .card h3{color:var(--tint,var(--t-white))}
+[data-scene="board"] .card.tape::before{background:rgba(239,226,190,.5)}
+[data-scene="board"] .lab{background:#203A31;color:var(--tint,var(--t-white));padding:0 14px;top:-30px}
+[data-scene="board"] .vs::before{color:#FFDC6A}
+[data-scene="board"] .cell{border-width:3.2px}
+[data-scene="board"] .term{border:3px solid rgba(246,244,238,.75);box-shadow:none}
+[data-scene="board"] .term-bar i{background:#C3CDC6}[data-scene="board"] .term-bar i:nth-child(2){background:#FFDC6A}
+
+/* 可复制的命令：粉笔虚线框；「已复制」用黄粉笔 */
+[data-scene="board"] .copy{color:var(--ink);border:2.5px dashed rgba(246,244,238,.45);border-radius:8px;font-weight:700}
+@media (hover:hover){[data-scene="board"] .copy:hover{color:#FFDC6A;background:rgba(255,255,255,.04)}}
+[data-scene="board"] .copied-tip{color:#FFDC6A}
+[data-scene="board"] .shot{box-shadow:0 16px 26px -10px rgba(0,0,0,.6)}
+[data-scene="board"] .shot::before{background:rgba(239,226,190,.55)}
+
+/* 形象（不管用哪个）：浅色描边由引擎按 board.js 的 dark: true 加，这里只给描边的颜色（白粉笔色）和一道投影；
+   默认形象沙沙是白粉笔、自带粉尘光（outline: false），不加描边，只有投影；换成别的形象时描边才用得上。
+   说的话是黄粉笔框 */
+[data-scene="board"] .mascot{--mascot-outline:#F6F4EE;--mascot-shadow:drop-shadow(0 6px 6px rgba(0,0,0,.35))}
+[data-scene="board"] .mascot-say{color:#FFDC6A;border:3px solid #FFDC6A;border-radius:18px;background:#213B31}
+[data-scene="board"] .mascot-say::after{background:#213B31;border-right:3px solid #FFDC6A;border-bottom:3px solid #FFDC6A}
+
+/* 节拍格：板角的「正」字（五拍一个字），亮的是讲到第几拍 */
+#stage[data-scene="board"] .chap span{font-size:30px;color:#C3CDC6;filter:url(#chalk-text)}
+#stage[data-scene="board"] .meta{color:#C3CDC6;font-weight:700}
+#stage[data-scene="board"] .meter .ml{display:none}#stage[data-scene="board"] .meter .ms{display:inline}
+#stage[data-scene="board"] .dots{gap:12px;filter:url(#chalk-text)}
+#stage[data-scene="board"] .zg{display:block;position:relative;width:40px;height:40px}
+#stage[data-scene="board"] .zg i{position:absolute;background:#F6F4EE;border-radius:3px;opacity:.16;transition:opacity .3s,background-color .3s}
+#stage[data-scene="board"] .zg i:nth-child(1){left:3px;top:3px;width:34px;height:5px;rotate:-1deg}
+#stage[data-scene="board"] .zg i:nth-child(2){left:18px;top:4px;width:5px;height:33px}
+#stage[data-scene="board"] .zg i:nth-child(3){left:21px;top:18px;width:15px;height:5px}
+#stage[data-scene="board"] .zg i:nth-child(4){left:6px;top:20px;width:5px;height:17px}
+#stage[data-scene="board"] .zg i:nth-child(5){left:1px;top:34px;width:38px;height:5px;rotate:1deg}
+#stage[data-scene="board"] .zg i.on{opacity:.95}
+#stage[data-scene="board"] .zg i.now{background:#FFDC6A;opacity:1}
+#stage[data-scene="board"] .pageno,#stage[data-scene="board"] .meter .mnum b{color:#F6F4EE}
+
+/* 粉笔质感（只给演示中的当前页加，阅读模式不加，省性能）；黑板自有组件 .bd-* 也加 */
+.slide.active[data-scene="board"] :is(.s-title,.s-topic,.explain,.chalk,.card,.steps,.cells,.quote,.lab,.tag,.vs,svg.sketch,svg.marks,.copied-tip,.copy,.bd-note,.bd-box,.bd-line){filter:url(#chalk-text)}
+.slide.active[data-scene="board"] :is(.s-title,.chalk,.card,.steps,.cells,.quote,.bd-note,.bd-box,.bd-line){text-shadow:0 0 1px rgba(255,255,255,.45)}
+
+/* 阅读模式：每页底下画一截粉笔槽的木边 */
+[data-scene="board"].slide:is(.reading *){box-shadow:inset 0 -30px 0 -4px #7A4A27}
+
+/* =====================================================================
+   黑板自有版式组件（.bd-*）：只在黑板里认，别的风格不认识这些类，只是普通的透明容器
+   用法照下面每段注释抄；位置、大小由页面写（加 abs 再写 left、top、width），颜色一律用这里的变量。
+   出场不用写 data-in：board.js 的 enterBy 按类名配好了「粉笔写」bdchalk。
+   可读性约定：
+   - 板书不擦：讲过的块只由引擎退到 .8，这里不另加透明度、不调灰
+   - 黄粉笔只给重点：重点词、正在讲的那一行行首的点、黄框 .bd-box.y，一页加起来不超过 3 处；框、圈号、下划线默认白粉笔
+   - 字横排、不歪；名字、数字用白粉笔 --ink，说明用浅灰绿 --ink-2（讲过退到 .8 后对比度仍有 5:1 左右），不用更淡的 --ink-3
+   - 框不压字：框画在块自己的边上（不往外探），字和框之间靠 padding 留空
+   ===================================================================== */
+[data-scene="board"] :is(.bd-note,.bd-box,.bd-line):not(.abs){position:relative}
+[data-scene="board"] :is(.bd-note,.bd-box)>:is(p,div,h3,h4){margin:0}
+
+/* ---------- 板书块 .bd-note：几行板书，一行写完再写下一行
+   <div class="bd-note abs" data-beat="1" style="left:…;top:…;width:…">
+     <p><i class="bd-no">1</i><b>一只<em class="key">盖碗</em></b></p>
+     <p>白瓷的最好，看得清茶色</p>
+   </div>
+   - 每行一个子元素（p、div）；字直接写在容器里（没包进 p）的，整块一起写
+   - 字号、颜色、对齐由页面写；子元素自己写了 data-beat 的，等它自己那一拍再写 ---------- */
+[data-scene="board"] .bd-note{color:var(--ink)}
+
+/* ---------- 粉笔框 .bd-box：先沿四边画一个粉笔框，再一行行写里面的字
+   <div class="bd-box abs" data-beat="1" style="left:…;top:…;width:…"><p>水温</p><p>80℃</p></div>
+   - 默认方框（四角的线略微出头，像粉笔随手画的）；round 椭圆框（框图中间的主题）；y 黄粉笔框（算一处强调）
+   - after：先写字、最后把框圈上去（圈结论用）
+   - 框画在块自己的边上：padding 默认上下 24px、左右 36px，椭圆框左右要再多留（字在椭圆里，四角是空的）
+   - 不写死 height，字多了框跟着变高 ---------- */
+[data-scene="board"] .bd-box{--bd-f:1;--bd-frame:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath d='M1.4 4.2 C30 2.6 70 3.9 98.8 2.9 M96.8 1.2 C97.8 34 96.9 70 97.9 98.8 M98.9 96.2 C70 97.7 34 96.5 1.2 97.7 M3.1 98.9 C2.3 66 3.6 32 2.5 1.3' fill='none' stroke='%23F6F4EE' stroke-opacity='.92' stroke-width='3.6' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
+  padding:24px 36px 26px;color:var(--ink)}
+[data-scene="board"] .bd-box.round{--bd-frame:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath d='M9 40 C14 13 82 5 94 38 C101 70 70 97 43 95 C13 93 1 68 8 46 C11 34 20 25 31 19' fill='none' stroke='%23F6F4EE' stroke-opacity='.92' stroke-width='3.8' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
+  padding:30px 64px 34px}
+[data-scene="board"] .bd-box.y{--bd-frame:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath d='M1.4 4.2 C30 2.6 70 3.9 98.8 2.9 M96.8 1.2 C97.8 34 96.9 70 97.9 98.8 M98.9 96.2 C70 97.7 34 96.5 1.2 97.7 M3.1 98.9 C2.3 66 3.6 32 2.5 1.3' fill='none' stroke='%23FFDC6A' stroke-width='3.8' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E")}
+[data-scene="board"] .bd-box.round.y{--bd-frame:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath d='M9 40 C14 13 82 5 94 38 C101 70 70 97 43 95 C13 93 1 68 8 46 C11 34 20 25 31 19' fill='none' stroke='%23FFDC6A' stroke-width='4' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E")}
+/* 框画在 ::before 上；--bd-f 从 0 到 1 时，遮罩从左上角起绕一圈放开，像粉笔一笔画出来 */
+[data-scene="board"] .bd-box::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:var(--bd-frame) center/100% 100% no-repeat;
+  -webkit-mask-image:conic-gradient(from 292deg,#000 calc(var(--bd-f) * 360deg),transparent 0);mask-image:conic-gradient(from 292deg,#000 calc(var(--bd-f) * 360deg),transparent 0)}
+[data-scene="board"] .bd-box{isolation:isolate}
+
+/* ---------- 板书一行 .bd-line：一整行从左往右写出来，写完在行首点一个粉笔点
+   <p class="bd-line abs" data-beat="1" data-mascot="1" data-mascot-side="right" style="left:…;top:…">
+     <b>一、</b><b class="bd-ul">温杯</b>：热水把盖碗烫一遍
+   </p>
+   - 不写 width：块跟着字的长度走，形象站到 right 时就站在这一行的字尾
+   - 行首的点：正在讲的这一行是黄粉笔点（这一拍的强调），讲过的变回白粉笔点、点还在；左边让出 48px 放点
+   - 一行不换行（white-space:nowrap），长了自己算宽度 ---------- */
+[data-scene="board"] .bd-line{--bd-d:1;margin:0;padding-left:48px;white-space:nowrap;color:var(--ink)}
+[data-scene="board"] .bd-line::before{content:"";position:absolute;left:2px;top:50%;width:24px;height:22px;margin-top:-10px;border-radius:52% 46% 50% 48%;
+  background:radial-gradient(circle at 42% 40%,#FFFFFF,#E9ECE6 55%,#C3CDC6);scale:var(--bd-d);transition:background .3s}
+[data-scene="board"] .bd-line.on:not(.past)::before{background:radial-gradient(circle at 42% 40%,#FFF4C8,#FFDC6A 55%,#E9BE45)}
+
+/* ---------- 圈号 .bd-no：一个数字外面画一个白粉笔圈，跟着所在的那一行写出来（圈从左上起笔）
+   <p><i class="bd-no">1</i>水温</p>
+   - 字号是所在行的 .82 倍，所在行 42px 以上时圈里的数字才不小于 34px
+   - 只放一位数字（1–9）；就是阅读顺序 ---------- */
+[data-scene="board"] .bd-no{--bd-r:1;position:relative;display:inline-block;width:1.36em;height:1.36em;margin-right:.32em;font-size:.82em;font-style:normal;font-weight:700;line-height:1.36em;text-align:center;vertical-align:.06em;text-indent:0}
+[data-scene="board"] .bd-no::before{content:"";position:absolute;inset:0;pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'%3E%3Cpath d='M50 5 C80 4 96 26 95 52 C94 80 72 95 48 94 C22 93 5 74 6 48 C7 24 24 7 56 7' fill='none' stroke='%23F6F4EE' stroke-width='3.2' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") center/100% 100% no-repeat;
+  -webkit-mask-image:conic-gradient(from 330deg,#000 calc(var(--bd-r) * 360deg),transparent 0);mask-image:conic-gradient(from 330deg,#000 calc(var(--bd-r) * 360deg),transparent 0)}
+
+/* ---------- 白粉笔下划线 .bd-ul：这一行写完，在词底下从左往右划一道（标题、步骤名用；算不上强调，重点词另用 .key 的黄粉笔）
+   <b class="bd-ul">温杯</b> ---------- */
+[data-scene="board"] .bd-ul{--bd-u:1;padding-bottom:.12em;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20' preserveAspectRatio='none'%3E%3Cpath d='M3 9 C50 5 110 13 197 7' fill='none' stroke='%23F6F4EE' stroke-opacity='.85' stroke-width='3.4' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") 0 100%/calc(var(--bd-u) * 100%) .26em no-repeat}

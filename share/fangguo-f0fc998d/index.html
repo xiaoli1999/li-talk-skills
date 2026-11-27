@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta name="li-talk-edit" content="demo">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="li-talk-engine" content="0.1.0">
+<meta name="li-talk-mascot" content="fangfang">
+<title>方果 ERP：POD 工厂的一站式生产系统</title>
+<!-- 方果 ERP 客户演讲（20 页）：用方果风格 fangguo 和形象方方 fangfang 做的完整演示，给用户看交互。
+     引擎、风格、形象、vendor 都直接引用仓库模板里的（），页面在 slides/ 里。
+     这个目录在 _private/ 下，git 不收 -->
+<script>/* 自检用：记下页面里的报错和加载失败 */window.__deckErrors=[];addEventListener('error',function(e){var t=e.target;__deckErrors.push(t&&t!==window&&(t.src||t.href)?'加载失败：'+(t.src||t.href):String(e.message))},true);(function(c){var o=c.error;c.error=function(){__deckErrors.push([].slice.call(arguments).join(' '));return o.apply(c,arguments)}})(console);</script>
+<link rel="stylesheet" href="vendor/fonts/wenkai-lite.css">
+<link rel="stylesheet" href="engine/engine.css">
+<link rel="stylesheet" href="scenes/fangguo.css">
+<!-- 章节样式（开始） -->
+<link rel="stylesheet" href="slides/ch1.css">
+<link rel="stylesheet" href="slides/ch2.css">
+<link rel="stylesheet" href="slides/ch3.css">
+<!-- 章节样式（结束） -->
+</head>
+<body class="loading">
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/rough.min.js"></script>
+<script src="engine/core.js"></script>
+<script src="engine/build.js"></script>
+<script src="engine/beats.js"></script>
+<script src="engine/mascot.js"></script>
+<script src="engine/pages.js"></script>
+<script src="engine/ui.js"></script>
+<script src="engine/presenter.js"></script>
+<script src="engine/tools.js"></script>
+<script src="engine/selftest.js"></script>
+<script src="engine/edit.js"></script>
+<script src="scenes/fangguo.js"></script>
+<script src="mascots/fangfang.js"></script>
+<!-- 章节（开始）：页面顺序 = 引入顺序；新增一章就在这里和上面的章节样式里各加一行 -->
+<script src="slides/ch1.js"></script>
+<script src="slides/ch2.js"></script>
+<script src="slides/ch3.js"></script>
+<!-- 章节（结束） -->
+</body>
+</html>

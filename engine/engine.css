@@ -1,0 +1,413 @@
+/* =====================================================================
+   演示稿底座 · 样式
+   一套语言（字号、重点词、节拍指示、组件的结构和位置），不含任何具体风格：
+   各风格的样子在 scenes/<键名>.css 里，选择器的第一段带 [data-scene="<键名>"]。
+   所有风格共用同一套 CSS 变量名和组件类名：内容只写一次，换风格不用改结构。
+   引擎内置一个朴素风格 plain（浅色底、墨色字、无装饰），只用下面 :root 里变量的默认值，
+   页面用了没注册的风格时退回它。
+   字体不在这里：入口 index.html 单独引入 vendor/fonts/ 里的字体样式（wenkai-lite.css 或 wenkai.css）。
+   ===================================================================== */
+
+/* 不继承的倾斜角与「拿起来」程度：给 gsap 动画用，也避免子元素跟着重复倾斜 */
+@property --r{syntax:"<angle>";inherits:false;initial-value:0deg}
+@property --lift{syntax:"<number>";inherits:false;initial-value:0}
+
+:root{
+  --f-hand:"WK","LXGW WenKai","KaiTi","STKaiti","楷体","Kaiti SC",serif;
+  --f-sans:"WK","LXGW WenKai","KaiTi","STKaiti","楷体",serif;   /* 全稿统一用楷体；保留这个名字给旧写法 */
+  --f-mono:Consolas,"Cascadia Mono","JetBrains Mono",Menlo,"Courier New","WK","LXGW WenKai","KaiTi","STKaiti","楷体",monospace;
+  /* 字号（1920 宽画布）：正文不小于 34px */
+  --fs-title:68px; --fs-xl:84px; --fs-lg:50px; --fs-md:42px; --fs-body:36px; --fs-min:34px;
+  --rough-r:255px 15px 225px 15px/15px 225px 15px 255px;   /* 手绘不规则圆角 */
+}
+
+/* =====================================================================
+   风格变量的默认值（也就是朴素风格 plain 的样子）
+   每个风格在 scenes/<键名>.css 的 [data-scene="<键名>"]{…} 里给全套变量另赋值；
+   哪个变量没写，就用这里的默认值。--recede（讲过的拍变到多淡）由风格的 recede 字段写入
+   ===================================================================== */
+:root{
+  --bg:#FAFAF8; --ink:#1F2933; --ink-2:#52606D; --ink-3:#9AA5B1; --line:#3E4C59;
+  --mark:#E8590C; --key-ink:#1F2933; --hl:rgba(255,212,59,.55); --accent:#E8590C;
+  --card-ink:#1F2933; --card-ink-2:#52606D; --paper:#FFFFFF;
+  --t-yellow:#FFF3BF; --t-mint:#D3F9D8; --t-pink:#FFE3E3; --t-blue:#D0EBFF; --t-white:#FFFFFF; --t-peach:#FFE8CC;
+  --term-bg:#22252B; --term-ink:#ECE8E0;
+  --human:#F76707; --ai:#2B8A3E; --idle:#9AA5B1;
+  --recede:.8;
+  --scene-bg:#FAFAF8;
+  --sign-color:rgba(0,0,0,.45);   /* 最后一页署名的颜色；深色底风格（dark: true）引擎默认改成半透明白，风格可在自己的 CSS 里再改 */
+}
+
+/* =====================================================================
+   外壳：世界层（铺满窗口的风格背景）+ 1920×1080 舞台
+   演示模式下 html、body 都不滚动；#app 是固定铺满窗口、裁掉溢出的外框，
+   否则窄窗口会被 1920 宽的舞台撑出滚动条（阅读模式另见文件末尾：只许竖向滚动）
+   ===================================================================== */
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#121212;overflow:hidden;touch-action:manipulation}
+body{font-family:var(--f-hand);-webkit-font-smoothing:antialiased}
+body.loading #app{opacity:0}
+#app{position:fixed;inset:0;overflow:hidden;transition:opacity .3s}
+#world{position:absolute;left:0;top:0;transform-origin:0 0;overflow:hidden}
+.deck-defs{position:absolute;width:0;height:0}
+
+/* 风格背景层：每个注册的风格一层，叠放，当前的一层在上（风格可以在 backdrop 里往层里放东西） */
+.bg{position:absolute;inset:0;visibility:hidden;background:var(--scene-bg)}
+.bg.on{visibility:visible}
+
+#stage{position:absolute;width:1920px;height:1080px;user-select:none;-webkit-user-select:none}
+#slides{position:absolute;inset:0}
+/* 每页外层的 .r-item/.frame 是整屏透明层：不接收指针，只让当前页（.slide.active）接收，免得后面的页盖住当前页的点击 */
+.r-item,.frame{position:absolute;inset:0;pointer-events:none}
+.slide{pointer-events:none}
+.slide.active{pointer-events:auto}
+.r-head,.r-notes{display:none}
+
+/* =====================================================================
+   页面
+   ===================================================================== */
+/* isolation:isolate：每页自成一层，页里的 z-index（包括下面涟漪层的 -1）只在这一页里比较 */
+.slide{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;visibility:hidden;isolation:isolate;color:var(--ink);font:400 var(--fs-body)/1.45 var(--f-hand);transform-origin:0 50%;backface-visibility:hidden}
+.slide.active{visibility:visible}
+/* 点击涟漪层：引擎放在每页最前面，铺满页面、压在这一页所有内容下面、不接收指针；
+   风格的 ripple(x, y, layer) 往里放元素（x、y 是舞台坐标，就是这一层里的坐标），播完自己删掉 */
+.ripple-layer{position:absolute;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+/* 署名：最后一页由引擎自动加上（build.js 的 addSign），位置由 ui.js 的 placeSign 写进内联的 left、top；
+   点它复制链接、不进拍。颜色用 --sign-color；24px 是允许的小字（自检不按正文字号查它） */
+.li-sign{position:absolute;z-index:8;white-space:nowrap;font:400 24px/1.3 var(--f-hand);color:var(--sign-color);text-decoration:none;cursor:pointer;-webkit-user-drag:none}
+@media (hover:hover){.li-sign:hover{text-decoration:underline;text-underline-offset:5px}}
+.slide p{margin:0}
+/* 标了 data-beat 的元素：没到拍就藏起来 */
+.slide [data-beat]:not(.on){visibility:hidden}
+/* 讲过的拍退后一点，当前这一拍是唯一的重心（data-recede="off" 或 Deck.add 的 recede:false 关掉） */
+.slide .past{opacity:var(--recede);transition:opacity .45s ease}
+@media (hover:hover){.slide .past:hover{opacity:.95}}
+svg.marks g.past{opacity:var(--recede)!important;transition:opacity .45s}
+
+
+/* =====================================================================
+   主题行：每页顶部「章节短名 › 本页主题」（Deck.add 的 topic / chapterShort），第 0 拍就在，不参与节拍和退后
+   位置在左上，和右上角的页码、节拍指示同一行；主题 42px 加粗（放不下时引擎自动缩到 34px）
+   ===================================================================== */
+.s-topic{position:absolute;left:120px;top:18px;height:60px;display:flex;align-items:center;gap:14px;max-width:1260px;white-space:nowrap;z-index:6;pointer-events:none;font-family:var(--f-hand);color:var(--ink)}
+.s-topic .tc{flex:none;padding:3px 14px 5px;font:700 28px/1.2 var(--f-hand);color:var(--ink-2)}
+.s-topic .ts{flex:none;font:700 34px/1 var(--f-hand);color:var(--ink-3)}
+.s-topic .tt{position:relative;z-index:0;padding:0 .06em;font:700 42px/1.2 var(--f-hand);color:var(--ink)}
+
+/* 第 0 拍的一句话解释：<p class="explain abs"><b>概念</b>：……</p>（放在大标题下面） */
+.explain{position:absolute;left:120px;top:192px;margin:0;padding-left:24px;max-width:1680px;white-space:nowrap;font:400 36px/1.3 var(--f-hand);color:var(--ink-2);z-index:5}
+.explain::before{content:"";position:absolute;left:0;top:.2em;bottom:.14em;width:6px;border-radius:3px;background:var(--mark)}
+.explain b{font-weight:700;color:var(--ink)}
+
+/* 页标题：引擎按 title 自动生成；所有风格位置一致 */
+.s-title{position:absolute;left:120px;top:96px;margin:0;max-width:1480px;font:700 var(--fs-title)/1.2 var(--f-hand);letter-spacing:.02em;color:var(--ink);z-index:5}
+
+/* ---------- 文字工具 ---------- */
+.hand{font-family:var(--f-hand)}
+.mono{font-family:var(--f-mono)}
+.sans{font-family:var(--f-sans)}
+.lead{font-size:var(--fs-lg);line-height:1.35}
+.t-xl{font-size:var(--fs-xl);line-height:1.2}
+.t-lg{font-size:var(--fs-lg);line-height:1.3}
+.t-md{font-size:var(--fs-md);line-height:1.35}
+.t-sm{font-size:var(--fs-min);line-height:1.45}
+.b{font-weight:700}
+.muted{color:var(--ink-2)}
+.faint{color:var(--ink-3)}
+.center{text-align:center}
+.nowrap{white-space:nowrap}
+code,.code{font-family:var(--f-mono);font-size:.92em}
+.c-mark{color:var(--mark)}.c-ink2{color:var(--ink-2)}.c-human{color:var(--human)}.c-ai{color:var(--ai)}.c-idle{color:var(--idle)}
+.c-yellow{color:var(--t-yellow)}.c-mint{color:var(--t-mint)}.c-pink{color:var(--t-pink)}.c-blue{color:var(--t-blue)}
+
+/* ---------- 布局工具 ---------- */
+.abs{position:absolute}
+.area{position:absolute;left:120px;right:120px;top:240px;bottom:100px}
+.row{display:flex;gap:var(--gap,40px);align-items:var(--align,flex-start)}
+.col{display:flex;flex-direction:column;gap:var(--gap,28px)}
+.grid{display:grid;grid-template-columns:repeat(var(--cols,3),minmax(0,1fr));gap:var(--gap,36px)}
+.tilt{rotate:var(--r)}
+
+/* =====================================================================
+   重点词：<em class="key">词</em>
+   每个风格自己画强调（荧光笔、粉笔描一遍、马克笔……）。--k 从 0 到 1 由引擎在那一拍动画，
+   强调的进度跟着 --k 走；引擎还把文字抄进 data-k，需要「再描一遍」的风格可以用 content:attr(data-k)
+   ===================================================================== */
+.key{--k:0;position:relative;z-index:0;display:inline-block;font-style:normal;font-weight:700;white-space:nowrap;color:var(--key-ink);padding:0 .1em;margin:0 .02em;background-repeat:no-repeat}
+
+/* =====================================================================
+   通用组件
+   ===================================================================== */
+
+/* ---------- 便签 / 卡片：.card（色：t-yellow t-mint t-pink t-blue t-white t-peach；装饰：tape pin） ----------
+   边框、底色、投影由各风格定 */
+.card{position:relative;padding:30px 36px;color:var(--card-ink);rotate:var(--r)}
+.card h3{margin:0 0 12px;font:700 var(--fs-md)/1.2 var(--f-hand)}
+.card p{font-size:var(--fs-body);line-height:1.45}
+.card .sm,.card small{display:block;font-size:var(--fs-min);line-height:1.45;color:var(--card-ink-2)}
+.card ul{margin:6px 0 0;padding:0;list-style:none}
+.card li{position:relative;padding-left:1.1em;font-size:var(--fs-body);line-height:1.5}
+.card li::before{content:"";position:absolute;left:.12em;top:.72em;width:.46em;height:3px;border-radius:2px;background:currentColor;opacity:.6;rotate:-8deg}
+.t-yellow{--tint:var(--t-yellow)}.t-mint{--tint:var(--t-mint)}.t-pink{--tint:var(--t-pink)}.t-blue{--tint:var(--t-blue)}.t-white{--tint:var(--t-white)}.t-peach{--tint:var(--t-peach)}
+.card.tape::before{content:"";position:absolute;top:-16px;left:50%;width:110px;height:32px;margin-left:-55px;rotate:-3deg;background:rgba(255,255,255,.62);box-shadow:0 1px 2px rgba(0,0,0,.1);z-index:2}
+.card.pin::before{content:"";position:absolute;top:-10px;left:50%;width:24px;height:24px;margin-left:-12px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#FF9B7C,#EF6A43 60%,#A63A1E);box-shadow:0 4px 4px rgba(0,0,0,.28);z-index:2}
+/* 卡片上沿的标签：<span class="lab">底座</span> */
+.lab{position:absolute;top:-24px;left:26px;z-index:3;padding:4px 22px 6px;font:700 var(--fs-min)/1.2 var(--f-hand);color:var(--card-ink);white-space:nowrap}
+
+/* ---------- 带序号的步骤：<ol class="steps"><li><b>标题</b><span>说明</span></li></ol> ---------- */
+.steps{list-style:none;margin:0;padding:0;counter-reset:st;display:flex;flex-direction:column;gap:var(--gap,30px)}
+.steps>li{counter-increment:st;display:grid;grid-template-columns:72px 1fr;column-gap:26px;align-items:start}
+.steps>li::before{content:counter(st);grid-row:1/span 3;width:62px;height:62px;display:grid;place-items:center;font:700 34px/1 var(--f-hand);color:var(--ink);border:3px solid var(--line);border-radius:52% 46% 50% 48%/48% 52% 46% 50%}
+.steps>li>b{display:block;font:700 var(--fs-md)/1.3 var(--f-hand)}
+.steps>li>span{display:block;font-size:var(--fs-body);line-height:1.45;color:var(--ink-2)}
+.steps.h{flex-direction:row}
+.steps.h>li{flex:1;min-width:0}
+
+/* ---------- 左右对比：<div class="vs" data-mid="→"><div>左</div><div>右</div></div> ---------- */
+.vs{display:grid;grid-template-columns:minmax(0,1fr) 130px minmax(0,1fr);align-items:stretch}
+.vs::before{content:attr(data-mid);grid-column:2;grid-row:1;align-self:center;justify-self:center;font:700 60px/1 var(--f-hand);color:var(--ink-2)}
+.vs:not([data-mid])::before{content:"vs"}
+.vs>:first-child{grid-column:1;grid-row:1}
+.vs>:last-child{grid-column:3;grid-row:1}
+
+/* ---------- 一排小格：<div class="cells"><div class="cell ai"><b>开发</b><span>说明</span></div>…</div> ---------- */
+.cells{display:flex;gap:var(--gap,18px);align-items:stretch}
+.cell{position:relative;flex:1;min-width:0;padding:22px 14px 20px;text-align:center;border:2.6px solid var(--line);border-radius:var(--rough-r);rotate:var(--r)}
+.cell>i{display:block;font:700 28px/1 var(--f-hand);font-style:normal;color:var(--ink-3);margin-bottom:8px}
+.cell>b{display:block;font:700 var(--fs-md)/1.2 var(--f-hand)}
+.cell>span{display:block;margin-top:8px;font-size:var(--fs-min);line-height:1.35;color:var(--ink-2)}
+.cell.ai{border-color:var(--ai)}
+.cell.human{border-color:var(--human)}
+.cell.human::after{content:"";position:absolute;top:-11px;right:-11px;width:24px;height:24px;border-radius:50%;background:var(--human);box-shadow:0 2px 0 rgba(0,0,0,.15)}
+.cell.idle{border-color:var(--idle);color:var(--idle)}
+.cell.idle>b{text-decoration:line-through;text-decoration-thickness:3px;text-decoration-color:var(--idle)}
+
+/* ---------- 散落再归位：<div class="cells scatter" data-arrange="2">，子元素用 --sx --sy --sr 写散落的位置 ---------- */
+.scatter{position:relative}
+/* 前面加 .slide 提高优先级：风格给卡片写的 position:relative 不能盖过散开的状态 */
+.slide .scatter.scattered>*{position:absolute;left:var(--sx,0);top:var(--sy,0);rotate:var(--sr,0deg);margin:0}
+
+/* ---------- 图例圆点：<i class="dot human"></i> ---------- */
+.dot{display:inline-block;width:.62em;height:.62em;border-radius:50%;background:var(--ink-3);vertical-align:.02em;margin-right:.3em}
+.dot.human{background:var(--human)}.dot.ai{background:var(--ai)}.dot.idle{background:var(--idle)}
+
+/* ---------- 标签：<span class="tag">只读</span> ---------- */
+.tag{display:inline-block;padding:4px 18px;border:2.6px solid currentColor;border-radius:var(--rough-r);font:700 var(--fs-min)/1.2 var(--f-hand);rotate:var(--r)}
+
+/* ---------- 大字金句：<p class="quote">…</p> ---------- */
+.quote{margin:0;font:700 var(--fs-xl)/1.25 var(--f-hand);letter-spacing:.02em;text-align:center;rotate:var(--r)}
+
+/* ---------- 终端窗口：<div class="term" data-title="终端"><p class="in">命令</p><p class="dim">输出</p></div> ---------- */
+.term{position:relative;background:var(--term-bg);color:var(--term-ink);border-radius:12px;padding:0 0 24px;font:500 var(--fs-min)/1.55 var(--f-mono);box-shadow:0 22px 30px -16px rgba(0,0,0,.45);overflow:hidden;rotate:var(--r)}
+.term-bar{display:flex;align-items:center;gap:10px;height:54px;margin-bottom:16px;padding:0 22px;background:rgba(255,255,255,.06);font:500 24px/1 var(--f-mono);color:rgba(255,255,255,.55)}
+.term-bar i{width:15px;height:15px;border-radius:50%;background:#FF6B6B}
+.term-bar i:nth-child(2){background:#FFD43B}.term-bar i:nth-child(3){background:#69DB7C;margin-right:12px}
+.term p{margin:0;padding:0 30px;white-space:pre-wrap}
+.term .in::before{content:"$ ";color:#7FD99A}
+.term .cc::before{content:"> ";color:#F2A93B}
+.term .dim{color:#8E8A83}.term .ok{color:#7FD99A}.term .warn{color:#FFA25E}.term .hi{color:#FFE17A}
+
+/* ---------- 一行可复制的命令：<button class="copy" data-copy="命令">命令</button> ----------
+   引擎会把内容整理成 $ + 命令 + 复制图标；底色、边框由各风格定 */
+[data-copy]{cursor:copy}
+.copy{position:relative;display:inline-flex;align-items:center;gap:16px;max-width:100%;padding:15px 26px;border:0;font:600 var(--fs-min)/1.2 var(--f-mono);color:inherit;background:none;white-space:nowrap;rotate:var(--r);transition:translate .2s,box-shadow .2s,background-color .2s,border-color .2s}
+.copy .ps{opacity:.55}
+.copy .ic{flex:none;width:28px;height:28px;background:currentColor;opacity:.45;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='8' y='8' width='13' height='13' rx='2.5'/%3E%3Cpath d='M16 8V5.5A2.5 2.5 0 0 0 13.5 3h-8A2.5 2.5 0 0 0 3 5.5v8A2.5 2.5 0 0 0 5.5 16H8'/%3E%3C/svg%3E") center/contain no-repeat;
+          mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='8' y='8' width='13' height='13' rx='2.5'/%3E%3Cpath d='M16 8V5.5A2.5 2.5 0 0 0 13.5 3h-8A2.5 2.5 0 0 0 3 5.5v8A2.5 2.5 0 0 0 5.5 16H8'/%3E%3C/svg%3E") center/contain no-repeat}
+.copy:focus{outline:none}
+.copy:focus-visible{outline:3px dashed var(--ink-2);outline-offset:6px}
+@media (hover:hover){.copy:hover{translate:0 -3px}}
+
+/* 复制成功的反馈：引擎在命令旁边放一个 .copied-tip（颜色、框由各风格定，出场动画见风格的 copied）
+   复制失败的红条要盖过各风格的样子：风格 CSS 在本文件之后引入，所以这里多带一个 .slide 提高优先级 */
+.copied-tip{position:absolute;z-index:45;pointer-events:none;white-space:nowrap;display:flex;align-items:center;gap:10px;font:700 var(--fs-min)/1 var(--f-hand)}
+.copied-tip svg{width:44px;height:38px;overflow:visible}
+.copied-tip path{fill:none;stroke:currentColor;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+.slide .copied-tip.fail{color:#fff!important;background:#C92A2A!important;border:0!important;outline:0!important;box-shadow:none!important;filter:none!important;padding:10px 18px;border-radius:8px;font-size:28px}
+.copied-tip.fail svg{display:none}
+
+/* ---------- 截图位：<figure class="shot" data-src="shots/a.png" data-caption="说明"></figure> ---------- */
+.shot{position:relative;margin:0;padding:14px 14px 0;background:#fff;cursor:zoom-in;rotate:var(--r);box-shadow:0 16px 22px -14px rgba(40,30,10,.45),0 0 0 1px rgba(0,0,0,.05)}
+.shot::before{content:"";position:absolute;top:-15px;left:50%;width:120px;height:32px;margin-left:-60px;rotate:2deg;background:rgba(255,255,255,.62);box-shadow:0 1px 2px rgba(0,0,0,.1);z-index:3}
+.shot-img{position:relative;aspect-ratio:var(--ar,16/9);background:#2A2D33;overflow:hidden}
+.shot-img img{display:block;width:100%;height:100%;object-fit:var(--fit,cover);object-position:var(--pos,50% 0)}
+.shot-miss{position:absolute;inset:0;display:none;place-items:center;text-align:center;padding:20px;font:500 30px/1.4 var(--f-hand);color:#8A8F98;background:repeating-linear-gradient(-45deg,#F1EFE8 0 14px,#E9E6DD 14px 28px)}
+.shot-miss small{font:400 18px/1.4 var(--f-mono);color:#A3A7AE}
+.shot.missing .shot-miss{display:grid}.shot.missing img{visibility:hidden}
+.shot figcaption{padding:12px 6px 16px;text-align:center;font:500 32px/1.3 var(--f-hand);color:#3B3426}
+.shot-zoom{position:absolute;right:24px;top:24px;padding:7px 14px 8px;border-radius:999px;background:rgba(20,20,22,.66);color:#fff;font:500 20px/1 var(--f-hand);pointer-events:none}
+.shot-zoom::before{content:"⤢ "}
+.shot.missing .shot-zoom{display:none}
+
+/* ---------- 手绘线稿层：<svg class="sketch" viewBox="0 0 1920 1080">形状</svg>，引擎换成 rough.js 线条 ---------- */
+svg.sketch,svg.marks{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:visible;pointer-events:none;color:var(--line)}
+svg.marks{z-index:26;color:var(--mark)}
+svg.sketch path,svg.marks path{stroke-linecap:round;stroke-linejoin:round}
+svg.sketch .c-mark{color:var(--mark)}
+
+/* 组件默认是相对定位；加了 .abs 就改成绝对定位（写在组件之后、并提高优先级，保证生效） */
+.slide .abs{position:absolute}
+
+/* =====================================================================
+   形象：<div class="mascot guide" data-pose="idle|point|happy|rest" style="left:…;top:…"></div>
+   （旧写法 <div class="kid guide">、style="--kid:…" 照样认）
+   长相来自 mascots/<键名>.js 注册的 svg(pose, opts)，这里只管外层。引擎生成的结构：
+     .mascot > .mascot-body（蹦跳、压扁，原点在脚底） > .mascot-spin（转圈） > .mascot-art（画像） + .mascot-say（说的话）
+   大小：默认是形象的 size（引擎写进 --mascot-w 宽、--mascot-k 高宽比）；
+     页面写 --mascot-size（或旧的 --kid、data-size）时按这个宽度等比缩放
+   风格可以给形象的变量：--mascot-shadow（画像的投影，写成一串 drop-shadow()，不要写 none）、
+     --mascot-outline（深色底描边的颜色）；说的话 .mascot-say 的框和颜色也由风格定
+   深色底（风格 dark: true，且形象没写 outline: false）：引擎给 .mascot 加 .outline，画像外面四个方向各一道浅色描边
+   ===================================================================== */
+.mascot{--ms:var(--mascot-size,var(--kid,var(--mascot-w,120px)));position:absolute;z-index:30;width:var(--ms);height:calc(var(--ms) * var(--mascot-k,1));pointer-events:none}
+.mascot-body{position:absolute;inset:0;transform-origin:50% var(--mascot-foot,100%);pointer-events:auto;cursor:pointer}
+.mascot-spin{position:absolute;inset:0;transform-origin:50% 58%}
+.mascot-art{position:absolute;inset:0;filter:var(--mascot-shadow,none)}
+.mascot-art svg{display:block;width:100%;height:100%;overflow:visible}
+.mascot[data-face="left"]:not(.self-flip) .mascot-art{transform:scaleX(-1)}
+.mascot.outline .mascot-art{filter:drop-shadow(2px 0 0 var(--mascot-outline,#F4F6FA)) drop-shadow(-2px 0 0 var(--mascot-outline,#F4F6FA)) drop-shadow(0 2px 0 var(--mascot-outline,#F4F6FA)) drop-shadow(0 -2px 0 var(--mascot-outline,#F4F6FA)) var(--mascot-shadow,)}
+/* 形象说的话（重点词）：在头顶一侧弹出，跟着朝向换边 */
+.mascot-say{position:absolute;bottom:calc(100% + 14px);left:58%;padding:8px 20px 10px;white-space:nowrap;font:700 var(--fs-min)/1.2 var(--f-hand);opacity:0;transform:scale(.4);transform-origin:12% 120%;transition:opacity .15s,transform .15s;pointer-events:none}
+.mascot-say.on{opacity:1;transform:none;transition:opacity .2s,transform .4s cubic-bezier(.34,1.8,.64,1)}
+.mascot-say::after{content:"";position:absolute;left:18px;bottom:-12px;width:18px;height:18px;rotate:45deg}
+.mascot[data-face="left"] .mascot-say{left:auto;right:58%;transform-origin:88% 120%}
+.mascot[data-face="left"] .mascot-say::after{left:auto;right:18px}
+
+/* =====================================================================
+   常驻信息：章节标记（左上）、节拍指示 + 页码（右上）、计时（左下）
+   所有风格位置一致，样子由各风格定（选择器写 #stage[data-scene="<键名>"] …）
+   节拍格的结构：.dots 里每 5 拍一个 b.zg，每拍一个 i（.on 讲过、.now 当前）
+   ===================================================================== */
+.chrome{position:absolute;inset:0;z-index:50;pointer-events:none}
+.chap{position:absolute;left:120px;top:38px}
+.chap:empty{display:none}
+.chap span{display:inline-block;white-space:nowrap;font:500 28px/1.2 var(--f-hand);color:var(--ink-3)}
+.meta{position:absolute;right:64px;top:40px;display:flex;align-items:center;gap:22px;font:500 24px/1 var(--f-hand);color:var(--ink-3)}
+.meter{display:flex;align-items:center;gap:16px}
+.meter[hidden]{display:none}
+.meter .dots{display:flex;align-items:center;gap:9px}
+.meter .zg{display:contents}
+.meter .mnum b,.pageno b{color:var(--ink-2);font-weight:700}
+.meter .ms{display:none}
+.pageno{letter-spacing:.04em;color:var(--ink-2)}
+.timer{position:absolute;left:64px;bottom:30px;font:600 26px/1 var(--f-mono);color:var(--ink-3)}
+.timer:empty{display:none}
+.timer.paused{opacity:.5}
+
+/* =====================================================================
+   内置的朴素风格 plain：浅色底、墨色字、无装饰（页面用了没注册的风格时退回它）
+   颜色全用上面 :root 的默认值；只补底座里没画的几样：卡片和小格的框、重点词、命令、节拍格、形象说的话
+   ===================================================================== */
+[data-scene="plain"] .s-topic .tc{border:2px solid var(--line);border-radius:8px}
+[data-scene="plain"] .key{background-image:linear-gradient(transparent 55%,var(--hl) 55%,var(--hl) 92%,transparent 92%);background-size:calc(var(--k)*100%) 100%}
+[data-scene="plain"] .card{background:var(--tint,var(--paper));border:2px solid var(--line);border-radius:14px}
+[data-scene="plain"] .lab{background:var(--bg);padding:0 12px}
+[data-scene="plain"] .cell{border-width:2px;border-radius:12px;background:var(--tint,var(--paper))}
+[data-scene="plain"] .tag{border-width:2px;border-radius:8px}
+[data-scene="plain"] .copy{background:var(--paper);border:2px solid var(--line);border-radius:10px}
+[data-scene="plain"] .copied-tip{color:var(--ai)}
+[data-scene="plain"] .mascot-say{color:var(--ink);background:var(--paper);border:2px solid var(--line);border-radius:14px}
+[data-scene="plain"] .mascot-say::after{background:var(--paper);border-right:2px solid var(--line);border-bottom:2px solid var(--line)}
+#stage[data-scene="plain"] .dots i{width:14px;height:14px;border:2px solid var(--ink-3);border-radius:50%;transition:background-color .3s,border-color .3s}
+#stage[data-scene="plain"] .dots i.on{background:var(--ink-2);border-color:var(--ink-2)}
+#stage[data-scene="plain"] .dots i.now{background:var(--mark);border-color:var(--mark)}
+
+/* =====================================================================
+   提示、灯箱
+   ===================================================================== */
+#toast{position:fixed;left:50%;top:18px;z-index:900;max-width:min(92vw,900px);transform:translate(-50%,-16px);padding:12px 20px;border-radius:10px;background:#FFF7D6;color:#3B3426;border:1.5px solid #E2C76B;font:500 17px/1.5 var(--f-hand);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;user-select:text}
+#toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+#toast code{display:block;margin-top:6px;padding:6px 10px;background:#fff;border-radius:6px;font:500 15px/1.4 var(--f-mono);user-select:all;word-break:break-all}
+#lightbox{position:fixed;inset:0;z-index:800;background:rgba(10,10,12,.92)}
+#lightbox[hidden]{display:none}
+.lb-scroll{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.lb-scroll img{max-width:calc(100vw - 40px);max-height:calc(100vh - 90px);object-fit:contain;cursor:zoom-in;box-shadow:0 20px 60px rgba(0,0,0,.6);user-select:none;-webkit-user-drag:none}
+#lightbox.full .lb-scroll{display:block;overflow:auto}
+#lightbox.full .lb-scroll img{max-width:none;max-height:none;cursor:zoom-out}
+.lb-close{position:absolute;right:18px;top:14px;width:52px;height:52px;border:0;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font:300 36px/1 sans-serif;cursor:pointer}
+.lb-cap{position:absolute;left:0;right:0;bottom:16px;text-align:center;color:#EDE9E1;font:500 18px/1.4 var(--f-hand);pointer-events:none;text-shadow:0 1px 3px #000}
+
+/* =====================================================================
+   现场工具（tools.js）：总览跳页（O）、黑屏（B）、激光笔（L）、底部进度条
+   总览、黑屏、激光笔是挂在 body 上的固定层，不跟风格走（深色界面，和看大图层一个路子）；
+   层级：样册的换风格小条 700 < 总览 760 < 黑屏 780 < 看大图 800 < 激光笔 850 < 提示条 900
+   ===================================================================== */
+/* 总览：铺满窗口，上面一行说明，下面是缩略图网格（列数、缩放比例 --ov-k 由 tools.js 按窗口和页数算） */
+.deck-ov{position:fixed;inset:0;z-index:760;display:flex;flex-direction:column;background:#111215;color:#EDE9E1;font-family:var(--f-hand);visibility:hidden;opacity:0;user-select:none;-webkit-user-select:none}
+.deck-ov.on{visibility:visible;opacity:1;transition:opacity .18s ease-out}
+.deck-ov.instant{transition:none}
+.ov-head{flex:none;display:flex;align-items:baseline;gap:18px;padding:18px 48px 4px;white-space:nowrap;font:400 18px/1.4 var(--f-hand);color:#A9A396}
+.ov-head .ov-t{font:700 26px/1.2 var(--f-hand);color:#FFF8E6}
+.ov-head .ov-num{flex:1;min-width:0;text-align:center;font:500 22px/1.2 var(--f-hand);color:#FFE68A}
+.ov-head .ov-num b{margin:0 4px;font:700 30px/1 var(--f-mono)}
+.ov-head .ov-num .bad{color:#FF9B85}
+.ov-grid{flex:1;min-height:0;overflow:auto;display:grid;grid-template-columns:repeat(var(--ov-cols,4),minmax(0,1fr));gap:24px;align-content:start;padding:18px 48px 32px}
+.ov-cell{position:relative;min-width:0;cursor:pointer}
+/* 每格只在滚到看得见时才画（content-visibility），页多也不卡 */
+.ov-frame{position:relative;aspect-ratio:16/9;overflow:hidden;border-radius:6px;background:#2A2B2F;box-shadow:0 6px 18px rgba(0,0,0,.45);content-visibility:auto}
+.ov-k{position:absolute;left:0;top:0;width:1920px;height:1080px;transform:scale(var(--ov-k,.2));transform-origin:0 0;pointer-events:none}
+.ov-k>.slide{visibility:visible;pointer-events:none}
+.ov-k *,.ov-k *::before,.ov-k *::after{animation:none!important;transition:none!important}
+.ov-cap{display:flex;align-items:baseline;gap:10px;height:40px;padding:9px 2px 0;white-space:nowrap;overflow:hidden;font:400 18px/1.3 var(--f-hand);color:#CFC9BC}
+.ov-cap b{flex:none;font:700 18px/1 var(--f-mono);color:#FFE68A}
+.ov-cap span{overflow:hidden;text-overflow:ellipsis}
+/* 当前页：橙框加「当前」小签；选中（键盘、鼠标）：白色外圈 */
+.ov-cell.cur .ov-frame{box-shadow:0 0 0 4px #F76707,0 6px 18px rgba(0,0,0,.45)}
+.ov-cell.cur .ov-cap::after{content:"当前";flex:none;order:-1;padding:2px 8px;border-radius:4px;background:#F76707;color:#fff;font:700 14px/1.2 var(--f-hand)}
+.ov-cell.sel .ov-frame{outline:3px solid #fff;outline-offset:5px}
+
+/* 黑屏：全黑、藏起鼠标；点一下也恢复 */
+.deck-black{position:fixed;inset:0;z-index:780;background:#000;cursor:none;visibility:hidden;opacity:0;transition:opacity .25s,visibility 0s .25s}
+.deck-black.on{visibility:visible;opacity:1;transition:opacity .25s}
+.deck-black.instant{transition:none}
+
+/* 激光笔：铺满窗口的画布，不接收指针（点击照常进拍）；开着时藏起鼠标 */
+.deck-laser{position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:850;pointer-events:none;display:none}
+.deck-laser.on{display:block}
+html.deck-laser-on,html.deck-laser-on *{cursor:none!important}
+
+/* 底部进度条：舞台底边 y 1066–1070（当前位置的小圆点 1064–1072），在署名（底边 1036）之下；
+   每章一段，段的长短按这一章的拍数；底用 --ink-3，走过的用 --ink-2，当前位置一个 --accent 小圆点。
+   在外框 .chrome 里：不接收指针，换风格时跟着页码一起淡出淡入，阅读模式里随 .chrome 一起藏起来 */
+.deck-progress{position:absolute;left:64px;right:64px;bottom:10px;height:4px;display:flex;gap:6px;pointer-events:none}
+.deck-progress .pg-seg{position:relative;min-width:4px;border-radius:2px}
+.deck-progress .pg-seg::before{content:"";position:absolute;inset:0;border-radius:2px;background:var(--ink-3);opacity:.32}
+.deck-progress .pg-fill{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:2px;background:var(--ink-2);opacity:.62;transition:width .35s ease}
+.deck-progress .pg-seg.cur::after{content:"";position:absolute;top:50%;left:var(--pg,0%);width:8px;height:8px;margin:-4px 0 0 -6px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 1px rgba(0,0,0,.18);transition:left .35s ease}
+
+/* =====================================================================
+   阅读模式（窄的竖屏）：一页页竖排，每页按屏宽缩放，所有拍直接显示
+   ===================================================================== */
+html.reading{overflow-x:hidden;overflow-y:auto;height:auto}   /* 只许竖向滚动 */
+body.reading{overflow:visible;background:#1C1B19;height:auto}
+body.reading #app{position:static}
+body.reading #world{position:static;transform:none!important;width:auto!important;height:auto!important;overflow:visible}
+body.reading .bg,body.reading .chrome{display:none}
+body.reading #stage{position:static;width:auto;height:auto}
+body.reading #slides{position:static;padding:12px 0 40px}
+.r-top{display:none}
+body.reading .r-top{display:block;width:var(--rw);margin:6px auto 14px;color:#EDE6D6;font:400 15px/1.6 var(--f-hand)}
+body.reading .r-top b{display:block;font:700 22px/1.35 var(--f-hand);color:#FFF8E6}
+body.reading .r-item{position:relative;inset:auto;width:var(--rw);margin:0 auto 22px;pointer-events:auto}
+body.reading .frame,body.reading .slide{pointer-events:auto}
+body.reading .r-head{display:flex;align-items:baseline;gap:10px;margin:0 2px 6px;color:#BDB5A4;font:500 13px/1.4 var(--f-hand)}
+body.reading .r-head b{color:#FFE68A;font:700 15px/1 var(--f-mono)}
+body.reading .frame{position:relative;inset:auto;height:calc(var(--rw) * .5625);overflow:hidden;border-radius:6px;box-shadow:0 8px 20px rgba(0,0,0,.45)}
+body.reading .slide{visibility:visible;transform:scale(var(--rs));transform-origin:0 0;background:var(--scene-bg)}
+body.reading .slide .past{opacity:1}
+body.reading .r-notes{display:block;margin:8px 2px 0;color:#D9D2C3;font:400 14px/1.65 var(--f-hand)}
+body.reading .r-notes summary{cursor:pointer;color:#BDB5A4;font-size:13px}
+body.reading .r-notes ol{margin:6px 0 0;padding-left:1.4em}
+body.reading .r-notes li b{color:#FFE68A;font-weight:600;margin-right:6px}
+body.reading .shot-zoom{font-size:26px}
+body.reading .ripple-layer{display:none}
+/* 署名在阅读模式里挪到最后一页的下面（页面缩得太小，留在页里看不清；见 ui.js 的 placeSign），用阅读模式的浅色小字靠右 */
+body.reading .r-item > .li-sign{position:static;display:block;width:fit-content;max-width:100%;margin:8px 2px 0 auto;white-space:normal;word-break:break-all;font:400 13px/1.5 var(--f-hand);color:#BDB5A4}
+
+/* =====================================================================
+   减少动态：不做位移动画
+   ===================================================================== */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{transition-duration:.01ms!important;transition-delay:0s!important;animation-duration:.01ms!important;animation-iteration-count:1!important}
+}
