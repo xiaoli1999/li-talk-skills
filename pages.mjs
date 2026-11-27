@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // 打包 GitHub Pages 网站：根目录是介绍页（site/index.html），tour/ 是教程课件，gallery.html 是样册；可选推到 gh-pages 分支
 //   node pages.mjs            打包到 .pages/（git 不收），打开 .pages/index.html 就能看
-//   node pages.mjs --deploy   打包后把 .pages/ 作为 gh-pages 分支强推到 origin（只动 gh-pages，不碰 master、dev）
+//   node pages.mjs --deploy   打包后把 .pages/ 作为 gh-pages 分支强推到 origin（只动 gh-pages，不碰 master、dev）；
+//                             线上 share/ 下的分享课件会先取回来一起推，并打上体验编辑的标记
 //
 // 网站目录照模板目录的样子摆：
 //   1. 教程课件 tour/ 整个复制到 tour/（它引用的 ../engine/…、../scenes/…、../gallery.html 正好指到网站根目录，不用改路径）
@@ -127,6 +128,32 @@ function buildSite(out, take) {
 }
 
 // 把 out 作为 gh-pages 分支强推到 origin：在 out 里建一个只有一个提交的临时仓库
+/* 网站上的分享课件（share/<名字>/）不是这里打包出来的，是另外放上去的。强推前先从线上的 gh-pages 取回来，免得被冲掉；
+   顺手给每份打上体验编辑的标记，它的引擎只差 edit.js 时换成模板里最新的（体验编辑要新版 edit.js，别的引擎文件不一样就不动） */
+export function keepShares(out, run) {
+  try { run(['fetch', '-q', 'origin', 'gh-pages'], ROOT); } catch { return []; }   // 第一次发布，线上还没有 gh-pages
+  const files = run(['-c', 'core.quotepath=false', 'ls-tree', '-r', '-z', '--name-only', 'FETCH_HEAD', 'share'], ROOT).split('\0').filter(Boolean);
+  for (const f of files) {
+    const r = spawnSync('git', ['show', 'FETCH_HEAD:' + f], { cwd: ROOT, maxBuffer: 1 << 28 });
+    if (r.status !== 0) throw new Error('取不回网站上的 ' + f + '：' + r.stderr);
+    mkdirSync(dirname(join(out, ...f.split('/'))), { recursive: true });
+    writeFileSync(join(out, ...f.split('/')), r.stdout);
+  }
+  const root = join(out, 'share');
+  if (!existsSync(root)) return [];
+  const names = readdirSync(root).filter(n => existsSync(join(root, n, 'index.html')));
+  for (const n of names) {
+    const page = join(root, n, 'index.html');
+    writeFileSync(page, demoEdit(readFileSync(page, 'utf8')));
+    const eng = join(root, n, 'engine');
+    if (!existsSync(join(eng, 'edit.js'))) continue;
+    const same = readdirSync(join(TPL, 'engine')).filter(f => f !== 'edit.js')
+      .every(f => existsSync(join(eng, f)) && readFileSync(join(eng, f)).equals(readFileSync(join(TPL, 'engine', f))));
+    if (same) copyFileSync(join(TPL, 'engine', 'edit.js'), join(eng, 'edit.js'));
+  }
+  return names;
+}
+
 function deploy(out) {
   const run = (args, cwd = out) => {
     const r = spawnSync('git', args, { cwd, encoding: 'utf8' });
@@ -135,6 +162,8 @@ function deploy(out) {
   };
   const remote = run(['remote', 'get-url', 'origin'], ROOT);
   const head = run(['rev-parse', '--short', 'HEAD'], ROOT);
+  const shares = keepShares(out, run);
+  if (shares.length) console.log('保留了网站上的分享课件：' + shares.map(s => 'share/' + s).join('、'));
   run(['init', '-q', '-b', 'gh-pages']);
   run(['add', '-A']);
   run(['-c', 'user.name=li-talk-skills', '-c', 'user.email=li-talk-skills@users.noreply.github.com', 'commit', '-q', '-m', `介绍页和教程网页（来自 ${head}）`]);
