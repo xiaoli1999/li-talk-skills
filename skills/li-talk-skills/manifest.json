@@ -1,9 +1,9 @@
 {
-  "version": "0.4.6",
+  "version": "0.4.7",
   "files": {
     "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
     "NOTICE": "b80310f961b75c35260f64df94c26ecf5f8d025b132f912089a58a9843872e4b",
-    "SKILL.md": "73506f878415cbdb901b1af2c967923d40e129ff3502385cfa6134b107c9bfad",
+    "SKILL.md": "c8ff62f21f8d53978e16febf03fdf8a46b7840ad85c01055e341aa645d8a7ba2",
     "fonts/wenkai.json": "1df3f00d2ef1218f9e4991fedb8925ea97154f581a4bed248ca18c39a8910bb3",
     "references/authoring.md": "4386ba3ec100a84b372e2915059ddc3be0b67f8df0532adaa855247febc61ec6",
     "references/checklist.md": "65d892184eba830c0b848d2a1c64126998536e63521ffcfbf5d7d65b399353a6",
@@ -38,7 +38,7 @@
     "template/engine/beats.js": "9c8f570b97b100131000a9495c86bca4c37e3e2389894d00de9786e8b1f0aca5",
     "template/engine/build.js": "fc53ccf7039b179c674575d3f3526becde8c110fac0b781629d0d86ce7d9cd7a",
     "template/engine/core.js": "f80fe9ad253c3dace255550120ad150ad9fd71fbe91ac94af401191ddad7c5f7",
-    "template/engine/edit.js": "d2f5548f494d383efb9709e41aee0b475cdeaef29e7ebf399bcb722e51d57d3e",
+    "template/engine/edit.js": "cca8540f178d826c6cb7dc1c6f9cc66ba71c33852018513f91111727dcf26d83",
     "template/engine/engine.css": "6a9891e496f6db28b316f646a5c49738b2e910860ecc1ad2e3caa0debd579a28",
     "template/engine/mascot.js": "2aaf2f926bcfe2ad4f2c8da0315ef934ab61510e3f061f0ce3ed1693e7f5a63a",
     "template/engine/pages.js": "367f3156fe00eadcf0a50f0e0d205efafcd984ae8b874abad5f7d778a27e1048",
@@ -176,6 +176,6 @@
     "template/vendor/fonts/wenkai-lite.css": "b15e0d0662543155920c9244fbf3636fa3c6bce7dad6e4f33ad258656c9f5b04",
     "template/vendor/gsap.min.js": "96c01b81f44a3290e2b4532f55e2c9534b2adc43273a19f3756b2cb41f0fd0b6",
     "template/vendor/rough.min.js": "6853af8619532f3939b156cd16824d2e14f31e71d3df306ad5558eeafacab194",
-    "version.txt": "aee8cd7067db4ba68b056e2e49072621d7dbcdf9b3952e98e6d9e5b024200e83"
+    "version.txt": "b908034df92dbedd142741ee10b5da8ac50837c4994e15c0840b47b022e8e263"
   }
 }

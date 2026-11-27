@@ -47,6 +47,11 @@
   // 能不能编辑：本机双击打开、AI 开的在线编辑（带口令）、本机预览（localhost）可以；从网站上打开的（GitHub Pages 上的教程和样册、
   // 用户发成在线链接的课件）按 E 不进编辑：看的人改了也只存在自己浏览器里，底部还会提示他去找 AI，莫名其妙
   const EDITABLE = SERVER || FILE || /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+  // 体验编辑：介绍网站（GitHub Pages）上的教程和样册由 pages.mjs 打包时加上 <meta name="li-talk-edit" content="demo">，
+  // 让没装的人也能按 E 试试：能改、能撤销，但不存（刷新就没了）、不出交给 AI 的按钮，底部说明装好以后在本机打开才能真的改。
+  // 别人发成在线链接的课件没有这个标记，照旧只能看
+  const DEMO = !EDITABLE && !!document.querySelector('meta[name="li-talk-edit"][content="demo"]');
+  const DEMO_SAY = '从 GitHub 仓库 xiaoli1999/li-talk-skills 安装到全局，装好后打开新手教程带我过一遍';
   const API = name => '/__li-talk/' + name + '?token=' + encodeURIComponent(TOKEN);
   const LS_KEY = 'li-talk-edits:' + document.title;
   const SS_KEY = 'li-talk-edit-resume:' + document.title;
@@ -69,7 +74,7 @@
     mode0 = QS.get('mode');
     try { localStorage.setItem('li-talk-merge-mode', mode0); } catch (e) { /* 存不了就只管这次 */ }
   }
-  const HINT_KEY = 'li-talk-edit-offline-hint';
+  const HINT_KEY = DEMO ? 'li-talk-edit-demo-hint' : 'li-talk-edit-offline-hint';
   const BOX = ['left', 'top', 'width', 'height'];
   const STYLE = ['fontSize', 'color', 'fontWeight', 'textAlign'];
   const SAVE_DELAY = 400;
@@ -797,6 +802,7 @@
     clearTimeout(E.saveT); E.saveT = 0;
     if (E.leaving) return Promise.resolve(true);   // 正在离开：修改已经交出去了（或者要从服务读回最新的），这一页的不再存
     E.items.sort((a, b) => (a.no || 0) - (b.no || 0));
+    if (DEMO) { E.dirty = false; E.failed = false; updateBar(); return Promise.resolve(true); }   // 体验编辑：只留在这个页面里
     if (!SERVER) {
       try { localStorage.setItem(LS_KEY, JSON.stringify({ version: 1, updated: new Date().toISOString(), items: E.items })); E.failed = false; E.dirty = false; }
       catch (e) { E.failed = true; }
@@ -1408,7 +1414,7 @@
       return fetch(API('edits'), { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).catch(() => null)
         .then(d => { E.items = d && Array.isArray(d.items) ? d.items : []; });
     }
-    E.items = offlineItems();
+    E.items = DEMO ? [] : offlineItems();   // 体验编辑每次从头开始
     return Promise.resolve();
   }
   /* 离线的修改：localStorage 里的；那里是空的、又有刚切去在线编辑时留的备份（没切过去又回来了），就用备份 */
@@ -1529,7 +1535,7 @@
   function toggle() {
     if (E.on) { exit(); return; }
     // 从网站上打开的：不进编辑，提示一句，免得看的人以为按坏了
-    if (!EDITABLE) { I.toast('网页上打开的课件只能看，在本机双击打开才能按 E 编辑', 3500); return; }
+    if (!EDITABLE && !DEMO) { I.toast('网页上打开的课件只能看，在本机双击打开才能按 E 编辑', 3500); return; }
     if (!FILE || SERVER || S.reading || !PAGES.length) { enter(); return; }
     if (E.checking || E.leaving) return;
     E.checking = true;
@@ -1579,8 +1585,10 @@
     st.classList.toggle('lt-edit-fail', E.failed);
     const mv = $('.lt-edit-modev', E.bar);
     if (mv) mv.textContent = MODE_LABEL[E.mode];
-    $('.lt-edit-gotxt', btn).textContent = SERVER ? (E.notifying ? '正在通知…' : E.notified ? 'AI 正在改…' : '通知 AI 修改') : '复制修改给 AI';
-    btn.disabled = !n || E.notifying || E.notified;
+    if (btn) {   // 体验编辑没有这个按钮
+      $('.lt-edit-gotxt', btn).textContent = SERVER ? (E.notifying ? '正在通知…' : E.notified ? 'AI 正在改…' : '通知 AI 修改') : '复制修改给 AI';
+      btn.disabled = !n || E.notifying || E.notified;
+    }
     $('.lt-edit-undo', E.bar).disabled = !E.undo.length;
     $('.lt-edit-redo', E.bar).disabled = !E.redo.length;
     $('.lt-edit-all', E.bar).disabled = !n;
@@ -1592,24 +1600,31 @@
     E.bar = el('div', 'lt-edit-bar lt-edit-glass',
       '<button type="button" class="lt-edit-status" data-tip="还没改动"><i class="lt-edit-dot"></i><span class="lt-edit-stxt">未改动</span></button>' + sep +
       ibtn('lt-edit-undo', 'undo', '撤销 Ctrl+Z') + ibtn('lt-edit-redo', 'redo', '重做 Ctrl+Shift+Z / Ctrl+Y') + ibtn('lt-edit-all', 'resetAll', '全部还原（清掉还没合并的改动）') + sep +
-      '<button type="button" class="lt-edit-mode" data-tip="改完怎么合进源码"><span class="lt-edit-modev"></span>' + icon('down') + '</button>' +
-      '<button type="button" class="lt-edit-go" data-tip="' + (SERVER ? '把改动交给 AI 合进源码' : '复制改动清单，贴给 AI') + '">' + icon(SERVER ? 'send' : 'copy') + '<span class="lt-edit-gotxt"></span></button>' +
+      (DEMO ? '<span class="lt-edit-demo-tag" data-tip="改动只留在这个页面，刷新就没了">体验编辑</span>'
+        : '<button type="button" class="lt-edit-mode" data-tip="改完怎么合进源码"><span class="lt-edit-modev"></span>' + icon('down') + '</button>' +
+          '<button type="button" class="lt-edit-go" data-tip="' + (SERVER ? '把改动交给 AI 合进源码' : '复制改动清单，贴给 AI') + '">' + icon(SERVER ? 'send' : 'copy') + '<span class="lt-edit-gotxt"></span></button>') +
       ibtn('lt-edit-exit', 'exit', '退出编辑 E'));
     E.bar.setAttribute('role', 'toolbar');
     E.bar.setAttribute('data-noclick', '');
-    // 离线编辑（没连上 AI 开的编辑服务）：屏幕底部一条提示，说明改完怎么交给 AI，并引导用户让 AI 开在线编辑（改完一键通知）
+    // 离线编辑（没连上 AI 开的编辑服务）：屏幕底部一条提示，说明改完怎么交给 AI，并引导用户让 AI 开在线编辑（改完一键通知）；
+    // 体验编辑：说明改动不存，装好以后在本机打开才能真的改，按钮复制安装的那句话
     if (!SERVER) {
-      E.hint = el('div', 'lt-edit-hint lt-edit-glass',
-        '<span class="lt-edit-hint-tag">离线编辑</span>' +
-        '<span class="lt-edit-hint-txt">改完点「复制修改给 AI」贴进对话。想改完<b>一键交给 AI</b>？把这句话发给 AI，它开好在线编辑后，这一页会自己切过去，改动一起带上：</span>' +
-        '<button type="button" class="lt-edit-hint-say" data-tip="复制这句话">' + icon('copy') + '<span>' + OFFLINE_SAY + '</span></button>' +
-        '<button type="button" class="lt-edit-hint-x" data-tip="知道了" aria-label="知道了">' + icon('exit') + '</button>');
+      E.hint = el('div', 'lt-edit-hint lt-edit-glass', DEMO
+        ? '<span class="lt-edit-hint-tag">体验编辑</span>' +
+          '<span class="lt-edit-hint-txt">随便改，改动只留在这个页面，刷新就没了。装好 li-talk-skills 后，在本机打开课件按 E 就能真的改，改完<b>一键交给 AI</b>：</span>' +
+          '<button type="button" class="lt-edit-hint-say" data-tip="复制这句话，发给你的 AI">' + icon('copy') + '<span>复制安装的话</span></button>' +
+          '<button type="button" class="lt-edit-hint-x" data-tip="知道了" aria-label="知道了">' + icon('exit') + '</button>'
+        : '<span class="lt-edit-hint-tag">离线编辑</span>' +
+          '<span class="lt-edit-hint-txt">改完点「复制修改给 AI」贴进对话。想改完<b>一键交给 AI</b>？把这句话发给 AI，它开好在线编辑后，这一页会自己切过去，改动一起带上：</span>' +
+          '<button type="button" class="lt-edit-hint-say" data-tip="复制这句话">' + icon('copy') + '<span>' + OFFLINE_SAY + '</span></button>' +
+          '<button type="button" class="lt-edit-hint-x" data-tip="知道了" aria-label="知道了">' + icon('exit') + '</button>');
       E.hint.hidden = true;
       E.hint.setAttribute('data-noclick', '');
       E.hint.setAttribute('role', 'note');
       E.hint.addEventListener('mousedown', e => e.preventDefault());
       $('.lt-edit-hint-say', E.hint).addEventListener('click', () => {
-        I.copyText(OFFLINE_SAY).then(ok => I.toast(ok ? '已复制，发给 AI 就行' : '没能自动复制，请手动对 AI 说：' + OFFLINE_SAY, 3500));
+        const say = DEMO ? DEMO_SAY : OFFLINE_SAY;
+        I.copyText(say).then(ok => I.toast(ok ? (DEMO ? '已复制，发给你的 AI 就能装好' : '已复制，发给 AI 就行') : '没能自动复制，请手动对 AI 说：' + say, 3500));
       });
       $('.lt-edit-hint-x', E.hint).addEventListener('click', () => {
         E.hint.hidden = true;
@@ -1620,8 +1635,17 @@
     }
     E.bar.addEventListener('mousedown', e => e.preventDefault());   // 点按钮不抢焦点：免得之后按空格又点一次按钮
     $('.lt-edit-status', E.bar).addEventListener('click', () => { if (E.failed) save(); });
+    if (!DEMO) buildModeMenu();   // 体验编辑没有「交给 AI」按钮和合并方式菜单
+    $('.lt-edit-undo', E.bar).addEventListener('click', undo);
+    $('.lt-edit-redo', E.bar).addEventListener('click', redo);
+    $('.lt-edit-all', E.bar).addEventListener('click', resetAll);
+    $('.lt-edit-exit', E.bar).addEventListener('click', exit);
+    document.body.appendChild(E.bar);
+    buildTools(sep);
+  }
+  /* 「交给 AI」按钮和合并方式菜单 */
+  function buildModeMenu() {
     $('.lt-edit-go', E.bar).addEventListener('click', notify);
-    // 合并方式菜单
     E.mpop = el('div', 'lt-edit-pop lt-edit-mpop lt-edit-glass', '<div class="lt-edit-poph">改完怎么合进源码</div>' +
       Object.keys(MODES).map(k => '<button type="button" data-mode="' + k + '"><b>' + MODE_LABEL[k] + '</b><small>' + MODE_DESC[k] + '</small></button>').join(''));
     E.mpop.hidden = true;
@@ -1644,12 +1668,9 @@
       E.mpop.style.left = Math.round(clamp(r.left + r.width / 2 - pw / 2, 6, innerWidth - pw - 6)) + 'px';
       E.mpop.style.top = Math.round(r.bottom + 8) + 'px';
     });
-    $('.lt-edit-undo', E.bar).addEventListener('click', undo);
-    $('.lt-edit-redo', E.bar).addEventListener('click', redo);
-    $('.lt-edit-all', E.bar).addEventListener('click', resetAll);
-    $('.lt-edit-exit', E.bar).addEventListener('click', exit);
-    document.body.appendChild(E.bar);
-
+  }
+  /* 选中后旁边浮出的工具条 */
+  function buildTools(sep) {
     // 每组后面自带分隔线，哪组藏起来都不会多出或少一道线；字号、颜色、粗细对齐这几组只在选中的是文字时出现（lt-edit-g-text）
     E.tools = el('div', 'lt-edit-tools lt-edit-glass',
       '<span class="lt-edit-g-text"><span class="lt-edit-grp" data-tip="字号">' + ibtn('', 'minus', '字号小一档', ' data-act="fsstep" data-v="-1"') +
@@ -1711,6 +1732,7 @@
     '.lt-edit-mpop button small{color:var(--lt-sub);font-size:12px;line-height:1.45;white-space:normal}',
     '.lt-edit-mpop button.lt-edit-on{background:var(--lt-on)!important;box-shadow:inset 3px 0 0 var(--lt-acc)}',
     '.lt-edit-glass.lt-edit-hint{left:50%;bottom:24px;transform:translateX(-50%);display:flex;align-items:center;gap:10px;width:max-content;max-width:calc(100vw - 24px);padding:6px 6px 6px 8px;font-size:13px;line-height:1.5}',
+    '.lt-edit-demo-tag{display:inline-flex;align-items:center;height:30px;padding:0 12px;border-radius:9px;background:var(--lt-acc);color:var(--lt-on-accent,#fff);font-weight:600;font-size:13px;white-space:nowrap;cursor:default}',
     '.lt-edit-hint-tag{flex:none;padding:2px 8px;border-radius:8px;background:var(--lt-acc);color:var(--lt-on-accent,#fff);font-weight:600;font-size:12px}',
     '.lt-edit-hint-txt{color:var(--lt-fg)}',
     '.lt-edit-hint-txt b{font-weight:700}',

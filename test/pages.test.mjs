@@ -55,3 +55,12 @@ test('介绍页：在根目录，链到教程和样册，风格清单从 scenes/
   }
   assert.ok(existsSync(join(out, 'img', 'edit.jpg')));
 });
+
+test('网站上的教程和样册带「体验编辑」标记（按 E 能试着改，不存）；模板里的原文件不带，本机打开照常编辑', () => {
+  const META = '<meta name="li-talk-edit" content="demo">';
+  for (const rel of ['tour/index.html', 'gallery.html']) {
+    assert.ok(readFileSync(join(out, ...rel.split('/')), 'utf8').includes(META), rel + ' 要带体验编辑的标记');
+    assert.ok(!readFileSync(join(TPL, ...rel.split('/')), 'utf8').includes(META), '模板里的 ' + rel + ' 不能带');
+  }
+  assert.ok(existsSync(join(out, 'img', 'edit.gif')), '介绍页的编辑动图');
+});

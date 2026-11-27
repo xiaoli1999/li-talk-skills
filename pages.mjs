@@ -65,11 +65,22 @@ export function buildPages(out = join(ROOT, '.pages')) {
   const gallery = readFileSync(join(TPL, 'gallery.html'), 'utf8');
   for (const m of gallery.matchAll(/(?:href|src)="([\w./-]+\.(?:css|js|svg|png|jpe?g|webp|woff2?))"/g)) take(m[1]);
   copyDir(join(TPL, 'samples'), join(out, 'samples'));
-  writeFileSync(join(out, 'gallery.html'), gallery);
+  writeFileSync(join(out, 'gallery.html'), demoEdit(gallery));
+  // 教程和样册打上「体验编辑」的标记：来网站看的人按 E 能试着改（engine/edit.js 的 DEMO，不存、不出交给 AI 的按钮）
+  const tourHtml = join(out, 'tour', 'index.html');
+  writeFileSync(tourHtml, demoEdit(readFileSync(tourHtml, 'utf8')));
 
   buildSite(out, take);
   writeFileSync(join(out, '.nojekyll'), '');
   return [...done].sort();
+}
+
+/** 在 <head> 后面插一行体验编辑的标记 */
+export function demoEdit(html) {
+  const META = '<meta name="li-talk-edit" content="demo">';
+  if (html.includes(META)) return html;
+  if (!/<head>/i.test(html)) throw new Error('页面里找不到 <head>，没法加体验编辑的标记');
+  return html.replace(/<head>/i, m => m + '\n' + META);
 }
 
 // 介绍页用的水彩素材：从 scenes/watercolor.css 的变量里取（色块遮罩、笔触、铅笔框；纸纹那条 --scene-bg 改名 --wc-paper-bg）

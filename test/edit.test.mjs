@@ -681,17 +681,19 @@ test('真实浏览器：双击打开的页面，服务开着时按 E 切到在�
   }
 });
 
+// 普通的静态网站：把 dir 原样放在 host 上（127.0.0.2 这类主机名不是 localhost / 127.0.0.1，当成别人的网站）
+const staticSite = (dir, host) => new Promise(ok => {
+  const srv = createServer((req, res) => {
+    const rel = decodeURIComponent(new URL(req.url, 'http://x').pathname).replace(/^\/+/, '') || 'index.html';
+    try { const body = readFileSync(join(dir, rel)); res.writeHead(200, { 'Content-Type': /\.html$/.test(rel) ? 'text/html; charset=utf-8' : /\.js$/.test(rel) ? 'text/javascript' : /\.css$/.test(rel) ? 'text/css' : 'application/octet-stream' }); res.end(body); }
+    catch { res.writeHead(404); res.end(); }
+  });
+  srv.listen(0, host, () => ok(srv));
+});
+
 test('真实浏览器：从网站上打开的课件（不是本机、不带口令）按 E 不进编辑；本机预览（127.0.0.1）照样能离线编辑', { skip: !browser && '本机没找到 Edge / Chrome', timeout: 60000 }, async () => {
   const dir = deck();
-  // 普通的静态网站：一个在 127.0.0.2 上（主机名不是 localhost / 127.0.0.1，当成别人的网站），一个在 127.0.0.1 上（本机预览）
-  const site = host => new Promise(ok => {
-    const srv = createServer((req, res) => {
-      const rel = decodeURIComponent(new URL(req.url, 'http://x').pathname).replace(/^\/+/, '') || 'index.html';
-      try { const body = readFileSync(join(dir, rel)); res.writeHead(200, { 'Content-Type': /\.html$/.test(rel) ? 'text/html; charset=utf-8' : /\.js$/.test(rel) ? 'text/javascript' : /\.css$/.test(rel) ? 'text/css' : 'application/octet-stream' }); res.end(body); }
-      catch { res.writeHead(404); res.end(); }
-    });
-    srv.listen(0, host, () => ok(srv));
-  });
+  const site = host => staticSite(dir, host);
   const web = await site('127.0.0.2'), local = await site('127.0.0.1');
   const b = await openBrowser(browser);
   const ev = poller(b);
@@ -709,6 +711,47 @@ test('真实浏览器：从网站上打开的课件（不是本机、不带口�
   } finally {
     await b.close();
     web.close(); local.close();
+  }
+});
+
+test('真实浏览器：介绍网站上的教程和样册（页面带 <meta name="li-talk-edit" content="demo">）按 E 进「体验编辑」：能改，不出交给 AI 的按钮，改动不存，刷新就没了', { skip: !browser && '本机没找到 Edge / Chrome', timeout: 60000 }, async () => {
+  const dir = deck();
+  const f = join(dir, 'index.html');
+  writeFileSync(f, readFileSync(f, 'utf8').replace('<head>', '<head>\n<meta name="li-talk-edit" content="demo">'));
+  const web = await staticSite(dir, '127.0.0.2');
+  const b = await openBrowser(browser);
+  const ev = poller(b);
+  const url = `http://127.0.0.2:${web.address().port}/index.html#2`;
+  try {
+    await b.goto(url, { w: 1280, h: 720 });
+    assert.ok(await ev(`window.Deck && Deck.page && !document.body.classList.contains('loading')`));
+    await pressE(b);
+    assert.ok(await ev('Deck._.editState().on'), '按 E 进了编辑');
+    assert.equal(await b.evaluate(`!!document.querySelector('.lt-edit-go') || !!document.querySelector('.lt-edit-mode')`), false, '没有「复制修改给 AI」和合并方式');
+    assert.equal(await b.evaluate(`(document.querySelector('.lt-edit-demo-tag') || {}).textContent`), '体验编辑');
+    const hint = await b.evaluate(`(() => { const h = document.querySelector('.lt-edit-hint'); return h && !h.hidden ? h.textContent : ''; })()`);
+    assert.match(hint, /体验编辑/);
+    assert.match(hint, /刷新就没了/);
+    // 改一处：单击一张卡片选中，按 → 挪 1px
+    const pt = JSON.parse(await b.evaluate(`JSON.stringify((() => { const r = document.querySelector('#slide-g2 .card:nth-of-type(3)').getBoundingClientRect(); return [Math.round(r.x + r.width / 2), Math.round(r.y + r.height / 2)]; })())`));
+    await b.call('Input.dispatchMouseEvent', { type: 'mousePressed', x: pt[0], y: pt[1], button: 'left', buttons: 1, clickCount: 1 });
+    await b.call('Input.dispatchMouseEvent', { type: 'mouseReleased', x: pt[0], y: pt[1], button: 'left', buttons: 0, clickCount: 1 });
+    await sleep(200);
+    await b.call('Input.dispatchKeyEvent', { type: 'keyDown', key: 'ArrowRight', code: 'ArrowRight', windowsVirtualKeyCode: 39 });
+    await b.call('Input.dispatchKeyEvent', { type: 'keyUp', key: 'ArrowRight', code: 'ArrowRight', windowsVirtualKeyCode: 39 });
+    assert.ok(await ev('Deck._.editState().items.length === 1'), '改动记下来了');
+    assert.match(await ev(`Deck._.editState().bar.includes('1 处改动') && Deck._.editState().bar`), /1 处改动/);
+    await sleep(1500);   // 过了自动保存的时间
+    assert.equal(await b.evaluate(`Object.keys(localStorage).filter(k => k.startsWith('li-talk-edits:')).length`), 0, '体验编辑不往 localStorage 存');
+    // 刷新：改动没了，再按 E 也是从头开始
+    await b.call('Page.reload', {});
+    assert.ok(await ev(`window.Deck && Deck.page && !document.body.classList.contains('loading')`));
+    await pressE(b);
+    assert.ok(await ev('Deck._.editState().on'));
+    assert.equal(await b.evaluate('Deck._.editState().items.length'), 0, '刷新后改动没了');
+  } finally {
+    await b.close();
+    web.close();
   }
 });
 
